@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "lib": ["ES2020"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@ecb/shared": ["./packages/shared/src/index.ts"],
+      "@ecb/broker-mock": ["./packages/broker-mock/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

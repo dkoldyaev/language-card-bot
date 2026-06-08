@@ -1,0 +1,22 @@
+{
+  "name": "english-card-bot-2",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "ts-node packages/core-service/src/index.ts",
+    "dev:bot": "ts-node packages/telegram-bot/src/index.ts",
+    "dev:rest": "ts-node packages/rest-api/src/index.ts",
+    "dev:all": "concurrently \"npm run dev -w packages/core-service\" \"npm run dev -w packages/rest-api\" \"npm run dev -w packages/telegram-bot\"",
+    "build": "npm run build --workspaces",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.2",
+    "concurrently": "^8.2.2",
+    "@types/node": "^20.12.0"
+  }
+}

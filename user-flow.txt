@@ -1,0 +1,103 @@
+---
+config:
+  theme: redux
+  layout: dagre
+---
+flowchart TB
+ subgraph s1["Settings mode"]
+        n2["<b>&lt;Settings message&gt;</b><br>Buttons: <i>set base language</i> | <i>set learned language</i> | <i>set level</i> | <i>to quiz</i> | <i>to dictionary</i>"]
+        n5["<b>&lt;Set base language message&gt;</b><br>Buttons: <i>Russian</i> | <i>English</i> | <i>Español</i> | <i>...</i> | <i>back</i>"]
+        n7@{ label: "Save the data to the user's setting" }
+        n8["<b>&lt;Set learned language message&gt;</b><br>Buttons: <i>Russian</i> | <i>English</i> | <i>Español</i> | <i>...</i> |"]
+        n9["<b>&lt;Set level message&gt;</b><br>Buttons: <i>A0</i> | <i>A1</i> | <i>A2</i> | <i>...</i> | <i>C2</i> |"]
+  end
+ subgraph s3["Dictionary | Add word"]
+        n10["<b>&lt;Add words message&gt;</b><br>Buttons: <i>back</i>"]
+        n11["User sends message"]
+        n12["Split the message by lines. Each line is a single word"]
+        n13@{ label: "<b>&lt;Words received message&gt;</b><br>Buttons:<br><i>Word 1 (status icon | processaed definitions / definitions count )</i><br><i>Word 2 (status icon</i><i style=\"--tw-translate-x:\"> | processaed definitions / definitions count</i><i>)<br>...<br>Word N</i><i style=\"--tw-translate-x:\"> (status icon</i>" }
+        n14@{ label: "Check the Wird (1, 2, ..., N) is not exist in user's dictionary" }
+        n15@{ label: "Get word's status" }
+        n16@{ label: "Put to the user's dictionary" }
+        n17["Download translations list"]
+        n18["Download definitions list"]
+        n19["Download translations for each definition"]
+        n20@{ label: "Get word's status" }
+        n21@{ label: "save the word's definitions with translations" }
+        n22["Save translations to the word"]
+  end
+ subgraph s4["Dictionary | Edit dictionary"]
+        n23["<b>&lt;Edit dcitionary message&gt;</b><br><br>Buttons:<br><i>Word 1 (status icon | processed definitions / total definitions)</i><br><i>Word 2 (status icon | processed definitions / total definitions)</i><br><i>...</i><br><i>Word N (status icon | processed definitions / total definitions)</i>"]
+        n24["<b>&lt;Edit single word message&gt;</b><br>Word 1<br><br>Buttons: <i>delete</i> | <i>edit translations</i><br><i>Definition 1</i><br><i>Definition 2</i><br>...<br><i>Definition N</i>"]
+        n25["<b>&lt;Are you sure message&gt;</b><br>Buttons: <i>yes</i> | <i>back</i>"]
+        n26["Remove Word N from DB"]
+        n27["<b>&lt;Edit definiton message&gt;</b><br>Definition N<br>Buttons: <i>back</i> | <i>edit translation (disabled if the translation is loading)</i>"]
+        n28["User texts new definition"]
+        n29["Loading definition translation"]
+        n30["<b>&lt;Edit translation message&gt;</b><br>Definition N | Translation for definition N<br><br>Buttons: <i>back</i> | <i>edit</i>"]
+        n31["User texts new translation for definition"]
+        n32@{ label: "Update the definition's translate" }
+  end
+    n1["<b>&lt;Welcome message&gt;</b><br>Buttons: <i>settings</i> | <i>dictionary</i> | <i>quiz</i>"] -- Settings --> n2
+    n1 --> n3["<b>Dictionary</b><br>Buttons: <i>add words</i> | <i>edit dictionary</i> | <i>to quiz</i> | <i>to settings</i>"] & n4["Quiz"]
+    n2 -- "<span style=background-color:>Set base language</span>" --> n5
+    n5 -- "<i style=--tw-border-spacing-y:>Russian</i><span style=background-color:> | </span><i style=--tw-border-spacing-y:>English</i><span style=background-color:> | </span><i style=--tw-border-spacing-y:>Español</i><span style=background-color:> | </span><i style=--tw-border-spacing-y:>...</i>" --> n7
+    n7 --> n2
+    n2 -- Set learned language --> n8
+    n2 -- set level --> n9
+    n8 -- "Russian | English | Español | ..." --> n7
+    n9 -- "A0 | A1 | ... | C2" --> n7
+    n3 -- Add words --> n10
+    n5 -- back --> n2
+    n8 -- back --> n2
+    n9 -- back --> n2
+    n10 --> n11
+    n11 --> n12
+    n12 --> n13 & n14
+    n14 -- Word is already exist --> n15
+    n15 -- Update word's status on message and definitions total/processed numbers --> n13
+    n14 -- Word is not exist --> n16
+    n16 --> n17 & n18
+    n18 --> n19
+    n19 --> n20
+    n20 --> n21
+    n17 --> n22
+    n21 --> n15
+    n22 --> n15
+    n13 -- back --> n3
+    n10 -- back --> n3
+    n3 --> n23
+    n23 -- Word N --> n24
+    n24 -- Delete --> n25
+    n25 -- Yes --> n26
+    n25 -- Back --> n24
+    n24 -- Definition N --> n27
+    n27 -- back --> n24
+    n27 -- <br> --> n28
+    n28 --> n29
+    n27 -- Edit translation --> n30
+    n30 -- back --> n27
+    n30 --> n31
+    n29 --> n27
+    n31 --> n32
+    n32 --> n27
+
+    n7@{ shape: cyl}
+    n11@{ icon: "fa:comment", pos: "b"}
+    n12@{ shape: braces}
+    n13@{ shape: rect}
+    n14@{ shape: braces}
+    n15@{ shape: braces}
+    n16@{ shape: db}
+    n17@{ shape: braces}
+    n18@{ shape: braces}
+    n19@{ shape: braces}
+    n20@{ shape: braces}
+    n21@{ shape: db}
+    n22@{ shape: db}
+    n26@{ shape: db}
+    n28@{ icon: "fa:comment", pos: "b"}
+    n29@{ shape: braces}
+    n31@{ icon: "fa:comment", pos: "b"}
+    n32@{ shape: db}
+    n1@{ shape: text}
