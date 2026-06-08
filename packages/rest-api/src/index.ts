@@ -6,6 +6,7 @@ import { bootstrap as startTranslationService } from '@ecb/translation-service';
 import { bootstrap as startDefinitionsService } from '@ecb/definitions-service';
 import { createApiRouter } from './router';
 import { openApiSpec } from './openapi';
+import { errorHandler } from './middleware/errors';
 
 const PORT = process.env.REST_PORT ? parseInt(process.env.REST_PORT, 10) : 3002;
 
@@ -17,9 +18,16 @@ const PORT = process.env.REST_PORT ? parseInt(process.env.REST_PORT, 10) : 3002;
  *   /docs          — Scalar API Reference (интерактивная документация)
  *   /openapi.json  — OpenAPI 3.1 спецификация (машинночитаемый формат)
  *
- * TODO: Добавить CORS middleware для PWA.
+ * Middleware стек (порядок важен):
+ *   1. JSON парсинг
+ *   2. CORS
+ *   3. Request logger
+ *   4. Роутеры
+ *   5. 404 handler
+ *   6. Error handler (должен быть последним)
+ *
  * TODO: Добавить auth middleware (JWT проверку).
- * TODO: Добавить request validation (zod / ajv).
+ * TODO: Добавить rate limiting.
  */
 async function bootstrap(): Promise<void> {
   // ── Shared infrastructure (monolith-режим) ────────────────────────────────
@@ -35,10 +43,10 @@ async function bootstrap(): Promise<void> {
   // ── Express ───────────────────────────────────────────────────────────────
   const app = express();
 
-  // Парсинг JSON
+  // 1. JSON парсинг
   app.use(express.json());
 
-  // CORS заголовки (для dev-доступа из браузера)
+  // 2. CORS (для dev-доступа из браузера / Scalar)
   app.use((_req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -47,44 +55,48 @@ async function bootstrap(): Promise<void> {
     next();
   });
 
-  // ── REST API Routes ───────────────────────────────────────────────────────
+  // 3. Request logger
+  app.use((req, _res, next) => {
+    console.log(`[RestAPI] ${req.method} ${req.path}`);
+    next();
+  });
+
+  // 4. REST API Routes
   app.use('/api', createApiRouter(users, words, orchestrator));
 
-  // ── OpenAPI JSON endpoint ─────────────────────────────────────────────────
-  // Scalar и другие инструменты загружают спецификацию с этого URL
+  // 5. OpenAPI JSON
   app.get('/openapi.json', (_req, res) => {
     res.json(openApiSpec);
   });
 
-  // ── Scalar API Reference ──────────────────────────────────────────────────
-  // Интерактивная документация: http://localhost:3002/docs
+  // 6. Scalar API Reference
   app.use(
     '/docs',
     apiReference({
-      spec: {
-        url: '/openapi.json',
-      },
-      theme: 'purple',          // доступные темы: default, alternate, moon, purple, solarized
-      defaultHttpClient: {
-        targetKey: 'javascript',
-        clientKey: 'fetch',
-      },
+      spec: { url: '/openapi.json' },
+      theme: 'purple',
+      defaultHttpClient: { targetKey: 'javascript', clientKey: 'fetch' },
       layout: 'modern',
     })
   );
 
-  // Редирект с корня на документацию
-  app.get('/', (_req, res) => {
-    res.redirect('/docs');
+  // Редирект с корня
+  app.get('/', (_req, res) => res.redirect('/docs'));
+
+  // 7. 404 для неизвестных путей
+  app.use((_req, res) => {
+    res.status(404).json({ error: 'Маршрут не найден' });
   });
+
+  // 8. Центральный обработчик ошибок (ДОЛЖЕН БЫТЬ ПОСЛЕДНИМ)
+  app.use(errorHandler);
 
   // ── Запуск ────────────────────────────────────────────────────────────────
   app.listen(PORT, () => {
     console.log(`\n[RestAPI] 🚀 Server started`);
     console.log(`[RestAPI]    REST API:  http://localhost:${PORT}/api/health`);
     console.log(`[RestAPI]    Docs:      http://localhost:${PORT}/docs`);
-    console.log(`[RestAPI]    OpenAPI:   http://localhost:${PORT}/openapi.json`);
-    console.log('');
+    console.log(`[RestAPI]    OpenAPI:   http://localhost:${PORT}/openapi.json\n`);
   });
 }
 

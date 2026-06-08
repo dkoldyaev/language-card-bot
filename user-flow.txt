@@ -5,17 +5,17 @@ config:
 ---
 flowchart TB
  subgraph s1["Settings mode"]
-        msg_settings["<b>&lt;Settings message&gt;</b><br>Buttons: <i>set base language</i> | <i>set learned language</i> | <i>set level</i> | <i>to quiz</i> | <i>to dictionary</i>"]
-        msg_set_base_language["<b>&lt;Set base language message&gt;</b><br>Buttons: <i>Russian</i> | <i>English</i> | <i>Español</i> | <i>...</i>"]
+        msg_settings["<b>&lt;Settings message&gt;</b><br>[🔘 Set base language] [🔘 Set learned language] [🔘 Set level] [🔘 To quiz] [🔘 To dictionary]"]
+        msg_set_base_language["<b>&lt;Set base language message&gt;</b><br>[🔘 Russian] [🔘 English] [🔘 Español] [🔘 ...]"]
         db_save_user_settings@{ label: "Save the data to the user's setting" }
-        msg_set_learned_language["<b>&lt;Set learned language message&gt;</b><br>Buttons: <i>Russian</i> | <i>English</i> | <i>Español</i> | <i>...</i>"]
-        msg_set_level["<b>&lt;Set level message&gt;</b><br>Buttons: <i>A0</i> | <i>A1</i> | <i>A2</i> | <i>...</i> | <i>C2</i> |"]
+        msg_set_learned_language["<b>&lt;Set learned language message&gt;</b><br>[🔘 Russian] [🔘 English] [🔘 Español] [🔘 ...]"]
+        msg_set_level["<b>&lt;Set level message&gt;</b><br>[🔘 A0] [🔘 A1] [🔘 A2] [🔘 ...] [🔘 C2]"]
   end
  subgraph s3["Dictionary | Add word"]
-        msg_add_words["<b>&lt;Add words message&gt;</b><br>"]
-        user_input_word_list["User sends message"]
+        msg_add_words["<b>&lt;Add words message&gt;</b>"]
+        user_input_word_list["User sends message with words"]
         backend_split_words_by_lines["Split the message by lines. Each line is a single word"]
-        msg_words_received@{ label: "<b>&lt;Words received message&gt;</b><br>Buttons:<br><i>Word 1 (status icon | processed definitions / definitions count )</i><br><i>Word 2 (status icon</i><i style=\"--tw-translate-x:\"> | processed definitions / definitions count</i><i>)<br>...<br>Word N</i><i style=\"--tw-translate-x:\"> (status icon</i>" }
+        msg_words_received@{ label: "<b>&lt;Words received message&gt;</b><br>[🔘 Word 1 (status icon | processed/total definitions)]<br>[🔘 Word 2 (status icon | processed/total definitions)]<br>...<br>[🔘 Word N (status icon)]" }
         backend_check_words_dont_exist@{ label: "Check the Word (1, 2, ..., N) is not exist in user's dictionary" }
         backend_get_word_status@{ label: "Get word's status" }
         db_put_words_to_user_dictionary@{ label: "Put to the user's dictionary" }
@@ -27,14 +27,14 @@ flowchart TB
         db_save_translations["Save translations to the word"]
   end
  subgraph s4["Dictionary | Edit dictionary"]
-        msg_edit_dictionary["<b>&lt;Edit dcitionary message&gt;</b><br><br>Buttons:<br><i>Word 1 (status icon | processed definitions / total definitions)</i><br><i>Word 2 (status icon | processed definitions / total definitions)</i><br><i>...</i><br><i>Word N (status icon | processed definitions / total definitions)</i>"]
-        msg_edit_single_word["<b>&lt;Edit single word message&gt;</b><br>Word 1<br><br>Buttons: <i>delete</i> | <i>edit translations</i><br><i>Definition 1</i><br><i>Definition 2</i><br>...<br><i>Definition N</i>"]
-        msg_are_you_sure_delete["<b>&lt;Are you sure message&gt;</b><br>Buttons: <i>yes</i> | <i>back</i>"]
+        msg_edit_dictionary["<b>&lt;Edit dictionary message&gt;</b><br><br>[🔘 Word 1 (status icon | processed/total definitions)]<br>[🔘 Word 2 (status icon | processed/total definitions)]<br>...<br>[🔘 Word N (status icon | processed/total definitions)]"]
+        msg_edit_single_word["<b>&lt;Edit single word message&gt;</b><br>Word N<br><br>[🔘 Delete] [🔘 Edit translations]<br>[🔘 Definition 1] [🔘 Definition 2] ... [🔘 Definition N]"]
+        msg_are_you_sure_delete["<b>&lt;Are you sure message&gt;</b><br>[🔘 Yes] [🔘 Back]"]
         db_delete_word["Remove Word N from DB"]
-        msg_edit_definition["<b>&lt;Edit definiton message&gt;</b><br>Definition N<br>Buttons: <i>back</i> | <i>edit translation (disabled if the translation is loading)</i>"]
+        msg_edit_definition["<b>&lt;Edit definition message&gt;</b><br>Definition N<br>[🔘 Back] [🔘 Edit translation (disabled if loading)]"]
         user_input_new_definition["User texts new definition"]
         backend_load_definition_translation["Loading definition translation"]
-        msg_edit_translation["<b>&lt;Edit translation message&gt;</b><br>Definition N | Translation for definition N<br><br>Buttons: <i>back</i> | <i>edit</i>"]
+        msg_edit_translation["<b>&lt;Edit translation message&gt;</b><br>Definition N | Translation N<br><br>[🔘 Back] [🔘 Edit]"]
         user_input_new_translation["User texts new translation for definition"]
         db_update_definition_translation@{ label: "Update the definition's translate" }
   end
@@ -42,7 +42,7 @@ flowchart TB
         quiz_start["Quiz"]
         backend_select_random_word@{ label: "Select a random word from user's dictionary" }
         backend_select_random_definition["Select a random definition for this word"]
-        msg_show_quiz_card@{ label: "<b>Definition text,<br>translation for the definition (if 'show definitions' is true)</b><br>Buttons: <i>another definitions</i> | <i>translate definition</i> | <i>show variants</i> | <i>another card<br>Buttons: (if 'show wariants' is true): variant 1</i> | <i>...</i> | <i>variant 5</i> | <i>word</i>" }
+        msg_show_quiz_card@{ label: "<b>Definition text<br>(Translation for definition if 'show definitions' is true)</b><br>[🔘 Another definitions] [🔘 Translate definition] [🔘 Show variants] [🔘 Another card]<br>(if 'show variants' is true):<br>[🔘 Variant 1] ... [🔘 Variant 5] [🔘 Word]" }
         user_input_suggestion["User makes a suggestion"]
         backend_select_wrong_variants@{ label: "Select random 5 another words from user's dictionary" }
         backend_set_show_variants_false@{ label: "set 'show variants' to false" }
@@ -62,23 +62,23 @@ flowchart TB
         backend_set_show_definition_translation_false_quiz_end@{ label: "Set 'show definition translation' to false" }
         backend_set_show_translated_definition_true@{ label: "set 'show translated definition' to true" }
   end
-    msg_welcome["<b>&lt;Welcome message&gt;</b><br>Buttons: <i>settings</i> | <i>dictionary</i> | <i>quiz</i>"] -- Settings --> msg_settings
-    msg_welcome -- to dictionary --> msg_dictionary_menu["<b>Dictionary</b><br>Buttons: <i>add words</i> | <i>edit dictionary</i> | <i>to quiz</i> | <i>to settings</i>"]
-    msg_welcome --> quiz_start
-    msg_settings -- "<span style=background-color:>Set base language</span>" --> msg_set_base_language
-    msg_set_base_language -- "<i style=--tw-border-spacing-y:>Russian</i><span style=background-color:> | </span><i style=--tw-border-spacing-y:>English</i><span style=background-color:> | </span><i style=--tw-border-spacing-y:>Español</i><span style=background-color:> | </span><i style=--tw-border-spacing-y:>...</i>" --> db_save_user_settings
+    msg_welcome["<b>&lt;Welcome message&gt;</b><br>[🔘 Settings] [🔘 Dictionary] [🔘 Quiz]"] -- Click Settings --> msg_settings
+    msg_welcome -- Click Dictionary --> msg_dictionary_menu["<b>Dictionary</b><br>[🔘 Add words] [🔘 Edit dictionary] [🔘 To quiz] [🔘 To settings]"]
+    msg_welcome -- Click Quiz --> quiz_start
+    msg_settings -- Click Set base language --> msg_set_base_language
+    msg_set_base_language -- Click base language (e.g. Russian) --> db_save_user_settings
     db_save_user_settings --> msg_settings
-    msg_settings -- Set learned language --> msg_set_learned_language
-    msg_settings -- set level --> msg_set_level
-    msg_set_learned_language -- "Russian | English | Español | ..." --> db_save_user_settings
-    msg_set_level -- "A0 | A1 | ... | C2" --> db_save_user_settings
-    msg_dictionary_menu -- Add words --> msg_add_words
+    msg_settings -- Click Set learned language --> msg_set_learned_language
+    msg_settings -- Click Set level --> msg_set_level
+    msg_set_learned_language -- Click learned language (e.g. English) --> db_save_user_settings
+    msg_set_level -- Click level (e.g. A2) --> db_save_user_settings
+    msg_dictionary_menu -- Click Add words --> msg_add_words
     msg_add_words --> user_input_word_list
     user_input_word_list --> backend_split_words_by_lines
     backend_split_words_by_lines --> msg_words_received & backend_check_words_dont_exist
-    backend_check_words_dont_exist -- Word is already exist --> backend_get_word_status
-    backend_get_word_status -- Update word's status on message and definitions total/processed numbers --> msg_words_received
-    backend_check_words_dont_exist -- Word is not exist --> db_put_words_to_user_dictionary
+    backend_check_words_dont_exist -- Word already exists --> backend_get_word_status
+    backend_get_word_status -- Update word status on message --> msg_words_received
+    backend_check_words_dont_exist -- Word does not exist --> db_put_words_to_user_dictionary
     db_put_words_to_user_dictionary --> backend_download_translations & backend_download_definitions
     backend_download_definitions --> backend_download_translations_for_definitions
     backend_download_translations_for_definitions --> backend_get_word_status_definitions
@@ -86,40 +86,40 @@ flowchart TB
     backend_download_translations --> db_save_translations
     db_save_definitions_with_translations --> backend_get_word_status
     db_save_translations --> backend_get_word_status
-    msg_dictionary_menu --> msg_edit_dictionary
-    msg_edit_dictionary -- Word N --> msg_edit_single_word
-    msg_edit_single_word -- Delete --> msg_are_you_sure_delete
-    msg_are_you_sure_delete -- Yes --> db_delete_word
-    msg_are_you_sure_delete -- Back --> msg_edit_single_word
-    msg_edit_single_word -- Definition N --> msg_edit_definition
-    msg_edit_definition -- back --> msg_edit_single_word
-    msg_edit_definition -- <br> --> user_input_new_definition
+    msg_dictionary_menu -- Click Edit dictionary --> msg_edit_dictionary
+    msg_edit_dictionary -- Click on Word N --> msg_edit_single_word
+    msg_edit_single_word -- Click Delete --> msg_are_you_sure_delete
+    msg_are_you_sure_delete -- Click Yes --> db_delete_word
+    msg_are_you_sure_delete -- Click Back --> msg_edit_single_word
+    msg_edit_single_word -- Click on Definition N --> msg_edit_definition
+    msg_edit_definition -- Click Back --> msg_edit_single_word
+    msg_edit_definition -- Sends text (new definition) --> user_input_new_definition
     user_input_new_definition --> backend_load_definition_translation
-    msg_edit_definition -- Edit translation --> msg_edit_translation
-    msg_edit_translation -- back --> msg_edit_definition
-    msg_edit_translation --> user_input_new_translation
+    msg_edit_definition -- Click Edit translation --> msg_edit_translation
+    msg_edit_translation -- Click Back --> msg_edit_definition
+    msg_edit_translation -- Sends text (new translation) --> user_input_new_translation
     backend_load_definition_translation --> msg_edit_definition
     user_input_new_translation --> db_update_definition_translation
     db_update_definition_translation --> msg_edit_definition
-    msg_dictionary_menu -- to settings --> msg_settings
-    msg_dictionary_menu -- to quiz --> quiz_start
+    msg_dictionary_menu -- Click To settings --> msg_settings
+    msg_dictionary_menu -- Click To quiz --> quiz_start
     quiz_start --> backend_select_random_word
     backend_select_random_word --> backend_select_random_definition
     backend_select_random_definition --> msg_show_quiz_card
-    msg_show_quiz_card --> user_input_suggestion
-    msg_show_quiz_card -- Show variants --> backend_select_wrong_variants
-    msg_show_quiz_card -- another card --> backend_set_show_variants_false
-    msg_show_quiz_card -- another definition --> backend_set_show_definition_translation_false
-    user_input_suggestion -- The suggestion matches with the word --> sticker_success
+    msg_show_quiz_card -- Sends suggestion --> user_input_suggestion
+    msg_show_quiz_card -- Click Show variants --> backend_select_wrong_variants
+    msg_show_quiz_card -- Click Another card --> backend_set_show_variants_false
+    msg_show_quiz_card -- Click Another definition --> backend_set_show_definition_translation_false
+    user_input_suggestion -- Suggestion matches word --> sticker_success
     sticker_success --> backend_wait_2_seconds
     backend_wait_2_seconds --> backend_delete_quiz_message
     backend_delete_quiz_message --> backend_delete_user_suggestions
     backend_delete_user_suggestions --> backend_delete_answer_reactions
-    user_input_suggestion -- The suggestion doesn't matche the word --> sticker_sad
+    user_input_suggestion -- Suggestion does not match word --> sticker_sad
     sticker_sad --> backend_wait_2_seconds_sad
     backend_wait_2_seconds_sad --> backend_delete_answer_reactions_sad
     backend_delete_answer_reactions_sad --> user_input_suggestion
-    user_input_suggestion -- The suggestion is close but has a typo --> sticker_close_match
+    user_input_suggestion -- Suggestion is close (typo) --> sticker_close_match
     sticker_close_match --> backend_wait_2_seconds_sad
     backend_select_wrong_variants --> backend_set_show_variants_true
     backend_set_show_definition_translation_false --> backend_select_random_definition
@@ -129,7 +129,7 @@ flowchart TB
     backend_delete_answer_reactions --> backend_set_show_variants_false_quiz_end
     backend_set_show_variants_false_quiz_end --> backend_set_show_definition_translation_false_quiz_end
     backend_set_show_definition_translation_false_quiz_end --> backend_select_random_word
-    msg_show_quiz_card -- translate definition --> backend_set_show_translated_definition_true
+    msg_show_quiz_card -- Click Translate definition --> backend_set_show_translated_definition_true
     backend_set_show_translated_definition_true --> msg_show_quiz_card
 
     db_save_user_settings@{ shape: cyl}

@@ -12,7 +12,7 @@ export const openApiSpec = {
 
   info: {
     title: 'English Card Bot — REST API',
-    version: '0.1.0',
+    version: '0.2.0',
     description: `
 ## English Card Bot REST API
 
@@ -24,19 +24,20 @@ export const openApiSpec = {
 API-клиент подключается к **Core Service** через \`ICoreServiceAdapter\`.
 В dev-режиме все внешние зависимости заменены mock-заглушками.
 
+### Особенности
+- Все ошибки валидации возвращают **400** с полем \`details\` (массив {path, message})
+- Конфликты возвращают **409** с полем \`existing\` (существующий ресурс)
+- Список слов возвращает **envelope** \`{data, meta: {total, limit, offset, hasMore}}\`
+- Пакетное добавление (/words/batch) возвращает **207 Multi-Status**
+
 ### Текущее состояние
 🚧 Skeleton — моки, без реальной БД и авторизации.
     `.trim(),
-    contact: {
-      name: 'English Card Bot',
-    },
+    contact: { name: 'English Card Bot' },
   },
 
   servers: [
-    {
-      url: 'http://localhost:3002',
-      description: 'Development (mock)',
-    },
+    { url: 'http://localhost:3002', description: 'Development (mock)' },
   ],
 
   tags: [
@@ -47,9 +48,6 @@ API-клиент подключается к **Core Service** через \`ICore
     { name: 'definitions', description: 'Определения и переводы' },
   ],
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Reusable components
-  // ─────────────────────────────────────────────────────────────────────────
   components: {
     schemas: {
       Language: {
@@ -77,18 +75,14 @@ API-клиент подключается к **Core Service** через \`ICore
           learnedLanguage: { $ref: '#/components/schemas/Language' },
           level: { $ref: '#/components/schemas/CefrLevel' },
         },
-        example: {
-          baseLanguage: 'ru',
-          learnedLanguage: 'en',
-          level: 'B1',
-        },
+        example: { baseLanguage: 'ru', learnedLanguage: 'en', level: 'B1' },
       },
       User: {
         type: 'object',
         required: ['id', 'settings', 'createdAt'],
         properties: {
-          id: { type: 'string', format: 'uuid', description: 'Внутренний идентификатор' },
-          telegramId: { type: 'string', description: 'Telegram user ID (если есть)', nullable: true },
+          id: { type: 'string', format: 'uuid' },
+          telegramId: { type: 'string', nullable: true },
           settings: { $ref: '#/components/schemas/UserSettings' },
           createdAt: { type: 'string', format: 'date-time' },
         },
@@ -109,46 +103,64 @@ API-клиент подключается к **Core Service** через \`ICore
         properties: {
           id: { type: 'string', format: 'uuid' },
           userId: { type: 'string', format: 'uuid' },
-          text: { type: 'string', description: 'Слово на изучаемом языке', example: 'apple' },
-          translation: { type: 'string', description: 'Перевод слова', example: '[MOCK:en→ru] apple' },
+          text: { type: 'string', example: 'ephemeral' },
+          translation: { type: 'string', example: '[MOCK:en→ru] ephemeral' },
           translationStatus: { $ref: '#/components/schemas/WordStatus' },
-          definitions: {
-            type: 'array',
-            items: { $ref: '#/components/schemas/Definition' },
-          },
+          definitions: { type: 'array', items: { $ref: '#/components/schemas/Definition' } },
           status: { $ref: '#/components/schemas/WordStatus' },
           createdAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      PaginatedWords: {
+        type: 'object',
+        required: ['data', 'meta'],
+        properties: {
+          data: { type: 'array', items: { $ref: '#/components/schemas/Word' } },
+          meta: {
+            type: 'object',
+            required: ['total', 'limit', 'offset', 'hasMore'],
+            properties: {
+              total: { type: 'integer', description: 'Общее количество слов (с учётом фильтров)' },
+              limit: { type: 'integer' },
+              offset: { type: 'integer' },
+              hasMore: { type: 'boolean' },
+            },
+          },
+        },
+      },
+      BatchWordResult: {
+        type: 'object',
+        required: ['text', 'word', 'duplicate'],
+        properties: {
+          text: { type: 'string' },
+          word: { $ref: '#/components/schemas/Word' },
+          duplicate: { type: 'boolean', description: 'true если слово уже было в словаре' },
+        },
+      },
+      ValidationError: {
+        type: 'object',
+        required: ['error', 'details'],
+        properties: {
+          error: { type: 'string', example: 'Ошибка валидации запроса' },
+          details: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                path: { type: 'string' },
+                message: { type: 'string' },
+              },
+            },
+          },
         },
       },
       Error: {
         type: 'object',
         required: ['error'],
         properties: {
-          error: { type: 'string', description: 'Сообщение об ошибке' },
+          error: { type: 'string' },
         },
-        example: { error: 'User not found' },
-      },
-      AddWordRequest: {
-        type: 'object',
-        required: ['text'],
-        properties: {
-          text: { type: 'string', description: 'Слово для добавления', example: 'serendipity' },
-        },
-      },
-      UpdateSettingsRequest: {
-        type: 'object',
-        properties: {
-          baseLanguage: { $ref: '#/components/schemas/Language' },
-          learnedLanguage: { $ref: '#/components/schemas/Language' },
-          level: { $ref: '#/components/schemas/CefrLevel' },
-        },
-      },
-      UpdateDefinitionRequest: {
-        type: 'object',
-        properties: {
-          text: { type: 'string', description: 'Новый текст определения' },
-          translation: { type: 'string', description: 'Новый перевод определения' },
-        },
+        example: { error: 'Пользователь не найден' },
       },
     },
 
@@ -159,7 +171,6 @@ API-клиент подключается к **Core Service** через \`ICore
         required: true,
         schema: { type: 'string', format: 'uuid' },
         description: 'Идентификатор пользователя',
-        example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
       },
       wordId: {
         name: 'wordId',
@@ -175,6 +186,30 @@ API-клиент подключается к **Core Service** через \`ICore
         schema: { type: 'string', format: 'uuid' },
         description: 'Идентификатор определения',
       },
+      limit: {
+        name: 'limit',
+        in: 'query',
+        schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
+        description: 'Количество записей на странице',
+      },
+      offset: {
+        name: 'offset',
+        in: 'query',
+        schema: { type: 'integer', minimum: 0, default: 0 },
+        description: 'Сдвиг от начала выборки',
+      },
+      statusFilter: {
+        name: 'status',
+        in: 'query',
+        schema: { type: 'string', enum: ['pending', 'processing', 'ready', 'error'] },
+        description: 'Фильтр по статусу обработки слова',
+      },
+      searchFilter: {
+        name: 'search',
+        in: 'query',
+        schema: { type: 'string', maxLength: 100 },
+        description: 'Поиск по тексту слова или переводу (substring, case-insensitive)',
+      },
     },
 
     responses: {
@@ -183,15 +218,18 @@ API-клиент подключается к **Core Service** через \`ICore
         content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
       },
       BadRequest: {
-        description: 'Некорректный запрос',
+        description: 'Ошибка валидации',
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/ValidationError' } },
+        },
+      },
+      Conflict: {
+        description: 'Конфликт — ресурс уже существует',
         content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
       },
     },
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Paths
-  // ─────────────────────────────────────────────────────────────────────────
   paths: {
     '/api/health': {
       get: {
@@ -219,27 +257,50 @@ API-клиент подключается к **Core Service** через \`ICore
     },
 
     '/api/users/telegram/{telegramId}': {
+      get: {
+        tags: ['users'],
+        summary: 'Найти пользователя по Telegram ID',
+        operationId: 'findUserByTelegram',
+        parameters: [
+          { name: 'telegramId', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Пользователь найден',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/User' } } },
+          },
+          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
       post: {
         tags: ['users'],
         summary: 'Найти или создать пользователя по Telegram ID',
-        description:
-          'Используется при первом входе через Telegram. Создаёт пользователя с настройками по умолчанию если не существует.',
+        description: 'Идемпотентно: если пользователь существует — возвращает его, иначе создаёт с настройками по умолчанию.',
         operationId: 'findOrCreateUserByTelegram',
         parameters: [
-          {
-            name: 'telegramId',
-            in: 'path',
-            required: true,
-            schema: { type: 'string' },
-            description: 'Telegram User ID',
-            example: '123456789',
-          },
+          { name: 'telegramId', in: 'path', required: true, schema: { type: 'string' }, example: '123456789' },
         ],
         responses: {
           '200': {
             description: 'Пользователь найден или создан',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/User' } } },
           },
+        },
+      },
+    },
+
+    '/api/users/{userId}': {
+      get: {
+        tags: ['users'],
+        summary: 'Получить пользователя по ID',
+        operationId: 'getUserById',
+        parameters: [{ $ref: '#/components/parameters/userId' }],
+        responses: {
+          '200': {
+            description: 'Пользователь',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/User' } } },
+          },
+          '404': { $ref: '#/components/responses/NotFound' },
         },
       },
     },
@@ -253,9 +314,7 @@ API-клиент подключается к **Core Service** через \`ICore
         responses: {
           '200': {
             description: 'Настройки',
-            content: {
-              'application/json': { schema: { $ref: '#/components/schemas/UserSettings' } },
-            },
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UserSettings' } } },
           },
           '404': { $ref: '#/components/responses/NotFound' },
         },
@@ -263,23 +322,25 @@ API-клиент подключается к **Core Service** через \`ICore
       put: {
         tags: ['settings'],
         summary: 'Обновить настройки пользователя',
-        description: 'Частичное обновление (PATCH-семантика). Передавайте только изменяемые поля.',
+        description: 'Частичное обновление. Необходимо передать хотя бы одно поле.',
         operationId: 'updateSettings',
         parameters: [{ $ref: '#/components/parameters/userId' }],
         requestBody: {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/UpdateSettingsRequest' },
+              schema: {
+                type: 'object',
+                properties: {
+                  baseLanguage: { $ref: '#/components/schemas/Language' },
+                  learnedLanguage: { $ref: '#/components/schemas/Language' },
+                  level: { $ref: '#/components/schemas/CefrLevel' },
+                },
+              },
               examples: {
-                changeLanguage: {
-                  summary: 'Сменить изучаемый язык',
-                  value: { learnedLanguage: 'en' },
-                },
-                changeLevel: {
-                  summary: 'Повысить уровень',
-                  value: { level: 'B2' },
-                },
+                changeLanguage: { summary: 'Сменить изучаемый язык', value: { learnedLanguage: 'en' } },
+                changeLevel: { summary: 'Повысить уровень', value: { level: 'B2' } },
+                full: { summary: 'Полное обновление', value: { baseLanguage: 'ru', learnedLanguage: 'en', level: 'B1' } },
               },
             },
           },
@@ -287,9 +348,7 @@ API-клиент подключается к **Core Service** через \`ICore
         responses: {
           '200': {
             description: 'Обновлённые настройки',
-            content: {
-              'application/json': { schema: { $ref: '#/components/schemas/UserSettings' } },
-            },
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UserSettings' } } },
           },
           '400': { $ref: '#/components/responses/BadRequest' },
           '404': { $ref: '#/components/responses/NotFound' },
@@ -301,60 +360,58 @@ API-клиент подключается к **Core Service** через \`ICore
       get: {
         tags: ['words'],
         summary: 'Получить словарь пользователя',
-        description: 'Возвращает все слова пользователя с их определениями и статусами обработки.',
+        description: 'Поддерживает пагинацию, фильтрацию по статусу и поиск по тексту/переводу.',
         operationId: 'getWords',
-        parameters: [{ $ref: '#/components/parameters/userId' }],
+        parameters: [
+          { $ref: '#/components/parameters/userId' },
+          { $ref: '#/components/parameters/limit' },
+          { $ref: '#/components/parameters/offset' },
+          { $ref: '#/components/parameters/statusFilter' },
+          { $ref: '#/components/parameters/searchFilter' },
+        ],
         responses: {
           '200': {
-            description: 'Список слов',
-            content: {
-              'application/json': {
-                schema: { type: 'array', items: { $ref: '#/components/schemas/Word' } },
-              },
-            },
+            description: 'Список слов с метаданными пагинации',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/PaginatedWords' } } },
           },
+          '400': { $ref: '#/components/responses/BadRequest' },
           '404': { $ref: '#/components/responses/NotFound' },
         },
       },
       post: {
         tags: ['words'],
         summary: 'Добавить слово в словарь',
-        description: `
-Добавляет слово и запускает асинхронное обогащение:
-1. Перевод слова (Translation Service)
-2. Загрузка определений (Definitions Service)
-3. Перевод каждого определения
-
-Ответ возвращается немедленно со статусом \`pending\`.
-Обогащение происходит в фоне.
-        `.trim(),
+        description: 'Запускает асинхронное обогащение: перевод → определения → переводы определений. Ответ приходит немедленно со статусом `pending`.',
         operationId: 'addWord',
         parameters: [{ $ref: '#/components/parameters/userId' }],
         requestBody: {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/AddWordRequest' },
-              example: { text: 'serendipity' },
+              schema: {
+                type: 'object',
+                required: ['text'],
+                properties: { text: { type: 'string', example: 'serendipity' } },
+              },
             },
           },
         },
         responses: {
           '201': {
-            description: 'Слово добавлено, обогащение запущено',
+            description: 'Слово добавлено',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Word' } } },
           },
           '400': { $ref: '#/components/responses/BadRequest' },
           '404': { $ref: '#/components/responses/NotFound' },
           '409': {
-            description: 'Слово уже существует в словаре пользователя',
+            description: 'Слово уже существует в словаре',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
                   properties: {
                     error: { type: 'string' },
-                    word: { $ref: '#/components/schemas/Word' },
+                    existing: { $ref: '#/components/schemas/Word' },
                   },
                 },
               },
@@ -364,10 +421,81 @@ API-клиент подключается к **Core Service** через \`ICore
       },
     },
 
+    '/api/users/{userId}/words/batch': {
+      post: {
+        tags: ['words'],
+        summary: 'Пакетное добавление слов',
+        description: 'Добавляет несколько слов за один запрос. Возвращает 207 Multi-Status с результатом по каждому слову. Дубликаты не вызывают ошибку — помечаются `duplicate: true`.',
+        operationId: 'addWordsBatch',
+        parameters: [{ $ref: '#/components/parameters/userId' }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['words'],
+                properties: {
+                  words: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    minItems: 1,
+                    maxItems: 50,
+                    example: ['apple', 'banana', 'cherry'],
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '207': {
+            description: 'Multi-Status — результат по каждому слову',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    results: { type: 'array', items: { $ref: '#/components/schemas/BatchWordResult' } },
+                    summary: {
+                      type: 'object',
+                      properties: {
+                        total: { type: 'integer' },
+                        created: { type: 'integer' },
+                        duplicates: { type: 'integer' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+
     '/api/users/{userId}/words/{wordId}': {
+      get: {
+        tags: ['words'],
+        summary: 'Получить слово по ID',
+        operationId: 'getWordById',
+        parameters: [
+          { $ref: '#/components/parameters/userId' },
+          { $ref: '#/components/parameters/wordId' },
+        ],
+        responses: {
+          '200': {
+            description: 'Слово с определениями',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Word' } } },
+          },
+          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
       delete: {
         tags: ['words'],
-        summary: 'Удалить слово из словаря',
+        summary: 'Удалить слово',
         operationId: 'deleteWord',
         parameters: [
           { $ref: '#/components/parameters/userId' },
@@ -384,8 +512,7 @@ API-клиент подключается к **Core Service** через \`ICore
       put: {
         tags: ['definitions'],
         summary: 'Редактировать определение',
-        description:
-          'Обновляет текст определения и/или его перевод. Передавайте только изменяемые поля.',
+        description: 'Обновляет текст определения и/или перевод. Необходимо передать хотя бы одно поле.',
         operationId: 'updateDefinition',
         parameters: [
           { $ref: '#/components/parameters/userId' },
@@ -396,23 +523,24 @@ API-клиент подключается к **Core Service** через \`ICore
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/UpdateDefinitionRequest' },
+              schema: {
+                type: 'object',
+                properties: {
+                  text: { type: 'string', maxLength: 2000, description: 'Новый текст определения' },
+                  translation: { type: 'string', maxLength: 2000, description: 'Новый перевод' },
+                },
+              },
               examples: {
-                updateText: {
-                  summary: 'Изменить текст определения',
-                  value: { text: 'A fruit that grows on trees.' },
-                },
-                updateTranslation: {
-                  summary: 'Изменить перевод',
-                  value: { translation: 'Фрукт, растущий на деревьях.' },
-                },
+                updateText: { summary: 'Изменить текст', value: { text: 'A fruit that grows on trees.' } },
+                updateTranslation: { summary: 'Изменить перевод', value: { translation: 'Фрукт, растущий на деревьях.' } },
+                updateBoth: { summary: 'Изменить оба поля', value: { text: 'A round fruit.', translation: 'Круглый фрукт.' } },
               },
             },
           },
         },
         responses: {
           '200': {
-            description: 'Обновлённое слово с определениями',
+            description: 'Слово с обновлённым определением',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Word' } } },
           },
           '400': { $ref: '#/components/responses/BadRequest' },

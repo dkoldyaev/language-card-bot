@@ -132,3 +132,67 @@ npm run dev:rest   # REST API на :3002
 
 ### Smoke test результат
 Полный pipeline: `POST /words` → broker → translation/definitions mocks → `status: ready` ✅
+
+---
+
+## 2026-06-08 — Сессия 3: Полноценная реализация REST API
+
+### Что сделано
+
+REST API из монолитного роутера переработан в модульную структуру с валидацией, типизированными ошибками и расширенными эндпоинтами.
+
+### Новые файлы
+
+```
+packages/rest-api/src/
+├── validation.ts              # Zod-схемы для всех запросов
+├── middleware/
+│   └── errors.ts              # AppError, NotFoundError, ConflictError, asyncHandler, errorHandler
+└── routes/
+    ├── users.ts               # GET/POST /users/telegram/:id, GET /users/:id
+    ├── settings.ts            # GET/PUT /users/:id/settings
+    └── words.ts               # Полный CRUD слов + batch + определения
+```
+
+### Изменения в существующих файлах
+
+- `router.ts` — теперь композитный, собирает доменные роутеры
+- `index.ts` — добавлен request logger, 404-catch-all, errorHandler последним
+- `openapi.ts` — v0.2.0: добавлены новые эндпоинты, PaginatedWords, BatchWordResult, ValidationError схемы
+
+### Новые эндпоинты
+
+| Метод | Путь | Что нового |
+|-------|------|------------|
+| `GET` | `/api/users/telegram/:id` | Найти (без создания) |
+| `GET` | `/api/users/:id` | Получить пользователя |
+| `GET` | `/api/users/:id/words?limit&offset&status&search` | Пагинация + фильтр + поиск |
+| `GET` | `/api/users/:id/words/:wordId` | Слово по ID |
+| `POST` | `/api/users/:id/words/batch` | Пакетное добавление (до 50 слов) |
+
+### Middleware стек (index.ts)
+
+1. JSON парсинг
+2. CORS
+3. Request logger
+4. Роутеры
+5. 404 catch-all
+6. Central errorHandler
+
+### Формат ошибок
+
+```json
+// 400 Validation Error
+{ "error": "Ошибка валидации запроса", "details": [{ "path": "text", "message": "..." }] }
+
+// 409 Conflict
+{ "error": "Слово 'apple' уже есть в словаре", "existing": { ...Word } }
+
+// 404
+{ "error": "Слово '...' не найден" }
+```
+
+### Тесты
+
+23/24 автоматических тестов прошли ✅ (1 — артефакт тест-фреймворка: `json.loads("")` при 204).
+DELETE 204 → GET 404 подтверждён отдельно.
