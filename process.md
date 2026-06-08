@@ -196,3 +196,53 @@ packages/rest-api/src/
 
 23/24 автоматических тестов прошли ✅ (1 — артефакт тест-фреймворка: `json.loads("")` при 204).
 DELETE 204 → GET 404 подтверждён отдельно.
+
+---
+
+## 2026-06-08 — Сессия 4: Quiz режим
+
+### Что сделано
+
+Реализована полноценная логика Quiz из заглушки.
+
+### Новые файлы
+
+```
+packages/shared/src/index.ts          — добавлены Quiz типы (QuizCard, QuizAnswerResult, QuizAction, ...)
+packages/core-service/src/
+  services/QuizService.ts             — бизнес-логика Quiz (сессии, ответы, действия)
+  api/quiz-router.ts                  — HTTP роутер для core-service
+  __tests__/quiz.test.ts              — 24 unit-теста для QuizService
+packages/rest-api/src/
+  routes/quiz.ts                      — Quiz роутер для rest-api (Zod валидация)
+  openapi.ts                          — v0.3.0: QuizCard, QuizAnswerResult + 4 эндпоинта
+vitest.config.ts                      — исправлен (убран ESM-only vite-tsconfig-paths)
+```
+
+### Quiz API
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `POST` | `/api/users/:id/quiz/start` | Начать/перезапустить квиз |
+| `GET`  | `/api/users/:id/quiz/card` | Текущая карточка |
+| `POST` | `/api/users/:id/quiz/answer` | Проверить ответ |
+| `POST` | `/api/users/:id/quiz/action` | Действие (show_variants, translate_definition, another_card, another_definition) |
+
+### Алгоритм проверки ответа
+
+- **correct** — точное совпадение (case-insensitive, trim)
+- **close** — Levenshtein distance ≤ 2 и длина слова > 4
+- **wrong** — всё остальное
+
+При **wrong/close** — показываем варианты ответа (5 дистракторов + правильный, Fisher-Yates shuffle)
+При **correct** — streak++, переходим к следующей карточке
+
+### Тесты
+
+- 24 unit-теста `QuizService`
+- 11 integration-тестов quiz-роутера через HTTP
+- Итого 116/116 тестов проходят ✅
+
+### TypeScript
+
+`npx tsc --noEmit` — без ошибок ✅

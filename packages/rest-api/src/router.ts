@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { UserRepository, WordRepository, WordEnrichmentOrchestrator } from '@ecb/core-service';
+import { UserRepository, WordRepository, WordEnrichmentOrchestrator, QuizService } from '@ecb/core-service';
 import { createUsersRouter } from './routes/users';
 import { createSettingsRouter } from './routes/settings';
 import { createWordsRouter } from './routes/words';
+import { createQuizApiRouter } from './routes/quiz';
 
 /**
  * Корневой API роутер.
@@ -13,7 +14,8 @@ import { createWordsRouter } from './routes/words';
 export function createApiRouter(
   users: UserRepository,
   words: WordRepository,
-  orchestrator: WordEnrichmentOrchestrator
+  orchestrator: WordEnrichmentOrchestrator,
+  quiz: QuizService
 ): Router {
   const router = Router();
 
@@ -30,6 +32,9 @@ export function createApiRouter(
 
   // Словарь — вложен в /users/:userId
   router.use('/users/:userId/words', createWordsRouter(users, words, orchestrator));
+
+  // Quiz — вложен в /users/:userId
+  router.use('/users/:userId/quiz', createQuizApiRouter(quiz));
 
   return router;
 }

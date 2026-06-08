@@ -11,7 +11,9 @@ import { createRouter } from './api/router';
 export { UserRepository } from './repositories/UserRepository';
 export { WordRepository } from './repositories/WordRepository';
 export { WordEnrichmentOrchestrator } from './services/WordEnrichmentOrchestrator';
+export { QuizService } from './services/QuizService';
 export { createRouter } from './api/router';
+
 
 // ── Standalone HTTP сервер (запускается только через `npm run dev`) ──────────
 const PORT = process.env.CORE_PORT ? parseInt(process.env.CORE_PORT, 10) : 3001;

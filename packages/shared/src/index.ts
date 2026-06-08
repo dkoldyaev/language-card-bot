@@ -161,6 +161,72 @@ export interface UpdateDefinitionRequest {
   translation?: string;
 }
 
+// ───────────────────────────────────────────────────────────────────────────────
+// Quiz Domain
+// ───────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Карточка вопроса в квизе.
+ * Пользователь видит определение и должен угадать слово.
+ */
+export interface QuizCard {
+  /** ID сессии (= userId для простоты) */
+  sessionId: string;
+
+  /** ID загаданного слова (не отправляется клиенту до правильного ответа) */
+  wordId: string;
+  /** ID показываемого определения */
+  definitionId: string;
+
+  /** Текст определения (на изучаемом языке) */
+  definitionText: string;
+  /** Перевод определения (показывается пользователю только после действия "Translate definition") */
+  definitionTranslation: string | null;
+
+  /** Случайные 5 вариантов ответа + правильный в случайной позиции.
+   *  null — пока не нажата кнопка "Show variants" */
+  variants: string[] | null;
+
+  /** Номер отвеченных слов за эту сессию (для показа прогресса) */
+  streak: number;
+}
+
+/** Результат проверки ответа */
+export type QuizAnswerVerdict = 'correct' | 'close' | 'wrong';
+
+export interface QuizAnswerResult {
+  verdict: QuizAnswerVerdict;
+  /** Правильный ответ (всегда возвращается, чтобы показать пользователю правильный ответ после проверки) */
+  correctWord: string;
+  /** Следующая карточка (null если wrong/close — пользователь остаётся на той же карточке) */
+  nextCard: QuizCard | null;
+  /** Обновлённый streak */
+  streak: number;
+}
+
+/** Действия интерфейса quiz-карточки */
+export enum QuizAction {
+  /** Показать варианты ответа */
+  ShowVariants = 'show_variants',
+  /** Показать перевод определения */
+  TranslateDefinition = 'translate_definition',
+  /** Следующая карточка (скип) */
+  AnotherCard = 'another_card',
+  /** Другое определение для того же слова */
+  AnotherDefinition = 'another_definition',
+}
+
+/** HTTP запрос: ответ пользователя */
+export interface QuizAnswerRequest {
+  suggestion: string;
+}
+
+/** HTTP запрос: действие на карточке */
+export interface QuizActionRequest {
+  action: QuizAction;
+}
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // FSM — состояния диалога (используются и в боте, и в core-service)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -173,11 +239,11 @@ export enum DialogState {
   SET_LEVEL = 'SET_LEVEL',
   DICTIONARY = 'DICTIONARY',
   ADD_WORDS = 'ADD_WORDS',
-  WORDS_RECEIVED = 'WORDS_RECEIVED',       // показываем статусы добавленных слов
+  WORDS_RECEIVED = 'WORDS_RECEIVED',
   EDIT_DICTIONARY = 'EDIT_DICTIONARY',
   EDIT_WORD = 'EDIT_WORD',
   CONFIRM_DELETE_WORD = 'CONFIRM_DELETE_WORD',
   EDIT_DEFINITION = 'EDIT_DEFINITION',
   EDIT_TRANSLATION = 'EDIT_TRANSLATION',
-  QUIZ = 'QUIZ',                           // заглушка
+  QUIZ = 'QUIZ',
 }

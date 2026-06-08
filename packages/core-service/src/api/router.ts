@@ -2,13 +2,14 @@ import { Router, Request, Response } from 'express';
 import { UserRepository } from '../repositories/UserRepository';
 import { WordRepository } from '../repositories/WordRepository';
 import { WordEnrichmentOrchestrator } from '../services/WordEnrichmentOrchestrator';
+import { QuizService } from '../services/QuizService';
+import { createQuizRouter } from './quiz-router';
 import {
   AddWordRequest,
   UpdateSettingsRequest,
   UpdateDefinitionRequest,
   Language,
   CefrLevel,
-  WordStatus,
 } from '@ecb/shared';
 
 /**
@@ -25,11 +26,18 @@ import {
  *   POST /users/:userId/words
  *   DELETE /users/:userId/words/:wordId
  *   PUT  /users/:userId/words/:wordId/definitions/:defId
+ *   POST /users/telegram/:telegramId
+ *   GET  /users/telegram/:telegramId
+ *   POST /users/:userId/quiz/start
+ *   GET  /users/:userId/quiz/card
+ *   POST /users/:userId/quiz/answer
+ *   POST /users/:userId/quiz/action
  */
 export function createRouter(
   users: UserRepository,
   words: WordRepository,
-  orchestrator: WordEnrichmentOrchestrator
+  orchestrator: WordEnrichmentOrchestrator,
+  quiz?: QuizService
 ): Router {
   const router = Router();
 
@@ -149,6 +157,11 @@ export function createRouter(
     if (!user) return void res.status(404).json({ error: 'User not found' });
     res.json(user);
   });
+
+  // ── Quiz ─────────────────────────────────────────────────────────────────────────────
+  // Создаём сервис внутри роутера, если не передан изначально
+  const quizService = quiz ?? new QuizService(words);
+  router.use('/users/:userId/quiz', createQuizRouter(quizService));
 
   return router;
 }

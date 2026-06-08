@@ -1,7 +1,7 @@
 import express from 'express';
 import { apiReference } from '@scalar/express-api-reference';
 import { getBroker } from '@ecb/broker-mock';
-import { UserRepository, WordRepository, WordEnrichmentOrchestrator } from '@ecb/core-service';
+import { UserRepository, WordRepository, WordEnrichmentOrchestrator, QuizService } from '@ecb/core-service';
 import { bootstrap as startTranslationService } from '@ecb/translation-service';
 import { bootstrap as startDefinitionsService } from '@ecb/definitions-service';
 import { createApiRouter } from './router';
@@ -35,6 +35,7 @@ async function bootstrap(): Promise<void> {
   const users = new UserRepository();
   const words = new WordRepository();
   const orchestrator = new WordEnrichmentOrchestrator(broker, users, words);
+  const quiz = new QuizService(words);
 
   // Регистрируем подписчиков mock-сервисов
   startTranslationService();
@@ -62,7 +63,7 @@ async function bootstrap(): Promise<void> {
   });
 
   // 4. REST API Routes
-  app.use('/api', createApiRouter(users, words, orchestrator));
+  app.use('/api', createApiRouter(users, words, orchestrator, quiz));
 
   // 5. OpenAPI JSON
   app.get('/openapi.json', (_req, res) => {

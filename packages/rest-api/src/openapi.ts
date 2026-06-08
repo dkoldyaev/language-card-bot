@@ -12,23 +12,22 @@ export const openApiSpec = {
 
   info: {
     title: 'English Card Bot — REST API',
-    version: '0.2.0',
+    version: '0.3.0',
     description: `
 ## English Card Bot REST API
 
-Внешний REST-интерфейс для управления словарём и настройками пользователя.
-
-Используется как альтернативный клиент наряду с Telegram Bot.
+Внешний REST-интерфейс для управления словарём, настройками и квизом.
 
 ### Архитектура
-API-клиент подключается к **Core Service** через \`ICoreServiceAdapter\`.
+API-клиент подключается к **Core Service**.
 В dev-режиме все внешние зависимости заменены mock-заглушками.
 
 ### Особенности
-- Все ошибки валидации возвращают **400** с полем \`details\` (массив {path, message})
-- Конфликты возвращают **409** с полем \`existing\` (существующий ресурс)
-- Список слов возвращает **envelope** \`{data, meta: {total, limit, offset, hasMore}}\`
-- Пакетное добавление (/words/batch) возвращает **207 Multi-Status**
+- Ошибки валидации **400** с \`details\` (\`[{path, message}]\`)
+- Конфликты **409** с \`existing\`
+- Список слов: envelope \`{data, meta: {total, limit, offset, hasMore}}\`
+- Batch: **207 Multi-Status**
+- Quiz: stateful сессия по userId
 
 ### Текущее состояние
 🚧 Skeleton — моки, без реальной БД и авторизации.
@@ -46,6 +45,7 @@ API-клиент подключается к **Core Service** через \`ICore
     { name: 'settings', description: 'Настройки пользователя (язык, уровень)' },
     { name: 'words', description: 'Словарь пользователя' },
     { name: 'definitions', description: 'Определения и переводы' },
+    { name: 'quiz', description: 'Квиз-режим: угадай слово по определению' },
   ],
 
   components: {
@@ -161,6 +161,49 @@ API-клиент подключается к **Core Service** через \`ICore
           error: { type: 'string' },
         },
         example: { error: 'Пользователь не найден' },
+      },
+
+      // ── Quiz schemas ──────────────────────────────────────────────────────────
+
+      QuizCard: {
+        type: 'object',
+        required: ['sessionId', 'wordId', 'definitionId', 'definitionText', 'definitionTranslation', 'variants', 'streak'],
+        properties: {
+          sessionId: { type: 'string', description: 'ID сессии (= userId)' },
+          wordId: { type: 'string', description: 'ID загаданного слова' },
+          definitionId: { type: 'string', description: 'ID показываемого определения' },
+          definitionText: { type: 'string', example: 'A round fruit typically red or green.', description: 'Текст определения' },
+          definitionTranslation: {
+            type: 'string',
+            nullable: true,
+            description: 'Перевод определения — null пока не нажата кнопка translate_definition',
+          },
+          variants: {
+            type: 'array',
+            items: { type: 'string' },
+            nullable: true,
+            description: 'Варианты ответа (null пока не нажата show_variants)',
+          },
+          streak: { type: 'integer', description: 'Количество правильных ответов за сессию', example: 3 },
+        },
+      },
+
+      QuizAnswerResult: {
+        type: 'object',
+        required: ['verdict', 'correctWord', 'nextCard', 'streak'],
+        properties: {
+          verdict: {
+            type: 'string',
+            enum: ['correct', 'close', 'wrong'],
+            description: 'correct — правильно, close — близко (опечатка), wrong — неверно',
+          },
+          correctWord: { type: 'string', description: 'Правильный ответ', example: 'serendipity' },
+          nextCard: {
+            oneOf: [{ $ref: '#/components/schemas/QuizCard' }, { type: 'null' }],
+            description: 'Следующая карточка (не null только при verdict=correct)',
+          },
+          streak: { type: 'integer', description: 'Обновлённый streak' },
+        },
       },
     },
 
@@ -542,6 +585,133 @@ API-клиент подключается к **Core Service** через \`ICore
           '200': {
             description: 'Слово с обновлённым определением',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Word' } } },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+
+    // ──────────────────────────────────────────────────────────────────────────────
+    // Quiz
+    // ──────────────────────────────────────────────────────────────────────────────
+
+    '/api/users/{userId}/quiz/start': {
+      post: {
+        tags: ['quiz'],
+        summary: 'Начать квиз',
+        description: 'Создаёт сессию и возвращает первую карточку. Перезапуск обнуляет streak.',
+        operationId: 'quizStart',
+        parameters: [{ $ref: '#/components/parameters/userId' }],
+        responses: {
+          '200': {
+            description: 'Первая карточка',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/QuizCard' } } },
+          },
+          '404': {
+            description: 'Нет слов с определениями — невозможно запустить квиз',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+          },
+        },
+      },
+    },
+
+    '/api/users/{userId}/quiz/card': {
+      get: {
+        tags: ['quiz'],
+        summary: 'Текущая карточка',
+        description: 'Возвращает текущую карточку без изменения состояния. 404 если сессии нет — вызовите POST /start.',
+        operationId: 'quizCurrentCard',
+        parameters: [{ $ref: '#/components/parameters/userId' }],
+        responses: {
+          '200': {
+            description: 'Текущая карточка',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/QuizCard' } } },
+          },
+          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+
+    '/api/users/{userId}/quiz/answer': {
+      post: {
+        tags: ['quiz'],
+        summary: 'Ответить на квиз-вопрос',
+        description: `Проверяет ответ пользователя.
+
+**Verdict:**
+- \`correct\` — точное совпадение → streak++, клиент показывает emoji «успех» 2 сек. и удаляет, nextCard = следующая карточка
+- \`close\` — опечатка (Levenshtein ≤ 2, длина > 4) → остаёмся на карточке; клиент показывает emoji «почти» 2 сек. и удаляет; \`variants\` не меняются
+- \`wrong\` — неверно → остаёмся на карточке; клиент показывает emoji «неверно» 2 сек. и удаляет; \`variants\` не меняются
+
+> Чтобы показать варианты ответа — отдельно вызовите **POST /quiz/action** с \`action: show_variants\``,
+
+        operationId: 'quizAnswer',
+        parameters: [{ $ref: '#/components/parameters/userId' }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['suggestion'],
+                properties: { suggestion: { type: 'string', example: 'serendipity' } },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Результат проверки',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/QuizAnswerResult' } } },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+
+    '/api/users/{userId}/quiz/action': {
+      post: {
+        tags: ['quiz'],
+        summary: 'Действие на карточке',
+        description: `Обработка действий UI:
+
+| action | Что делает |
+|--------|--------|
+| \`show_variants\` | Генерирует 5 дистракторов + правильный |
+| \`translate_definition\` | Открывает \`definitionTranslation\` |
+| \`another_card\` | Следующее случайное слово |
+| \`another_definition\` | Другое определение того же слова |`,
+        operationId: 'quizAction',
+        parameters: [{ $ref: '#/components/parameters/userId' }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['action'],
+                properties: {
+                  action: {
+                    type: 'string',
+                    enum: ['show_variants', 'translate_definition', 'another_card', 'another_definition'],
+                  },
+                },
+              },
+              examples: {
+                showVariants: { summary: 'Показать варианты', value: { action: 'show_variants' } },
+                translate: { summary: 'Перевести определение', value: { action: 'translate_definition' } },
+                skip: { summary: 'Следующее слово', value: { action: 'another_card' } },
+                anotherDef: { summary: 'Другое определение', value: { action: 'another_definition' } },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Обновлённая карточка',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/QuizCard' } } },
           },
           '400': { $ref: '#/components/responses/BadRequest' },
           '404': { $ref: '#/components/responses/NotFound' },
