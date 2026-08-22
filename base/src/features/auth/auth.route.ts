@@ -1,15 +1,14 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../prisma';
+import { prisma } from '../../prisma';
+import { validateRequest } from '../../middleware/validate';
+import { AuthRequestSchema, AuthRequest, AuthResponse } from './auth.type';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', validateRequest(AuthRequestSchema), async (req: Request<{}, {}, AuthRequest>, res: Response<AuthResponse | { error: string }>) => {
   const { username } = req.body;
-  if (!username) {
-    return res.status(400).json({ error: 'Username is required' });
-  }
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { username } });
@@ -36,11 +35,8 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', validateRequest(AuthRequestSchema), async (req: Request<{}, {}, AuthRequest>, res: Response<AuthResponse | { error: string }>) => {
   const { username } = req.body;
-  if (!username) {
-    return res.status(400).json({ error: 'Username is required' });
-  }
 
   try {
     const user = await prisma.user.findUnique({ where: { username } });

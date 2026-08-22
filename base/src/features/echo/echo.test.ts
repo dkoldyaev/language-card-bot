@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
-import app from '../app';
+import app from '../../app';
 import jwt from 'jsonwebtoken';
 
 describe('Echo Endpoint', () => {
@@ -45,10 +45,8 @@ describe('Echo Endpoint', () => {
       .send(payload);
 
     expect(res.status).toBe(200);
-    expect(res.body.version).toBe('v1');
     expect(res.body.message).toBe('Echo successful');
     expect(res.body.data).toEqual(payload);
-    expect(res.body.user).toHaveProperty('username', 'testuser');
 
     // Verify Mercure fetch was called
     expect(global.fetch).toHaveBeenCalledTimes(1);

@@ -1,10 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { authMiddleware } from '../middleware/auth';
-import { prisma } from '../prisma';
+import { authMiddleware } from '../../middleware/auth';
+import { prisma } from '../../prisma';
+import { StateSyncMercureEvent } from '../../types/mercure.type';
+import { UserMode } from '@prisma/client';
+import { SyncResponse } from './state.type';
 
 const router = Router();
 
-router.post('/sync', authMiddleware, async (req: Request, res: Response) => {
+router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResponse | { error: string }>) => {
   const MERCURE_URL = process.env.MERCURE_URL;
   const MERCURE_JWT = process.env.MERCURE_JWT;
 
@@ -22,10 +25,10 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User state not found' });
     }
 
-    const payload = {
+    const payload: StateSyncMercureEvent = {
       version: 'v1',
       type: 'state_sync',
-      mode: userState.mode
+      mode: userState.mode as UserMode
     };
 
     if (MERCURE_URL && MERCURE_JWT) {

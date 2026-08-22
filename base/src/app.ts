@@ -1,8 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth';
-import echoRoutes from './routes/echo';
-import stateRoutes from './routes/state';
+import authRoutes from './features/auth/auth.route';
+import echoRoutes from './features/echo/echo.route';
+import stateRoutes from './features/state/state.route';
 
 dotenv.config();
 

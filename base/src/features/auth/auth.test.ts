@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
-import app from '../app';
-import { prisma } from '../prisma';
+import app from '../../app';
+import { prisma } from '../../prisma';
 
 describe('Auth Endpoints', () => {
   beforeEach(async () => {
@@ -50,5 +50,15 @@ describe('Auth Endpoints', () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('token');
     expect(res.body.user).toHaveProperty('username', 'existinguser');
+  });
+
+  it('should return 400 for invalid validation', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ username: 'ab' }); // less than 3 chars
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error', 'Validation failed');
+    expect(res.body).toHaveProperty('details');
   });
 });
