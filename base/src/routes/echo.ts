@@ -31,7 +31,9 @@ router.post('/echo', authMiddleware, async (req: Request, res: Response) => {
   // Push to Mercure if configured
   if (MERCURE_URL && MERCURE_JWT) {
     try {
-      const topic = 'http://localhost/v1/echo';
+      // @ts-ignore
+      const username = req.user.username;
+      const topic = `http://localhost/v1/users/${username}/echo`;
       const body = new URLSearchParams({
         topic: topic,
         data: JSON.stringify(responseData)

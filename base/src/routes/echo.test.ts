@@ -68,12 +68,55 @@ describe('Echo Endpoint', () => {
     const bodyStr = options?.body as string;
     const searchParams = new URLSearchParams(bodyStr);
     
-    expect(searchParams.get('topic')).toBe('http://localhost/v1/echo');
+    expect(searchParams.get('topic')).toBe('http://localhost/v1/users/testuser/echo');
     
     const mercureData = JSON.parse(searchParams.get('data') || '{}');
     expect(mercureData.version).toBe('v1');
     expect(mercureData.message).toBe('Echo successful');
     expect(mercureData.data).toEqual(payload);
     expect(mercureData.user).toHaveProperty('username', 'testuser');
+  });
+
+  it('should isolate Mercure topics for different users', async () => {
+    // Generate tokens for two different users
+    const token1 = jwt.sign({ username: 'user1' }, JWT_SECRET, { expiresIn: '1h' });
+    const token2 = jwt.sign({ username: 'user2' }, JWT_SECRET, { expiresIn: '1h' });
+
+    const payload1 = { message: 'Hello user1' };
+    const payload2 = { message: 'Hello user2' };
+
+    // Request from user 1
+    await request(app)
+      .post('/api/v1/echo')
+      .set('Authorization', `Bearer ${token1}`)
+      .send(payload1);
+
+    // Request from user 2
+    await request(app)
+      .post('/api/v1/echo')
+      .set('Authorization', `Bearer ${token2}`)
+      .send(payload2);
+
+    // Verify Mercure fetch was called twice
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    
+    const fetchArgs1 = vi.mocked(global.fetch).mock.calls[0];
+    const fetchArgs2 = vi.mocked(global.fetch).mock.calls[1];
+    
+    // Check user1's topic and data
+    const bodyStr1 = fetchArgs1[1]?.body as string;
+    const searchParams1 = new URLSearchParams(bodyStr1);
+    expect(searchParams1.get('topic')).toBe('http://localhost/v1/users/user1/echo');
+    const mercureData1 = JSON.parse(searchParams1.get('data') || '{}');
+    expect(mercureData1.data).toEqual(payload1);
+    expect(mercureData1.user.username).toBe('user1');
+
+    // Check user2's topic and data
+    const bodyStr2 = fetchArgs2[1]?.body as string;
+    const searchParams2 = new URLSearchParams(bodyStr2);
+    expect(searchParams2.get('topic')).toBe('http://localhost/v1/users/user2/echo');
+    const mercureData2 = JSON.parse(searchParams2.get('data') || '{}');
+    expect(mercureData2.data).toEqual(payload2);
+    expect(mercureData2.user.username).toBe('user2');
   });
 });
