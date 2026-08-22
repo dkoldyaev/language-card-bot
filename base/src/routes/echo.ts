@@ -3,10 +3,9 @@ import { authMiddleware } from '../middleware/auth';
 import jwt from 'jsonwebtoken';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
-
 // Endpoint to generate a test token
 router.post('/auth/login', (req: Request, res: Response) => {
+  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
   const { username } = req.body;
   if (!username) {
     return res.status(400).json({ error: 'Username is required' });
@@ -22,6 +21,7 @@ router.post('/echo', authMiddleware, async (req: Request, res: Response) => {
   const MERCURE_JWT = process.env.MERCURE_JWT;
 
   const responseData = {
+    version: 'v1',
     message: 'Echo successful',
     // @ts-ignore
     user: req.user,
@@ -31,7 +31,7 @@ router.post('/echo', authMiddleware, async (req: Request, res: Response) => {
   // Push to Mercure if configured
   if (MERCURE_URL && MERCURE_JWT) {
     try {
-      const topic = 'http://localhost/echo';
+      const topic = 'http://localhost/v1/echo';
       const body = new URLSearchParams({
         topic: topic,
         data: JSON.stringify(responseData)
