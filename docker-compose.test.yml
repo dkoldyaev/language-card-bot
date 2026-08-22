@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    extends:
+      file: docker-compose.yml
+      service: app
+    environment:
+      - DATABASE_URL=postgresql://testuser:testpass@db_test:5432/english_card_bot_test?schema=public
+    depends_on:
+      - db_test
+
+  mercure:
+    extends:
+      file: docker-compose.yml
+      service: mercure
+
+  db_test:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: english_card_bot_test
+    ports:
+      - "5433:5432"
