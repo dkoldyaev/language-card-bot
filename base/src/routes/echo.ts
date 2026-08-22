@@ -3,17 +3,6 @@ import { authMiddleware } from '../middleware/auth';
 import jwt from 'jsonwebtoken';
 
 const router = Router();
-// Endpoint to generate a test token
-router.post('/auth/login', (req: Request, res: Response) => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
-  const { username } = req.body;
-  if (!username) {
-    return res.status(400).json({ error: 'Username is required' });
-  }
-
-  const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
-  res.json({ token });
-});
 
 // Protected echo endpoint
 router.post('/echo', authMiddleware, async (req: Request, res: Response) => {

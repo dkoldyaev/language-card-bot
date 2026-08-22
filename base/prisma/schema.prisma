@@ -6,8 +6,25 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserMode {
+  DEFAULT
+  ADDING_WORDS
+  EDITING_DICTIONARY
+  TRAINING
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  createdAt DateTime @default(now())
+  id           Int        @id @default(autoincrement())
+  username     String     @unique
+  createdAt    DateTime   @default(now())
+  
+  state        UserState?
+}
+
+model UserState {
+  id     Int      @id @default(autoincrement())
+  mode   UserMode @default(DEFAULT)
+
+  userId Int      @unique
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
