@@ -3,6 +3,12 @@ import request from 'supertest';
 import app from '../../app';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../prisma';
+import { mockDeep, mockReset } from 'vitest-mock-extended';
+import { PrismaClient } from '@prisma/client';
+
+vi.mock('../../prisma');
+
+const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('State Endpoint', () => {
   const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
@@ -18,12 +24,11 @@ describe('State Endpoint', () => {
       text: vi.fn().mockResolvedValue('ok')
     });
 
-    await prisma.user.deleteMany({});
+    mockReset(prismaMock);
   });
 
   afterEach(async () => {
     vi.restoreAllMocks();
-    await prisma.user.deleteMany({});
   });
 
   it('should return 401 if no token provided', async () => {
@@ -32,19 +37,15 @@ describe('State Endpoint', () => {
   });
 
   it('should sync state to Mercure and return 200', async () => {
-    // Register user with state
-    const user = await prisma.user.create({
-      data: {
-        username: 'test_sync_user',
-        state: {
-          create: {
-            mode: 'DEFAULT'
-          }
-        }
-      }
-    });
+    const userId = 20;
+    const username = 'test_sync_user';
+    const token = jwt.sign({ id: userId, username }, JWT_SECRET, { expiresIn: '1h' });
 
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    prismaMock.userState.findUnique.mockResolvedValue({
+      id: 1,
+      userId,
+      mode: 'DEFAULT'
+    });
 
     const res = await request(app)
       .post('/api/v1/state/sync')
@@ -53,6 +54,10 @@ describe('State Endpoint', () => {
     expect(res.status).toBe(200);
     expect(res.body.message).toBe('State synced to Mercure');
     expect(res.body.state.mode).toBe('DEFAULT');
+
+    expect(prismaMock.userState.findUnique).toHaveBeenCalledWith({
+      where: { userId }
+    });
 
     // Verify Mercure push
     expect(global.fetch).toHaveBeenCalledTimes(1);
@@ -65,7 +70,7 @@ describe('State Endpoint', () => {
     const bodyStr = options?.body as string;
     const searchParams = new URLSearchParams(bodyStr);
     
-    expect(searchParams.get('topic')).toBe('http://localhost/v1/users/test_sync_user/state');
+    expect(searchParams.get('topic')).toBe(`http://localhost/v1/users/${username}/state`);
     const mercureData = JSON.parse(searchParams.get('data') || '{}');
     expect(mercureData.type).toBe('state_sync');
     expect(mercureData.mode).toBe('DEFAULT');

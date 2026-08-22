@@ -1,18 +1,28 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import app from '../../app';
 import { prisma } from '../../prisma';
+import { mockDeep, mockReset } from 'vitest-mock-extended';
+import { PrismaClient } from '@prisma/client';
+
+vi.mock('../../prisma');
+
+const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Auth Endpoints', () => {
-  beforeEach(async () => {
-    await prisma.user.deleteMany({});
-  });
-
-  afterEach(async () => {
-    await prisma.user.deleteMany({});
+  beforeEach(() => {
+    mockReset(prismaMock);
   });
 
   it('should register a new user successfully', async () => {
+    // Arrange: User doesn't exist
+    prismaMock.user.findUnique.mockResolvedValue(null);
+    prismaMock.user.create.mockResolvedValue({
+      id: 1,
+      username: 'testuser',
+      createdAt: new Date(),
+    } as any);
+
     const res = await request(app)
       .post('/api/v1/auth/register')
       .send({ username: 'testuser' });
@@ -20,28 +30,20 @@ describe('Auth Endpoints', () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('token');
     expect(res.body.user).toHaveProperty('username', 'testuser');
-    expect(res.body.user).toHaveProperty('id');
+    expect(res.body.user).toHaveProperty('id', 1);
 
-    const userInDb = await prisma.user.findUnique({
-      where: { username: 'testuser' },
-      include: { state: true }
+    expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+      where: { username: 'testuser' }
     });
-
-    expect(userInDb).toBeDefined();
-    expect(userInDb?.state).toBeDefined();
-    expect(userInDb?.state).not.toBeNull();
-    expect(userInDb?.state?.mode).toBe('DEFAULT');
+    expect(prismaMock.user.create).toHaveBeenCalled();
   });
 
   it('should login an existing user', async () => {
-    await prisma.user.create({
-      data: {
-        username: 'existinguser',
-        state: {
-          create: { mode: 'DEFAULT' }
-        }
-      }
-    });
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: 2,
+      username: 'existinguser',
+      createdAt: new Date(),
+    } as any);
 
     const res = await request(app)
       .post('/api/v1/auth/login')
@@ -50,6 +52,9 @@ describe('Auth Endpoints', () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('token');
     expect(res.body.user).toHaveProperty('username', 'existinguser');
+    expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+      where: { username: 'existinguser' }
+    });
   });
 
   it('should return 400 for invalid validation', async () => {

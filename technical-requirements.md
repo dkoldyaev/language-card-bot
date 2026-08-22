@@ -7,7 +7,7 @@
 - **База данных**: PostgreSQL.
 - **ORM**: Prisma ORM (используется для миграций и типизированного взаимодействия с БД).
 - **Валидация и Типизация**: Используется **Zod** для runtime-валидации данных (Request / Response / Mercure Events) и автоматического вывода TypeScript-типов.
-- **Тестирование**: Vitest + Supertest.
+- **Тестирование**: Vitest + Supertest (см. подробнее в [test-requirements.md](./test-requirements.md)).
 
 ## 2. Структура и Инфраструктура
 - **Структура проекта (Feature-Based)**: Основной код приложения и конфигурации (package.json, src, prisma) находятся в директории `base/`. 
