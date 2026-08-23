@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../prisma';
 import { validateRequest } from '../../middleware/validate';
 import { AuthRequestSchema, AuthRequest, AuthResponse } from './auth.type';
+import { UserMode } from '@prisma/client';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
@@ -21,7 +22,7 @@ router.post('/register', validateRequest(AuthRequestSchema), async (req: Request
         username,
         state: {
           create: {
-            mode: 'DEFAULT'
+            mode: UserMode.DEFAULT
           }
         }
       }

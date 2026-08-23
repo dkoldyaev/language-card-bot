@@ -6,6 +6,7 @@ import { prisma } from '../../prisma';
 import { mockDeep, mockReset } from 'vitest-mock-extended';
 import { PrismaClient } from '@prisma/client';
 import { publishEvent } from '../event_bus/event_bus.service';
+import { UserMode } from '@prisma/client';
 
 vi.mock('../../prisma');
 vi.mock('../event_bus/event_bus.service', () => ({
@@ -46,7 +47,7 @@ describe('Dictionary View Endpoint', () => {
     prismaMock.userState.update.mockResolvedValue({
       id: 1,
       userId,
-      mode: 'DICTIONARY_VIEW'
+      mode: UserMode.DICTIONARY_VIEW
     });
 
     // Act
@@ -61,7 +62,7 @@ describe('Dictionary View Endpoint', () => {
     // Verify DB update
     expect(prismaMock.userState.update).toHaveBeenCalledWith({
       where: { userId },
-      data: { mode: 'DICTIONARY_VIEW' }
+      data: { mode: UserMode.DICTIONARY_VIEW }
     });
 
     // Verify event bus push
@@ -69,7 +70,7 @@ describe('Dictionary View Endpoint', () => {
     expect(publishEvent).toHaveBeenCalledWith(username, {
       version: 'v1',
       type: 'state_sync',
-      mode: 'DICTIONARY_VIEW'
+      mode: UserMode.DICTIONARY_VIEW
     });
   });
 });

@@ -15,7 +15,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response<SwitchModeDi
   const { id: userId, username } = getAuthUser(req);
 
   try {
-    const userState = await updateUserMode(userId, 'EDITING_DICTIONARY');
+    const userState = await updateUserMode(userId, UserMode.EDITING_DICTIONARY);
 
     const payload: StateSyncMercureEvent = {
       version: 'v1',

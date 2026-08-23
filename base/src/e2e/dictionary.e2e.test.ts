@@ -3,6 +3,7 @@ import request from 'supertest';
 import app from '../app';
 import { prisma } from '../prisma';
 import { clearDatabase, setupTestUser, setupMercureListener, teardownMercureListener } from './helpers';
+import { UserMode } from '@prisma/client';
 
 describe('Dictionary Modes E2E', () => {
   const testUsername = 'dict_user';
@@ -41,7 +42,7 @@ describe('Dictionary Modes E2E', () => {
 
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    const event = messages.find(m => m.type === 'state_sync' && m.mode === 'DICTIONARY_VIEW');
+    const event = messages.find(m => m.type === 'state_sync' && m.mode === UserMode.DICTIONARY_VIEW);
     expect(event).toBeDefined();
 
     const userInDb = await prisma.user.findUnique({
@@ -50,7 +51,7 @@ describe('Dictionary Modes E2E', () => {
     });
     
     expect(userInDb).toBeDefined();
-    expect(userInDb?.state?.mode).toBe('DICTIONARY_VIEW');
+    expect(userInDb?.state?.mode).toBe(UserMode.DICTIONARY_VIEW);
   });
 
   it('should switch to dictionary add view', async () => {
@@ -62,7 +63,7 @@ describe('Dictionary Modes E2E', () => {
     expect(res.body.message).toBe('Switched to dictionary add view');
 
     await new Promise(resolve => setTimeout(resolve, 500));
-    const event = messages.find(m => m.type === 'state_sync' && m.mode === 'DICTIONARY_ADD');
+    const event = messages.find(m => m.type === 'state_sync' && m.mode === UserMode.DICTIONARY_ADD);
     expect(event).toBeDefined();
 
     const userInDb = await prisma.user.findUnique({
@@ -71,7 +72,7 @@ describe('Dictionary Modes E2E', () => {
     });
     
     expect(userInDb).toBeDefined();
-    expect(userInDb?.state?.mode).toBe('DICTIONARY_ADD');
+    expect(userInDb?.state?.mode).toBe(UserMode.DICTIONARY_ADD);
   });
 
   it('should switch to dictionary edit view', async () => {
@@ -83,7 +84,7 @@ describe('Dictionary Modes E2E', () => {
     expect(res.body.message).toBe('Switched to dictionary edit view');
 
     await new Promise(resolve => setTimeout(resolve, 500));
-    const event = messages.find(m => m.type === 'state_sync' && m.mode === 'EDITING_DICTIONARY');
+    const event = messages.find(m => m.type === 'state_sync' && m.mode === UserMode.EDITING_DICTIONARY);
     expect(event).toBeDefined();
 
     const userInDb = await prisma.user.findUnique({
@@ -92,6 +93,6 @@ describe('Dictionary Modes E2E', () => {
     });
     
     expect(userInDb).toBeDefined();
-    expect(userInDb?.state?.mode).toBe('EDITING_DICTIONARY');
+    expect(userInDb?.state?.mode).toBe(UserMode.EDITING_DICTIONARY);
   });
 });

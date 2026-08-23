@@ -7,6 +7,7 @@ import { publishEvent } from '../event_bus/event_bus.service';
 import { enqueueFetchDefinitions } from './add_word.queue';
 import { getAuthUser } from '../auth/auth.service';
 import { getUserState } from '../state/state.service';
+import { UserMode } from '@prisma/client';
 
 const router = Router();
 
@@ -24,7 +25,7 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordRequest>, re
   try {
     const userState = await getUserState(userId);
 
-    if (!userState || userState.mode !== 'DICTIONARY_ADD') {
+    if (!userState || userState.mode !== UserMode.DICTIONARY_ADD) {
       return res.status(403).json({ error: 'User is not in DICTIONARY_ADD mode' });
     }
 

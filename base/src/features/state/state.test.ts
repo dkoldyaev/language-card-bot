@@ -6,6 +6,7 @@ import { prisma } from '../../prisma';
 import { mockDeep, mockReset } from 'vitest-mock-extended';
 import { PrismaClient } from '@prisma/client';
 import { publishEvent } from '../event_bus/event_bus.service';
+import { UserMode } from '@prisma/client';
 
 vi.mock('../../prisma');
 vi.mock('../event_bus/event_bus.service', () => ({
@@ -45,7 +46,7 @@ describe('State Endpoint', () => {
     prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,
       userId,
-      mode: 'DEFAULT'
+      mode: UserMode.DEFAULT
     });
 
     const res = await request(app)
@@ -54,7 +55,7 @@ describe('State Endpoint', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe('State synced to Mercure');
-    expect(res.body.state.mode).toBe('DEFAULT');
+    expect(res.body.state.mode).toBe(UserMode.DEFAULT);
 
     expect(prismaMock.userState.findUnique).toHaveBeenCalledWith({
       where: { userId }
@@ -64,7 +65,7 @@ describe('State Endpoint', () => {
     expect(publishEvent).toHaveBeenCalledTimes(1);
     expect(publishEvent).toHaveBeenCalledWith(username, expect.objectContaining({
       type: 'state_sync',
-      mode: 'DEFAULT'
+      mode: UserMode.DEFAULT
     }));
   });
 });
