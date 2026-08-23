@@ -22,6 +22,7 @@ model User {
   
   state        UserState?
   settings     UserSettings?
+  words        Word[]
 }
 
 model UserState {
@@ -40,4 +41,34 @@ model UserSettings {
 
   userId         Int      @unique
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Word {
+  id        Int      @id @default(autoincrement())
+  text      String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  definitions Definition[]
+  
+  @@unique([userId, text])
+}
+
+model Definition {
+  id        Int      @id @default(autoincrement())
+  text      String
+  wordId    Int
+  word      Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  translation DefinitionTranslation?
+}
+
+model DefinitionTranslation {
+  id           Int      @id @default(autoincrement())
+  text         String
+  definitionId Int      @unique
+  definition   Definition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
 }

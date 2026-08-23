@@ -7,8 +7,10 @@ services:
       service: app
     environment:
       - DATABASE_URL=postgresql://testuser:testpass@db_test:5432/english_card_bot_test?schema=public
+      - REDIS_URL=redis://redis_test:6379
     depends_on:
       - db_test
+      - redis_test
 
   mercure:
     extends:
@@ -24,7 +26,13 @@ services:
     ports:
       - "5433:5432"
 
+  redis_test:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+
   translator:
     extends:
       file: docker-compose.yml
       service: translator
+

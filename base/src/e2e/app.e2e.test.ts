@@ -1,8 +1,10 @@
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import app from '../app';
 import { prisma } from '../prisma';
 import jwt from 'jsonwebtoken';
+import { dictionaryQueue, queueConnection } from '../features/add_word/add_word.queue';
+import { dictionaryWorker, workerConnection } from '../features/add_word/add_word.worker';
 
 describe('App E2E Flow', () => {
   let userToken: string;
@@ -14,6 +16,10 @@ describe('App E2E Flow', () => {
   });
 
   afterAll(async () => {
+    await dictionaryQueue.close();
+    await dictionaryWorker.close();
+    queueConnection.quit();
+    workerConnection.quit();
     await prisma.$disconnect();
   });
 
@@ -245,5 +251,133 @@ describe('App E2E Flow', () => {
     expect(userInDbAfterPatch?.settings?.baseLanguage).toBe('en');
     expect(userInDbAfterPatch?.settings?.targetLanguage).toBe('es');
     expect(userInDbAfterPatch?.settings?.desiredLevel).toBe('C1');
+    // 7. add_word endpoint tests
+    const originalFetch = global.fetch;
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (url, options) => {
+      const urlStr = url.toString();
+      if (urlStr.includes('define')) {
+        return new Response(JSON.stringify({ definitions: ['def1', 'def2'] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (urlStr.includes('translate')) {
+        return new Response(JSON.stringify({ translatedText: 'mocked_translation' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return originalFetch(url, options);
+    });
+
+    // 7.1 Fails when not in DICTIONARY_ADD mode (currently in DICTIONARY_ADD from step 5, let's switch to DEFAULT first)
+    await prisma.userState.update({
+      where: { userId: userInDbAfterAdd!.id },
+      data: { mode: 'DEFAULT' }
+    });
+
+    const addWordFailRes = await request(app)
+      .post('/api/v1/add_word')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ word: 'apple' });
+
+    expect(addWordFailRes.status).toBe(403);
+    expect(addWordFailRes.body.error).toBe('User is not in DICTIONARY_ADD mode');
+
+    // Switch back to DICTIONARY_ADD
+    await prisma.userState.update({
+      where: { userId: userInDbAfterAdd!.id },
+      data: { mode: 'DICTIONARY_ADD' }
+    });
+
+    // Connect to Mercure for dictionary_add events
+    const addWordUrl = new URL(mercureUrl);
+    addWordUrl.searchParams.append('topic', settingsTopic);
+
+    const esAddWordRes = await originalFetch(addWordUrl.toString(), {
+      headers: {
+        'Authorization': `Bearer ${subscriberToken}`,
+        'Accept': 'text/event-stream'
+      }
+    });
+
+    const addWordReader = esAddWordRes.body!.getReader();
+    const addWordMessages: any[] = [];
+    const readAddWordStream = async () => {
+      while (true) {
+        const { done, value } = await addWordReader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            addWordMessages.push(JSON.parse(line.substring(6)));
+          }
+        }
+      }
+    };
+    const addWordStreamPromise = readAddWordStream();
+
+    // 7.2 Successfully adds word
+    const addWordSuccessRes = await request(app)
+      .post('/api/v1/add_word')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ word: 'apple' });
+
+    expect(addWordSuccessRes.status).toBe(200);
+    expect(addWordSuccessRes.body.message).toBe('Word added successfully');
+
+    // Wait for async events to propagate
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Verify DB records
+    const createdWord = await prisma.word.findUnique({
+      where: { userId_text: { userId: userInDbAfterAdd!.id, text: 'apple' } },
+      include: {
+        definitions: {
+          include: { translation: true }
+        }
+      }
+    });
+
+    expect(createdWord).toBeDefined();
+    expect(createdWord?.text).toBe('apple');
+    expect(createdWord?.definitions.length).toBe(2);
+    expect(createdWord?.definitions[0].translation?.text).toBe('mocked_translation');
+
+    // 7.3 Duplicate word check
+    const duplicateAddRes = await request(app)
+      .post('/api/v1/add_word')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ word: 'Apple ' }); // testing trim and lowercase
+
+    expect(duplicateAddRes.status).toBe(200);
+    expect(duplicateAddRes.body.message).toBe('Word already exists');
+
+    // Wait for duplicate event
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    await addWordReader.cancel();
+    await addWordStreamPromise;
+    fetchSpy.mockRestore();
+
+    // Verify events in Mercure
+    const processingEvents = addWordMessages.filter(m => m.type === 'dictionary_add_processing');
+    expect(processingEvents.length).toBe(1);
+    expect(processingEvents[0].word).toBe('apple');
+
+    const defsReceivedEvents = addWordMessages.filter(m => m.type === 'dictionary_add_definitions_received');
+    expect(defsReceivedEvents.length).toBe(1);
+    expect(defsReceivedEvents[0].definitionsCount).toBe(2);
+
+    const defProcessedEvents = addWordMessages.filter(m => m.type === 'dictionary_add_definition_processed');
+    expect(defProcessedEvents.length).toBe(2); // 2 definitions
+    expect(defProcessedEvents[0].totalDefinitions).toBe(2);
+
+    const duplicateEvents = addWordMessages.filter(m => m.type === 'dictionary_add_duplicate');
+    expect(duplicateEvents.length).toBe(1);
+    expect(duplicateEvents[0].word).toBe('apple');
+    expect(duplicateEvents[0].definitionsCount).toBe(2);
+
   });
 });

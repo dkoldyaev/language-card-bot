@@ -30,4 +30,35 @@ export interface SettingsSyncMercureEvent extends BaseMercureEvent {
   };
 }
 
-export type MercureEvent = StateSyncMercureEvent | EchoMercureEvent | SettingsSyncMercureEvent;
+export interface DictionaryAddDuplicateEvent extends BaseMercureEvent {
+  type: 'dictionary_add_duplicate';
+  word: string;
+  definitionsCount: number;
+}
+
+export interface DictionaryAddProcessingEvent extends BaseMercureEvent {
+  type: 'dictionary_add_processing';
+  word: string;
+}
+
+export interface DictionaryAddDefinitionsReceivedEvent extends BaseMercureEvent {
+  type: 'dictionary_add_definitions_received';
+  word: string;
+  definitionsCount: number;
+}
+
+export interface DictionaryAddDefinitionProcessedEvent extends BaseMercureEvent {
+  type: 'dictionary_add_definition_processed';
+  word: string;
+  processedCount: number;
+  totalDefinitions: number;
+}
+
+export type MercureEvent = 
+  | StateSyncMercureEvent 
+  | EchoMercureEvent 
+  | SettingsSyncMercureEvent
+  | DictionaryAddDuplicateEvent
+  | DictionaryAddProcessingEvent
+  | DictionaryAddDefinitionsReceivedEvent
+  | DictionaryAddDefinitionProcessedEvent;

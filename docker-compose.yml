@@ -17,6 +17,7 @@ services:
       - TRANSLATOR_API_URL=http://translator:3001/api/v1/translate
       - DEFINER_API_URL=http://definer:3002/api/v1/define
       - BASE_DOMAIN=${BASE_DOMAIN:-http://localhost}
+      - REDIS_URL=redis://redis:6379
     volumes:
       - ./base:/app
       - /app/node_modules
@@ -60,3 +61,9 @@ services:
     volumes:
       - ./definer:/app
       - /app/node_modules
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
