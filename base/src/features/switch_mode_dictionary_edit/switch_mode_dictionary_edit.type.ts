@@ -1,3 +1,3 @@
-export interface SwitchToDictionaryEditResponse {
+export interface SwitchModeDictionaryEditResponse {
   message: string;
 }

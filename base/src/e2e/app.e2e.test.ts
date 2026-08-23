@@ -107,7 +107,7 @@ describe('App E2E Flow', () => {
 
     // 4. Переключение в режим словаря (dictionary_view)
     const dictRes = await request(app)
-      .post('/api/v1/dictionary_view/switch_to_dictionary')
+      .post('/api/v1/switch_mode_dictionary_view')
       .set('Authorization', `Bearer ${userToken}`);
 
     expect(dictRes.status).toBe(200);
@@ -131,7 +131,7 @@ describe('App E2E Flow', () => {
 
     // 5. Переключение в режим добавления словаря (dictionary_add) и проверка БД
     const dictAddRes = await request(app)
-      .post('/api/v1/dictionary_add/switch_to_dictionary_add')
+      .post('/api/v1/switch_mode_dictionary_add')
       .set('Authorization', `Bearer ${userToken}`);
 
     expect(dictAddRes.status).toBe(200);

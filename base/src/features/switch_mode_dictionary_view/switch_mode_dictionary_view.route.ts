@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
-import { SwitchToDictionaryResponse } from './dictionary_view.type';
+import { SwitchModeDictionaryViewResponse } from './switch_mode_dictionary_view.type';
 import { StateSyncMercureEvent } from '../event_bus/event_bus.type';
 import { publishEvent } from '../event_bus/event_bus.service';
 import { UserMode } from '@prisma/client';
@@ -10,7 +10,7 @@ import { updateUserMode } from '../state/state.service';
 
 const router = Router();
 
-router.post('/switch_to_dictionary', authMiddleware, async (req: Request, res: Response<SwitchToDictionaryResponse | { error: string }>) => {
+router.post('/', authMiddleware, async (req: Request, res: Response<SwitchModeDictionaryViewResponse | { error: string }>) => {
 
   const { id: userId, username } = getAuthUser(req);
 

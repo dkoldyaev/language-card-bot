@@ -33,7 +33,7 @@ describe('Dictionary Edit Endpoint', () => {
   });
 
   it('should return 401 if no token provided', async () => {
-    const res = await request(app).post('/api/v1/dictionary_edit/switch_to_dictionary_edit');
+    const res = await request(app).post('/api/v1/switch_mode_dictionary_edit/');
     expect(res.status).toBe(401);
   });
 
@@ -51,7 +51,7 @@ describe('Dictionary Edit Endpoint', () => {
 
     // Act
     const res = await request(app)
-      .post('/api/v1/dictionary_edit/switch_to_dictionary_edit')
+      .post('/api/v1/switch_mode_dictionary_edit/')
       .set('Authorization', `Bearer ${token}`);
 
     // Assert
