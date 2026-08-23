@@ -21,4 +21,13 @@ export interface EchoMercureEvent extends BaseMercureEvent {
   };
 }
 
-export type MercureEvent = StateSyncMercureEvent | EchoMercureEvent;
+export interface SettingsSyncMercureEvent extends BaseMercureEvent {
+  type: 'settings_sync';
+  settings: {
+    baseLanguage: string;
+    targetLanguage: string;
+    desiredLevel: string;
+  };
+}
+
+export type MercureEvent = StateSyncMercureEvent | EchoMercureEvent | SettingsSyncMercureEvent;

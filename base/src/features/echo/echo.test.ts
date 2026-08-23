@@ -66,7 +66,7 @@ describe('Echo Endpoint', () => {
     const bodyStr = options?.body as string;
     const searchParams = new URLSearchParams(bodyStr);
     
-    expect(searchParams.get('topic')).toBe('http://localhost/v1/users/testuser/echo');
+    expect(searchParams.get('topic')).toBe(`${process.env.BASE_DOMAIN}/v1/users/testuser`);
     
     const mercureData = JSON.parse(searchParams.get('data') || '{}');
     expect(mercureData.version).toBe('v1');
@@ -104,7 +104,7 @@ describe('Echo Endpoint', () => {
     // Check user1's topic and data
     const bodyStr1 = fetchArgs1[1]?.body as string;
     const searchParams1 = new URLSearchParams(bodyStr1);
-    expect(searchParams1.get('topic')).toBe('http://localhost/v1/users/user1/echo');
+    expect(searchParams1.get('topic')).toBe(`${process.env.BASE_DOMAIN}/v1/users/user1`);
     const mercureData1 = JSON.parse(searchParams1.get('data') || '{}');
     expect(mercureData1.data).toEqual(payload1);
     expect(mercureData1.user.username).toBe('user1');
@@ -112,7 +112,7 @@ describe('Echo Endpoint', () => {
     // Check user2's topic and data
     const bodyStr2 = fetchArgs2[1]?.body as string;
     const searchParams2 = new URLSearchParams(bodyStr2);
-    expect(searchParams2.get('topic')).toBe('http://localhost/v1/users/user2/echo');
+    expect(searchParams2.get('topic')).toBe(`${process.env.BASE_DOMAIN}/v1/users/user2`);
     const mercureData2 = JSON.parse(searchParams2.get('data') || '{}');
     expect(mercureData2.data).toEqual(payload2);
     expect(mercureData2.user.username).toBe('user2');

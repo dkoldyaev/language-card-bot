@@ -74,7 +74,7 @@ describe('Dictionary Add Endpoint', () => {
     const bodyStr = options?.body as string;
     const searchParams = new URLSearchParams(bodyStr);
     
-    expect(searchParams.get('topic')).toBe(`http://localhost/v1/users/${username}/state`);
+    expect(searchParams.get('topic')).toBe(`${process.env.BASE_DOMAIN}/v1/users/${username}`);
     const mercureData = JSON.parse(searchParams.get('data') || '{}');
     expect(mercureData.type).toBe('state_sync');
     expect(mercureData.mode).toBe('DICTIONARY_ADD');

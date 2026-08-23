@@ -21,6 +21,7 @@ model User {
   createdAt    DateTime   @default(now())
   
   state        UserState?
+  settings     UserSettings?
 }
 
 model UserState {
@@ -29,4 +30,14 @@ model UserState {
 
   userId Int      @unique
   user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSettings {
+  id             Int      @id @default(autoincrement())
+  baseLanguage   String
+  targetLanguage String
+  desiredLevel   String
+
+  userId         Int      @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

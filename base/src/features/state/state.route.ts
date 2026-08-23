@@ -8,8 +8,8 @@ import { SyncResponse } from './state.type';
 const router = Router();
 
 router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResponse | { error: string }>) => {
-  const MERCURE_URL = process.env.MERCURE_URL;
-  const MERCURE_JWT = process.env.MERCURE_JWT;
+  const MERCURE_URL = process.env.MERCURE_URL!;
+  const MERCURE_JWT = process.env.MERCURE_JWT!;
 
   // @ts-ignore
   const userId = req.user.id;
@@ -31,26 +31,25 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
       mode: userState.mode as UserMode
     };
 
-    if (MERCURE_URL && MERCURE_JWT) {
-      const topic = `http://localhost/v1/users/${username}/state`;
-      const body = new URLSearchParams({
-        topic: topic,
-        data: JSON.stringify(payload)
-      });
+    const BASE_DOMAIN = process.env.BASE_DOMAIN;
+    const topic = `${BASE_DOMAIN}/v1/users/${username}`;
+    const body = new URLSearchParams({
+      topic: topic,
+      data: JSON.stringify(payload)
+    });
 
-      const mercureRes = await fetch(MERCURE_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${MERCURE_JWT}`,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: body.toString()
-      });
+    const mercureRes = await fetch(MERCURE_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${MERCURE_JWT}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body.toString()
+    });
 
-      if (!mercureRes.ok) {
-        console.error('Failed to publish state to Mercure', await mercureRes.text());
-        return res.status(500).json({ error: 'Failed to publish to Mercure' });
-      }
+    if (!mercureRes.ok) {
+      console.error('Failed to publish state to Mercure', await mercureRes.text());
+      return res.status(500).json({ error: 'Failed to publish to Mercure' });
     }
 
     res.json({ message: 'State synced to Mercure', state: payload });

@@ -16,6 +16,7 @@ services:
       - MERCURE_JWT=supersecret_mercure_key
       - TRANSLATOR_API_URL=http://translator:3001/api/v1/translate
       - DEFINER_API_URL=http://definer:3002/api/v1/define
+      - BASE_DOMAIN=${BASE_DOMAIN:-http://localhost}
     volumes:
       - ./base:/app
       - /app/node_modules
