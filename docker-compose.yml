@@ -15,6 +15,7 @@ services:
       - MERCURE_URL=http://mercure/.well-known/mercure
       - MERCURE_JWT=supersecret_mercure_key
       - TRANSLATOR_API_URL=http://translator:3001/api/v1/translate
+      - DEFINER_API_URL=http://definer:3002/api/v1/define
     volumes:
       - ./base:/app
       - /app/node_modules
@@ -43,4 +44,18 @@ services:
       - GOOGLE_TRANSLATE_API_KEY=${GOOGLE_TRANSLATE_API_KEY}
     volumes:
       - ./translator:/app
+      - /app/node_modules
+
+  definer:
+    build:
+      context: ./definer
+      target: development
+    ports:
+      - "3003:3002"
+    environment:
+      - PORT=3002
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./definer:/app
       - /app/node_modules
