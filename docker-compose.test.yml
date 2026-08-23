@@ -23,3 +23,8 @@ services:
       POSTGRES_DB: english_card_bot_test
     ports:
       - "5433:5432"
+
+  translator:
+    extends:
+      file: docker-compose.yml
+      service: translator

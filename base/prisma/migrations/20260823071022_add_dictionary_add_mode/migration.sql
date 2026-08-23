@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "UserMode" ADD VALUE 'DICTIONARY_ADD';

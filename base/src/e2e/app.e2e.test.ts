@@ -121,5 +121,21 @@ describe('App E2E Flow', () => {
     
     expect(userInDb).toBeDefined();
     expect(userInDb?.state?.mode).toBe('DICTIONARY_VIEW');
+
+    // 5. Переключение в режим добавления словаря (dictionary_add) и проверка БД
+    const dictAddRes = await request(app)
+      .post('/api/v1/dictionary_add/switch_to_dictionary_add')
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(dictAddRes.status).toBe(200);
+    expect(dictAddRes.body.message).toBe('Switched to dictionary add view');
+
+    const userInDbAfterAdd = await prisma.user.findUnique({
+      where: { username: testUsername },
+      include: { state: true }
+    });
+    
+    expect(userInDbAfterAdd).toBeDefined();
+    expect(userInDbAfterAdd?.state?.mode).toBe('DICTIONARY_ADD');
   });
 });
