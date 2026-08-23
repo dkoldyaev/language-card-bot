@@ -2,25 +2,20 @@ import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { SwitchToDictionaryAddResponse } from './dictionary_add.type';
-import { StateSyncMercureEvent } from '../../types/mercure.type';
+import { StateSyncMercureEvent } from '../event_bus/event_bus.type';
+import { publishEvent } from '../event_bus/event_bus.service';
 import { UserMode } from '@prisma/client';
+import { getAuthUser } from '../auth/auth.service';
+import { updateUserMode } from '../state/state.service';
 
 const router = Router();
 
 router.post('/switch_to_dictionary_add', authMiddleware, async (req: Request, res: Response<SwitchToDictionaryAddResponse | { error: string }>) => {
-  const MERCURE_URL = process.env.MERCURE_URL!;
-  const MERCURE_JWT = process.env.MERCURE_JWT!;
 
-  // @ts-ignore
-  const userId = req.user.id;
-  // @ts-ignore
-  const username = req.user.username;
+  const { id: userId, username } = getAuthUser(req);
 
   try {
-    const userState = await prisma.userState.update({
-      where: { userId },
-      data: { mode: 'DICTIONARY_ADD' }
-    });
+    const userState = await updateUserMode(userId, 'DICTIONARY_ADD');
 
     const payload: StateSyncMercureEvent = {
       version: 'v1',
@@ -28,24 +23,10 @@ router.post('/switch_to_dictionary_add', authMiddleware, async (req: Request, re
       mode: userState.mode as UserMode
     };
 
-    const BASE_DOMAIN = process.env.BASE_DOMAIN;
-    const topic = `${BASE_DOMAIN}/v1/users/${username}`;
-    const body = new URLSearchParams({
-      topic,
-      data: JSON.stringify(payload)
-    });
-
-    const mercureRes = await fetch(MERCURE_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${MERCURE_JWT}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: body.toString()
-    });
-
-    if (!mercureRes.ok) {
-      console.error('Failed to publish state to Mercure', await mercureRes.text());
+    try {
+      await publishEvent(username, payload);
+    } catch (e) {
+      console.error('Failed to publish state to Mercure', e);
       return res.status(500).json({ error: 'Failed to publish to Mercure' });
     }
 

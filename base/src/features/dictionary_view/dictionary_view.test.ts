@@ -5,8 +5,12 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../prisma';
 import { mockDeep, mockReset } from 'vitest-mock-extended';
 import { PrismaClient } from '@prisma/client';
+import { publishEvent } from '../event_bus/event_bus.service';
 
 vi.mock('../../prisma');
+vi.mock('../event_bus/event_bus.service', () => ({
+  publishEvent: vi.fn()
+}));
 
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
@@ -19,16 +23,13 @@ describe('Dictionary View Endpoint', () => {
     process.env.MERCURE_JWT = 'test_mercure_jwt';
     process.env.JWT_SECRET = JWT_SECRET;
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      text: vi.fn().mockResolvedValue('ok')
-    });
+    vi.mocked(publishEvent).mockResolvedValue();
 
     mockReset(prismaMock);
   });
 
   afterEach(async () => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should return 401 if no token provided', async () => {
@@ -63,20 +64,12 @@ describe('Dictionary View Endpoint', () => {
       data: { mode: 'DICTIONARY_VIEW' }
     });
 
-    // Verify Mercure push
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    const fetchArgs = vi.mocked(global.fetch).mock.calls[0];
-    const options = fetchArgs[1];
-    
-    expect(fetchArgs[0]).toBe(MERCURE_URL);
-    expect(options?.headers).toHaveProperty('Authorization', 'Bearer test_mercure_jwt');
-    
-    const bodyStr = options?.body as string;
-    const searchParams = new URLSearchParams(bodyStr);
-    
-    expect(searchParams.get('topic')).toBe(`${process.env.BASE_DOMAIN}/v1/users/${username}`);
-    const mercureData = JSON.parse(searchParams.get('data') || '{}');
-    expect(mercureData.type).toBe('state_sync');
-    expect(mercureData.mode).toBe('DICTIONARY_VIEW');
+    // Verify event bus push
+    expect(publishEvent).toHaveBeenCalledTimes(1);
+    expect(publishEvent).toHaveBeenCalledWith(username, {
+      version: 'v1',
+      type: 'state_sync',
+      mode: 'DICTIONARY_VIEW'
+    });
   });
 });

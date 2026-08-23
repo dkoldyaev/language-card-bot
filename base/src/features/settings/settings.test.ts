@@ -5,8 +5,12 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../prisma';
 import { mockDeep, mockReset } from 'vitest-mock-extended';
 import { PrismaClient } from '@prisma/client';
+import { publishEvent } from '../event_bus/event_bus.service';
 
 vi.mock('../../prisma');
+vi.mock('../event_bus/event_bus.service', () => ({
+  publishEvent: vi.fn()
+}));
 
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
@@ -19,16 +23,13 @@ describe('Settings Endpoint', () => {
     process.env.MERCURE_JWT = 'test_mercure_jwt';
     process.env.JWT_SECRET = JWT_SECRET;
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      text: vi.fn().mockResolvedValue('ok')
-    });
+    vi.mocked(publishEvent).mockResolvedValue();
 
     mockReset(prismaMock);
   });
 
   afterEach(async () => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should return 401 if no token provided', async () => {
@@ -115,19 +116,15 @@ describe('Settings Endpoint', () => {
       }
     });
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    const fetchArgs = vi.mocked(global.fetch).mock.calls[0];
-    expect(fetchArgs[0]).toBe(MERCURE_URL);
-    
-    const bodyStr = fetchArgs[1]?.body as string;
-    const searchParams = new URLSearchParams(bodyStr);
-    expect(searchParams.get('topic')).toBe(`${process.env.BASE_DOMAIN}/v1/users/${username}`);
-    
-    const mercureData = JSON.parse(searchParams.get('data') || '{}');
-    expect(mercureData.type).toBe('settings_sync');
-    expect(mercureData.settings.baseLanguage).toBe('es');
-    expect(mercureData.settings.targetLanguage).toBe('fr');
-    expect(mercureData.settings.desiredLevel).toBe('C1');
+    expect(publishEvent).toHaveBeenCalledTimes(1);
+    expect(publishEvent).toHaveBeenCalledWith(username, expect.objectContaining({
+      type: 'settings_sync',
+      settings: expect.objectContaining({
+        baseLanguage: 'es',
+        targetLanguage: 'fr',
+        desiredLevel: 'C1'
+      })
+    }));
   });
 
   it('should update settings partially', async () => {
@@ -166,12 +163,11 @@ describe('Settings Endpoint', () => {
       }
     });
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    const fetchArgs = vi.mocked(global.fetch).mock.calls[0];
-    const bodyStr = fetchArgs[1]?.body as string;
-    const searchParams = new URLSearchParams(bodyStr);
-    
-    const mercureData = JSON.parse(searchParams.get('data') || '{}');
-    expect(mercureData.settings.targetLanguage).toBe('de');
+    expect(publishEvent).toHaveBeenCalledTimes(1);
+    expect(publishEvent).toHaveBeenCalledWith(username, expect.objectContaining({
+      settings: expect.objectContaining({
+        targetLanguage: 'de'
+      })
+    }));
   });
 });

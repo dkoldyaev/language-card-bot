@@ -36,3 +36,12 @@ services:
       file: docker-compose.yml
       service: translator
 
+  mercure_monitor:
+    build:
+      context: ./mercure-monitor
+    environment:
+      - MERCURE_URL=http://mercure/.well-known/mercure
+      - MERCURE_JWT_KEY=supersecret_mercure_key
+    depends_on:
+      - mercure
+

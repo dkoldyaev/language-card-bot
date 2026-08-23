@@ -47,27 +47,15 @@ describe('App E2E Flow', () => {
     // Сохраняем токен для дальнейших запросов
     userToken = loginRes.body.token;
 
-    // 3. Echo запрос
-    const echoPayload = { message: 'Hello from e2e!' };
-    const echoRes = await request(app)
-      .post('/api/v1/echo')
-      .set('Authorization', `Bearer ${userToken}`)
-      .send(echoPayload);
-
-    expect(echoRes.status).toBe(200);
-    expect(echoRes.body.message).toBe('Echo successful');
-    expect(echoRes.body.data).toEqual(echoPayload);
-
-    // 4. Переключение в режим словаря (dictionary_view) и проверка Mercure SSE
+    // Подключаемся к Mercure как SSE клиент ОДИН РАЗ для всего теста
     const subscriberToken = process.env.MERCURE_JWT;
-
     const mercureUrl = process.env.MERCURE_URL!;
     const topic = `${process.env.BASE_DOMAIN}/v1/users/${testUsername}`;
     const url = new URL(mercureUrl);
     url.searchParams.append('topic', topic);
 
-    // Подключаемся к Mercure как SSE клиент
-    const esRes = await fetch(url.toString(), {
+    const originalFetchForE2E = global.fetch;
+    const esRes = await originalFetchForE2E(url.toString(), {
       headers: {
         'Authorization': `Bearer ${subscriberToken}`,
         'Accept': 'text/event-stream'
@@ -78,12 +66,10 @@ describe('App E2E Flow', () => {
       throw new Error(`SSE fetch failed: ${esRes.status}`);
     }
     
-    // Получаем reader для чтения потока
     const reader = esRes.body!.getReader();
     const decoder = new TextDecoder();
     const messages: any[] = [];
 
-    // Читаем поток асинхронно
     const readStream = async () => {
       while (true) {
         const { done, value } = await reader.read();
@@ -99,7 +85,27 @@ describe('App E2E Flow', () => {
     };
     const streamPromise = readStream();
 
-    // Отправляем запрос, который должен сгенерировать SSE событие
+    // Даем время на установку соединения
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // 3. Echo запрос
+    const echoPayload = { message: 'Hello from e2e!' };
+    const echoRes = await request(app)
+      .post('/api/v1/echo')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send(echoPayload);
+
+    expect(echoRes.status).toBe(200);
+    expect(echoRes.body.message).toBe('Echo successful');
+    expect(echoRes.body.data).toEqual(echoPayload);
+
+    // Даем время на доставку сообщения Echo
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const echoEvent = messages.find(m => m.type === 'echo');
+    expect(echoEvent).toBeDefined();
+    expect(echoEvent.data).toEqual(echoPayload);
+
+    // 4. Переключение в режим словаря (dictionary_view)
     const dictRes = await request(app)
       .post('/api/v1/dictionary_view/switch_to_dictionary')
       .set('Authorization', `Bearer ${userToken}`);
@@ -110,14 +116,9 @@ describe('App E2E Flow', () => {
     // Даем время на доставку сообщения
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Закрываем ридер чтобы остановить readStream
-    await reader.cancel();
-    await streamPromise;
-
     // Проверяем, что событие пришло
-    expect(messages.length).toBeGreaterThan(0);
-    expect(messages[0].type).toBe('state_sync');
-    expect(messages[0].mode).toBe('DICTIONARY_VIEW');
+    const viewEvent = messages.find(m => m.type === 'state_sync' && m.mode === 'DICTIONARY_VIEW');
+    expect(viewEvent).toBeDefined();
 
     // Проверяем БД, что стейт юзера действительно изменился на DICTIONARY_VIEW
     const userInDb = await prisma.user.findUnique({
@@ -135,6 +136,11 @@ describe('App E2E Flow', () => {
 
     expect(dictAddRes.status).toBe(200);
     expect(dictAddRes.body.message).toBe('Switched to dictionary add view');
+
+    // Даем время на доставку сообщения
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const addModeEvent = messages.find(m => m.type === 'state_sync' && m.mode === 'DICTIONARY_ADD');
+    expect(addModeEvent).toBeDefined();
 
     const userInDbAfterAdd = await prisma.user.findUnique({
       where: { username: testUsername },
@@ -154,38 +160,6 @@ describe('App E2E Flow', () => {
     expect(getSettingsRes.body.settings.targetLanguage).toBe('en');
     expect(getSettingsRes.body.settings.desiredLevel).toBe('B2');
 
-    // Подключаемся к Mercure как SSE клиент для settings
-    const settingsTopic = `${process.env.BASE_DOMAIN}/v1/users/${testUsername}`;
-    const settingsUrl = new URL(mercureUrl);
-    settingsUrl.searchParams.append('topic', settingsTopic);
-
-    const esSettingsRes = await fetch(settingsUrl.toString(), {
-      headers: {
-        'Authorization': `Bearer ${subscriberToken}`,
-        'Accept': 'text/event-stream'
-      }
-    });
-
-    if (!esSettingsRes.ok) {
-      throw new Error(`SSE fetch failed: ${esSettingsRes.status}`);
-    }
-    
-    const settingsReader = esSettingsRes.body!.getReader();
-    const settingsMessages: any[] = [];
-    const readSettingsStream = async () => {
-      while (true) {
-        const { done, value } = await settingsReader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            settingsMessages.push(JSON.parse(line.substring(6)));
-          }
-        }
-      }
-    };
-    const settingsStreamPromise = readSettingsStream();
 
     // 6.2 Изменение настроек
     const postSettingsRes = await request(app)
@@ -205,16 +179,11 @@ describe('App E2E Flow', () => {
     // Даем время на доставку сообщения
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Закрываем ридер чтобы остановить readStream
-    await settingsReader.cancel();
-    await settingsStreamPromise;
-
     // Проверяем, что событие пришло
-    expect(settingsMessages.length).toBeGreaterThan(0);
-    expect(settingsMessages[0].type).toBe('settings_sync');
-    expect(settingsMessages[0].settings.baseLanguage).toBe('en');
-    expect(settingsMessages[0].settings.targetLanguage).toBe('de');
-    expect(settingsMessages[0].settings.desiredLevel).toBe('C1');
+    const settingsEvent1 = messages.find(m => m.type === 'settings_sync' && m.settings?.targetLanguage === 'de');
+    expect(settingsEvent1).toBeDefined();
+    expect(settingsEvent1.settings.baseLanguage).toBe('en');
+    expect(settingsEvent1.settings.desiredLevel).toBe('C1');
 
     // Проверяем БД, что настройки обновились
     const userInDbAfterSettings = await prisma.user.findUnique({
@@ -241,6 +210,14 @@ describe('App E2E Flow', () => {
     expect(patchSettingsRes.body.settings.targetLanguage).toBe('es');
     expect(patchSettingsRes.body.settings.desiredLevel).toBe('C1');
 
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Проверяем событие в Mercure
+    const settingsEvent2 = messages.find(m => m.type === 'settings_sync' && m.settings?.targetLanguage === 'es');
+    expect(settingsEvent2).toBeDefined();
+    expect(settingsEvent2.settings.baseLanguage).toBe('en');
+    expect(settingsEvent2.settings.desiredLevel).toBe('C1');
+
     // Проверяем БД, что частичное обновление сработало
     const userInDbAfterPatch = await prisma.user.findUnique({
       where: { username: testUsername },
@@ -251,6 +228,7 @@ describe('App E2E Flow', () => {
     expect(userInDbAfterPatch?.settings?.baseLanguage).toBe('en');
     expect(userInDbAfterPatch?.settings?.targetLanguage).toBe('es');
     expect(userInDbAfterPatch?.settings?.desiredLevel).toBe('C1');
+
     // 7. add_word endpoint tests
     const originalFetch = global.fetch;
     const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (url, options) => {
@@ -289,34 +267,6 @@ describe('App E2E Flow', () => {
       where: { userId: userInDbAfterAdd!.id },
       data: { mode: 'DICTIONARY_ADD' }
     });
-
-    // Connect to Mercure for dictionary_add events
-    const addWordUrl = new URL(mercureUrl);
-    addWordUrl.searchParams.append('topic', settingsTopic);
-
-    const esAddWordRes = await originalFetch(addWordUrl.toString(), {
-      headers: {
-        'Authorization': `Bearer ${subscriberToken}`,
-        'Accept': 'text/event-stream'
-      }
-    });
-
-    const addWordReader = esAddWordRes.body!.getReader();
-    const addWordMessages: any[] = [];
-    const readAddWordStream = async () => {
-      while (true) {
-        const { done, value } = await addWordReader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            addWordMessages.push(JSON.parse(line.substring(6)));
-          }
-        }
-      }
-    };
-    const addWordStreamPromise = readAddWordStream();
 
     // 7.2 Successfully adds word
     const addWordSuccessRes = await request(app)
@@ -357,24 +307,25 @@ describe('App E2E Flow', () => {
     // Wait for duplicate event
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    await addWordReader.cancel();
-    await addWordStreamPromise;
+    // Close the original reader now that all tests are done
+    await reader.cancel();
+    await streamPromise;
     fetchSpy.mockRestore();
 
     // Verify events in Mercure
-    const processingEvents = addWordMessages.filter(m => m.type === 'dictionary_add_processing');
+    const processingEvents = messages.filter(m => m.type === 'dictionary_add_processing');
     expect(processingEvents.length).toBe(1);
     expect(processingEvents[0].word).toBe('apple');
 
-    const defsReceivedEvents = addWordMessages.filter(m => m.type === 'dictionary_add_definitions_received');
+    const defsReceivedEvents = messages.filter(m => m.type === 'dictionary_add_definitions_received');
     expect(defsReceivedEvents.length).toBe(1);
     expect(defsReceivedEvents[0].definitionsCount).toBe(2);
 
-    const defProcessedEvents = addWordMessages.filter(m => m.type === 'dictionary_add_definition_processed');
+    const defProcessedEvents = messages.filter(m => m.type === 'dictionary_add_definition_processed');
     expect(defProcessedEvents.length).toBe(2); // 2 definitions
     expect(defProcessedEvents[0].totalDefinitions).toBe(2);
 
-    const duplicateEvents = addWordMessages.filter(m => m.type === 'dictionary_add_duplicate');
+    const duplicateEvents = messages.filter(m => m.type === 'dictionary_add_duplicate');
     expect(duplicateEvents.length).toBe(1);
     expect(duplicateEvents[0].word).toBe('apple');
     expect(duplicateEvents[0].definitionsCount).toBe(2);

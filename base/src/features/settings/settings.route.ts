@@ -1,13 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
-import { SettingsSyncMercureEvent } from '../../types/mercure.type';
+import { SettingsSyncMercureEvent } from '../event_bus/event_bus.type';
+import { publishEvent } from '../event_bus/event_bus.service';
+import { getAuthUser } from '../auth/auth.service';
 
 const router = Router();
 
 router.get('/', authMiddleware, async (req: Request, res: Response) => {
-  // @ts-ignore
-  const userId = req.user.id;
+  const { id: userId } = getAuthUser(req);
 
   try {
     let settings = await prisma.userSettings.findUnique({
@@ -33,13 +34,9 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
 });
 
 router.post('/', authMiddleware, async (req: Request, res: Response) => {
-  const MERCURE_URL = process.env.MERCURE_URL!;
-  const MERCURE_JWT = process.env.MERCURE_JWT!;
 
-  // @ts-ignore
-  const userId = req.user.id;
-  // @ts-ignore
-  const username = req.user.username;
+
+  const { id: userId, username } = getAuthUser(req);
   const { baseLanguage, targetLanguage, desiredLevel } = req.body;
 
   try {
@@ -68,24 +65,10 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       }
     };
 
-    const BASE_DOMAIN = process.env.BASE_DOMAIN;
-    const topic = `${BASE_DOMAIN}/v1/users/${username}`;
-    const body = new URLSearchParams({
-      topic: topic,
-      data: JSON.stringify(payload)
-    });
-
-    const mercureRes = await fetch(MERCURE_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${MERCURE_JWT}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: body.toString()
-    });
-
-    if (!mercureRes.ok) {
-      console.error('Failed to publish settings to Mercure', await mercureRes.text());
+    try {
+      await publishEvent(username, payload);
+    } catch (e) {
+      console.error('Failed to publish settings to Mercure', e);
       return res.status(500).json({ error: 'Failed to publish to Mercure' });
     }
 

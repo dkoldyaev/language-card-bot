@@ -2,8 +2,11 @@ import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { AddWordRequest, AddWordResponse } from './add_word.type';
-import { DictionaryAddDuplicateEvent } from '../../types/mercure.type';
+import { DictionaryAddDuplicateEvent } from '../event_bus/event_bus.type';
+import { publishEvent } from '../event_bus/event_bus.service';
 import { enqueueFetchDefinitions } from './add_word.queue';
+import { getAuthUser } from '../auth/auth.service';
+import { getUserState } from '../state/state.service';
 
 const router = Router();
 
@@ -16,15 +19,10 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordRequest>, re
 
   const wordText = word.trim().toLowerCase();
 
-  // @ts-ignore
-  const userId = req.user.id;
-  // @ts-ignore
-  const username = req.user.username;
+  const { id: userId, username } = getAuthUser(req);
 
   try {
-    const userState = await prisma.userState.findUnique({
-      where: { userId }
-    });
+    const userState = await getUserState(userId);
 
     if (!userState || userState.mode !== 'DICTIONARY_ADD') {
       return res.status(403).json({ error: 'User is not in DICTIONARY_ADD mode' });
@@ -50,23 +48,7 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordRequest>, re
         definitionsCount: existingWord.definitions.length
       };
 
-      const MERCURE_URL = process.env.MERCURE_URL!;
-      const MERCURE_JWT = process.env.MERCURE_JWT!;
-      const BASE_DOMAIN = process.env.BASE_DOMAIN;
-      const topic = `${BASE_DOMAIN}/v1/users/${username}`;
-      const body = new URLSearchParams({
-        topic,
-        data: JSON.stringify(payload)
-      });
-
-      await fetch(MERCURE_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${MERCURE_JWT}`,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: body.toString()
-      });
+      await publishEvent(username, payload);
 
       return res.json({ message: 'Word already exists' });
     }

@@ -6,40 +6,16 @@ import {
   DictionaryAddProcessingEvent, 
   DictionaryAddDefinitionsReceivedEvent, 
   DictionaryAddDefinitionProcessedEvent 
-} from '../../types/mercure.type';
+} from '../event_bus/event_bus.type';
+import { publishEvent } from '../event_bus/event_bus.service';
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 export const workerConnection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 
-const MERCURE_URL = process.env.MERCURE_URL!;
-const MERCURE_JWT = process.env.MERCURE_JWT!;
-const BASE_DOMAIN = process.env.BASE_DOMAIN;
+
+
 const DEFINER_API_URL = process.env.DEFINER_API_URL!;
 const TRANSLATOR_API_URL = process.env.TRANSLATOR_API_URL!;
-
-async function publishEvent(username: string, payload: any) {
-  const topic = `${BASE_DOMAIN}/v1/users/${username}`;
-  const body = new URLSearchParams({
-    topic,
-    data: JSON.stringify(payload)
-  });
-
-  try {
-    const res = await fetch(MERCURE_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${MERCURE_JWT}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: body.toString()
-    });
-    if (!res.ok) {
-      console.error('Failed to publish to Mercure:', await res.text());
-    }
-  } catch (e) {
-    console.error('Mercure publish error:', e);
-  }
-}
 
 export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) => {
   if (job.name === 'fetchDefinitions') {

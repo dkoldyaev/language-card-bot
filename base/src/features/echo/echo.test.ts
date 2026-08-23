@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import app from '../../app';
 import jwt from 'jsonwebtoken';
+import { publishEvent } from '../event_bus/event_bus.service';
+
+vi.mock('../event_bus/event_bus.service', () => ({
+  publishEvent: vi.fn()
+}));
 
 describe('Echo Endpoint', () => {
   const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
@@ -13,15 +18,11 @@ describe('Echo Endpoint', () => {
     process.env.MERCURE_JWT = 'test_mercure_jwt';
     process.env.JWT_SECRET = JWT_SECRET;
 
-    // Mock global fetch
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      text: vi.fn().mockResolvedValue('ok')
-    });
+    vi.mocked(publishEvent).mockResolvedValue();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should return 401 if no token is provided', async () => {
@@ -48,31 +49,15 @@ describe('Echo Endpoint', () => {
     expect(res.body.message).toBe('Echo successful');
     expect(res.body.data).toEqual(payload);
 
-    // Verify Mercure fetch was called
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    const fetchArgs = vi.mocked(global.fetch).mock.calls[0];
-    
-    // Check URL
-    expect(fetchArgs[0]).toBe(MERCURE_URL);
-    
-    // Check fetch options
-    const options = fetchArgs[1];
-    expect(options).toBeDefined();
-    expect(options?.method).toBe('POST');
-    expect(options?.headers).toHaveProperty('Authorization', 'Bearer test_mercure_jwt');
-    expect(options?.headers).toHaveProperty('Content-Type', 'application/x-www-form-urlencoded');
-
-    // Check body content
-    const bodyStr = options?.body as string;
-    const searchParams = new URLSearchParams(bodyStr);
-    
-    expect(searchParams.get('topic')).toBe(`${process.env.BASE_DOMAIN}/v1/users/testuser`);
-    
-    const mercureData = JSON.parse(searchParams.get('data') || '{}');
-    expect(mercureData.version).toBe('v1');
-    expect(mercureData.message).toBe('Echo successful');
-    expect(mercureData.data).toEqual(payload);
-    expect(mercureData.user).toHaveProperty('username', 'testuser');
+    // Verify event bus push
+    expect(publishEvent).toHaveBeenCalledTimes(1);
+    expect(publishEvent).toHaveBeenCalledWith('testuser', expect.objectContaining({
+      version: 'v1',
+      type: 'echo',
+      message: 'Echo successful',
+      data: payload,
+      user: { username: 'testuser' }
+    }));
   });
 
   it('should isolate Mercure topics for different users', async () => {
@@ -95,26 +80,19 @@ describe('Echo Endpoint', () => {
       .set('Authorization', `Bearer ${token2}`)
       .send(payload2);
 
-    // Verify Mercure fetch was called twice
-    expect(global.fetch).toHaveBeenCalledTimes(2);
-    
-    const fetchArgs1 = vi.mocked(global.fetch).mock.calls[0];
-    const fetchArgs2 = vi.mocked(global.fetch).mock.calls[1];
+    // Verify event bus push was called twice
+    expect(publishEvent).toHaveBeenCalledTimes(2);
     
     // Check user1's topic and data
-    const bodyStr1 = fetchArgs1[1]?.body as string;
-    const searchParams1 = new URLSearchParams(bodyStr1);
-    expect(searchParams1.get('topic')).toBe(`${process.env.BASE_DOMAIN}/v1/users/user1`);
-    const mercureData1 = JSON.parse(searchParams1.get('data') || '{}');
-    expect(mercureData1.data).toEqual(payload1);
-    expect(mercureData1.user.username).toBe('user1');
+    expect(publishEvent).toHaveBeenCalledWith('user1', expect.objectContaining({
+      data: payload1,
+      user: { username: 'user1' }
+    }));
 
     // Check user2's topic and data
-    const bodyStr2 = fetchArgs2[1]?.body as string;
-    const searchParams2 = new URLSearchParams(bodyStr2);
-    expect(searchParams2.get('topic')).toBe(`${process.env.BASE_DOMAIN}/v1/users/user2`);
-    const mercureData2 = JSON.parse(searchParams2.get('data') || '{}');
-    expect(mercureData2.data).toEqual(payload2);
-    expect(mercureData2.user.username).toBe('user2');
+    expect(publishEvent).toHaveBeenCalledWith('user2', expect.objectContaining({
+      data: payload2,
+      user: { username: 'user2' }
+    }));
   });
 });
