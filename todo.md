@@ -41,7 +41,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 ## Pending Tasks (Frontend - React + Zustand + Material-UI)
 
 ### 1. Foundation & Routing
-- [ ] **React App Initialization**: Set up a new React project (e.g., using Vite) with TypeScript in a `frontend` directory.
+- [x] **React App Initialization**: Set up a new React project (e.g., using Vite) with TypeScript in a `frontend` directory.
 - [ ] **Material-UI Setup**: Install and configure `@mui/material`, `@emotion/react`, `@emotion/styled`. Set up a custom theme with visually appealing defaults (dark/light mode support if needed).
 - [ ] **Routing Implementation**: Install `react-router-dom` and configure routing for main pages: `/settings`, `/dictionary/add`, `/dictionary/edit`, `/quiz`, and a default `/` Welcome page.
 - [ ] **Base Layout Component**: Create a main layout component (e.g., Navigation bar or Drawer, Main content area) to wrap all pages and handle simple mode switching.
