@@ -66,7 +66,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 - [x] **Dictionary List View**: Create a Material-UI component (e.g., Accordion or List) to display all words with their definitions and translations.
 - [x] **Delete Word Logic**: Implement a "Delete" button with a confirmation dialog for each word, triggering the `/api/v1/word_delete` endpoint.
 - [x] **Definition Editing UI & API**: Implement inline editing (or a dialog) for definition texts and translations, connecting them to `/api/v1/definition_edit` and `/api/v1/definition_translate_edit`.
-- [ ] **Definition Add/Delete Logic**: Implement UI and actions to add a new definition (`/api/v1/definition_add`) or delete an existing one (`/api/v1/definition_delete`).
+- [x] **Definition Add/Delete Logic**: Implement UI and actions to add a new definition (`/api/v1/definition_add`) or delete an existing one (`/api/v1/definition_delete`).
 
 ### 6. Quiz Mode (`/quiz`)
 - [ ] **Quiz Start & Card UI**: Create the main Quiz view with a "Start Quiz" button (`/api/v1/quiz/start`). Create a Card component to display the current word/definition based on the Quiz state in Zustand.

@@ -18,6 +18,8 @@ export default function DictionaryEdit() {
   const removeDictionaryWord = useStore((state) => state.removeDictionaryWord);
   const updateDictionaryDefinition = useStore((state) => state.updateDictionaryDefinition);
   const updateDictionaryTranslation = useStore((state) => state.updateDictionaryTranslation);
+  const addDictionaryDefinition = useStore((state) => state.addDictionaryDefinition);
+  const removeDictionaryDefinition = useStore((state) => state.removeDictionaryDefinition);
 
   const handleDelete = async (e: React.MouseEvent, wordId: number, text: string) => {
     e.stopPropagation(); // Prevent accordion from toggling
@@ -48,6 +50,29 @@ export default function DictionaryEdit() {
       setEditingTransId(null);
     } catch (error) {
       console.error('Failed to edit translation:', error);
+    }
+  };
+
+  const handleAddDefinition = async (wordId: number) => {
+    const text = window.prompt('Enter new definition:');
+    if (text && text.trim()) {
+      try {
+        const res = await apiClient.post('/definition_add', { wordId, text: text.trim() });
+        addDictionaryDefinition(wordId, { id: res.data.definitionId, text: text.trim(), translation: null });
+      } catch (error) {
+        console.error('Failed to add definition:', error);
+      }
+    }
+  };
+
+  const handleDeleteDefinition = async (wordId: number, defId: number) => {
+    if (window.confirm('Are you sure you want to delete this definition?')) {
+      try {
+        await apiClient.delete(`/definition_delete/${defId}`);
+        removeDictionaryDefinition(wordId, defId);
+      } catch (error) {
+        console.error('Failed to delete definition:', error);
+      }
     }
   };
 
@@ -138,6 +163,14 @@ export default function DictionaryEdit() {
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
+                        <IconButton 
+                          size="small" 
+                          color="error"
+                          onClick={() => handleDeleteDefinition(word.id, def.id)}
+                          aria-label="Delete definition"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
                       </Box>
                     )}
 
@@ -196,6 +229,15 @@ export default function DictionaryEdit() {
                     )}
                   </Box>
                 ))}
+                <Box sx={{ mt: 2 }}>
+                  <Button 
+                    variant="outlined" 
+                    size="small" 
+                    onClick={() => handleAddDefinition(word.id)}
+                  >
+                    Add Definition
+                  </Button>
+                </Box>
               </AccordionDetails>
             </Accordion>
           ))}

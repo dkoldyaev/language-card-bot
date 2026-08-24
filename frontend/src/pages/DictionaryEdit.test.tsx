@@ -131,5 +131,55 @@ describe('DictionaryEdit', () => {
       expect(screen.getByText('Translation: яблочко')).toBeInTheDocument();
     });
   });
+
+  it('handles adding a definition', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'prompt').mockReturnValue('A new meaning');
+    vi.spyOn(apiClient, 'post').mockResolvedValue({ data: { definitionId: 2 } });
+
+    render(<DictionaryEdit />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('apple')).toBeInTheDocument();
+    });
+
+    const accordionBtn = screen.getByRole('button', { name: /apple 1 definition\(s\)/i });
+    await user.click(accordionBtn);
+
+    const addBtn = screen.getByRole('button', { name: /Add Definition/i });
+    await user.click(addBtn);
+
+    expect(window.prompt).toHaveBeenCalledWith('Enter new definition:');
+    expect(apiClient.post).toHaveBeenCalledWith('/definition_add', { wordId: 1, text: 'A new meaning' });
+
+    await waitFor(() => {
+      expect(screen.getByText('2. A new meaning')).toBeInTheDocument();
+    });
+  });
+
+  it('handles deleting a definition', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(apiClient, 'delete').mockResolvedValue({});
+
+    render(<DictionaryEdit />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('apple')).toBeInTheDocument();
+    });
+
+    const accordionBtn = screen.getByRole('button', { name: /apple 1 definition\(s\)/i });
+    await user.click(accordionBtn);
+
+    const deleteDefBtn = screen.getByRole('button', { name: /Delete definition/i });
+    await user.click(deleteDefBtn);
+
+    expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to delete this definition?');
+    expect(apiClient.delete).toHaveBeenCalledWith('/definition_delete/1');
+
+    await waitFor(() => {
+      expect(screen.queryByText('1. A fruit')).not.toBeInTheDocument();
+    });
+  });
 });
 

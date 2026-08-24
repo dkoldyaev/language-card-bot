@@ -44,6 +44,8 @@ interface AppState {
   removeDictionaryWord: (wordId: number) => void;
   updateDictionaryDefinition: (wordId: number, definitionId: number, text: string) => void;
   updateDictionaryTranslation: (wordId: number, definitionId: number, text: string) => void;
+  addDictionaryDefinition: (wordId: number, definition: DictionaryDefinition) => void;
+  removeDictionaryDefinition: (wordId: number, definitionId: number) => void;
 }
 
 const useStore = create<AppState>((set) => ({
@@ -88,6 +90,22 @@ const useStore = create<AppState>((set) => ({
             translation: def.translation ? { ...def.translation, text } : { id: Date.now(), text } 
           } : def
         )
+      } : word
+    )
+  })),
+  addDictionaryDefinition: (wordId, definition) => set((state) => ({
+    dictionary: state.dictionary.map(word => 
+      word.id === wordId ? {
+        ...word,
+        definitions: [...word.definitions, definition]
+      } : word
+    )
+  })),
+  removeDictionaryDefinition: (wordId, definitionId) => set((state) => ({
+    dictionary: state.dictionary.map(word => 
+      word.id === wordId ? {
+        ...word,
+        definitions: word.definitions.filter(def => def.id !== definitionId)
       } : word
     )
   })),
