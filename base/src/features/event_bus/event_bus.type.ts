@@ -58,6 +58,16 @@ export interface DictionaryAddDefinitionProcessedEvent extends BaseMercureEvent 
   totalDefinitions: number;
 }
 
+export interface QuizCardMercureEvent extends BaseMercureEvent {
+  type: 'quiz_card';
+  wordId: number;
+  definition: {
+    id: number;
+    text: string;
+    translation: string | null;
+  };
+}
+
 export type MercureEvent = 
   | StateSyncMercureEvent 
   | EchoMercureEvent 
@@ -65,4 +75,5 @@ export type MercureEvent =
   | DictionaryAddDuplicateEvent
   | DictionaryAddProcessingEvent
   | DictionaryAddDefinitionsReceivedEvent
-  | DictionaryAddDefinitionProcessedEvent;
+  | DictionaryAddDefinitionProcessedEvent
+  | QuizCardMercureEvent;

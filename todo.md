@@ -15,8 +15,8 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 
 ### Quiz State & Generation
 - [x] **Quiz State Schema Update**: Add new fields to the `UserState` model in `schema.prisma` to track the active quiz session state (e.g., `showVariants: Boolean`, `showDefinitionTranslation: Boolean`, `currentDefinitionId: Int`).
-- [ ] **Quiz Generation Service**: Implement a backend service function to select a random word from a specific user's dictionary and a random definition for that word.
-- [ ] **Quiz Start API (`/api/v1/quiz/start`)**: Implement an endpoint that utilizes the Quiz Generation Service, resets the quiz state flags in `UserState` to false, and sends a Mercure event containing the initial quiz card data.
+- [x] **Quiz Generation Service**: Implement a backend service function to select a random word from a specific user's dictionary and a random definition for that word.
+- [x] **Quiz Start API (`/api/v1/quiz/start`)**: Implement an endpoint that utilizes the Quiz Generation Service, resets the quiz state flags in `UserState` to false, and sends a Mercure event containing the initial quiz card data.
 
 ### Quiz Interactions
 - [ ] **Quiz Variants API (`/api/v1/quiz/variants`)**: Implement an endpoint that fetches 5 random incorrect words from the user's dictionary, updates `showVariants` to true in `UserState`, and sends the variants list via a Mercure event.

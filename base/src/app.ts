@@ -14,6 +14,7 @@ import definitionEditRoutes from './features/definition_edit/definition_edit.rou
 import definitionTranslateEditRoutes from './features/definition_translate_edit/definition_translate_edit.route';
 import switchModeDictionaryEditRoutes from './features/switch_mode_dictionary_edit/switch_mode_dictionary_edit.route';
 import switchModeQuizRoutes from './features/switch_mode_quiz/switch_mode_quiz.route';
+import quizRoutes from './features/quiz/quiz.route';
 import './features/add_word/add_word.worker';
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use('/api/v1/definition_edit', definitionEditRoutes);
 app.use('/api/v1/definition_translate_edit', definitionTranslateEditRoutes);
 app.use('/api/v1/switch_mode_dictionary_edit', switchModeDictionaryEditRoutes);
 app.use('/api/v1/switch_mode_quiz', switchModeQuizRoutes);
+app.use('/api/v1/quiz', quizRoutes);
 app.use('/api/v1', echoRoutes);
 
 app.get('/health', (req, res) => {
