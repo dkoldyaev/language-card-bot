@@ -204,4 +204,60 @@ describe('Quiz E2E', () => {
     expect(cleanupEvent).toBeDefined();
     expect(cleanupEvent.type).toBe('quiz_cleanup');
   });
+
+  it('should get next card', async () => {
+    // Setup state and words
+    const w1 = await prisma.word.create({ data: { userId, text: 'apple', definitions: { create: { text: 'a red fruit' } } }, include: { definitions: true } });
+    const w2 = await prisma.word.create({ data: { userId, text: 'pear', definitions: { create: { text: 'a green fruit' } } } });
+
+    await prisma.userState.update({
+      where: { userId },
+      data: { mode: 'QUIZ', currentWordId: w1.id, currentDefinitionId: w1.definitions[0].id }
+    });
+
+    const res = await request(app)
+      .post('/api/v1/quiz/next_card')
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.card.type).toBe('quiz_card');
+    expect(res.body.card.wordId).toBe(w2.id); // since w1 is excluded
+
+    const userState = await prisma.userState.findUnique({ where: { userId } });
+    expect(userState?.showVariants).toBe(false);
+    expect(userState?.showDefinitionTranslation).toBe(false);
+    expect(userState?.currentWordId).toBe(w2.id);
+  });
+
+  it('should get next definition', async () => {
+    // Create a word with 2 definitions
+    const word = await prisma.word.create({ 
+      data: { 
+        userId, 
+        text: 'pear', 
+        definitions: { 
+          create: [{ text: 'a green fruit' }, { text: 'a sweet fruit' }] 
+        } 
+      },
+      include: { definitions: true } 
+    });
+    
+    await prisma.userState.update({
+      where: { userId },
+      data: { mode: 'QUIZ', currentWordId: word.id, currentDefinitionId: word.definitions[0].id }
+    });
+
+    const res = await request(app)
+      .post('/api/v1/quiz/next_definition')
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.card.type).toBe('quiz_card');
+    expect(res.body.card.definition.id).toBe(word.definitions[1].id); // since def 0 is excluded
+    
+    const userState = await prisma.userState.findUnique({ where: { userId } });
+    expect(userState?.showVariants).toBe(false);
+    expect(userState?.showDefinitionTranslation).toBe(false);
+    expect(userState?.currentDefinitionId).toBe(word.definitions[1].id);
+  });
 });

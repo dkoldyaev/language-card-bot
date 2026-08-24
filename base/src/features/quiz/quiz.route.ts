@@ -4,7 +4,7 @@ import { getAuthUser } from '../auth/auth.service';
 import { prisma } from '../../prisma';
 import { publishEvent } from '../event_bus/event_bus.service';
 import { QuizCardMercureEvent, QuizVariantsMercureEvent, QuizDefinitionTranslationMercureEvent, QuizAnswerEvaluationMercureEvent } from '../event_bus/event_bus.type';
-import { generateQuizCard, getQuizVariants } from './quiz.service';
+import { generateQuizCard, getQuizVariants, getNextDefinition } from './quiz.service';
 import { evaluateSuggestion } from './evaluation.service';
 import { enqueueQuizCleanup } from './quiz_cleanup.queue';
 import { UserMode } from '@prisma/client';
@@ -165,6 +165,93 @@ router.post('/answer', authMiddleware, async (req: Request, res: Response) => {
     res.json({ message: 'Answer evaluated', evaluation: event });
   } catch (error) {
     console.error('Failed to evaluate quiz answer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/next_card', authMiddleware, async (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  
+  try {
+    const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
+    if (!userState || userState.mode !== UserMode.QUIZ) {
+      return res.status(400).json({ error: 'Quiz not active' });
+    }
+
+    const cardData = await generateQuizCard(user.id, userState.currentWordId || undefined);
+    
+    if (!cardData) {
+      return res.status(400).json({ error: 'Not enough words to pick a new card' });
+    }
+
+    await prisma.userState.update({
+      where: { userId: user.id },
+      data: {
+        showVariants: false,
+        showDefinitionTranslation: false,
+        currentDefinitionId: cardData.definition.id,
+        currentWordId: cardData.word.id
+      }
+    });
+
+    const event: QuizCardMercureEvent = {
+      version: 'v1',
+      type: 'quiz_card',
+      wordId: cardData.word.id,
+      definition: {
+        id: cardData.definition.id,
+        text: cardData.definition.text,
+        translation: cardData.definition.translation?.text || null
+      }
+    };
+    
+    await publishEvent(user.username, event);
+    res.json({ message: 'Next card generated', card: event });
+  } catch (error) {
+    console.error('Failed to generate next quiz card:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/next_definition', authMiddleware, async (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+
+  try {
+    const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
+    if (!userState || userState.mode !== UserMode.QUIZ || !userState.currentWordId || !userState.currentDefinitionId) {
+      return res.status(400).json({ error: 'Quiz not active or current word/definition not set' });
+    }
+
+    const definition = await getNextDefinition(userState.currentWordId, userState.currentDefinitionId);
+
+    if (!definition) {
+      return res.status(404).json({ error: 'Definition not found' });
+    }
+
+    await prisma.userState.update({
+      where: { userId: user.id },
+      data: {
+        showVariants: false,
+        showDefinitionTranslation: false,
+        currentDefinitionId: definition.id
+      }
+    });
+
+    const event: QuizCardMercureEvent = {
+      version: 'v1',
+      type: 'quiz_card',
+      wordId: userState.currentWordId,
+      definition: {
+        id: definition.id,
+        text: definition.text,
+        translation: definition.translation?.text || null
+      }
+    };
+
+    await publishEvent(user.username, event);
+    res.json({ message: 'Next definition fetched', card: event });
+  } catch (error) {
+    console.error('Failed to fetch next definition:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -28,5 +28,5 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 
 ### Cleanup & Navigation
 - [x] **Quiz Cleanup Background Task**: Implement a delayed job/worker (triggered ~2 seconds after an answer) that sends Mercure events instructing the client to delete the quiz message, user suggestions, and answer reactions.
-- [ ] **Next Card API (`/api/v1/quiz/next_card`)**: Implement an endpoint that resets the quiz state flags (`showVariants`, `showDefinitionTranslation`), calls the Quiz Generation Service to select a *new word*, updates the state, and sends the new card via a Mercure event.
-- [ ] **Next Definition API (`/api/v1/quiz/next_definition`)**: Implement an endpoint that resets the quiz state flags, selects a *different random definition* for the *currently active word*, updates the state, and sends the updated card via a Mercure event.
+- [x] **Next Card API (`/api/v1/quiz/next_card`)**: Implement an endpoint that resets the quiz state flags (`showVariants`, `showDefinitionTranslation`), calls the Quiz Generation Service to select a *new word*, updates the state, and sends the new card via a Mercure event.
+- [x] **Next Definition API (`/api/v1/quiz/next_definition`)**: Implement an endpoint that resets the quiz state flags, selects a *different random definition* for the *currently active word*, updates the state, and sends the updated card via a Mercure event.

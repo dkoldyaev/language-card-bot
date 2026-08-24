@@ -238,4 +238,78 @@ describe('Quiz Route', () => {
       }));
     });
   });
+
+  describe('POST /api/v1/quiz/next_card', () => {
+    it('should generate next card and update state', async () => {
+      const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
+      
+      prismaMock.userState.findUnique.mockResolvedValue({
+        mode: UserMode.QUIZ,
+        currentWordId: 10
+      } as any);
+
+      vi.spyOn(quizService, 'generateQuizCard').mockResolvedValue({
+        word: { id: 20, text: 'banana' },
+        definition: { id: 200, text: 'yellow fruit', translation: { text: 'банан' } }
+      } as any);
+
+      prismaMock.userState.update.mockResolvedValue({} as any);
+
+      const res = await request(app)
+        .post('/api/v1/quiz/next_card')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(prismaMock.userState.update).toHaveBeenCalledWith({
+        where: { userId: 1 },
+        data: {
+          showVariants: false,
+          showDefinitionTranslation: false,
+          currentDefinitionId: 200,
+          currentWordId: 20
+        }
+      });
+      expect(publishEvent).toHaveBeenCalledWith('test_user', expect.objectContaining({
+        type: 'quiz_card',
+        wordId: 20
+      }));
+    });
+  });
+
+  describe('POST /api/v1/quiz/next_definition', () => {
+    it('should fetch next definition and update state', async () => {
+      const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
+      
+      prismaMock.userState.findUnique.mockResolvedValue({
+        mode: UserMode.QUIZ,
+        currentWordId: 10,
+        currentDefinitionId: 100
+      } as any);
+
+      vi.spyOn(quizService, 'getNextDefinition').mockResolvedValue({
+        id: 101, text: 'another fruit', translation: { text: 'другой фрукт' }
+      } as any);
+
+      prismaMock.userState.update.mockResolvedValue({} as any);
+
+      const res = await request(app)
+        .post('/api/v1/quiz/next_definition')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(prismaMock.userState.update).toHaveBeenCalledWith({
+        where: { userId: 1 },
+        data: {
+          showVariants: false,
+          showDefinitionTranslation: false,
+          currentDefinitionId: 101
+        }
+      });
+      expect(publishEvent).toHaveBeenCalledWith('test_user', expect.objectContaining({
+        type: 'quiz_card',
+        wordId: 10,
+        definition: expect.objectContaining({ id: 101 })
+      }));
+    });
+  });
 });

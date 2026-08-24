@@ -78,4 +78,25 @@ describe('Quiz Service', () => {
       select: { id: true, text: true }
     });
   });
+
+  describe('getNextDefinition', () => {
+    it('should return null if word not found', async () => {
+      prismaMock.word.findUnique.mockResolvedValue(null);
+      const result = await quizService.getNextDefinition(10, 100);
+      expect(result).toBeNull();
+    });
+
+    it('should return another definition if available', async () => {
+      prismaMock.word.findUnique.mockResolvedValue({
+        id: 10,
+        definitions: [
+          { id: 100, text: 'd1' },
+          { id: 101, text: 'd2' }
+        ]
+      } as any);
+
+      const result = await quizService.getNextDefinition(10, 100);
+      expect(result?.id).toBe(101);
+    });
+  });
 });

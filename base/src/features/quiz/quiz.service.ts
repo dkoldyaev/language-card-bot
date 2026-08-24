@@ -6,10 +6,11 @@ export type QuizCardData = {
   definition: Definition & { translation: DefinitionTranslation | null };
 };
 
-export async function generateQuizCard(userId: number): Promise<QuizCardData | null> {
+export async function generateQuizCard(userId: number, excludeWordId?: number): Promise<QuizCardData | null> {
   const wordsWithDefs = await prisma.word.findMany({
     where: {
       userId,
+      ...(excludeWordId ? { id: { not: excludeWordId } } : {}),
       definitions: {
         some: {} // Must have at least one definition
       }
@@ -18,6 +19,8 @@ export async function generateQuizCard(userId: number): Promise<QuizCardData | n
   });
 
   if (wordsWithDefs.length === 0) {
+    // If we excluded the current word and no other words exist, maybe return null,
+    // but the caller can handle it or we can fallback to any word if length is 0.
     return null;
   }
 
@@ -49,6 +52,26 @@ export async function generateQuizCard(userId: number): Promise<QuizCardData | n
     },
     definition: randomDef
   };
+}
+
+export async function getNextDefinition(wordId: number, currentDefinitionId: number): Promise<QuizCardData['definition'] | null> {
+  const word = await prisma.word.findUnique({
+    where: { id: wordId },
+    include: {
+      definitions: {
+        include: { translation: true }
+      }
+    }
+  });
+
+  if (!word || word.definitions.length === 0) {
+    return null;
+  }
+
+  const otherDefs = word.definitions.filter(d => d.id !== currentDefinitionId);
+  const pool = otherDefs.length > 0 ? otherDefs : word.definitions; // Fallback to current if it's the only one
+  
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 export async function getQuizVariants(userId: number, currentWordId: number): Promise<{ id: number; text: string }[]> {
