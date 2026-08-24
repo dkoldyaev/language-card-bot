@@ -197,5 +197,11 @@ describe('Quiz E2E', () => {
     await checkAnswer('strawberry', 'SUCCESS', '✅');
     await checkAnswer('strawbery', 'CLOSE_MATCH', '⚠️'); // 1 typo
     await checkAnswer('stabery', 'INCORRECT', '❌'); // 3 typos
+
+    // Wait for the cleanup event (2 seconds delay in queue)
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    const cleanupEvent = messages.find(m => m.type === 'quiz_cleanup');
+    expect(cleanupEvent).toBeDefined();
+    expect(cleanupEvent.type).toBe('quiz_cleanup');
   });
 });

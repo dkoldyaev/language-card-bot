@@ -6,6 +6,7 @@ import { publishEvent } from '../event_bus/event_bus.service';
 import { QuizCardMercureEvent, QuizVariantsMercureEvent, QuizDefinitionTranslationMercureEvent, QuizAnswerEvaluationMercureEvent } from '../event_bus/event_bus.type';
 import { generateQuizCard, getQuizVariants } from './quiz.service';
 import { evaluateSuggestion } from './evaluation.service';
+import { enqueueQuizCleanup } from './quiz_cleanup.queue';
 import { UserMode } from '@prisma/client';
 
 const router = Router();
@@ -159,6 +160,7 @@ router.post('/answer', authMiddleware, async (req: Request, res: Response) => {
     };
 
     await publishEvent(user.username, event);
+    await enqueueQuizCleanup(user.username);
 
     res.json({ message: 'Answer evaluated', evaluation: event });
   } catch (error) {

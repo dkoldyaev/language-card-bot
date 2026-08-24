@@ -12,6 +12,9 @@ vi.mock('../../prisma');
 vi.mock('../event_bus/event_bus.service', () => ({
   publishEvent: vi.fn()
 }));
+vi.mock('./quiz_cleanup.queue', () => ({
+  enqueueQuizCleanup: vi.fn()
+}));
 
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
@@ -199,6 +202,39 @@ describe('Quiz Route', () => {
       expect(publishEvent).toHaveBeenCalledWith('test_user', expect.objectContaining({
         type: 'quiz_definition_translation',
         translation: 'привет'
+      }));
+    });
+  });
+
+  describe('POST /api/v1/quiz/answer', () => {
+    it('should evaluate answer and enqueue cleanup', async () => {
+      const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
+      
+      prismaMock.userState.findUnique.mockResolvedValue({
+        mode: UserMode.QUIZ,
+        currentWordId: 10
+      } as any);
+
+      prismaMock.word.findUnique.mockResolvedValue({
+        id: 10,
+        text: 'apple'
+      } as any);
+
+      const res = await request(app)
+        .post('/api/v1/quiz/answer')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ suggestion: 'apple' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.evaluation.result).toBe('SUCCESS');
+      
+      const { enqueueQuizCleanup } = await import('./quiz_cleanup.queue');
+      expect(enqueueQuizCleanup).toHaveBeenCalledWith('test_user');
+      
+      expect(publishEvent).toHaveBeenCalledWith('test_user', expect.objectContaining({
+        type: 'quiz_answer_evaluation',
+        result: 'SUCCESS',
+        suggestion: 'apple'
       }));
     });
   });
