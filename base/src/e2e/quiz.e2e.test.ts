@@ -166,4 +166,36 @@ describe('Quiz E2E', () => {
     expect(event).toBeDefined();
     expect(event.translation).toBe('яблоко');
   });
+
+  it('should evaluate answers correctly and send event', async () => {
+    const word = await prisma.word.create({ data: { userId, text: 'strawberry' } });
+
+    await prisma.userState.update({
+      where: { userId },
+      data: { mode: UserMode.QUIZ, currentWordId: word.id }
+    });
+
+    const checkAnswer = async (suggestion: string, expectedResult: string, expectedEmoji: string) => {
+      const res = await request(app)
+        .post('/api/v1/quiz/answer')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ suggestion });
+      
+      expect(res.status).toBe(200);
+      expect(res.body.evaluation.result).toBe(expectedResult);
+      expect(res.body.evaluation.emoji).toBe(expectedEmoji);
+
+      // We might have multiple answer events in a row, let's just check the last one
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const answerEvents = messages.filter(m => m.type === 'quiz_answer_evaluation');
+      const lastEvent = answerEvents[answerEvents.length - 1];
+      expect(lastEvent.result).toBe(expectedResult);
+      expect(lastEvent.emoji).toBe(expectedEmoji);
+      expect(lastEvent.suggestion).toBe(suggestion);
+    };
+
+    await checkAnswer('strawberry', 'SUCCESS', '✅');
+    await checkAnswer('strawbery', 'CLOSE_MATCH', '⚠️'); // 1 typo
+    await checkAnswer('stabery', 'INCORRECT', '❌'); // 3 typos
+  });
 });

@@ -3,8 +3,9 @@ import { authMiddleware } from '../../middleware/auth';
 import { getAuthUser } from '../auth/auth.service';
 import { prisma } from '../../prisma';
 import { publishEvent } from '../event_bus/event_bus.service';
-import { QuizCardMercureEvent, QuizVariantsMercureEvent, QuizDefinitionTranslationMercureEvent } from '../event_bus/event_bus.type';
+import { QuizCardMercureEvent, QuizVariantsMercureEvent, QuizDefinitionTranslationMercureEvent, QuizAnswerEvaluationMercureEvent } from '../event_bus/event_bus.type';
 import { generateQuizCard, getQuizVariants } from './quiz.service';
+import { evaluateSuggestion } from './evaluation.service';
 import { UserMode } from '@prisma/client';
 
 const router = Router();
@@ -117,6 +118,51 @@ router.post('/translate_definition', authMiddleware, async (req: Request, res: R
     res.json({ message: 'Translation fetched', translation: definition.translation.text });
   } catch (error) {
     console.error('Failed to get definition translation:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/answer', authMiddleware, async (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+  const { suggestion } = req.body;
+
+  if (typeof suggestion !== 'string' || !suggestion.trim()) {
+    return res.status(400).json({ error: 'Suggestion must be a non-empty string' });
+  }
+
+  try {
+    const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
+
+    if (!userState || userState.mode !== UserMode.QUIZ || !userState.currentWordId) {
+      return res.status(400).json({ error: 'Quiz not active or current word not set' });
+    }
+
+    const word = await prisma.word.findUnique({
+      where: { id: userState.currentWordId }
+    });
+
+    if (!word) {
+      return res.status(404).json({ error: 'Word not found' });
+    }
+
+    const result = evaluateSuggestion(suggestion, word.text);
+    let emoji = '❌';
+    if (result === 'SUCCESS') emoji = '✅';
+    else if (result === 'CLOSE_MATCH') emoji = '⚠️';
+
+    const event: QuizAnswerEvaluationMercureEvent = {
+      version: 'v1',
+      type: 'quiz_answer_evaluation',
+      result,
+      emoji,
+      suggestion: suggestion.trim()
+    };
+
+    await publishEvent(user.username, event);
+
+    res.json({ message: 'Answer evaluated', evaluation: event });
+  } catch (error) {
+    console.error('Failed to evaluate quiz answer:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

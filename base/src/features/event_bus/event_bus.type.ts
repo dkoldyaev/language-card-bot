@@ -78,6 +78,13 @@ export interface QuizDefinitionTranslationMercureEvent extends BaseMercureEvent 
   translation: string;
 }
 
+export interface QuizAnswerEvaluationMercureEvent extends BaseMercureEvent {
+  type: 'quiz_answer_evaluation';
+  result: 'SUCCESS' | 'CLOSE_MATCH' | 'INCORRECT';
+  emoji: string;
+  suggestion: string;
+}
+
 export type MercureEvent = 
   | StateSyncMercureEvent 
   | EchoMercureEvent 
@@ -88,4 +95,5 @@ export type MercureEvent =
   | DictionaryAddDefinitionProcessedEvent
   | QuizCardMercureEvent
   | QuizVariantsMercureEvent
-  | QuizDefinitionTranslationMercureEvent;
+  | QuizDefinitionTranslationMercureEvent
+  | QuizAnswerEvaluationMercureEvent;

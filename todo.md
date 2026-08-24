@@ -23,8 +23,8 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 - [x] **Quiz Translate Definition API (`/api/v1/quiz/translate_definition`)**: Implement an endpoint that sets `showDefinitionTranslation` to true in `UserState`, fetches the translation for the currently active definition, and sends it via a Mercure event.
 
 ### Answer Processing & Evaluation
-- [ ] **Suggestion Evaluation Utility**: Implement a string comparison service to evaluate user text suggestions against the correct word (handling exact matches, detecting close matches/typos using a distance algorithm like Levenshtein, and identifying incorrect answers).
-- [ ] **Answer Submission API (`/api/v1/quiz/answer`)**: Implement an endpoint that receives the user's text suggestion, evaluates it using the Evaluation Utility, and sends a Mercure event with the evaluation result (success emoji, close match emoji, or sad emoji).
+- [x] **Suggestion Evaluation Utility**: Implement a string comparison service to evaluate user text suggestions against the correct word (handling exact matches, detecting close matches/typos using a distance algorithm like Levenshtein, and identifying incorrect answers).
+- [x] **Answer Submission API (`/api/v1/quiz/answer`)**: Implement an endpoint that receives the user's text suggestion, evaluates it using the Evaluation Utility, and sends a Mercure event with the evaluation result (success emoji, close match emoji, or sad emoji).
 
 ### Cleanup & Navigation
 - [ ] **Quiz Cleanup Background Task**: Implement a delayed job/worker (triggered ~2 seconds after an answer) that sends Mercure events instructing the client to delete the quiz message, user suggestions, and answer reactions.
