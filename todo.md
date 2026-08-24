@@ -44,7 +44,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 - [x] **React App Initialization**: Set up a new React project (e.g., using Vite) with TypeScript in a `frontend` directory.
 - [x] **Material-UI Setup**: Install and configure `@mui/material`, `@emotion/react`, `@emotion/styled`. Set up a custom theme with visually appealing defaults (dark/light mode support if needed).
 - [x] **Routing Implementation**: Install `react-router-dom` and configure routing for main pages: `/settings`, `/dictionary/add`, `/dictionary/edit`, `/quiz`, and a default `/` Welcome page.
-- [ ] **Base Layout Component**: Create a main layout component (e.g., Navigation bar or Drawer, Main content area) to wrap all pages and handle simple mode switching.
+- [x] **Base Layout Component**: Create a main layout component (e.g., Navigation bar or Drawer, Main content area) to wrap all pages and handle simple mode switching.
 
 ### 2. State Management & API Services
 - [ ] **Zustand Store - Global & Auth**: Create a Zustand store to handle authentication (JWT token), user profile (`/api/v1/auth/me`), and global application state.
