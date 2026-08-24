@@ -37,3 +37,40 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 - [x] **Dictionary Fetch API (`GET /api/v1/dictionary`)**: Implement an endpoint to return the user's entire dictionary (all words, definitions, and translations) so the web app can render the "Edit dictionary" view without relying on chat messages.
 - [x] **Quiz State Hydration (Enrichment)**: Update the `POST /api/v1/state/sync` endpoint so that when returning the `QUIZ` state, it includes the actual text of the current word and definition (instead of just their IDs), allowing the frontend to immediately render the card upon reload.
 - [x] **Session Validation API (`GET /api/v1/auth/me`)**: Implement a simple endpoint that takes the JWT token from the Authorization header and returns the current user's profile (`id`, `username`) to easily re-validate sessions in the browser.
+
+## Pending Tasks (Frontend - React + Zustand + Material-UI)
+
+### 1. Foundation & Routing
+- [ ] **React App Initialization**: Set up a new React project (e.g., using Vite) with TypeScript in a `frontend` directory.
+- [ ] **Material-UI Setup**: Install and configure `@mui/material`, `@emotion/react`, `@emotion/styled`. Set up a custom theme with visually appealing defaults (dark/light mode support if needed).
+- [ ] **Routing Implementation**: Install `react-router-dom` and configure routing for main pages: `/settings`, `/dictionary/add`, `/dictionary/edit`, `/quiz`, and a default `/` Welcome page.
+- [ ] **Base Layout Component**: Create a main layout component (e.g., Navigation bar or Drawer, Main content area) to wrap all pages and handle simple mode switching.
+
+### 2. State Management & API Services
+- [ ] **Zustand Store - Global & Auth**: Create a Zustand store to handle authentication (JWT token), user profile (`/api/v1/auth/me`), and global application state.
+- [ ] **API Client Service**: Implement an Axios (or fetch) wrapper configured with the base API URL and an interceptor to automatically attach the Authorization token.
+- [ ] **Mercure Event Listener Setup**: Create a React hook or service to connect to the Mercure Hub, listen to server-sent events, and dispatch updates to the Zustand store.
+- [ ] **State Sync Hydration**: Implement a call to `POST /api/v1/state/sync` on app load/login to hydrate the Zustand store with the initial state (including Quiz state).
+
+### 3. Settings Mode (`/settings`)
+- [ ] **Settings UI Components**: Create Material-UI forms/selects for setting "Base Language", "Learned Language", and "Level".
+- [ ] **Settings API Integration**: Connect the settings form to the `/api/v1/settings` endpoint to save user preferences, updating the Zustand store on success.
+
+### 4. Dictionary: Add Word (`/dictionary/add`)
+- [ ] **Add Word UI Component**: Create a multiline text area (Material-UI TextField) for users to input multiple words (one per line) and a submit button.
+- [ ] **Add Word Submission API**: Connect the submit button to the `/api/v1/add_word` endpoint.
+- [ ] **Word Processing Real-time Status**: Implement a UI component (e.g., a List) that displays the words being processed and updates their status in real-time based on Mercure events stored in Zustand.
+
+### 5. Dictionary: Edit Dictionary (`/dictionary/edit`)
+- [ ] **Dictionary Fetch API & Store**: Implement the call to `GET /api/v1/dictionary` on page load and store the entire dictionary data in Zustand.
+- [ ] **Dictionary List View**: Create a Material-UI component (e.g., Accordion or List) to display all words with their definitions and translations.
+- [ ] **Delete Word Logic**: Implement a "Delete" button with a confirmation dialog for each word, triggering the `/api/v1/word_delete` endpoint.
+- [ ] **Definition Editing UI & API**: Implement inline editing (or a dialog) for definition texts and translations, connecting them to `/api/v1/definition_edit` and `/api/v1/definition_translate_edit`.
+- [ ] **Definition Add/Delete Logic**: Implement UI and actions to add a new definition (`/api/v1/definition_add`) or delete an existing one (`/api/v1/definition_delete`).
+
+### 6. Quiz Mode (`/quiz`)
+- [ ] **Quiz Start & Card UI**: Create the main Quiz view with a "Start Quiz" button (`/api/v1/quiz/start`). Create a Card component to display the current word/definition based on the Quiz state in Zustand.
+- [ ] **Quiz Suggestion Input**: Add a TextField for the user to type their answer (suggestion) and a submit button. Connect to `/api/v1/quiz/answer` and display the result emoji/message (Success, Sad, Close Match).
+- [ ] **Quiz Card Controls**: Add buttons for "Translate definition" (`/api/v1/quiz/translate_definition`), "Another definition" (`/api/v1/quiz/next_definition`), and "Show variants" (`/api/v1/quiz/variants`).
+- [ ] **Quiz Variants Display**: Implement UI to display the 5 wrong variants when "Show variants" is active. Allow clicking a variant to submit it.
+- [ ] **Quiz Next Card Logic**: Implement a "Next card" button connected to `/api/v1/quiz/next_card` to proceed to the next word.
