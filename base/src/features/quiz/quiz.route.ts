@@ -3,7 +3,7 @@ import { authMiddleware } from '../../middleware/auth';
 import { getAuthUser } from '../auth/auth.service';
 import { prisma } from '../../prisma';
 import { publishEvent } from '../event_bus/event_bus.service';
-import { QuizCardMercureEvent, QuizVariantsMercureEvent } from '../event_bus/event_bus.type';
+import { QuizCardMercureEvent, QuizVariantsMercureEvent, QuizDefinitionTranslationMercureEvent } from '../event_bus/event_bus.type';
 import { generateQuizCard, getQuizVariants } from './quiz.service';
 import { UserMode } from '@prisma/client';
 
@@ -78,6 +78,45 @@ router.post('/variants', authMiddleware, async (req: Request, res: Response) => 
     res.json({ message: 'Variants fetched', variants });
   } catch (error) {
     console.error('Failed to get quiz variants:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/translate_definition', authMiddleware, async (req: Request, res: Response) => {
+  const user = getAuthUser(req);
+
+  try {
+    const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
+
+    if (!userState || userState.mode !== UserMode.QUIZ || !userState.currentDefinitionId) {
+      return res.status(400).json({ error: 'Quiz not active or current definition not set' });
+    }
+
+    const definition = await prisma.definition.findUnique({
+      where: { id: userState.currentDefinitionId },
+      include: { translation: true }
+    });
+
+    if (!definition || !definition.translation) {
+      return res.status(404).json({ error: 'Translation not found for current definition' });
+    }
+
+    await prisma.userState.update({
+      where: { userId: user.id },
+      data: { showDefinitionTranslation: true }
+    });
+
+    const event: QuizDefinitionTranslationMercureEvent = {
+      version: 'v1',
+      type: 'quiz_definition_translation',
+      translation: definition.translation.text
+    };
+
+    await publishEvent(user.username, event);
+
+    res.json({ message: 'Translation fetched', translation: definition.translation.text });
+  } catch (error) {
+    console.error('Failed to get definition translation:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

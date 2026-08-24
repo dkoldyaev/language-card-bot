@@ -20,7 +20,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 
 ### Quiz Interactions
 - [x] **Quiz Variants API (`/api/v1/quiz/variants`)**: Implement an endpoint that fetches 5 random incorrect words from the user's dictionary, updates `showVariants` to true in `UserState`, and sends the variants list via a Mercure event.
-- [ ] **Quiz Translate Definition API (`/api/v1/quiz/translate_definition`)**: Implement an endpoint that sets `showDefinitionTranslation` to true in `UserState`, fetches the translation for the currently active definition, and sends it via a Mercure event.
+- [x] **Quiz Translate Definition API (`/api/v1/quiz/translate_definition`)**: Implement an endpoint that sets `showDefinitionTranslation` to true in `UserState`, fetches the translation for the currently active definition, and sends it via a Mercure event.
 
 ### Answer Processing & Evaluation
 - [ ] **Suggestion Evaluation Utility**: Implement a string comparison service to evaluate user text suggestions against the correct word (handling exact matches, detecting close matches/typos using a distance algorithm like Levenshtein, and identifying incorrect answers).

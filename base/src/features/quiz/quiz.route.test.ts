@@ -137,4 +137,69 @@ describe('Quiz Route', () => {
       }));
     });
   });
+
+  describe('POST /api/v1/quiz/translate_definition', () => {
+    it('should return 400 if user state is not QUIZ or no currentDefinitionId', async () => {
+      const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
+      prismaMock.userState.findUnique.mockResolvedValue({ mode: UserMode.QUIZ, currentDefinitionId: null } as any);
+
+      const res = await request(app)
+        .post('/api/v1/quiz/translate_definition')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Quiz not active or current definition not set');
+    });
+
+    it('should return 404 if definition translation not found', async () => {
+      const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
+      
+      prismaMock.userState.findUnique.mockResolvedValue({
+        mode: UserMode.QUIZ,
+        currentDefinitionId: 100
+      } as any);
+
+      prismaMock.definition.findUnique.mockResolvedValue({ id: 100, translation: null } as any);
+
+      const res = await request(app)
+        .post('/api/v1/quiz/translate_definition')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('Translation not found for current definition');
+    });
+
+    it('should return translation and publish event', async () => {
+      const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
+      
+      prismaMock.userState.findUnique.mockResolvedValue({
+        mode: UserMode.QUIZ,
+        currentDefinitionId: 100
+      } as any);
+
+      prismaMock.definition.findUnique.mockResolvedValue({
+        id: 100,
+        translation: { id: 1000, text: 'привет' }
+      } as any);
+
+      prismaMock.userState.update.mockResolvedValue({} as any);
+
+      const res = await request(app)
+        .post('/api/v1/quiz/translate_definition')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.translation).toBe('привет');
+
+      expect(prismaMock.userState.update).toHaveBeenCalledWith({
+        where: { userId: 1 },
+        data: { showDefinitionTranslation: true }
+      });
+
+      expect(publishEvent).toHaveBeenCalledWith('test_user', expect.objectContaining({
+        type: 'quiz_definition_translation',
+        translation: 'привет'
+      }));
+    });
+  });
 });

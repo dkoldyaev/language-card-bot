@@ -130,4 +130,40 @@ describe('Quiz E2E', () => {
     expect(event).toBeDefined();
     expect(event.variants.length).toBeGreaterThan(0);
   });
+
+  it('should fetch definition translation successfully and update state', async () => {
+    const word = await prisma.word.create({
+      data: {
+        userId,
+        text: 'apple',
+        definitions: {
+          create: {
+            text: 'a fruit',
+            translation: { create: { text: 'яблоко' } }
+          }
+        }
+      },
+      include: { definitions: true }
+    });
+
+    await prisma.userState.update({
+      where: { userId },
+      data: { mode: UserMode.QUIZ, currentDefinitionId: word.definitions[0].id }
+    });
+
+    const res = await request(app)
+      .post('/api/v1/quiz/translate_definition')
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.translation).toBe('яблоко');
+
+    const userState = await prisma.userState.findUnique({ where: { userId } });
+    expect(userState?.showDefinitionTranslation).toBe(true);
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const event = messages.find(m => m.type === 'quiz_definition_translation');
+    expect(event).toBeDefined();
+    expect(event.translation).toBe('яблоко');
+  });
 });
