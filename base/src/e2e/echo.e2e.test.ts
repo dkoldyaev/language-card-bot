@@ -38,14 +38,20 @@ describe('Echo E2E', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .send(echoPayload);
 
-    expect(echoRes.status).toBe(200);
-    expect(echoRes.body.message).toBe('Echo successful');
-    expect(echoRes.body.data).toEqual(echoPayload);
+    expect(echoRes).toMatchObject({
+      status: 200,
+      body: {
+        message: 'Echo successful',
+        data: echoPayload
+      }
+    });
 
     // Даем время на доставку сообщения Echo
     await new Promise(resolve => setTimeout(resolve, 500));
     const echoEvent = messages.find(m => m.type === 'echo');
-    expect(echoEvent).toBeDefined();
-    expect(echoEvent.data).toEqual(echoPayload);
+    expect(echoEvent).toMatchObject({
+      type: 'echo',
+      data: echoPayload
+    });
   });
 });

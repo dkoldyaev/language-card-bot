@@ -37,13 +37,18 @@ describe('Dictionary Modes E2E', () => {
       .post('/api/v1/switch_mode_dictionary_view')
       .set('Authorization', `Bearer ${userToken}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.message).toBe('Switched to dictionary view');
+    expect(res).toMatchObject({
+      status: 200,
+      body: { message: 'Switched to dictionary view' }
+    });
 
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const event = messages.find(m => m.type === 'state_sync' && m.mode === UserMode.DICTIONARY_VIEW);
-    expect(event).toBeDefined();
+    expect(event).toMatchObject({
+      type: 'state_sync',
+      mode: UserMode.DICTIONARY_VIEW
+    });
 
     const userInDb = await prisma.user.findUnique({
       where: { username: testUsername },
@@ -59,12 +64,17 @@ describe('Dictionary Modes E2E', () => {
       .post('/api/v1/switch_mode_dictionary_add')
       .set('Authorization', `Bearer ${userToken}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.message).toBe('Switched to dictionary add view');
+    expect(res).toMatchObject({
+      status: 200,
+      body: { message: 'Switched to dictionary add view' }
+    });
 
     await new Promise(resolve => setTimeout(resolve, 500));
     const event = messages.find(m => m.type === 'state_sync' && m.mode === UserMode.DICTIONARY_ADD);
-    expect(event).toBeDefined();
+    expect(event).toMatchObject({
+      type: 'state_sync',
+      mode: UserMode.DICTIONARY_ADD
+    });
 
     const userInDb = await prisma.user.findUnique({
       where: { username: testUsername },
@@ -80,12 +90,17 @@ describe('Dictionary Modes E2E', () => {
       .post('/api/v1/switch_mode_dictionary_edit')
       .set('Authorization', `Bearer ${userToken}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.message).toBe('Switched to dictionary edit view');
+    expect(res).toMatchObject({
+      status: 200,
+      body: { message: 'Switched to dictionary edit view' }
+    });
 
     await new Promise(resolve => setTimeout(resolve, 500));
     const event = messages.find(m => m.type === 'state_sync' && m.mode === UserMode.EDITING_DICTIONARY);
-    expect(event).toBeDefined();
+    expect(event).toMatchObject({
+      type: 'state_sync',
+      mode: UserMode.EDITING_DICTIONARY
+    });
 
     const userInDb = await prisma.user.findUnique({
       where: { username: testUsername },

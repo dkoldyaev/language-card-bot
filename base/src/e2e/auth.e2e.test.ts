@@ -21,17 +21,30 @@ describe('Auth E2E', () => {
       .post('/api/v1/auth/register')
       .send({ username: newUser });
 
-    expect(registerRes.status).toBe(200);
-    expect(registerRes.body.user.username).toBe(newUser);
-    expect(registerRes.body).toHaveProperty('token');
+    expect(registerRes).toMatchObject({
+      status: 200,
+      body: {
+        user: {
+          id: expect.any(Number),
+          username: newUser,
+        },
+        token: expect.any(String),
+      }
+    });
 
     // Login
     const loginRes = await request(app)
       .post('/api/v1/auth/login')
       .send({ username: newUser });
 
-    expect(loginRes.status).toBe(200);
-    expect(loginRes.body.user.username).toBe(newUser);
-    expect(loginRes.body).toHaveProperty('token');
+    expect(loginRes).toMatchObject({
+      status: 200,
+      body: {
+        user: {
+          username: newUser,
+        },
+        token: expect.any(String),
+      },
+    });
   });
 });

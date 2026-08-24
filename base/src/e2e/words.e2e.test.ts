@@ -61,8 +61,10 @@ describe('Words E2E', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .send({ word: 'apple' });
 
-    expect(addWordFailRes.status).toBe(403);
-    expect(addWordFailRes.body.error).toBe('User is not in DICTIONARY_ADD mode');
+    expect(addWordFailRes).toMatchObject({
+      status: 403,
+      body: { error: 'User is not in DICTIONARY_ADD mode' }
+    });
 
     // Переключаемся в DICTIONARY_ADD
     await request(app)
@@ -77,8 +79,10 @@ describe('Words E2E', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .send({ word: 'apple' });
 
-    expect(addWordSuccessRes.status).toBe(200);
-    expect(addWordSuccessRes.body.message).toBe('Word added successfully');
+    expect(addWordSuccessRes).toMatchObject({
+      status: 200,
+      body: { message: 'Word added successfully' }
+    });
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -106,36 +110,52 @@ describe('Words E2E', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .send({ word: 'Apple ' });
 
-    expect(duplicateAddRes.status).toBe(200);
-    expect(duplicateAddRes.body.message).toBe('Word already exists');
+    expect(duplicateAddRes).toMatchObject({
+      status: 200,
+      body: { message: 'Word already exists' }
+    });
 
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // Verify Mercure events
     const processingEvents = messages.filter(m => m.type === 'dictionary_add_processing');
     expect(processingEvents.length).toBe(1);
-    expect(processingEvents[0].word).toBe('apple');
+    expect(processingEvents[0]).toMatchObject({
+      type: 'dictionary_add_processing',
+      word: 'apple'
+    });
 
     const defsReceivedEvents = messages.filter(m => m.type === 'dictionary_add_definitions_received');
     expect(defsReceivedEvents.length).toBe(1);
-    expect(defsReceivedEvents[0].definitionsCount).toBe(2);
+    expect(defsReceivedEvents[0]).toMatchObject({
+      type: 'dictionary_add_definitions_received',
+      definitionsCount: 2
+    });
 
     const defProcessedEvents = messages.filter(m => m.type === 'dictionary_add_definition_processed');
     expect(defProcessedEvents.length).toBe(2);
-    expect(defProcessedEvents[0].totalDefinitions).toBe(2);
+    expect(defProcessedEvents[0]).toMatchObject({
+      type: 'dictionary_add_definition_processed',
+      totalDefinitions: 2
+    });
 
     const duplicateEvents = messages.filter(m => m.type === 'dictionary_add_duplicate');
     expect(duplicateEvents.length).toBe(1);
-    expect(duplicateEvents[0].word).toBe('apple');
-    expect(duplicateEvents[0].definitionsCount).toBe(2);
+    expect(duplicateEvents[0]).toMatchObject({
+      type: 'dictionary_add_duplicate',
+      word: 'apple',
+      definitionsCount: 2
+    });
 
     // 4. Delete word
     const deleteRes = await request(app)
       .delete(`/api/v1/word_delete/${createdWord!.id}`)
       .set('Authorization', `Bearer ${userToken}`);
 
-    expect(deleteRes.status).toBe(200);
-    expect(deleteRes.body.message).toBe('Word deleted successfully');
+    expect(deleteRes).toMatchObject({
+      status: 200,
+      body: { message: 'Word deleted successfully' }
+    });
 
     const deletedWord = await prisma.word.findUnique({
       where: { id: createdWord!.id }

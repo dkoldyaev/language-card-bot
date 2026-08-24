@@ -66,9 +66,13 @@ describe('Definitions E2E', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .send({ wordId, text: 'A fruit' });
 
-    expect(addRes.status).toBe(200);
-    expect(addRes.body.message).toBe('Definition added successfully');
-    expect(addRes.body.definitionId).toBeDefined();
+    expect(addRes).toMatchObject({
+      status: 200,
+      body: {
+        message: 'Definition added successfully',
+        definitionId: expect.any(Number)
+      }
+    });
 
     const defId = addRes.body.definitionId;
 
@@ -82,8 +86,10 @@ describe('Definitions E2E', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .send({ text: 'A round fruit' });
 
-    expect(editRes.status).toBe(200);
-    expect(editRes.body.message).toBe('Definition edited successfully');
+    expect(editRes).toMatchObject({
+      status: 200,
+      body: { message: 'Definition edited successfully' }
+    });
 
     definition = await prisma.definition.findUnique({ where: { id: defId } });
     expect(definition?.text).toBe('A round fruit');
@@ -94,8 +100,10 @@ describe('Definitions E2E', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .send({ text: 'Круглый фрукт' });
 
-    expect(transEditRes.status).toBe(200);
-    expect(transEditRes.body.message).toBe('Definition translation edited successfully');
+    expect(transEditRes).toMatchObject({
+      status: 200,
+      body: { message: 'Definition translation edited successfully' }
+    });
 
     const translation = await prisma.definitionTranslation.findFirst({ where: { definitionId: defId } });
     expect(translation?.text).toBe('Круглый фрукт');
@@ -105,8 +113,10 @@ describe('Definitions E2E', () => {
       .delete(`/api/v1/definition_delete/${defId}`)
       .set('Authorization', `Bearer ${userToken}`);
 
-    expect(deleteRes.status).toBe(200);
-    expect(deleteRes.body.message).toBe('Definition deleted successfully');
+    expect(deleteRes).toMatchObject({
+      status: 200,
+      body: { message: 'Definition deleted successfully' }
+    });
 
     const deletedDef = await prisma.definition.findUnique({ where: { id: defId } });
     expect(deletedDef).toBeNull();

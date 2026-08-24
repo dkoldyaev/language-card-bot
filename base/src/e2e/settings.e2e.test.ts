@@ -37,10 +37,16 @@ describe('Settings E2E', () => {
       .get('/api/v1/settings')
       .set('Authorization', `Bearer ${userToken}`);
       
-    expect(getSettingsRes.status).toBe(200);
-    expect(getSettingsRes.body.settings.baseLanguage).toBe('ru');
-    expect(getSettingsRes.body.settings.targetLanguage).toBe('en');
-    expect(getSettingsRes.body.settings.desiredLevel).toBe('B2');
+    expect(getSettingsRes).toMatchObject({
+      status: 200,
+      body: {
+        settings: {
+          baseLanguage: 'ru',
+          targetLanguage: 'en',
+          desiredLevel: 'B2'
+        }
+      }
+    });
 
     // Изменение настроек
     const postSettingsRes = await request(app)
@@ -52,17 +58,28 @@ describe('Settings E2E', () => {
         desiredLevel: 'C1'
       });
 
-    expect(postSettingsRes.status).toBe(200);
-    expect(postSettingsRes.body.settings.baseLanguage).toBe('en');
-    expect(postSettingsRes.body.settings.targetLanguage).toBe('de');
-    expect(postSettingsRes.body.settings.desiredLevel).toBe('C1');
+    expect(postSettingsRes).toMatchObject({
+      status: 200,
+      body: {
+        settings: {
+          baseLanguage: 'en',
+          targetLanguage: 'de',
+          desiredLevel: 'C1'
+        }
+      }
+    });
 
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const settingsEvent1 = messages.find(m => m.type === 'settings_sync' && m.settings?.targetLanguage === 'de');
-    expect(settingsEvent1).toBeDefined();
-    expect(settingsEvent1.settings.baseLanguage).toBe('en');
-    expect(settingsEvent1.settings.desiredLevel).toBe('C1');
+    expect(settingsEvent1).toMatchObject({
+      type: 'settings_sync',
+      settings: {
+        baseLanguage: 'en',
+        targetLanguage: 'de',
+        desiredLevel: 'C1'
+      }
+    });
 
     const userInDbAfterSettings = await prisma.user.findUnique({
       where: { username: testUsername },
@@ -80,15 +97,26 @@ describe('Settings E2E', () => {
         targetLanguage: 'es'
       });
 
-    expect(patchSettingsRes.status).toBe(200);
-    expect(patchSettingsRes.body.settings.baseLanguage).toBe('en');
-    expect(patchSettingsRes.body.settings.targetLanguage).toBe('es');
-    expect(patchSettingsRes.body.settings.desiredLevel).toBe('C1');
+    expect(patchSettingsRes).toMatchObject({
+      status: 200,
+      body: {
+        settings: {
+          baseLanguage: 'en',
+          targetLanguage: 'es',
+          desiredLevel: 'C1'
+        }
+      }
+    });
 
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const settingsEvent2 = messages.find(m => m.type === 'settings_sync' && m.settings?.targetLanguage === 'es');
-    expect(settingsEvent2).toBeDefined();
+    expect(settingsEvent2).toMatchObject({
+      type: 'settings_sync',
+      settings: {
+        targetLanguage: 'es'
+      }
+    });
     
     const userInDbAfterPatch = await prisma.user.findUnique({
       where: { username: testUsername },
