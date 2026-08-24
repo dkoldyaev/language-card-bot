@@ -31,6 +31,28 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
       currentDefinitionId: userState.currentDefinitionId
     };
 
+    if (userState.mode === UserMode.QUIZ) {
+      if (userState.currentWordId) {
+        const word = await prisma.word.findUnique({ where: { id: userState.currentWordId } });
+        if (word) {
+          payload.currentWord = { id: word.id, text: word.text };
+        }
+      }
+      if (userState.currentDefinitionId) {
+        const definition = await prisma.definition.findUnique({
+          where: { id: userState.currentDefinitionId },
+          include: { translation: true }
+        });
+        if (definition) {
+          payload.currentDefinition = {
+            id: definition.id,
+            text: definition.text,
+            translation: definition.translation?.text || null
+          };
+        }
+      }
+    }
+
     try {
       await publishEvent(username, payload);
     } catch (e) {

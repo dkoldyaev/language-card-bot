@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import app from '../../app';
 import { prisma } from '../../prisma';
 import { mockDeep, mockReset } from 'vitest-mock-extended';
@@ -10,6 +11,8 @@ vi.mock('../../prisma');
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Auth Endpoints', () => {
+  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+
   beforeEach(() => {
     mockReset(prismaMock);
   });
@@ -65,5 +68,23 @@ describe('Auth Endpoints', () => {
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error', 'Validation failed');
     expect(res.body).toHaveProperty('details');
+  });
+
+  it('should get current user profile for /me', async () => {
+    const userId = 42;
+    const username = 'test_user';
+    const token = jwt.sign({ id: userId, username }, JWT_SECRET, { expiresIn: '1h' });
+
+    const res = await request(app)
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      user: {
+        id: userId,
+        username
+      }
+    });
   });
 });

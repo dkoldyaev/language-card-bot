@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../prisma';
 import { validateRequest } from '../../middleware/validate';
+import { authMiddleware } from '../../middleware/auth';
+import { getAuthUser } from './auth.service';
 import { AuthRequestSchema, AuthRequest, AuthResponse } from './auth.type';
 import { UserMode } from '@prisma/client';
 
@@ -51,6 +53,11 @@ router.post('/login', validateRequest(AuthRequestSchema), async (req: Request<{}
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+router.get('/me', authMiddleware, async (req: Request, res: Response) => {
+  const { id: userId, username } = getAuthUser(req);
+  res.json({ user: { id: userId, username } });
 });
 
 export default router;

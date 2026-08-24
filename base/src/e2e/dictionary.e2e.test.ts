@@ -137,11 +137,21 @@ describe('Dictionary Modes E2E', () => {
 
     expect(res).toMatchObject({
       status: 200,
+      body: {
+        dictionary: [
+          {
+            text: 'hello',
+            definitions: [
+              {
+                text: 'A greeting',
+                translation: {
+                  text: 'Привет'
+                }
+              }
+            ]
+          }
+        ]
+      }
     });
-    expect(res.body.dictionary).toBeDefined();
-    expect(res.body.dictionary.length).toBe(1);
-    expect(res.body.dictionary[0].text).toBe('hello');
-    expect(res.body.dictionary[0].definitions[0].text).toBe('A greeting');
-    expect(res.body.dictionary[0].definitions[0].translation.text).toBe('Привет');
   });
 });

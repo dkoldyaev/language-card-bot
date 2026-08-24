@@ -46,5 +46,22 @@ describe('Auth E2E', () => {
         token: expect.any(String),
       },
     });
+
+    const token = loginRes.body.token;
+
+    // Validate Session (/me)
+    const meRes = await request(app)
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(meRes).toMatchObject({
+      status: 200,
+      body: {
+        user: {
+          id: expect.any(Number),
+          username: newUser,
+        }
+      }
+    });
   });
 });

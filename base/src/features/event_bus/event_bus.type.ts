@@ -11,9 +11,11 @@ export interface StateSyncMercureEvent extends BaseMercureEvent {
   type: 'state_sync';
   mode: UserMode;
   currentWordId?: number | null;
+  currentWord?: { id: number; text: string } | null;
   showVariants?: boolean;
   showDefinitionTranslation?: boolean;
   currentDefinitionId?: number | null;
+  currentDefinition?: { id: number; text: string; translation: string | null } | null;
 }
 
 export interface EchoMercureEvent extends BaseMercureEvent {

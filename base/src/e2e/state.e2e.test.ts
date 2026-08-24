@@ -35,6 +35,24 @@ describe('State Sync E2E', () => {
   });
 
   it('should sync full user state including quiz fields', async () => {
+    const word = await prisma.word.create({
+      data: {
+        userId,
+        text: 'test_word',
+        definitions: {
+          create: {
+            text: 'test_definition',
+            translation: {
+              create: {
+                text: 'test_translation'
+              }
+            }
+          }
+        }
+      },
+      include: { definitions: true }
+    });
+
     // Setup initial state in DB
     await prisma.userState.update({
       where: { userId },
@@ -42,7 +60,8 @@ describe('State Sync E2E', () => {
         mode: UserMode.QUIZ,
         showVariants: true,
         showDefinitionTranslation: false,
-        currentDefinitionId: null
+        currentWordId: word.id,
+        currentDefinitionId: word.definitions[0].id
       }
     });
 
@@ -60,7 +79,17 @@ describe('State Sync E2E', () => {
       mode: UserMode.QUIZ,
       showVariants: true,
       showDefinitionTranslation: false,
-      currentDefinitionId: null
+      currentWordId: word.id,
+      currentDefinitionId: word.definitions[0].id,
+      currentWord: {
+        id: word.id,
+        text: 'test_word'
+      },
+      currentDefinition: {
+        id: word.definitions[0].id,
+        text: 'test_definition',
+        translation: 'test_translation'
+      }
     });
 
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -71,7 +100,17 @@ describe('State Sync E2E', () => {
       mode: UserMode.QUIZ,
       showVariants: true,
       showDefinitionTranslation: false,
-      currentDefinitionId: null
+      currentWordId: word.id,
+      currentDefinitionId: word.definitions[0].id,
+      currentWord: {
+        id: word.id,
+        text: 'test_word'
+      },
+      currentDefinition: {
+        id: word.definitions[0].id,
+        text: 'test_definition',
+        translation: 'test_translation'
+      }
     });
   });
 });
