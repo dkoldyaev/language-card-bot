@@ -10,6 +10,8 @@ export default function Quiz() {
   
   const quizCard = useStore((state) => state.quizCard);
   const quizEvaluation = useStore((state) => state.quizEvaluation);
+  const quizTranslation = useStore((state) => state.quizTranslation);
+  const quizVariants = useStore((state) => state.quizVariants);
 
   const handleStartQuiz = async () => {
     setStarting(true);
@@ -35,6 +37,30 @@ export default function Quiz() {
       console.error('Failed to submit answer:', error);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleTranslateDefinition = async () => {
+    try {
+      await apiClient.post('/quiz/translate_definition');
+    } catch (error) {
+      console.error('Failed to translate definition:', error);
+    }
+  };
+
+  const handleNextDefinition = async () => {
+    try {
+      await apiClient.post('/quiz/next_definition');
+    } catch (error) {
+      console.error('Failed to get next definition:', error);
+    }
+  };
+
+  const handleVariants = async () => {
+    try {
+      await apiClient.post('/quiz/variants');
+    } catch (error) {
+      console.error('Failed to get variants:', error);
     }
   };
 
@@ -101,6 +127,61 @@ export default function Quiz() {
           {quizEvaluation.result === 'INCORRECT' && (
             <Chip label="Incorrect 😢" color="error" />
           )}
+        </Box>
+      )}
+
+      {quizTranslation && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body1" color="textSecondary" align="center">
+            Translation: {quizTranslation}
+          </Typography>
+        </Box>
+      )}
+
+      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 3, flexWrap: 'wrap' }}>
+        <Button 
+          variant="outlined" 
+          onClick={handleTranslateDefinition}
+          disabled={Boolean(quizTranslation)}
+        >
+          Translate definition
+        </Button>
+        <Button 
+          variant="outlined" 
+          onClick={handleNextDefinition}
+        >
+          Another definition
+        </Button>
+        <Button 
+          variant="outlined" 
+          onClick={handleVariants}
+          disabled={Boolean(quizVariants)}
+        >
+          Show variants
+        </Button>
+      </Box>
+
+      {quizVariants && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" gutterBottom>Variants:</Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {quizVariants.map((variant, index) => (
+              <Button 
+                key={index} 
+                variant="contained" 
+                color="secondary"
+                onClick={() => {
+                  setSuggestion(variant);
+                  // We can't easily auto-submit here without fighting state, 
+                  // but we could call the submit logic directly.
+                  apiClient.post('/quiz/answer', { suggestion: variant })
+                    .catch(err => console.error(err));
+                }}
+              >
+                {variant}
+              </Button>
+            ))}
+          </Box>
         </Box>
       )}
       

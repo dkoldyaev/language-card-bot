@@ -37,6 +37,10 @@ export function useMercure() {
           useStore.getState().setQuizEvaluation(null); // Reset evaluation on new card
         } else if (data.type === 'quiz_answer_evaluation') {
           useStore.getState().setQuizEvaluation({ result: data.result, suggestion: data.suggestion });
+        } else if (data.type === 'quiz_definition_translation') {
+          useStore.getState().setQuizTranslation(data.translation);
+        } else if (data.type === 'quiz_variants') {
+          useStore.getState().setQuizVariants(data.variants);
         }
       } catch (error) {
         console.error('Error parsing Mercure message:', error);

@@ -52,6 +52,8 @@ interface AppState {
   dictionary: DictionaryWord[];
   quizCard: QuizCardData | null;
   quizEvaluation: QuizEvaluationData | null;
+  quizTranslation: string | null;
+  quizVariants: string[] | null;
   setToken: (token: string | null) => void;
   setProfile: (profile: UserProfile | null) => void;
   setAppState: (appState: any) => void;
@@ -64,6 +66,8 @@ interface AppState {
   removeDictionaryDefinition: (wordId: number, definitionId: number) => void;
   setQuizCard: (card: QuizCardData | null) => void;
   setQuizEvaluation: (evalData: QuizEvaluationData | null) => void;
+  setQuizTranslation: (translation: string | null) => void;
+  setQuizVariants: (variants: string[] | null) => void;
 }
 
 const useStore = create<AppState>((set) => ({
@@ -74,12 +78,16 @@ const useStore = create<AppState>((set) => ({
   dictionary: [],
   quizCard: null,
   quizEvaluation: null,
+  quizTranslation: null,
+  quizVariants: null,
   setToken: (token) => set({ token }),
   setProfile: (profile) => set({ profile }),
   setAppState: (appState) => set({ appState }),
   setDictionary: (dictionary) => set({ dictionary }),
-  setQuizCard: (card) => set({ quizCard: card }),
+  setQuizCard: (card) => set({ quizCard: card, quizEvaluation: null, quizTranslation: null, quizVariants: null }),
   setQuizEvaluation: (evalData) => set({ quizEvaluation: evalData }),
+  setQuizTranslation: (translation) => set({ quizTranslation: translation }),
+  setQuizVariants: (variants) => set({ quizVariants: variants }),
   updateWordProcessing: (status) => set((state) => {
     const existingIndex = state.wordProcessing.findIndex((w) => w.word === status.word);
     if (existingIndex >= 0) {

@@ -86,4 +86,66 @@ describe('Quiz', () => {
     expect(screen.getByText('apple')).toBeInTheDocument();
     expect(screen.getByText('Success! 🎉')).toBeInTheDocument();
   });
+
+  it('handles translation request and display', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(apiClient, 'post').mockResolvedValue({});
+
+    useStore.setState({
+      quizCard: { wordId: 1, definition: { id: 1, text: 'A fruit', translation: null } },
+      quizTranslation: 'Фрукт'
+    });
+
+    render(<Quiz />);
+    
+    expect(screen.getByText('Translation: Фрукт')).toBeInTheDocument();
+    
+    const translateBtn = screen.getByRole('button', { name: /Translate definition/i });
+    expect(translateBtn).toBeDisabled();
+
+    // Now test without translation
+    useStore.setState({ quizTranslation: null });
+    render(<Quiz />);
+
+    // Get the second instance of the button (from the second render)
+    const activeTranslateBtn = screen.getAllByRole('button', { name: /Translate definition/i })[1];
+    expect(activeTranslateBtn).not.toBeDisabled();
+    await user.click(activeTranslateBtn);
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/translate_definition');
+  });
+
+  it('handles next definition request', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(apiClient, 'post').mockResolvedValue({});
+
+    useStore.setState({
+      quizCard: { wordId: 1, definition: { id: 1, text: 'A fruit', translation: null } }
+    });
+
+    render(<Quiz />);
+    
+    const nextDefBtn = screen.getByRole('button', { name: /Another definition/i });
+    await user.click(nextDefBtn);
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/next_definition');
+  });
+
+  it('handles variants request and display', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(apiClient, 'post').mockResolvedValue({});
+
+    useStore.setState({
+      quizCard: { wordId: 1, definition: { id: 1, text: 'A fruit', translation: null } },
+      quizVariants: ['pear', 'banana', 'orange']
+    });
+
+    render(<Quiz />);
+    
+    expect(screen.getByText('pear')).toBeInTheDocument();
+    expect(screen.getByText('banana')).toBeInTheDocument();
+    
+    const variantBtn = screen.getByRole('button', { name: 'pear' });
+    await user.click(variantBtn);
+    
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'pear' });
+  });
 });

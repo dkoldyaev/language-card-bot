@@ -71,6 +71,6 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 ### 6. Quiz Mode (`/quiz`)
 - [x] **Quiz Start & Card UI**: Create the main Quiz view with a "Start Quiz" button (`/api/v1/quiz/start`). Create a Card component to display the current word/definition based on the Quiz state in Zustand.
 - [x] **Quiz Suggestion Input**: Add a TextField for the user to type their answer (suggestion) and a submit button. Connect to `/api/v1/quiz/answer` and display the result emoji/message (Success, Sad, Close Match).
-- [ ] **Quiz Card Controls**: Add buttons for "Translate definition" (`/api/v1/quiz/translate_definition`), "Another definition" (`/api/v1/quiz/next_definition`), and "Show variants" (`/api/v1/quiz/variants`).
-- [ ] **Quiz Variants Display**: Implement UI to display the 5 wrong variants when "Show variants" is active. Allow clicking a variant to submit it.
+- [x] **Quiz Card Controls**: Add buttons for "Translate definition" (`/api/v1/quiz/translate_definition`), "Another definition" (`/api/v1/quiz/next_definition`), and "Show variants" (`/api/v1/quiz/variants`).
+- [x] **Quiz Variants Display**: Implement UI to display the 5 wrong variants when "Show variants" is active. Allow clicking a variant to submit it.
 - [ ] **Quiz Next Card Logic**: Implement a "Next card" button connected to `/api/v1/quiz/next_card` to proceed to the next word.
