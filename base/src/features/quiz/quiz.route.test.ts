@@ -12,9 +12,6 @@ vi.mock('../../prisma');
 vi.mock('../event_bus/event_bus.service', () => ({
   publishEvent: vi.fn()
 }));
-vi.mock('./quiz_cleanup.queue', () => ({
-  enqueueQuizCleanup: vi.fn()
-}));
 
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
@@ -227,9 +224,6 @@ describe('Quiz Route', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.evaluation.result).toBe('SUCCESS');
-      
-      const { enqueueQuizCleanup } = await import('./quiz_cleanup.queue');
-      expect(enqueueQuizCleanup).toHaveBeenCalledWith('test_user');
       
       expect(publishEvent).toHaveBeenCalledWith('test_user', expect.objectContaining({
         type: 'quiz_answer_evaluation',

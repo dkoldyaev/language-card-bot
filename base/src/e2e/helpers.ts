@@ -2,9 +2,12 @@ import request from 'supertest';
 import app from '../app';
 import { prisma } from '../prisma';
 
+import { dictionaryQueue } from '../features/add_word/add_word.queue';
+
 export async function clearDatabase() {
   const deleteUsers = prisma.user.deleteMany();
   await prisma.$transaction([deleteUsers]);
+  await dictionaryQueue.obliterate({ force: true });
 }
 
 export async function setupTestUser(username: string): Promise<{ token: string, user: any }> {
