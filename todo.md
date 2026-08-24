@@ -58,7 +58,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 
 ### 4. Dictionary: Add Word (`/dictionary/add`)
 - [x] **Add Word UI Component**: Create a multiline text area (Material-UI TextField) for users to input multiple words (one per line) and a submit button.
-- [ ] **Add Word Submission API**: Connect the submit button to the `/api/v1/add_word` endpoint.
+- [x] **Add Word Submission API**: Connect the submit button to the `/api/v1/add_word` endpoint.
 - [ ] **Word Processing Real-time Status**: Implement a UI component (e.g., a List) that displays the words being processed and updates their status in real-time based on Mercure events stored in Zustand.
 
 ### 5. Dictionary: Edit Dictionary (`/dictionary/edit`)
