@@ -64,6 +64,14 @@ export default function Quiz() {
     }
   };
 
+  const handleNextCard = async () => {
+    try {
+      await apiClient.post('/quiz/next_card');
+    } catch (error) {
+      console.error('Failed to get next card:', error);
+    }
+  };
+
   if (!quizCard) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
@@ -158,6 +166,13 @@ export default function Quiz() {
           disabled={Boolean(quizVariants)}
         >
           Show variants
+        </Button>
+        <Button 
+          variant="outlined" 
+          color="primary"
+          onClick={handleNextCard}
+        >
+          Next card
         </Button>
       </Box>
 

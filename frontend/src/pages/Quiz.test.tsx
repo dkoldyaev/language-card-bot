@@ -148,4 +148,19 @@ describe('Quiz', () => {
     
     expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'pear' });
   });
+
+  it('handles next card request', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(apiClient, 'post').mockResolvedValue({});
+
+    useStore.setState({
+      quizCard: { wordId: 1, definition: { id: 1, text: 'A fruit', translation: null } }
+    });
+
+    render(<Quiz />);
+    
+    const nextCardBtn = screen.getByRole('button', { name: /Next card/i });
+    await user.click(nextCardBtn);
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/next_card');
+  });
 });
