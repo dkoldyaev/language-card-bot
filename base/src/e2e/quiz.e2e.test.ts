@@ -103,4 +103,31 @@ describe('Quiz E2E', () => {
       }
     });
   });
+
+  it('should fetch variants successfully and update state', async () => {
+    // Add multiple words
+    const w1 = await prisma.word.create({ data: { userId, text: 'apple' } });
+    await prisma.word.create({ data: { userId, text: 'banana' } });
+    await prisma.word.create({ data: { userId, text: 'orange' } });
+
+    await prisma.userState.update({
+      where: { userId },
+      data: { mode: UserMode.QUIZ, currentWordId: w1.id }
+    });
+
+    const res = await request(app)
+      .post('/api/v1/quiz/variants')
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.variants.length).toBeGreaterThan(0);
+
+    const userState = await prisma.userState.findUnique({ where: { userId } });
+    expect(userState?.showVariants).toBe(true);
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const event = messages.find(m => m.type === 'quiz_variants');
+    expect(event).toBeDefined();
+    expect(event.variants.length).toBeGreaterThan(0);
+  });
 });

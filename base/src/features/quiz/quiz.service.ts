@@ -50,3 +50,20 @@ export async function generateQuizCard(userId: number): Promise<QuizCardData | n
     definition: randomDef
   };
 }
+
+export async function getQuizVariants(userId: number, currentWordId: number): Promise<{ id: number; text: string }[]> {
+  const incorrectWords = await prisma.word.findMany({
+    where: {
+      userId,
+      id: { not: currentWordId }
+    },
+    select: { id: true, text: true }
+  });
+
+  for (let i = incorrectWords.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [incorrectWords[i], incorrectWords[j]] = [incorrectWords[j], incorrectWords[i]];
+  }
+
+  return incorrectWords.slice(0, 5);
+}

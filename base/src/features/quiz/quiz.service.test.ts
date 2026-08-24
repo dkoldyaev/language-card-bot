@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { generateQuizCard } from './quiz.service';
+import * as quizService from './quiz.service';
 import { prisma } from '../../prisma';
 import { mockDeep, mockReset } from 'vitest-mock-extended';
 import { PrismaClient } from '@prisma/client';
@@ -18,7 +18,7 @@ describe('Quiz Service', () => {
 
   it('should return null if user has no words with definitions', async () => {
     prismaMock.word.findMany.mockResolvedValue([]);
-    const result = await generateQuizCard(1);
+    const result = await quizService.generateQuizCard(1);
     expect(result).toBeNull();
   });
 
@@ -48,11 +48,34 @@ describe('Quiz Service', () => {
     
     prismaMock.word.findUnique.mockResolvedValue(mockWord as any);
 
-    const result = await generateQuizCard(1);
+    const result = await quizService.generateQuizCard(1);
 
     expect(result).not.toBeNull();
     expect(result?.word.text).toBe('hello');
     expect(result?.definition.text).toBe('a greeting');
     expect(result?.definition.translation?.text).toBe('привет');
+  });
+
+  it('should return up to 5 random variants excluding the current word', async () => {
+    prismaMock.word.findMany.mockResolvedValue([
+      { id: 1, text: 'w1' },
+      { id: 2, text: 'w2' },
+      { id: 3, text: 'w3' },
+      { id: 4, text: 'w4' },
+      { id: 5, text: 'w5' },
+      { id: 6, text: 'w6' },
+      { id: 7, text: 'w7' },
+    ] as any);
+
+    const result = await quizService.getQuizVariants(1, 10);
+    
+    expect(result.length).toBe(5);
+    expect(prismaMock.word.findMany).toHaveBeenCalledWith({
+      where: {
+        userId: 1,
+        id: { not: 10 }
+      },
+      select: { id: true, text: true }
+    });
   });
 });

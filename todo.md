@@ -19,7 +19,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 - [x] **Quiz Start API (`/api/v1/quiz/start`)**: Implement an endpoint that utilizes the Quiz Generation Service, resets the quiz state flags in `UserState` to false, and sends a Mercure event containing the initial quiz card data.
 
 ### Quiz Interactions
-- [ ] **Quiz Variants API (`/api/v1/quiz/variants`)**: Implement an endpoint that fetches 5 random incorrect words from the user's dictionary, updates `showVariants` to true in `UserState`, and sends the variants list via a Mercure event.
+- [x] **Quiz Variants API (`/api/v1/quiz/variants`)**: Implement an endpoint that fetches 5 random incorrect words from the user's dictionary, updates `showVariants` to true in `UserState`, and sends the variants list via a Mercure event.
 - [ ] **Quiz Translate Definition API (`/api/v1/quiz/translate_definition`)**: Implement an endpoint that sets `showDefinitionTranslation` to true in `UserState`, fetches the translation for the currently active definition, and sends it via a Mercure event.
 
 ### Answer Processing & Evaluation

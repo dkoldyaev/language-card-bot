@@ -87,4 +87,54 @@ describe('Quiz Route', () => {
       }
     }));
   });
+
+  describe('POST /api/v1/quiz/variants', () => {
+    it('should return 400 if user state is not QUIZ', async () => {
+      const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
+      prismaMock.userState.findUnique.mockResolvedValue({ mode: UserMode.DEFAULT } as any);
+
+      const res = await request(app)
+        .post('/api/v1/quiz/variants')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Quiz not active or current word not set');
+    });
+
+    it('should return variants and publish event', async () => {
+      const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
+      
+      prismaMock.userState.findUnique.mockResolvedValue({
+        mode: UserMode.QUIZ,
+        currentWordId: 10
+      } as any);
+
+      vi.spyOn(quizService, 'getQuizVariants').mockResolvedValue([
+        { id: 1, text: 'w1' },
+        { id: 2, text: 'w2' },
+        { id: 3, text: 'w3' },
+        { id: 4, text: 'w4' },
+        { id: 5, text: 'w5' },
+      ]);
+      prismaMock.userState.update.mockResolvedValue({} as any);
+
+      const res = await request(app)
+        .post('/api/v1/quiz/variants')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.variants.length).toBe(5);
+      expect(res.body.variants[0].text).toBe('w1');
+
+      expect(prismaMock.userState.update).toHaveBeenCalledWith({
+        where: { userId: 1 },
+        data: { showVariants: true }
+      });
+
+      expect(publishEvent).toHaveBeenCalledWith('test_user', expect.objectContaining({
+        type: 'quiz_variants',
+        variants: expect.any(Array)
+      }));
+    });
+  });
 });

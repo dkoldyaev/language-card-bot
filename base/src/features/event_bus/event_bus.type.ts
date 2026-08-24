@@ -68,6 +68,11 @@ export interface QuizCardMercureEvent extends BaseMercureEvent {
   };
 }
 
+export interface QuizVariantsMercureEvent extends BaseMercureEvent {
+  type: 'quiz_variants';
+  variants: { id: number; text: string }[];
+}
+
 export type MercureEvent = 
   | StateSyncMercureEvent 
   | EchoMercureEvent 
@@ -76,4 +81,5 @@ export type MercureEvent =
   | DictionaryAddProcessingEvent
   | DictionaryAddDefinitionsReceivedEvent
   | DictionaryAddDefinitionProcessedEvent
-  | QuizCardMercureEvent;
+  | QuizCardMercureEvent
+  | QuizVariantsMercureEvent;
