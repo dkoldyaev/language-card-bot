@@ -42,6 +42,8 @@ interface AppState {
   updateWordProcessing: (status: WordProcessingStatus) => void;
   setDictionary: (dictionary: DictionaryWord[]) => void;
   removeDictionaryWord: (wordId: number) => void;
+  updateDictionaryDefinition: (wordId: number, definitionId: number, text: string) => void;
+  updateDictionaryTranslation: (wordId: number, definitionId: number, text: string) => void;
 }
 
 const useStore = create<AppState>((set) => ({
@@ -65,6 +67,29 @@ const useStore = create<AppState>((set) => ({
   }),
   removeDictionaryWord: (wordId) => set((state) => ({
     dictionary: state.dictionary.filter((w) => w.id !== wordId),
+  })),
+  updateDictionaryDefinition: (wordId, definitionId, text) => set((state) => ({
+    dictionary: state.dictionary.map(word => 
+      word.id === wordId ? {
+        ...word,
+        definitions: word.definitions.map(def => 
+          def.id === definitionId ? { ...def, text } : def
+        )
+      } : word
+    )
+  })),
+  updateDictionaryTranslation: (wordId, definitionId, text) => set((state) => ({
+    dictionary: state.dictionary.map(word => 
+      word.id === wordId ? {
+        ...word,
+        definitions: word.definitions.map(def => 
+          def.id === definitionId ? { 
+            ...def, 
+            translation: def.translation ? { ...def.translation, text } : { id: Date.now(), text } 
+          } : def
+        )
+      } : word
+    )
   })),
 }));
 
