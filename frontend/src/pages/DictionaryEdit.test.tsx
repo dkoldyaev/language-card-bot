@@ -47,4 +47,27 @@ describe('DictionaryEdit', () => {
     expect(screen.getByText('1. A fruit')).toBeInTheDocument();
     expect(screen.getByText('Translation: яблоко')).toBeInTheDocument();
   });
+
+  it('handles word deletion', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(apiClient, 'delete').mockResolvedValue({});
+
+    render(<DictionaryEdit />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('apple')).toBeInTheDocument();
+    });
+
+    const deleteBtn = screen.getByRole('button', { name: /Delete apple/i });
+    await user.click(deleteBtn);
+
+    expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to delete "apple"?');
+    expect(apiClient.delete).toHaveBeenCalledWith('/word_delete/1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Your dictionary is empty.')).toBeInTheDocument();
+    });
+  });
 });
+

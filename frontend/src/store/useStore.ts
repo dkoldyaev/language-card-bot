@@ -41,6 +41,7 @@ interface AppState {
   setAppState: (appState: any) => void;
   updateWordProcessing: (status: WordProcessingStatus) => void;
   setDictionary: (dictionary: DictionaryWord[]) => void;
+  removeDictionaryWord: (wordId: number) => void;
 }
 
 const useStore = create<AppState>((set) => ({
@@ -62,6 +63,9 @@ const useStore = create<AppState>((set) => ({
     }
     return { wordProcessing: [...state.wordProcessing, status] };
   }),
+  removeDictionaryWord: (wordId) => set((state) => ({
+    dictionary: state.dictionary.filter((w) => w.id !== wordId),
+  })),
 }));
 
 export default useStore;

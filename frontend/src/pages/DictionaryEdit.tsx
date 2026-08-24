@@ -1,5 +1,6 @@
-import { Typography, Box, CircularProgress, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { Typography, Box, CircularProgress, Accordion, AccordionSummary, AccordionDetails, IconButton } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import useStore from '../store/useStore';
@@ -8,6 +9,19 @@ export default function DictionaryEdit() {
   const [loading, setLoading] = useState(true);
   const dictionary = useStore((state) => state.dictionary);
   const setDictionary = useStore((state) => state.setDictionary);
+  const removeDictionaryWord = useStore((state) => state.removeDictionaryWord);
+
+  const handleDelete = async (e: React.MouseEvent, wordId: number, text: string) => {
+    e.stopPropagation(); // Prevent accordion from toggling
+    if (window.confirm(`Are you sure you want to delete "${text}"?`)) {
+      try {
+        await apiClient.delete(`/word_delete/${wordId}`);
+        removeDictionaryWord(wordId);
+      } catch (error) {
+        console.error('Failed to delete word:', error);
+      }
+    }
+  };
 
   useEffect(() => {
     apiClient.get('/dictionary')
@@ -39,12 +53,23 @@ export default function DictionaryEdit() {
           {dictionary.map((word) => (
             <Accordion key={word.id}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1" sx={{ width: '33%', flexShrink: 0 }}>
-                  {word.text}
-                </Typography>
-                <Typography sx={{ color: 'text.secondary' }}>
-                  {word.definitions.length} definition(s)
-                </Typography>
+                <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+                  <Typography variant="subtitle1" sx={{ width: '33%', flexShrink: 0 }}>
+                    {word.text}
+                  </Typography>
+                  <Typography sx={{ color: 'text.secondary', flexGrow: 1 }}>
+                    {word.definitions.length} definition(s)
+                  </Typography>
+                  <IconButton 
+                    component="span"
+                    size="small" 
+                    color="error" 
+                    onClick={(e) => handleDelete(e, word.id, word.text)}
+                    aria-label={`Delete ${word.text}`}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
               </AccordionSummary>
               <AccordionDetails>
                 {word.definitions.map((def, idx) => (
