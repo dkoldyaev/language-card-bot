@@ -110,4 +110,38 @@ describe('Dictionary Modes E2E', () => {
     expect(userInDb).toBeDefined();
     expect(userInDb?.state?.mode).toBe(UserMode.EDITING_DICTIONARY);
   });
+
+  it('should fetch the dictionary', async () => {
+    // Add some dictionary data
+    const user = await prisma.user.findUnique({ where: { username: testUsername } });
+    const word = await prisma.word.create({
+      data: {
+        userId: user!.id,
+        text: 'hello',
+        definitions: {
+          create: {
+            text: 'A greeting',
+            translation: {
+              create: {
+                text: 'Привет'
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const res = await request(app)
+      .get('/api/v1/dictionary')
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(res).toMatchObject({
+      status: 200,
+    });
+    expect(res.body.dictionary).toBeDefined();
+    expect(res.body.dictionary.length).toBe(1);
+    expect(res.body.dictionary[0].text).toBe('hello');
+    expect(res.body.dictionary[0].definitions[0].text).toBe('A greeting');
+    expect(res.body.dictionary[0].definitions[0].translation.text).toBe('Привет');
+  });
 });

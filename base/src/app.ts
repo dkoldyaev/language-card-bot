@@ -7,6 +7,7 @@ import switchModeDictionaryViewRoutes from './features/switch_mode_dictionary_vi
 import switchModeDictionaryAddRoutes from './features/switch_mode_dictionary_add/switch_mode_dictionary_add.route';
 import addWordRoutes from './features/add_word/add_word.route';
 import settingsRoutes from './features/settings/settings.route';
+import dictionaryRoutes from './features/dictionary/dictionary.route';
 import definitionDeleteRoutes from './features/definition_delete/definition_delete.route';
 import wordDeleteRoutes from './features/word_delete/word_delete.route';
 import definitionAddRoutes from './features/definition_add/definition_add.route';
@@ -30,6 +31,7 @@ app.use('/api/v1/switch_mode_dictionary_view', switchModeDictionaryViewRoutes);
 app.use('/api/v1/switch_mode_dictionary_add', switchModeDictionaryAddRoutes);
 app.use('/api/v1/add_word', addWordRoutes);
 app.use('/api/v1/settings', settingsRoutes);
+app.use('/api/v1/dictionary', dictionaryRoutes);
 app.use('/api/v1/definition_delete', definitionDeleteRoutes);
 app.use('/api/v1/word_delete', wordDeleteRoutes);
 app.use('/api/v1/definition_add', definitionAddRoutes);
