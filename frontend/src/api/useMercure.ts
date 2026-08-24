@@ -20,9 +20,19 @@ export function useMercure() {
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        // Handle incoming data based on its type
-        // e.g. state sync or word processing updates
-        // useStore.getState().dispatchSomeAction(data);
+        const updateWordProcessing = useStore.getState().updateWordProcessing;
+
+        if (data.type === 'dictionary_add_duplicate') {
+          updateWordProcessing({ word: data.word, status: 'duplicate', definitionsCount: data.definitionsCount });
+        } else if (data.type === 'dictionary_add_processing') {
+          updateWordProcessing({ word: data.word, status: 'processing' });
+        } else if (data.type === 'dictionary_add_definitions_received') {
+          updateWordProcessing({ word: data.word, status: 'definitions_received', definitionsCount: data.definitionsCount });
+        } else if (data.type === 'dictionary_add_definition_processed') {
+          updateWordProcessing({ word: data.word, status: 'processed', processedCount: data.processedCount, totalDefinitions: data.totalDefinitions });
+        } else if (data.type === 'state_sync') {
+          useStore.getState().setAppState(data);
+        }
       } catch (error) {
         console.error('Error parsing Mercure message:', error);
       }

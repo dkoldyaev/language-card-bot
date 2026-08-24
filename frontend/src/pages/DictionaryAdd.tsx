@@ -1,6 +1,7 @@
 import { Typography, Box, TextField, Button, CircularProgress } from '@mui/material';
 import { useState } from 'react';
 import apiClient from '../api/client';
+import WordProcessingList from '../components/WordProcessingList';
 
 export default function DictionaryAdd() {
   const [wordsText, setWordsText] = useState('');
@@ -55,6 +56,8 @@ export default function DictionaryAdd() {
       >
         {submitting ? <CircularProgress size={24} /> : 'Submit Words'}
       </Button>
+
+      <WordProcessingList />
     </Box>
   );
 }
