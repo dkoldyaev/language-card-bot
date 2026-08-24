@@ -53,7 +53,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 - [x] **State Sync Hydration**: Implement a call to `POST /api/v1/state/sync` on app load/login to hydrate the Zustand store with the initial state (including Quiz state).
 
 ### 3. Settings Mode (`/settings`)
-- [ ] **Settings UI Components**: Create Material-UI forms/selects for setting "Base Language", "Learned Language", and "Level".
+- [x] **Settings UI Components**: Create Material-UI forms/selects for setting "Base Language", "Learned Language", and "Level".
 - [ ] **Settings API Integration**: Connect the settings form to the `/api/v1/settings` endpoint to save user preferences, updating the Zustand store on success.
 
 ### 4. Dictionary: Add Word (`/dictionary/add`)
