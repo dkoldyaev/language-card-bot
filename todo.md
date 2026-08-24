@@ -62,7 +62,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 - [x] **Word Processing Real-time Status**: Implement a UI component (e.g., a List) that displays the words being processed and updates their status in real-time based on Mercure events stored in Zustand.
 
 ### 5. Dictionary: Edit Dictionary (`/dictionary/edit`)
-- [ ] **Dictionary Fetch API & Store**: Implement the call to `GET /api/v1/dictionary` on page load and store the entire dictionary data in Zustand.
+- [x] **Dictionary Fetch API & Store**: Implement the call to `GET /api/v1/dictionary` on page load and store the entire dictionary data in Zustand.
 - [ ] **Dictionary List View**: Create a Material-UI component (e.g., Accordion or List) to display all words with their definitions and translations.
 - [ ] **Delete Word Logic**: Implement a "Delete" button with a confirmation dialog for each word, triggering the `/api/v1/word_delete` endpoint.
 - [ ] **Definition Editing UI & API**: Implement inline editing (or a dialog) for definition texts and translations, connecting them to `/api/v1/definition_edit` and `/api/v1/definition_translate_edit`.
