@@ -12,7 +12,7 @@ enum UserMode {
   EDITING_DICTIONARY
   DICTIONARY_VIEW
   DICTIONARY_ADD
-  TRAINING
+  QUIZ
 }
 
 model User {
