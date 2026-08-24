@@ -54,7 +54,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 
 ### 3. Settings Mode (`/settings`)
 - [x] **Settings UI Components**: Create Material-UI forms/selects for setting "Base Language", "Learned Language", and "Level".
-- [ ] **Settings API Integration**: Connect the settings form to the `/api/v1/settings` endpoint to save user preferences, updating the Zustand store on success.
+- [x] **Settings API Integration**: Connect the settings form to the `/api/v1/settings` endpoint to save user preferences, updating the Zustand store on success.
 
 ### 4. Dictionary: Add Word (`/dictionary/add`)
 - [ ] **Add Word UI Component**: Create a multiline text area (Material-UI TextField) for users to input multiple words (one per line) and a submit button.

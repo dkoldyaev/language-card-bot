@@ -1,10 +1,45 @@
-import { Typography, Box, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
-import { useState } from 'react';
+import { Typography, Box, FormControl, InputLabel, Select, MenuItem, Button, CircularProgress } from '@mui/material';
+import { useState, useEffect } from 'react';
+import apiClient from '../api/client';
 
 export default function Settings() {
   const [baseLanguage, setBaseLanguage] = useState('');
-  const [learnedLanguage, setLearnedLanguage] = useState('');
-  const [level, setLevel] = useState('');
+  const [targetLanguage, setTargetLanguage] = useState('');
+  const [desiredLevel, setDesiredLevel] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    apiClient.get('/settings')
+      .then((res) => {
+        const { settings } = res.data;
+        if (settings) {
+          setBaseLanguage(settings.baseLanguage || '');
+          setTargetLanguage(settings.targetLanguage || '');
+          setDesiredLevel(settings.desiredLevel || '');
+        }
+      })
+      .catch((error) => console.error('Failed to load settings', error))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = () => {
+    setSaving(true);
+    apiClient.post('/settings', { baseLanguage, targetLanguage, desiredLevel })
+      .then(() => {
+        // Successfully saved
+      })
+      .catch((error) => console.error('Failed to save settings', error))
+      .finally(() => setSaving(false));
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ maxWidth: 400, mx: 'auto', mt: 4 }}>
@@ -19,24 +54,24 @@ export default function Settings() {
           onChange={(e) => setBaseLanguage(e.target.value)}
           inputProps={{ 'data-testid': 'base-language-select' }}
         >
-          <MenuItem value="Russian">Russian</MenuItem>
-          <MenuItem value="English">English</MenuItem>
-          <MenuItem value="Spanish">Spanish</MenuItem>
+          <MenuItem value="ru">Russian</MenuItem>
+          <MenuItem value="en">English</MenuItem>
+          <MenuItem value="es">Spanish</MenuItem>
         </Select>
       </FormControl>
 
       <FormControl fullWidth margin="normal">
-        <InputLabel id="learned-language-label">Learned Language</InputLabel>
+        <InputLabel id="target-language-label">Learned Language</InputLabel>
         <Select
-          labelId="learned-language-label"
-          value={learnedLanguage}
+          labelId="target-language-label"
+          value={targetLanguage}
           label="Learned Language"
-          onChange={(e) => setLearnedLanguage(e.target.value)}
+          onChange={(e) => setTargetLanguage(e.target.value)}
           inputProps={{ 'data-testid': 'learned-language-select' }}
         >
-          <MenuItem value="English">English</MenuItem>
-          <MenuItem value="Spanish">Spanish</MenuItem>
-          <MenuItem value="Russian">Russian</MenuItem>
+          <MenuItem value="en">English</MenuItem>
+          <MenuItem value="es">Spanish</MenuItem>
+          <MenuItem value="ru">Russian</MenuItem>
         </Select>
       </FormControl>
 
@@ -44,9 +79,9 @@ export default function Settings() {
         <InputLabel id="level-label">Level</InputLabel>
         <Select
           labelId="level-label"
-          value={level}
+          value={desiredLevel}
           label="Level"
-          onChange={(e) => setLevel(e.target.value)}
+          onChange={(e) => setDesiredLevel(e.target.value)}
           inputProps={{ 'data-testid': 'level-select' }}
         >
           <MenuItem value="A0">A0</MenuItem>
@@ -59,10 +94,18 @@ export default function Settings() {
         </Select>
       </FormControl>
 
-      <Button variant="contained" color="primary" fullWidth sx={{ mt: 3 }}>
-        Save Settings
+      <Button
+        variant="contained"
+        color="primary"
+        fullWidth
+        sx={{ mt: 3 }}
+        onClick={handleSave}
+        disabled={saving}
+      >
+        {saving ? 'Saving...' : 'Save Settings'}
       </Button>
     </Box>
   );
 }
+
 
