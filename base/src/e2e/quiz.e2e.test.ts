@@ -175,7 +175,7 @@ describe('Quiz E2E', () => {
       data: { mode: UserMode.QUIZ, currentWordId: word.id }
     });
 
-    const checkAnswer = async (suggestion: string, expectedResult: string, expectedEmoji: string) => {
+    const checkAnswer = async (suggestion: string, expectedResult: string) => {
       const res = await request(app)
         .post('/api/v1/quiz/answer')
         .set('Authorization', `Bearer ${userToken}`)
@@ -183,26 +183,18 @@ describe('Quiz E2E', () => {
       
       expect(res.status).toBe(200);
       expect(res.body.evaluation.result).toBe(expectedResult);
-      expect(res.body.evaluation.emoji).toBe(expectedEmoji);
 
       // We might have multiple answer events in a row, let's just check the last one
       await new Promise(resolve => setTimeout(resolve, 500));
       const answerEvents = messages.filter(m => m.type === 'quiz_answer_evaluation');
       const lastEvent = answerEvents[answerEvents.length - 1];
       expect(lastEvent.result).toBe(expectedResult);
-      expect(lastEvent.emoji).toBe(expectedEmoji);
       expect(lastEvent.suggestion).toBe(suggestion);
     };
 
-    await checkAnswer('strawberry', 'SUCCESS', '✅');
-    await checkAnswer('strawbery', 'CLOSE_MATCH', '⚠️'); // 1 typo
-    await checkAnswer('stabery', 'INCORRECT', '❌'); // 3 typos
-
-    // Wait for the cleanup event (2 seconds delay in queue)
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    const cleanupEvent = messages.find(m => m.type === 'quiz_cleanup');
-    expect(cleanupEvent).toBeDefined();
-    expect(cleanupEvent.type).toBe('quiz_cleanup');
+    await checkAnswer('strawberry', 'SUCCESS');
+    await checkAnswer('strawbery', 'CLOSE_MATCH'); // 1 typo
+    await checkAnswer('stabery', 'INCORRECT'); // 3 typos
   });
 
   it('should get next card', async () => {

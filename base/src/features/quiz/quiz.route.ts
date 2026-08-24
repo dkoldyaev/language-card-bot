@@ -6,7 +6,6 @@ import { publishEvent } from '../event_bus/event_bus.service';
 import { QuizCardMercureEvent, QuizVariantsMercureEvent, QuizDefinitionTranslationMercureEvent, QuizAnswerEvaluationMercureEvent } from '../event_bus/event_bus.type';
 import { generateQuizCard, getQuizVariants, getNextDefinition } from './quiz.service';
 import { evaluateSuggestion } from './evaluation.service';
-import { enqueueQuizCleanup } from './quiz_cleanup.queue';
 import { UserMode } from '@prisma/client';
 
 const router = Router();
@@ -147,20 +146,15 @@ router.post('/answer', authMiddleware, async (req: Request, res: Response) => {
     }
 
     const result = evaluateSuggestion(suggestion, word.text);
-    let emoji = '❌';
-    if (result === 'SUCCESS') emoji = '✅';
-    else if (result === 'CLOSE_MATCH') emoji = '⚠️';
 
     const event: QuizAnswerEvaluationMercureEvent = {
       version: 'v1',
       type: 'quiz_answer_evaluation',
       result,
-      emoji,
       suggestion: suggestion.trim()
     };
 
     await publishEvent(user.username, event);
-    await enqueueQuizCleanup(user.username);
 
     res.json({ message: 'Answer evaluated', evaluation: event });
   } catch (error) {

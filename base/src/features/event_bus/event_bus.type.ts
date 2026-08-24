@@ -81,12 +81,7 @@ export interface QuizDefinitionTranslationMercureEvent extends BaseMercureEvent 
 export interface QuizAnswerEvaluationMercureEvent extends BaseMercureEvent {
   type: 'quiz_answer_evaluation';
   result: 'SUCCESS' | 'CLOSE_MATCH' | 'INCORRECT';
-  emoji: string;
   suggestion: string;
-}
-
-export interface QuizCleanupMercureEvent extends BaseMercureEvent {
-  type: 'quiz_cleanup';
 }
 
 export type MercureEvent = 
@@ -100,5 +95,4 @@ export type MercureEvent =
   | QuizCardMercureEvent
   | QuizVariantsMercureEvent
   | QuizDefinitionTranslationMercureEvent
-  | QuizAnswerEvaluationMercureEvent
-  | QuizCleanupMercureEvent;
+  | QuizAnswerEvaluationMercureEvent;

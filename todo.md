@@ -24,9 +24,9 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 
 ### Answer Processing & Evaluation
 - [x] **Suggestion Evaluation Utility**: Implement a string comparison service to evaluate user text suggestions against the correct word (handling exact matches, detecting close matches/typos using a distance algorithm like Levenshtein, and identifying incorrect answers).
-- [x] **Answer Submission API (`/api/v1/quiz/answer`)**: Implement an endpoint that receives the user's text suggestion, evaluates it using the Evaluation Utility, and sends a Mercure event with the evaluation result (success emoji, close match emoji, or sad emoji).
+- [x] **Answer Submission API (`/api/v1/quiz/answer`)**: Implement an endpoint that receives the user's text suggestion, evaluates it using the Evaluation Utility, and sends a Mercure event with the evaluation result. (Изменение: отправка emoji отключена, решается на клиенте).
 
 ### Cleanup & Navigation
-- [x] **Quiz Cleanup Background Task**: Implement a delayed job/worker (triggered ~2 seconds after an answer) that sends Mercure events instructing the client to delete the quiz message, user suggestions, and answer reactions.
+- [ ] **Quiz Cleanup Background Task**: (Отменено, не нужно делать, решается на клиенте).
 - [x] **Next Card API (`/api/v1/quiz/next_card`)**: Implement an endpoint that resets the quiz state flags (`showVariants`, `showDefinitionTranslation`), calls the Quiz Generation Service to select a *new word*, updates the state, and sends the new card via a Mercure event.
 - [x] **Next Definition API (`/api/v1/quiz/next_definition`)**: Implement an endpoint that resets the quiz state flags, selects a *different random definition* for the *currently active word*, updates the state, and sends the updated card via a Mercure event.
