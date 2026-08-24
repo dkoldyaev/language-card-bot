@@ -49,7 +49,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 ### 2. State Management & API Services
 - [x] **Zustand Store - Global & Auth**: Create a Zustand store to handle authentication (JWT token), user profile (`/api/v1/auth/me`), and global application state.
 - [x] **API Client Service**: Implement an Axios (or fetch) wrapper configured with the base API URL and an interceptor to automatically attach the Authorization token.
-- [ ] **Mercure Event Listener Setup**: Create a React hook or service to connect to the Mercure Hub, listen to server-sent events, and dispatch updates to the Zustand store.
+- [x] **Mercure Event Listener Setup**: Create a React hook or service to connect to the Mercure Hub, listen to server-sent events, and dispatch updates to the Zustand store.
 - [ ] **State Sync Hydration**: Implement a call to `POST /api/v1/state/sync` on app load/login to hydrate the Zustand store with the initial state (including Quiz state).
 
 ### 3. Settings Mode (`/settings`)
