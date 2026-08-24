@@ -34,6 +34,9 @@ export function useMercure() {
           useStore.getState().setAppState(data);
         } else if (data.type === 'quiz_card') {
           useStore.getState().setQuizCard(data);
+          useStore.getState().setQuizEvaluation(null); // Reset evaluation on new card
+        } else if (data.type === 'quiz_answer_evaluation') {
+          useStore.getState().setQuizEvaluation({ result: data.result, suggestion: data.suggestion });
         }
       } catch (error) {
         console.error('Error parsing Mercure message:', error);

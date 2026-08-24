@@ -39,6 +39,11 @@ export interface QuizCardData {
   };
 }
 
+export interface QuizEvaluationData {
+  result: 'SUCCESS' | 'CLOSE_MATCH' | 'INCORRECT';
+  suggestion: string;
+}
+
 interface AppState {
   token: string | null;
   profile: UserProfile | null;
@@ -46,6 +51,7 @@ interface AppState {
   wordProcessing: WordProcessingStatus[];
   dictionary: DictionaryWord[];
   quizCard: QuizCardData | null;
+  quizEvaluation: QuizEvaluationData | null;
   setToken: (token: string | null) => void;
   setProfile: (profile: UserProfile | null) => void;
   setAppState: (appState: any) => void;
@@ -57,6 +63,7 @@ interface AppState {
   addDictionaryDefinition: (wordId: number, definition: DictionaryDefinition) => void;
   removeDictionaryDefinition: (wordId: number, definitionId: number) => void;
   setQuizCard: (card: QuizCardData | null) => void;
+  setQuizEvaluation: (evalData: QuizEvaluationData | null) => void;
 }
 
 const useStore = create<AppState>((set) => ({
@@ -66,11 +73,13 @@ const useStore = create<AppState>((set) => ({
   wordProcessing: [],
   dictionary: [],
   quizCard: null,
+  quizEvaluation: null,
   setToken: (token) => set({ token }),
   setProfile: (profile) => set({ profile }),
   setAppState: (appState) => set({ appState }),
   setDictionary: (dictionary) => set({ dictionary }),
   setQuizCard: (card) => set({ quizCard: card }),
+  setQuizEvaluation: (evalData) => set({ quizEvaluation: evalData }),
   updateWordProcessing: (status) => set((state) => {
     const existingIndex = state.wordProcessing.findIndex((w) => w.word === status.word);
     if (existingIndex >= 0) {

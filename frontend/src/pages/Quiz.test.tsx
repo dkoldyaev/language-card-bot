@@ -40,5 +40,50 @@ describe('Quiz', () => {
     
     expect(screen.getByText('Quiz')).toBeInTheDocument();
     expect(screen.getByText('A fruit')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /Your answer/i })).toBeInTheDocument();
+  });
+
+  it('submits suggestion and clears input', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(apiClient, 'post').mockResolvedValue({});
+
+    useStore.setState({
+      quizCard: {
+        wordId: 1,
+        definition: { id: 1, text: 'A fruit', translation: null }
+      }
+    });
+
+    render(<Quiz />);
+    
+    const input = screen.getByRole('textbox', { name: /Your answer/i });
+    await user.type(input, 'apple');
+
+    const submitBtn = screen.getByRole('button', { name: /Submit/i });
+    await user.click(submitBtn);
+
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'apple' });
+    
+    await waitFor(() => {
+      expect(input).toHaveValue('');
+    });
+  });
+
+  it('displays evaluation result when quizEvaluation is set', () => {
+    useStore.setState({
+      quizCard: {
+        wordId: 1,
+        definition: { id: 1, text: 'A fruit', translation: null }
+      },
+      quizEvaluation: {
+        result: 'SUCCESS',
+        suggestion: 'apple'
+      }
+    });
+
+    render(<Quiz />);
+    
+    expect(screen.getByText('apple')).toBeInTheDocument();
+    expect(screen.getByText('Success! 🎉')).toBeInTheDocument();
   });
 });
