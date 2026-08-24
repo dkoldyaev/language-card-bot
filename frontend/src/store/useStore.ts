@@ -30,12 +30,22 @@ export interface DictionaryWord {
   definitions: DictionaryDefinition[];
 }
 
+export interface QuizCardData {
+  wordId: number;
+  definition: {
+    id: number;
+    text: string;
+    translation: string | null;
+  };
+}
+
 interface AppState {
   token: string | null;
   profile: UserProfile | null;
   appState: any | null;
   wordProcessing: WordProcessingStatus[];
   dictionary: DictionaryWord[];
+  quizCard: QuizCardData | null;
   setToken: (token: string | null) => void;
   setProfile: (profile: UserProfile | null) => void;
   setAppState: (appState: any) => void;
@@ -46,6 +56,7 @@ interface AppState {
   updateDictionaryTranslation: (wordId: number, definitionId: number, text: string) => void;
   addDictionaryDefinition: (wordId: number, definition: DictionaryDefinition) => void;
   removeDictionaryDefinition: (wordId: number, definitionId: number) => void;
+  setQuizCard: (card: QuizCardData | null) => void;
 }
 
 const useStore = create<AppState>((set) => ({
@@ -54,10 +65,12 @@ const useStore = create<AppState>((set) => ({
   appState: null,
   wordProcessing: [],
   dictionary: [],
+  quizCard: null,
   setToken: (token) => set({ token }),
   setProfile: (profile) => set({ profile }),
   setAppState: (appState) => set({ appState }),
   setDictionary: (dictionary) => set({ dictionary }),
+  setQuizCard: (card) => set({ quizCard: card }),
   updateWordProcessing: (status) => set((state) => {
     const existingIndex = state.wordProcessing.findIndex((w) => w.word === status.word);
     if (existingIndex >= 0) {

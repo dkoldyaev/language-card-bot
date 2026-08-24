@@ -32,6 +32,8 @@ export function useMercure() {
           updateWordProcessing({ word: data.word, status: 'processed', processedCount: data.processedCount, totalDefinitions: data.totalDefinitions });
         } else if (data.type === 'state_sync') {
           useStore.getState().setAppState(data);
+        } else if (data.type === 'quiz_card') {
+          useStore.getState().setQuizCard(data);
         }
       } catch (error) {
         console.error('Error parsing Mercure message:', error);
