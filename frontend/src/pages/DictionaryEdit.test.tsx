@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import DictionaryEdit from './DictionaryEdit';
 import apiClient from '../api/client';
@@ -23,6 +24,7 @@ describe('DictionaryEdit', () => {
   });
 
   it('renders dictionary after loading', async () => {
+    const user = userEvent.setup();
     render(<DictionaryEdit />);
     
     // Should show loading state initially
@@ -34,5 +36,15 @@ describe('DictionaryEdit', () => {
 
     expect(screen.getByText('apple')).toBeInTheDocument();
     expect(screen.getByText('1 definition(s)')).toBeInTheDocument();
+
+    // The accordion is collapsed by default in MUI, but text might still be in DOM.
+    // MUI Accordion uses a button for summary
+    const accordionBtn = screen.getByRole('button', { name: /apple 1 definition\(s\)/i });
+    expect(accordionBtn).toBeInTheDocument();
+
+    await user.click(accordionBtn);
+
+    expect(screen.getByText('1. A fruit')).toBeInTheDocument();
+    expect(screen.getByText('Translation: яблоко')).toBeInTheDocument();
   });
 });

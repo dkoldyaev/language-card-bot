@@ -1,4 +1,5 @@
-import { Typography, Box, CircularProgress, List, ListItem, ListItemText, Divider } from '@mui/material';
+import { Typography, Box, CircularProgress, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import useStore from '../store/useStore';
@@ -28,25 +29,40 @@ export default function DictionaryEdit() {
   }
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
+    <Box sx={{ maxWidth: 800, mx: 'auto', mt: 4 }}>
       <Typography variant="h4" gutterBottom>Edit Dictionary</Typography>
       
       {dictionary.length === 0 ? (
         <Typography color="text.secondary">Your dictionary is empty.</Typography>
       ) : (
-        <List>
-          {dictionary.map((word, index) => (
-            <div key={word.id}>
-              <ListItem>
-                <ListItemText
-                  primary={word.text}
-                  secondary={`${word.definitions.length} definition(s)`}
-                />
-              </ListItem>
-              {index < dictionary.length - 1 && <Divider />}
-            </div>
+        <div>
+          {dictionary.map((word) => (
+            <Accordion key={word.id}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle1" sx={{ width: '33%', flexShrink: 0 }}>
+                  {word.text}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary' }}>
+                  {word.definitions.length} definition(s)
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {word.definitions.map((def, idx) => (
+                  <Box key={def.id} sx={{ mb: idx !== word.definitions.length - 1 ? 2 : 0 }}>
+                    <Typography variant="body1" fontWeight="bold">
+                      {idx + 1}. {def.text}
+                    </Typography>
+                    {def.translation && (
+                      <Typography variant="body2" color="text.secondary" sx={{ ml: 2, mt: 0.5 }}>
+                        Translation: {def.translation.text}
+                      </Typography>
+                    )}
+                  </Box>
+                ))}
+              </AccordionDetails>
+            </Accordion>
           ))}
-        </List>
+        </div>
       )}
     </Box>
   );
