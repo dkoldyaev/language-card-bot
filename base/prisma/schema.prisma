@@ -16,31 +16,34 @@ enum UserMode {
 }
 
 model User {
-  id           Int        @id @default(autoincrement())
-  username     String     @unique
-  createdAt    DateTime   @default(now())
-  
-  state        UserState?
-  settings     UserSettings?
-  words        Word[]
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  createdAt DateTime @default(now())
+
+  state    UserState?
+  settings UserSettings?
+  words    Word[]
 }
 
 model UserState {
-  id     Int      @id @default(autoincrement())
-  mode   UserMode @default(DEFAULT)
+  id   Int      @id @default(autoincrement())
+  mode UserMode @default(DEFAULT)
 
-  userId Int      @unique
-  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  currentWordId Int?
+  currentWord   Word? @relation(fields: [currentWordId], references: [id], onDelete: SetNull)
 }
 
 model UserSettings {
-  id             Int      @id @default(autoincrement())
+  id             Int    @id @default(autoincrement())
   baseLanguage   String
   targetLanguage String
   desiredLevel   String
 
-  userId         Int      @unique
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Word {
@@ -51,7 +54,8 @@ model Word {
   createdAt DateTime @default(now())
 
   definitions Definition[]
-  
+  userStates  UserState[]
+
   @@unique([userId, text])
 }
 
@@ -61,14 +65,14 @@ model Definition {
   wordId    Int
   word      Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
-  
+
   translation DefinitionTranslation?
 }
 
 model DefinitionTranslation {
-  id           Int      @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   text         String
-  definitionId Int      @unique
+  definitionId Int        @unique
   definition   Definition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
+  createdAt    DateTime   @default(now())
 }

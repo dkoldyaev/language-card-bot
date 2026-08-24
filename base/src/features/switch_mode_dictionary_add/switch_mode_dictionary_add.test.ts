@@ -47,7 +47,8 @@ describe('Dictionary Add Endpoint', () => {
     prismaMock.userState.update.mockResolvedValue({
       id: 1,
       userId,
-      mode: UserMode.DICTIONARY_ADD
+      mode: UserMode.DICTIONARY_ADD,
+      currentWordId: null
     });
 
     // Act
@@ -70,7 +71,8 @@ describe('Dictionary Add Endpoint', () => {
     expect(publishEvent).toHaveBeenCalledWith(username, {
       version: 'v1',
       type: 'state_sync',
-      mode: UserMode.DICTIONARY_ADD
+      mode: UserMode.DICTIONARY_ADD,
+      currentWordId: null
     });
   });
 });

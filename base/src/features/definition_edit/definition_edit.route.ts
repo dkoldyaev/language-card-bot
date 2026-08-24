@@ -15,7 +15,7 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
 
   const { text } = parseResult.data;
   const { id: userId, username } = getAuthUser(req);
-  const definitionId = parseInt(req.params.id, 10);
+  const definitionId = parseInt(req.params.id as string, 10);
 
   if (isNaN(definitionId)) {
     return res.status(400).json({ error: 'Invalid definition ID' });

@@ -24,7 +24,8 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
     const payload: StateSyncMercureEvent = {
       version: 'v1',
       type: 'state_sync',
-      mode: userState.mode as UserMode
+      mode: userState.mode as UserMode,
+      currentWordId: userState.currentWordId
     };
 
     try {

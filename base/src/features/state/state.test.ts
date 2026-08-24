@@ -46,7 +46,8 @@ describe('State Endpoint', () => {
     prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,
       userId,
-      mode: UserMode.DEFAULT
+      mode: UserMode.DEFAULT,
+      currentWordId: null
     });
 
     const res = await request(app)
@@ -65,7 +66,8 @@ describe('State Endpoint', () => {
     expect(publishEvent).toHaveBeenCalledTimes(1);
     expect(publishEvent).toHaveBeenCalledWith(username, expect.objectContaining({
       type: 'state_sync',
-      mode: UserMode.DEFAULT
+      mode: UserMode.DEFAULT,
+      currentWordId: null
     }));
   });
 });
