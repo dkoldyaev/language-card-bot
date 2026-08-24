@@ -25,7 +25,10 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
       version: 'v1',
       type: 'state_sync',
       mode: userState.mode as UserMode,
-      currentWordId: userState.currentWordId
+      currentWordId: userState.currentWordId,
+      showVariants: userState.showVariants,
+      showDefinitionTranslation: userState.showDefinitionTranslation,
+      currentDefinitionId: userState.currentDefinitionId
     };
 
     try {

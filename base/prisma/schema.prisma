@@ -34,6 +34,12 @@ model UserState {
 
   currentWordId Int?
   currentWord   Word? @relation(fields: [currentWordId], references: [id], onDelete: SetNull)
+
+  showVariants              Boolean @default(false)
+  showDefinitionTranslation Boolean @default(false)
+
+  currentDefinitionId Int?
+  currentDefinition   Definition? @relation(fields: [currentDefinitionId], references: [id], onDelete: SetNull)
 }
 
 model UserSettings {
@@ -67,6 +73,7 @@ model Definition {
   createdAt DateTime @default(now())
 
   translation DefinitionTranslation?
+  userStates  UserState[]
 }
 
 model DefinitionTranslation {

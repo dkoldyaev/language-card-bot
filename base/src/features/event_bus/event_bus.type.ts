@@ -11,6 +11,9 @@ export interface StateSyncMercureEvent extends BaseMercureEvent {
   type: 'state_sync';
   mode: UserMode;
   currentWordId?: number | null;
+  showVariants?: boolean;
+  showDefinitionTranslation?: boolean;
+  currentDefinitionId?: number | null;
 }
 
 export interface EchoMercureEvent extends BaseMercureEvent {

@@ -47,7 +47,10 @@ describe('State Endpoint', () => {
       id: 1,
       userId,
       mode: UserMode.DEFAULT,
-      currentWordId: null
+      currentWordId: null,
+      showVariants: false,
+      showDefinitionTranslation: false,
+      currentDefinitionId: null
     });
 
     const res = await request(app)
@@ -67,7 +70,10 @@ describe('State Endpoint', () => {
     expect(publishEvent).toHaveBeenCalledWith(username, expect.objectContaining({
       type: 'state_sync',
       mode: UserMode.DEFAULT,
-      currentWordId: null
+      currentWordId: null,
+      showVariants: false,
+      showDefinitionTranslation: false,
+      currentDefinitionId: null
     }));
   });
 });
