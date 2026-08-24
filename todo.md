@@ -30,3 +30,10 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 - [ ] **Quiz Cleanup Background Task**: (Отменено, не нужно делать, решается на клиенте).
 - [x] **Next Card API (`/api/v1/quiz/next_card`)**: Implement an endpoint that resets the quiz state flags (`showVariants`, `showDefinitionTranslation`), calls the Quiz Generation Service to select a *new word*, updates the state, and sends the new card via a Mercure event.
 - [x] **Next Definition API (`/api/v1/quiz/next_definition`)**: Implement an endpoint that resets the quiz state flags, selects a *different random definition* for the *currently active word*, updates the state, and sends the updated card via a Mercure event.
+
+## Pending Tasks (PWA Integration)
+
+### Core Data & Hydration
+- [ ] **Dictionary Fetch API (`GET /api/v1/dictionary`)**: Implement an endpoint to return the user's entire dictionary (all words, definitions, and translations) so the web app can render the "Edit dictionary" view without relying on chat messages.
+- [ ] **Quiz State Hydration (Enrichment)**: Update the `POST /api/v1/state/sync` endpoint so that when returning the `QUIZ` state, it includes the actual text of the current word and definition (instead of just their IDs), allowing the frontend to immediately render the card upon reload.
+- [ ] **Session Validation API (`GET /api/v1/auth/me`)**: Implement a simple endpoint that takes the JWT token from the Authorization header and returns the current user's profile (`id`, `username`) to easily re-validate sessions in the browser.
