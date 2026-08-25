@@ -35,6 +35,15 @@ services:
     extends:
       file: docker-compose.yml
       service: translator
+    environment:
+      - MOCK_TIMEOUT=0
+
+  definer:
+    extends:
+      file: docker-compose.yml
+      service: definer
+    environment:
+      - MOCK_TIMEOUT=0
 
   mercure_monitor:
     build:

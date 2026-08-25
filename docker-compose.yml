@@ -44,6 +44,7 @@ services:
     environment:
       - PORT=${TRANSLATOR_PORT}
       - GOOGLE_TRANSLATE_API_KEY=${TRANSLATOR_GOOGLE_TRANSLATE_API_KEY}
+      - MOCK_TIMEOUT=${TRANSLATOR_MOCK_TIMEOUT}
     volumes:
       - ./translator:/app
       - /app/node_modules
@@ -58,6 +59,7 @@ services:
       - PORT=${DEFINER_PORT}
       - MISTRAL_API_KEY=${DEFINER_MISTRAL_API_KEY}
       - GEMINI_API_KEY=${DEFINER_GEMINI_API_KEY}
+      - MOCK_TIMEOUT=${DEFINER_MOCK_TIMEOUT}
     volumes:
       - ./definer:/app
       - /app/node_modules

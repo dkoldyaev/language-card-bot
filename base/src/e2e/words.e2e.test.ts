@@ -84,7 +84,19 @@ describe('Words E2E', () => {
       body: { message: 'Word added successfully' }
     });
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const waitForCondition = async (condition: () => boolean, timeout = 5000) => {
+      const start = Date.now();
+      while (!condition()) {
+        if (Date.now() - start > timeout) {
+          throw new Error('Timeout waiting for condition');
+        }
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    };
+
+    await waitForCondition(() => 
+      messages.filter(m => m.type === 'dictionary_add_definition_processed').length >= 2
+    );
 
     const userInDbAfterAdd = await prisma.user.findUnique({
       where: { username: testUsername },
@@ -115,7 +127,9 @@ describe('Words E2E', () => {
       body: { message: 'Word already exists' }
     });
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await waitForCondition(() => 
+      messages.some(m => m.type === 'dictionary_add_duplicate')
+    );
     
     // Verify Mercure events
     const processingEvents = messages.filter(m => m.type === 'dictionary_add_processing');
