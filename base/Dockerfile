@@ -24,7 +24,7 @@ RUN npm install
 COPY prisma ./prisma
 RUN npx prisma generate
 COPY . .
-CMD ["npm", "run", "dev"]
+CMD sh -c "npx prisma db push && npm run dev"
 
 # Production stage
 FROM node:22-alpine AS production
@@ -34,4 +34,4 @@ RUN npm ci --only=production
 COPY prisma ./prisma
 RUN npx prisma generate
 COPY --from=builder /app/dist ./dist
-CMD ["npm", "start"]
+CMD sh -c "npx prisma migrate deploy && npm start"
