@@ -18,3 +18,17 @@ export async function login(page: Page, username: string) {
   await expect(page).toHaveURL(/.*\/$/);
   await expect(page.locator('text=Welcome to English Card Bot')).toBeVisible({ timeout: 10000 });
 }
+
+export async function addWordsToDictionary(page: Page, words: string[]) {
+  await page.goto('/dictionary/add');
+  await expect(page.locator('h4:has-text("Add Words")')).toBeVisible();
+  
+  const text = words.join('\n');
+  await page.fill('textarea', text);
+  
+  await expect(page.locator('button:has-text("Submit Words")')).toBeVisible();
+  await page.click('button:has-text("Submit Words")');
+  
+  // Wait for submission to complete (textarea is cleared upon success)
+  await expect(page.locator('textarea').first()).toHaveValue('', { timeout: 10000 });
+}

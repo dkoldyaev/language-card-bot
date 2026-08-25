@@ -1,5 +1,5 @@
 import { Typography, Box, TextField, Button, CircularProgress } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import apiClient from '../api/client';
 import WordProcessingList from '../components/WordProcessingList';
 
@@ -7,14 +7,17 @@ export default function DictionaryAdd() {
   const [wordsText, setWordsText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    // Switch mode to DICTIONARY_ADD when the user visits the page
+    apiClient.post('/switch_mode_dictionary_add');
+  }, []);
+
   const handleSubmit = async () => {
     const words = wordsText.split('\n').map((w) => w.trim()).filter(Boolean);
     if (words.length === 0) return;
 
     setSubmitting(true);
     try {
-      // Switch mode to DICTIONARY_ADD first just in case
-      await apiClient.post('/state/mode', { mode: 'DICTIONARY_ADD' });
       
       for (const word of words) {
         await apiClient.post('/add_word', { word });

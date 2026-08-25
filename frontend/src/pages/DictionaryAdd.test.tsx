@@ -12,6 +12,9 @@ describe('DictionaryAdd', () => {
   it('renders input area and disabled submit button', () => {
     render(<DictionaryAdd />);
     
+    // Mode should be switched on mount
+    expect(apiClient.post).toHaveBeenCalledWith('/switch_mode_dictionary_add');
+    
     expect(screen.getByText('Add Words')).toBeInTheDocument();
     
     const input = screen.getByRole('textbox', { name: /Words list/i });
@@ -33,8 +36,8 @@ describe('DictionaryAdd', () => {
 
     await user.click(submitBtn);
 
-    expect(apiClient.post).toHaveBeenCalledWith('/state/mode', { mode: 'DICTIONARY_ADD' });
-    
+    // Check that mode was switched and words were added
+    // Mode switch was already called on mount, words are added on submit
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledWith('/add_word', { word: 'apple' });
       expect(apiClient.post).toHaveBeenCalledWith('/add_word', { word: 'banana' });
@@ -43,5 +46,4 @@ describe('DictionaryAdd', () => {
     // Check if input is cleared
     expect(input).toHaveValue('');
   });
-});
 

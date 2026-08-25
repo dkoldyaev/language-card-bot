@@ -1,43 +1,56 @@
 import { test, expect } from '@playwright/test';
+import { register, login, addWordsToDictionary } from './helpers';
 
 test.describe('English Card Bot Frontend E2E', () => {
+  test.beforeEach(async ({ page }) => {
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.log(`[PAGE ERROR LOG]: ${msg.text()}`);
+      }
+    });
+    page.on('pageerror', error => console.log(`[PAGE ERROR]: ${error.message}`));
 
-  // test('should display Welcome page', async ({ page }) => {
-  //   await page.goto('/');
-  //   await expect(page.locator('text=Welcome to English Card Bot')).toBeVisible();
-  // });
+    const username = `testuser_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    // We register and then login the user for each test
+    await register(page, username);
+    await login(page, username);
+  });
 
-  // test('should navigate to Settings and save settings', async ({ page }) => {
-  //   // Navigate to settings
-  //   await page.goto('/settings');
-  //   await expect(page.locator('h4:has-text("Settings")')).toBeVisible();
+  test('should display Welcome page', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('text=Welcome to English Card Bot')).toBeVisible();
+  });
 
-  //   // Select options if possible (checking the selects exist)
-  //   await expect(page.locator('[data-testid="base-language-select"]')).toBeVisible();
-  //   await expect(page.locator('[data-testid="learned-language-select"]')).toBeVisible();
-  //   await expect(page.locator('[data-testid="level-select"]')).toBeVisible();
+  test('should navigate to Settings and save settings', async ({ page }) => {
+    // Navigate to settings
+    await page.goto('/settings');
+    await expect(page.locator('h4:has-text("Settings")')).toBeVisible();
 
-  //   // In a real e2e test, we'd interact with MUI selects and click save, 
-  //   // but this depends on if backend is returning properly mocked data or real data.
-  //   // Let's at least check if Save button is there.
-  //   await expect(page.locator('button:has-text("Save Settings")')).toBeVisible();
-  // });
+    // Select options if possible (checking the selects exist)
+    await expect(page.locator('[data-testid="base-language-select"]')).toBeVisible();
+    await expect(page.locator('[data-testid="learned-language-select"]')).toBeVisible();
+    await expect(page.locator('[data-testid="level-select"]')).toBeVisible();
 
-  // test('should navigate to Dictionary Add and add a word', async ({ page }) => {
-  //   await page.goto('/dictionary/add');
-  //   await expect(page.locator('h4:has-text("Add Words")')).toBeVisible();
+    // In a real e2e test, we'd interact with MUI selects and click save, 
+    // but this depends on if backend is returning properly mocked data or real data.
+    // Let's at least check if Save button is there.
+    await expect(page.locator('button:has-text("Save Settings")')).toBeVisible();
+  });
 
-  //   // Fill the text area
-  //   await page.fill('textarea', 'apple');
-  //   await expect(page.locator('button:has-text("Submit Words")')).toBeVisible();
-  //   await page.click('button:has-text("Submit Words")');
-  //   // We would expect a success or processing list update
-  // });
+  test('should navigate to Dictionary Add, add words, and verify them in Dictionary Edit', async ({ page }) => {
+    // 1. Add words using the helper function
+    const wordsToAdd = ['apple', 'banana'];
+    await addWordsToDictionary(page, wordsToAdd);
 
-  // test('should navigate to Dictionary Edit', async ({ page }) => {
-  //   await page.goto('/dictionary/edit');
-  //   // Check title or presence of accordion/list
-  // });
+    // 2. Navigate to Dictionary Edit
+    await page.goto('/dictionary/edit');
+    await expect(page.locator('h4:has-text("Edit Dictionary")')).toBeVisible();
+
+    // 3. Verify that the added words are displayed in the list
+    for (const word of wordsToAdd) {
+      await expect(page.locator(`text=${word}`).first()).toBeVisible({ timeout: 10000 });
+    }
+  });
 
   // test('should navigate to Quiz and click Start Quiz', async ({ page }) => {
   //   await page.goto('/quiz');

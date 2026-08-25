@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface UserProfile {
   id: number;
@@ -70,75 +71,84 @@ interface AppState {
   setQuizVariants: (variants: string[] | null) => void;
 }
 
-const useStore = create<AppState>((set) => ({
-  token: null,
-  profile: null,
-  appState: null,
-  wordProcessing: [],
-  dictionary: [],
-  quizCard: null,
-  quizEvaluation: null,
-  quizTranslation: null,
-  quizVariants: null,
-  setToken: (token) => set({ token }),
-  setProfile: (profile) => set({ profile }),
-  setAppState: (appState) => set({ appState }),
-  setDictionary: (dictionary) => set({ dictionary }),
-  setQuizCard: (card) => set({ quizCard: card, quizEvaluation: null, quizTranslation: null, quizVariants: null }),
-  setQuizEvaluation: (evalData) => set({ quizEvaluation: evalData }),
-  setQuizTranslation: (translation) => set({ quizTranslation: translation }),
-  setQuizVariants: (variants) => set({ quizVariants: variants }),
-  updateWordProcessing: (status) => set((state) => {
-    const existingIndex = state.wordProcessing.findIndex((w) => w.word === status.word);
-    if (existingIndex >= 0) {
-      const newList = [...state.wordProcessing];
-      newList[existingIndex] = { ...newList[existingIndex], ...status };
-      return { wordProcessing: newList };
+const useStore = create<AppState>()(
+  persist(
+    (set) => ({
+      token: null,
+      profile: null,
+      appState: null,
+      wordProcessing: [],
+      dictionary: [],
+      quizCard: null,
+      quizEvaluation: null,
+      quizTranslation: null,
+      quizVariants: null,
+      setToken: (token) => set({ token }),
+      setProfile: (profile) => set({ profile }),
+      setAppState: (appState) => set({ appState }),
+      setDictionary: (dictionary) => set({ dictionary }),
+      setQuizCard: (card) => set({ quizCard: card, quizEvaluation: null, quizTranslation: null, quizVariants: null }),
+      setQuizEvaluation: (evalData) => set({ quizEvaluation: evalData }),
+      setQuizTranslation: (translation) => set({ quizTranslation: translation }),
+      setQuizVariants: (variants) => set({ quizVariants: variants }),
+      updateWordProcessing: (status) => set((state) => {
+        const existingIndex = state.wordProcessing.findIndex((w) => w.word === status.word);
+        if (existingIndex >= 0) {
+          const newList = [...state.wordProcessing];
+          newList[existingIndex] = { ...newList[existingIndex], ...status };
+          return { wordProcessing: newList };
+        }
+        return { wordProcessing: [...state.wordProcessing, status] };
+      }),
+      removeDictionaryWord: (wordId) => set((state) => ({
+        dictionary: state.dictionary.filter((w) => w.id !== wordId),
+      })),
+      updateDictionaryDefinition: (wordId, definitionId, text) => set((state) => ({
+        dictionary: state.dictionary.map(word => 
+          word.id === wordId ? {
+            ...word,
+            definitions: word.definitions.map(def => 
+              def.id === definitionId ? { ...def, text } : def
+            )
+          } : word
+        )
+      })),
+      updateDictionaryTranslation: (wordId, definitionId, text) => set((state) => ({
+        dictionary: state.dictionary.map(word => 
+          word.id === wordId ? {
+            ...word,
+            definitions: word.definitions.map(def => 
+              def.id === definitionId ? { 
+                ...def, 
+                translation: def.translation ? { ...def.translation, text } : { id: Date.now(), text } 
+              } : def
+            )
+          } : word
+        )
+      })),
+      addDictionaryDefinition: (wordId, definition) => set((state) => ({
+        dictionary: state.dictionary.map(word => 
+          word.id === wordId ? {
+            ...word,
+            definitions: [...word.definitions, definition]
+          } : word
+        )
+      })),
+      removeDictionaryDefinition: (wordId, definitionId) => set((state) => ({
+        dictionary: state.dictionary.map(word => 
+          word.id === wordId ? {
+            ...word,
+            definitions: word.definitions.filter(def => def.id !== definitionId)
+          } : word
+        )
+      })),
+    }),
+    {
+      name: 'english-card-bot-storage', // unique name
+      // you can also specify partialize here if you don't want to save some states (e.g., wordProcessing)
+      // but for now saving everything is fine to keep the user logged in
     }
-    return { wordProcessing: [...state.wordProcessing, status] };
-  }),
-  removeDictionaryWord: (wordId) => set((state) => ({
-    dictionary: state.dictionary.filter((w) => w.id !== wordId),
-  })),
-  updateDictionaryDefinition: (wordId, definitionId, text) => set((state) => ({
-    dictionary: state.dictionary.map(word => 
-      word.id === wordId ? {
-        ...word,
-        definitions: word.definitions.map(def => 
-          def.id === definitionId ? { ...def, text } : def
-        )
-      } : word
-    )
-  })),
-  updateDictionaryTranslation: (wordId, definitionId, text) => set((state) => ({
-    dictionary: state.dictionary.map(word => 
-      word.id === wordId ? {
-        ...word,
-        definitions: word.definitions.map(def => 
-          def.id === definitionId ? { 
-            ...def, 
-            translation: def.translation ? { ...def.translation, text } : { id: Date.now(), text } 
-          } : def
-        )
-      } : word
-    )
-  })),
-  addDictionaryDefinition: (wordId, definition) => set((state) => ({
-    dictionary: state.dictionary.map(word => 
-      word.id === wordId ? {
-        ...word,
-        definitions: [...word.definitions, definition]
-      } : word
-    )
-  })),
-  removeDictionaryDefinition: (wordId, definitionId) => set((state) => ({
-    dictionary: state.dictionary.map(word => 
-      word.id === wordId ? {
-        ...word,
-        definitions: word.definitions.filter(def => def.id !== definitionId)
-      } : word
-    )
-  })),
-}));
+  )
+);
 
 export default useStore;
