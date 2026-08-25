@@ -8,17 +8,16 @@ services:
     ports:
       - "3001:3001"
     environment:
-      # Use host.docker.internal to connect to the host's PostgreSQL instance
-      - DATABASE_URL=postgresql://dkoldaev@host.docker.internal:5432/english_card_bot?schema=public
-      - JWT_SECRET=supersecret_docker_key
-      - PORT=3001
-      - MERCURE_URL=http://mercure/.well-known/mercure
-      - MERCURE_JWT=supersecret_mercure_key
-      - TRANSLATOR_API_URL=http://translator:3001/api/v1/translate
-      - DEFINER_API_URL=http://definer:3002/api/v1/define
-      - BASE_DOMAIN=${BASE_DOMAIN:-http://localhost}
-      - REDIS_URL=redis://redis:6379
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5174}
+      - DATABASE_URL=${BASE_DATABASE_URL}
+      - JWT_SECRET=${BASE_JWT_SECRET}
+      - PORT=${BASE_PORT}
+      - MERCURE_URL=${BASE_MERCURE_URL}
+      - MERCURE_JWT=${BASE_MERCURE_JWT}
+      - TRANSLATOR_API_URL=${BASE_TRANSLATOR_API_URL}
+      - DEFINER_API_URL=${BASE_DEFINER_API_URL}
+      - BASE_DOMAIN=${BASE_DOMAIN}
+      - REDIS_URL=${BASE_REDIS_URL}
+      - CORS_ORIGIN=${BASE_CORS_ORIGIN}
     volumes:
       - ./base:/app
       - /app/node_modules
@@ -28,11 +27,11 @@ services:
   mercure:
     image: dunglas/mercure
     environment:
-      - SERVER_NAME=:80
-      - MERCURE_PUBLISHER_JWT_KEY=supersecret_mercure_key
-      - MERCURE_SUBSCRIBER_JWT_KEY=supersecret_mercure_key
-      - CORS_ALLOWED_ORIGINS=*
-      - ALLOW_ANONYMOUS=1
+      - SERVER_NAME=${MERCURE_SERVER_NAME}
+      - MERCURE_PUBLISHER_JWT_KEY=${MERCURE_JWT_KEY}
+      - MERCURE_SUBSCRIBER_JWT_KEY=${MERCURE_JWT_KEY}
+      - CORS_ALLOWED_ORIGINS=${MERCURE_CORS_ALLOWED_ORIGINS}
+      - ALLOW_ANONYMOUS=${MERCURE_ALLOW_ANONYMOUS}
     ports:
       - "9090:80"
 
@@ -43,8 +42,8 @@ services:
     ports:
       - "3002:3001"
     environment:
-      - PORT=3001
-      - GOOGLE_TRANSLATE_API_KEY=${GOOGLE_TRANSLATE_API_KEY}
+      - PORT=${TRANSLATOR_PORT}
+      - GOOGLE_TRANSLATE_API_KEY=${TRANSLATOR_GOOGLE_TRANSLATE_API_KEY}
     volumes:
       - ./translator:/app
       - /app/node_modules
@@ -56,9 +55,9 @@ services:
     ports:
       - "3003:3002"
     environment:
-      - PORT=3002
-      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=${DEFINER_PORT}
+      - MISTRAL_API_KEY=${DEFINER_MISTRAL_API_KEY}
+      - GEMINI_API_KEY=${DEFINER_GEMINI_API_KEY}
     volumes:
       - ./definer:/app
       - /app/node_modules
@@ -75,9 +74,9 @@ services:
     ports:
       - "5174:5173"
     environment:
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3001/api/v1}
-      - VITE_MERCURE_PUBLIC_URL=${VITE_MERCURE_PUBLIC_URL:-http://localhost:9090/.well-known/mercure}
-      - VITE_BASE_DOMAIN=${VITE_BASE_DOMAIN:-http://localhost}
+      - VITE_API_BASE_URL=${FRONTEND_VITE_API_BASE_URL}
+      - VITE_MERCURE_PUBLIC_URL=${FRONTEND_VITE_MERCURE_PUBLIC_URL}
+      - VITE_BASE_DOMAIN=${FRONTEND_VITE_BASE_DOMAIN}
     volumes:
       - ./frontend:/app
       - /app/node_modules
