@@ -18,6 +18,7 @@ services:
       - DEFINER_API_URL=http://definer:3002/api/v1/define
       - BASE_DOMAIN=${BASE_DOMAIN:-http://localhost}
       - REDIS_URL=redis://redis:6379
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5174}
     volumes:
       - ./base:/app
       - /app/node_modules
@@ -66,4 +67,18 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    ports:
+      - "5174:5173"
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3001/api/v1}
+      - VITE_MERCURE_PUBLIC_URL=${VITE_MERCURE_PUBLIC_URL:-http://localhost:9090/.well-known/mercure}
+      - VITE_BASE_DOMAIN=${VITE_BASE_DOMAIN:-http://localhost}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 

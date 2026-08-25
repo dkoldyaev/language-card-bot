@@ -69,7 +69,8 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 - [x] **Definition Add/Delete Logic**: Implement UI and actions to add a new definition (`/api/v1/definition_add`) or delete an existing one (`/api/v1/definition_delete`).
 
 ### 6. Quiz Mode (`/quiz`)
-- [x] **Quiz Start & Card UI**: Create the main Quiz view with a "Start Quiz" button (`/api/v1/quiz/start`). Create a Card component to display the current word/definition based on the Quiz state in Zustand.
+- [ ] **Quiz Start & Card UI**: Create the main Quiz view with a "Start Quiz" button (`/api/v1/quiz/start`). Create a Card component to display the current word/definition based on the Quiz state in Zustand.
+  - **Ошибка E2E теста**: При клике на "Start Quiz" карточка не появляется (ожидался заголовок "Quiz", но произошел таймаут). Запрос на `/api/v1/quiz/start` скорее всего падает с ошибкой (вероятно, из-за отсутствия авторизации или мок-токена в тестах/приложении).
 - [x] **Quiz Suggestion Input**: Add a TextField for the user to type their answer (suggestion) and a submit button. Connect to `/api/v1/quiz/answer` and display the result emoji/message (Success, Sad, Close Match).
 - [x] **Quiz Card Controls**: Add buttons for "Translate definition" (`/api/v1/quiz/translate_definition`), "Another definition" (`/api/v1/quiz/next_definition`), and "Show variants" (`/api/v1/quiz/variants`).
 - [x] **Quiz Variants Display**: Implement UI to display the 5 wrong variants when "Show variants" is active. Allow clicking a variant to submit it.

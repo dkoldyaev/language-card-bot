@@ -45,3 +45,12 @@ services:
     depends_on:
       - mercure
 
+  frontend:
+    extends:
+      file: docker-compose.yml
+      service: frontend
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3001/api/v1}
+    depends_on:
+      - app
+

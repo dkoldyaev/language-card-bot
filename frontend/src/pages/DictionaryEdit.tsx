@@ -156,6 +156,7 @@ export default function DictionaryEdit() {
                         </Typography>
                         <IconButton 
                           size="small" 
+                          aria-label="Edit definition"
                           onClick={() => {
                             setEditingDefId(def.id);
                             setEditDefText(def.text);
@@ -205,6 +206,7 @@ export default function DictionaryEdit() {
                             </Typography>
                             <IconButton 
                               size="small" 
+                              aria-label="Edit translation"
                               onClick={() => {
                                 setEditingTransId(def.id);
                                 setEditTransText(def.translation?.text || '');
