@@ -44,7 +44,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       body: JSON.stringify({
         language: userSettings.targetLanguage,
         text: wordText,
-        definerApp: 'mock' // or whatever
+        definerApp: process.env.DEFINER_APP_TYPE
       })
     });
 

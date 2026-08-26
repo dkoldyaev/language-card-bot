@@ -8,6 +8,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-testuser}:${POSTGRES_PASSWORD:-testpass}@db_test:5432/${POSTGRES_DB:-english_card_bot_test}?schema=public
       - REDIS_URL=redis://redis_test:6379
+      - DEFINER_APP_TYPE=mock
     depends_on:
       - db_test
       - redis_test

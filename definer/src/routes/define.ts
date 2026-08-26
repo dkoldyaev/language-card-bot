@@ -7,7 +7,7 @@ const router = Router();
 const DefineRequestSchema = z.object({
   language: z.string().min(1, 'Language is required'),
   text: z.string().min(1, 'Text is required'),
-  definerApp: z.enum(['mistral', 'gemini', 'mock'] as const),
+  definerApp: z.enum(['mistral', 'gemini', 'mock', 'freedictionary'] as const),
 });
 
 router.post('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
