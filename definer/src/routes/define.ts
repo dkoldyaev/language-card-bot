@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { DefinerFactory } from '../core/DefinerFactory';
+import { redisClient } from '../core/cache';
 
 const router = Router();
 
@@ -24,8 +25,19 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
 
     const { language, text, definerApp } = parseResult.data;
 
+    const cacheKey = `definer:${definerApp}:${language}:${text}`;
+    const cachedResult = await redisClient.get(cacheKey);
+
+    if (cachedResult) {
+      res.json({ definitions: JSON.parse(cachedResult) });
+      return;
+    }
+
     const definer = DefinerFactory.getDefiner(definerApp);
     const result = await definer.define(text, language);
+
+    // Cache for 1 year
+    await redisClient.set(cacheKey, JSON.stringify(result), 'EX', 365 * 24 * 60 * 60);
 
     res.json({
       definitions: result,

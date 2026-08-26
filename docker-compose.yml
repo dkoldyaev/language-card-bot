@@ -49,6 +49,7 @@ services:
       - MOCK_TIMEOUT=${TRANSLATOR_MOCK_TIMEOUT}
       - LARA_ACCESS_KEY_ID=${TRANSLATOR_LARA_ACCESS_KEY_ID}
       - LARA_ACCESS_KEY_SECRET=${TRANSLATOR_LARA_ACCESS_KEY_SECRET}
+      - REDIS_URL=${BASE_REDIS_URL}/1
     volumes:
       - ./translator:/app
       - /app/node_modules
@@ -64,6 +65,7 @@ services:
       - MISTRAL_API_KEY=${DEFINER_MISTRAL_API_KEY}
       - GEMINI_API_KEY=${DEFINER_GEMINI_API_KEY}
       - MOCK_TIMEOUT=${DEFINER_MOCK_TIMEOUT}
+      - REDIS_URL=${BASE_REDIS_URL}/2
     volumes:
       - ./definer:/app
       - /app/node_modules
@@ -72,6 +74,8 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
 
   frontend:
     build:
@@ -86,4 +90,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+
+volumes:
+  redis_data:
 
