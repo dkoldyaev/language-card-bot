@@ -32,3 +32,30 @@ export async function addWordsToDictionary(page: Page, words: string[]) {
   // Wait for submission to complete (textarea is cleared upon success)
   await expect(page.locator('textarea').first()).toHaveValue('', { timeout: 10000 });
 }
+
+export async function setupSettings(page: Page, baseLang = 'en', targetLang = 'ru', level = 'A1') {
+  await page.goto('/settings');
+  await expect(page.locator('h4:has-text("Settings")')).toBeVisible();
+
+  // Ensure the page is loaded
+  await expect(page.locator('[data-testid="base-language-select"]')).toBeVisible();
+
+  // Select base language
+  await page.locator('.MuiSelect-select').nth(0).click();
+  await page.locator(`li[data-value="${baseLang}"]`).click();
+
+  // Select target language
+  await page.locator('.MuiSelect-select').nth(1).click();
+  await page.locator(`li[data-value="${targetLang}"]`).click();
+
+  // Select level
+  await page.locator('.MuiSelect-select').nth(2).click();
+  await page.locator(`li[data-value="${level}"]`).click();
+
+  // Save Settings
+  const saveBtn = page.locator('button:has-text("Save Settings")');
+  await expect(saveBtn).toBeVisible();
+  await saveBtn.click();
+  // Wait for success message
+  await expect(page.locator('text=Settings saved successfully')).toBeVisible({ timeout: 5000 });
+}

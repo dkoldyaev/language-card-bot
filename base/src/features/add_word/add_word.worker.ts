@@ -120,9 +120,11 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
     const translatorData = (await translatorRes.json()) as { translatedText: string };
     const translatedText = translatorData.translatedText;
 
-    // Save translation
-    await prisma.definitionTranslation.create({
-      data: {
+    // Save or update translation
+    await prisma.definitionTranslation.upsert({
+      where: { definitionId: definitionId },
+      update: { text: translatedText },
+      create: {
         text: translatedText,
         definitionId: definitionId
       }

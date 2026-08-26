@@ -8,6 +8,7 @@ export default function Settings() {
   const [desiredLevel, setDesiredLevel] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     apiClient.get('/settings')
@@ -25,9 +26,10 @@ export default function Settings() {
 
   const handleSave = () => {
     setSaving(true);
+    setSuccess(false);
     apiClient.post('/settings', { baseLanguage, targetLanguage, desiredLevel })
       .then(() => {
-        // Successfully saved
+        setSuccess(true);
       })
       .catch((error) => console.error('Failed to save settings', error))
       .finally(() => setSaving(false));
@@ -104,6 +106,12 @@ export default function Settings() {
       >
         {saving ? 'Saving...' : 'Save Settings'}
       </Button>
+
+      {success && (
+        <Typography color="success.main" sx={{ mt: 2, textAlign: 'center' }}>
+          Settings saved successfully
+        </Typography>
+      )}
     </Box>
   );
 }

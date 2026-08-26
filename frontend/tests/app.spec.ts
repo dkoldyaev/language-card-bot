@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { register, login, addWordsToDictionary } from './helpers';
+import { register, login, addWordsToDictionary, setupSettings } from './helpers';
 
 test.describe('English Card Bot Frontend E2E', () => {
   test.beforeEach(async ({ page }) => {
@@ -14,6 +14,8 @@ test.describe('English Card Bot Frontend E2E', () => {
     // We register and then login the user for each test
     await register(page, username);
     await login(page, username);
+    // Set up default settings so worker processes jobs correctly
+    await setupSettings(page);
   });
 
   test('should display Welcome page', async ({ page }) => {
@@ -37,20 +39,6 @@ test.describe('English Card Bot Frontend E2E', () => {
     await expect(page.locator('button:has-text("Save Settings")')).toBeVisible();
   });
 
-  test('should navigate to Dictionary Add, add words, and verify them in Dictionary Edit', async ({ page }) => {
-    // 1. Add words using the helper function
-    const wordsToAdd = ['apple', 'banana'];
-    await addWordsToDictionary(page, wordsToAdd);
-
-    // 2. Navigate to Dictionary Edit
-    await page.goto('/dictionary/edit');
-    await expect(page.locator('h4:has-text("Edit Dictionary")')).toBeVisible();
-
-    // 3. Verify that the added words are displayed in the list
-    for (const word of wordsToAdd) {
-      await expect(page.locator(`text=${word}`).first()).toBeVisible({ timeout: 10000 });
-    }
-  });
 
   // test('should navigate to Quiz and click Start Quiz', async ({ page }) => {
   //   await page.goto('/quiz');

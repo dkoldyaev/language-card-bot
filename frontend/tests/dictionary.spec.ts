@@ -1,113 +1,103 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { register, login, addWordsToDictionary, setupSettings } from './helpers';
 
-// Helper to authenticate
-async function authenticate(page: Page, username: string) {
-  page.on('console', msg => console.log('BROWSER:', msg.text()));
-  page.on('requestfailed', request => console.log('FAILED:', request.url(), request.failure()?.errorText));
-  page.on('response', response => console.log('RESPONSE:', response.url(), response.status()));
-
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  
-  // Toggle to register mode if needed
-  if (await page.locator('button', { hasText: 'Need an account? Register' }).isVisible()) {
-    await page.click('button:has-text("Need an account? Register")');
-  }
-
-  await page.getByLabel('Username').fill(username);
-  await page.click('button[type="submit"]');
-  // Wait for redirect to home
-  await expect(page.locator('text=Welcome to English Card Bot')).toBeVisible({ timeout: 10000 });
-}
-
-test.describe.skip('Dictionary Operations', () => {
-  const username = `testuser_dict_${Date.now()}`;
-
+test.describe('Dictionary Operations', () => {
   test.beforeEach(async ({ page }) => {
-    await authenticate(page, username);
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.log(`[PAGE ERROR LOG]: ${msg.text()}`);
+      }
+    });
+    page.on('pageerror', error => console.log(`[PAGE ERROR]: ${error.message}`));
+
+    const username = `testuser_dict_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    await register(page, username);
+    await login(page, username);
+    await setupSettings(page);
   });
 
-  // test('should add 10 words, edit dictionary, and test duplicate/new logic', async ({ page }) => {
-  //   test.setTimeout(120000); // 2 minutes since adding 10 words takes time to process
+  test('should navigate to Dictionary Add, add words, and verify them in Dictionary Edit', async ({ page }) => {
+    // 1. Add words using the helper function
+    const wordsToAdd = ['apple', 'banana'];
+    await addWordsToDictionary(page, wordsToAdd);
 
-  //   // 1. Add 10 words
-  //   await page.click('text=Add Words');
-  //   await expect(page.locator('h4:has-text("Add Words")')).toBeVisible();
+    // 2. Navigate to Dictionary Edit
+    await page.goto('/dictionary/edit');
+    await expect(page.locator('h4:has-text("Edit Dictionary")')).toBeVisible();
 
-  //   const words = ['apple', 'banana', 'orange', 'grape', 'mango', 'kiwi', 'pear', 'peach', 'plum', 'cherry'];
-  //   await page.fill('textarea', words.join('\\n'));
-  //   await page.click('button:has-text("Add Words")');
+    // 3. Verify that the added words are displayed in the list and have correct definitions
+    for (const word of wordsToAdd) {
+      await expect(async () => {
+        // Reload the page to re-fetch dictionary if definitions are not ready
+        await page.reload();
+        await expect(page.locator('h4:has-text("Edit Dictionary")')).toBeVisible();
 
-  //   // Wait for all to be processed. 
-  //   // The UI displays status strings, usually "<word> - processed".
-  //   for (const word of words) {
-  //     await expect(page.locator(`li:has-text("${word}"):has-text("processed")`)).toBeVisible({ timeout: 25000 });
-  //   }
+        const wordAccordion = page.locator('.MuiAccordion-root').filter({ hasText: word });
+        await expect(wordAccordion).toBeVisible();
+        
+        // Ensure that the accordion summary says "2 definition(s)" to avoid expanding prematurely
+        await expect(wordAccordion.locator('text=2 definition(s)')).toBeVisible();
 
-  //   // 2. Edit Dictionary - Verify they are present
-  //   await page.click('text=Edit Dictionary');
-  //   await expect(page.locator('h4:has-text("Edit Dictionary")')).toBeVisible();
+        // Expand the accordion to see definitions
+        await wordAccordion.locator('.MuiAccordionSummary-root').click();
+        
+        // Verify mock definitions are present
+        await expect(wordAccordion.locator(`text=[Mock] Definition 1 for ${word} in ru`).first()).toBeVisible();
+        await expect(wordAccordion.locator(`text=[Mock] Definition 2 for ${word} in ru`).first()).toBeVisible();
+        
+        // Verify mock translations are present
+        await expect(wordAccordion.locator(`text=Translation: [MOCK: ru -> en] [Mock] Definition 1 for ${word} in ru`)).toBeVisible();
+        await expect(wordAccordion.locator(`text=Translation: [MOCK: ru -> en] [Mock] Definition 2 for ${word} in ru`)).toBeVisible();
+      }).toPass({ timeout: 15000 });
 
-  //   for (const word of words) {
-  //     await expect(page.locator(`text=${word}`).first()).toBeVisible();
-  //   }
+      // Edit Definition 1
+      const wordAccordion = page.locator('.MuiAccordion-root').filter({ hasText: word });
+      await wordAccordion.locator('button[aria-label="Edit definition"]').first().click();
+      await wordAccordion.locator('input[type="text"]').fill(`Edited definition for ${word}`);
+      await wordAccordion.locator('button:has-text("Save")').click();
 
-  //   // 3. Test deleting a word (apple)
-  //   // Click on the accordion for apple to make sure it's focused, then click delete
-  //   const appleItem = page.locator('.MuiAccordion-root').filter({ hasText: 'apple' }).first();
-  //   // In DictionaryEdit.tsx: <IconButton aria-label={`Delete ${word.text}`}>
-  //   page.on('dialog', dialog => dialog.accept()); // Accept confirm dialog
-  //   await appleItem.locator('button[aria-label="Delete apple"]').click();
-    
-  //   // Verify it disappears
-  //   await expect(page.locator('text=apple').first()).not.toBeVisible();
+      // Wait for the UI update to guarantee the PUT request has completed before we reload
+      await expect(wordAccordion.locator(`text=1. Edited definition for ${word}`)).toBeVisible();
 
-  //   // 4. Test editing a definition (for banana)
-  //   const bananaItem = page.locator('.MuiAccordion-root').filter({ hasText: 'banana' }).first();
-  //   await bananaItem.click(); // Expand accordion
-    
-  //   // Click edit definition
-  //   await bananaItem.locator('button[aria-label="Edit definition"]').first().click();
-  //   await bananaItem.locator('input[type="text"]').first().fill('A yellow fruit');
-  //   await bananaItem.locator('button:has-text("Save")').click();
-    
-  //   // Verify definition updated
-  //   await expect(bananaItem.locator('text=A yellow fruit')).toBeVisible();
+      // Wait for the new translation to be generated by the worker
+      await expect(async () => {
+        await page.reload();
+        await expect(page.locator('h4:has-text("Edit Dictionary")')).toBeVisible();
+        const acc = page.locator('.MuiAccordion-root').filter({ hasText: word });
+        await expect(acc).toBeVisible();
+        await acc.locator('.MuiAccordionSummary-root').click();
+        
+        await expect(acc.locator(`text=1. Edited definition for ${word}`)).toBeVisible();
+        await expect(acc.locator(`text=Translation: [MOCK: ru -> en] Edited definition for ${word}`)).toBeVisible();
+      }).toPass({ timeout: 15000 });
 
-  //   // 5. Test editing translation
-  //   // Wait for "Add Translation" or "Edit translation"
-  //   if (await bananaItem.locator('button:has-text("Add Translation")').isVisible()) {
-  //     await bananaItem.locator('button:has-text("Add Translation")').click();
-  //   } else {
-  //     await bananaItem.locator('button[aria-label="Edit translation"]').first().click();
-  //   }
-  //   await bananaItem.locator('input[type="text"]').first().fill('Желтый фрукт');
-  //   await bananaItem.locator('button:has-text("Save")').click();
-    
-  //   // Verify translation updated
-  //   await expect(bananaItem.locator('text=Translation: Желтый фрукт')).toBeVisible();
+      // Now edit the translation directly
+      const updatedAccordion = page.locator('.MuiAccordion-root').filter({ hasText: word });
+      await updatedAccordion.locator('button[aria-label="Edit translation"]').first().click();
+      await updatedAccordion.locator('input[type="text"]').fill(`Manually edited translation for ${word}`);
+      await updatedAccordion.locator('button:has-text("Save")').click();
 
-  //   // 6. Test deleting definition
-  //   await bananaItem.locator('button[aria-label="Delete definition"]').first().click();
-  //   // Because dialog auto-accepts, it should disappear
-  //   await expect(bananaItem.locator('text=A yellow fruit')).not.toBeVisible();
+      await expect(updatedAccordion.locator(`text=Translation: Manually edited translation for ${word}`)).toBeVisible();
 
-  //   // 7. Duplicate add logic
-  //   await page.click('text=Add Words');
-  //   await expect(page.locator('h4:has-text("Add New Words")')).toBeVisible();
-    
-  //   // Add existing word
-  //   await page.fill('textarea', 'banana');
-  //   await page.click('button:has-text("Add Words")');
-  //   await expect(page.locator(`li:has-text("banana"):has-text("duplicate")`)).toBeVisible({ timeout: 15000 });
+      // Delete the second definition
+      page.once('dialog', dialog => dialog.accept());
+      await updatedAccordion.locator('button[aria-label="Delete definition"]').last().click();
+      
+      // Wait for it to disappear
+      await expect(updatedAccordion.locator(`text=[Mock] Definition 2 for ${word} in ru`).first()).not.toBeVisible();
+      
+      // Verify the accordion summary shows 1 definition remaining
+      await expect(updatedAccordion.locator('text=1 definition(s)')).toBeVisible();
 
-  //   // 8. Add a new word
-  //   await page.fill('textarea', 'strawberry');
-  //   await page.click('button:has-text("Add Words")');
-  //   await expect(page.locator(`li:has-text("strawberry"):has-text("processed")`)).toBeVisible({ timeout: 15000 });
+      // Delete the word itself
+      page.once('dialog', dialog => dialog.accept());
+      await updatedAccordion.locator(`[aria-label="Delete ${word}"]`).click();
 
-  //   // 9. Add previously deleted word (apple)
-  //   await page.fill('textarea', 'apple');
-  //   await page.click('button:has-text("Add Words")');
-  //   await expect(page.locator(`li:has-text("apple"):has-text("processed")`)).toBeVisible({ timeout: 15000 });
-  // });
+      // Verify the word disappears
+      await expect(updatedAccordion).not.toBeVisible();
+    }
+
+    // After deleting all words, the dictionary should be empty
+    await expect(page.locator('text=Your dictionary is empty.')).toBeVisible();
+  });
 });
