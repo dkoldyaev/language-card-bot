@@ -19,9 +19,17 @@ export async function generateQuizCard(userId: number, excludeWordId?: number): 
   });
 
   if (wordsWithDefs.length === 0) {
-    // If we excluded the current word and no other words exist, maybe return null,
-    // but the caller can handle it or we can fallback to any word if length is 0.
-    return null;
+    if (excludeWordId) {
+      // Fallback to any word if no other words exist
+      const fallback = await prisma.word.findMany({
+        where: { userId, definitions: { some: {} } },
+        select: { id: true }
+      });
+      if (fallback.length === 0) return null;
+      wordsWithDefs.push(...fallback);
+    } else {
+      return null;
+    }
   }
 
   const randomWordId = wordsWithDefs[Math.floor(Math.random() * wordsWithDefs.length)].id;

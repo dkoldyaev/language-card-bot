@@ -1,5 +1,5 @@
 import { Typography, Box, Button, CircularProgress, Card, CardContent, TextField, Chip } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import apiClient from '../api/client';
 import useStore from '../store/useStore';
 
@@ -71,6 +71,15 @@ export default function Quiz() {
       console.error('Failed to get next card:', error);
     }
   };
+
+  useEffect(() => {
+    if (quizEvaluation?.result === 'SUCCESS') {
+      const timer = setTimeout(() => {
+        handleNextCard();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [quizEvaluation?.result]);
 
   if (!quizCard) {
     return (

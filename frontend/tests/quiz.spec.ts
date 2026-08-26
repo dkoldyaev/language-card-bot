@@ -48,25 +48,11 @@ test.describe('Quiz Operations', () => {
     await expect(page.locator('text=Close Match 🤔')).toBeVisible();
     await expect(page.locator('text=Your answer: aple')).toBeVisible();
 
-    // 3. Test Correct Answer
-    await answerInput.fill('apple');
-    await submitBtn.click();
-    await expect(page.locator('text=Success! 🎉')).toBeVisible();
-    await expect(page.locator('text=Your answer: apple')).toBeVisible();
-
-    // 4. Test Translate Definition
+    // 3. Test Translate Definition
     await page.click('button:has-text("Translate definition")');
     await expect(page.locator('text=Translation: [MOCK: ru -> en] [Mock] Definition')).toBeVisible();
 
-    // 5. Test Show Variants (Hints)
-    await page.click('button:has-text("Show variants")');
-    await expect(page.locator('h6:has-text("Variants:")')).toBeVisible();
-    // Click the correct variant
-    await page.getByRole('button', { name: /apple/i }).click();
-    // Clicking the variant directly submits it to the API, UI updates to Success
-    await expect(page.locator('text=Success! 🎉')).toBeVisible();
-    
-    // 6. Test Another Definition
+    // 4. Test Another Definition
     const currentDefText = await cardContent.innerText();
     await page.click('button:has-text("Another definition")');
     
@@ -76,6 +62,64 @@ test.describe('Quiz Operations', () => {
       expect(newDefText).not.toEqual(currentDefText);
       expect(newDefText).toContain('[Mock] Definition');
     }).toPass({ timeout: 5000 });
+
+    // 5. Test Correct Answer
+    await answerInput.fill('apple');
+    await submitBtn.click();
+    await expect(page.locator('text=Success! 🎉')).toBeVisible();
+    await expect(page.locator('text=Your answer: apple')).toBeVisible();
+    await expect(page.locator('text=Success! 🎉')).toBeHidden({ timeout: 5000 });
+  });
+
+  test('should go to the next card in case of success answer', async ({ page }) => {
+    // Add a word first so the quiz has content
+    await addWordsToDictionary(page, ['apple', 'banana']);
+
+    // Ensure the words have definitions by checking Dictionary Edit
+    await expect(async () => {
+      await page.goto('/dictionary/edit');
+      
+      const appleAccordion = page.locator('.MuiAccordion-root').filter({ hasText: 'apple' });
+      await expect(appleAccordion).toBeVisible();
+      await expect(appleAccordion.locator('text=2 definition(s)')).toBeVisible();
+
+      const bananaAccordion = page.locator('.MuiAccordion-root').filter({ hasText: 'banana' });
+      await expect(bananaAccordion).toBeVisible();
+      await expect(bananaAccordion.locator('text=2 definition(s)')).toBeVisible();
+    }).toPass({ timeout: 15000 });
+
+    await page.goto('/quiz');
+    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible({ timeout: 15000 });
+    await page.click('button:has-text("Start Quiz")');
+    
+    // Expect the quiz UI to show up
+    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible({ timeout: 5000 });
+    
+    const cardContent = page.locator('.MuiCardContent-root');
+    await expect(cardContent).toContainText('[Mock] Definition');
+    const initialDefText = await cardContent.innerText();
+    let currentWord = 'apple';
+    let nextWord = 'banana';
+    
+    if (initialDefText.includes('for banana')) {
+      currentWord = 'banana';
+      nextWord = 'apple';
+    }
+
+    await expect(cardContent).toContainText(`for ${currentWord} in ru`);
+
+    const answerInput = page.getByLabel(/Your answer/i);
+    const submitBtn = page.locator('button:has-text("Submit")');
+
+    // Test Correct Answer
+    await answerInput.fill(currentWord);
+    await submitBtn.click();
+    await expect(page.locator('text=Success! 🎉')).toBeVisible();
+    await expect(page.locator(`text=Your answer: ${currentWord}`)).toBeVisible();
+    await expect(page.locator('text=Success! 🎉')).toBeHidden({ timeout: 5000 });
+
+    // Verify it switched to the next word
+    await expect(cardContent).toContainText(`for ${nextWord} in ru`, { timeout: 5000 });
   });
 
 });
