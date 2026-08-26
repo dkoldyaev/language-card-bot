@@ -109,7 +109,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
         sourceLanguage: userSettings.targetLanguage,
         targetLanguage: userSettings.baseLanguage,
         text: definitionText,
-        translatorApp: 'mock'
+        translatorApp: process.env.TRANSLATOR_APP_TYPE
       })
     });
 

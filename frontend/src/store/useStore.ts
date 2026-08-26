@@ -95,7 +95,14 @@ const useStore = create<AppState>()(
       setMercureToken: (mercureToken) => set({ mercureToken }),
       setProfile: (profile) => set({ profile }),
       setAppState: (appState) => set({ appState }),
-      setDictionary: (dictionary) => set({ dictionary }),
+      setDictionary: (dictionary) => set((state) => {
+        const dictionaryWordIds = new Set(dictionary.map(w => w.id));
+        const shouldResetQuiz = state.quizCard && !dictionaryWordIds.has(state.quizCard.wordId);
+        return { 
+          dictionary,
+          ...(shouldResetQuiz && { quizCard: null, quizEvaluation: null, quizTranslation: null, quizVariants: null })
+        };
+      }),
       setQuizCard: (card) => set({ quizCard: card, quizEvaluation: null, quizTranslation: null, quizVariants: null }),
       setQuizEvaluation: (evalData) => set({ quizEvaluation: evalData }),
       setQuizTranslation: (translation) => set({ quizTranslation: translation }),
@@ -109,9 +116,13 @@ const useStore = create<AppState>()(
         }
         return { wordProcessing: [...state.wordProcessing, status] };
       }),
-      removeDictionaryWord: (wordId) => set((state) => ({
-        dictionary: state.dictionary.filter((w) => w.id !== wordId),
-      })),
+      removeDictionaryWord: (wordId) => set((state) => {
+        const shouldResetQuiz = state.quizCard?.wordId === wordId;
+        return {
+          dictionary: state.dictionary.filter((w) => w.id !== wordId),
+          ...(shouldResetQuiz && { quizCard: null, quizEvaluation: null, quizTranslation: null, quizVariants: null })
+        };
+      }),
       updateDictionaryDefinition: (wordId, definitionId, text) => set((state) => ({
         dictionary: state.dictionary.map(word => 
           word.id === wordId ? {
