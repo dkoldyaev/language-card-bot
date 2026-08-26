@@ -35,6 +35,19 @@ export async function addWordsToDictionary(page: Page, words: string[]) {
   await expect(page.locator('textarea').first()).toHaveValue('', { timeout: 10000 });
 }
 
+export async function addWordsAndAwaitDefinitions(page: Page, words: string[]) {
+  await addWordsToDictionary(page, words);
+  
+  await expect(async () => {
+    await page.goto('/dictionary/edit');
+    for (const word of words) {
+      const accordion = page.locator('.MuiAccordion-root').filter({ hasText: word });
+      await expect(accordion).toBeVisible();
+      await expect(accordion).toContainText(/[1-9]\d* definition\(s\)/);
+    }
+  }).toPass({ timeout: 15000 });
+}
+
 export async function setupSettings(page: Page, baseLang = 'en', targetLang = 'ru', level = 'A1') {
   await page.goto('/settings');
   await expect(page.locator('h4:has-text("Settings")')).toBeVisible();

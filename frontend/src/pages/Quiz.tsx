@@ -32,7 +32,6 @@ export default function Quiz() {
     setSubmitting(true);
     try {
       await apiClient.post('/quiz/answer', { suggestion });
-      setSuggestion(''); // Clear input after submission
     } catch (error) {
       console.error('Failed to submit answer:', error);
     } finally {
@@ -80,6 +79,10 @@ export default function Quiz() {
       return () => clearTimeout(timer);
     }
   }, [quizEvaluation?.result]);
+
+  useEffect(() => {
+    setSuggestion('');
+  }, [quizCard]);
 
   if (!quizCard) {
     return (

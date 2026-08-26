@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { register, login, addWordsToDictionary, setupSettings } from './helpers';
+import { register, login, addWordsAndAwaitDefinitions, setupSettings } from './helpers';
 
 test.describe('Quiz Operations', () => {
   test.beforeEach(async ({ page }) => {
@@ -20,7 +20,7 @@ test.describe('Quiz Operations', () => {
 
   test('should navigate to Quiz and click Start Quiz', async ({ page }) => {
     // Add a word first so the quiz has content
-    await addWordsToDictionary(page, ['apple']);
+    await addWordsAndAwaitDefinitions(page, ['apple']);
 
     await page.goto('/quiz');
     await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible({ timeout: 15000 });
@@ -73,20 +73,7 @@ test.describe('Quiz Operations', () => {
 
   test('should go to the next card in case of success answer', async ({ page }) => {
     // Add a word first so the quiz has content
-    await addWordsToDictionary(page, ['apple', 'banana']);
-
-    // Ensure the words have definitions by checking Dictionary Edit
-    await expect(async () => {
-      await page.goto('/dictionary/edit');
-      
-      const appleAccordion = page.locator('.MuiAccordion-root').filter({ hasText: 'apple' });
-      await expect(appleAccordion).toBeVisible();
-      await expect(appleAccordion.locator('text=2 definition(s)')).toBeVisible();
-
-      const bananaAccordion = page.locator('.MuiAccordion-root').filter({ hasText: 'banana' });
-      await expect(bananaAccordion).toBeVisible();
-      await expect(bananaAccordion.locator('text=2 definition(s)')).toBeVisible();
-    }).toPass({ timeout: 15000 });
+    await addWordsAndAwaitDefinitions(page, ['apple', 'banana']);
 
     await page.goto('/quiz');
     await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible({ timeout: 15000 });
@@ -120,6 +107,78 @@ test.describe('Quiz Operations', () => {
 
     // Verify it switched to the next word
     await expect(cardContent).toContainText(`for ${nextWord} in ru`, { timeout: 5000 });
+    await expect(answerInput).toBeEmpty();
+    await expect(submitBtn).toBeDisabled();
+  });
+
+  test('should show variants and handle correct/incorrect clicks', async ({ page }) => {
+    // Add words so we have variants
+    await addWordsAndAwaitDefinitions(page, ['apple', 'banana', 'cherry']);
+
+    await page.goto('/quiz');
+    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible({ timeout: 15000 });
+    await page.click('button:has-text("Start Quiz")');
+    
+    // Expect the quiz UI to show up
+    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible({ timeout: 5000 });
+    
+    const cardContent = page.locator('.MuiCardContent-root');
+    await expect(cardContent).toContainText('[Mock] Definition');
+
+    const initialDefText = await cardContent.innerText();
+    
+    // Determine the current word from the mock definition text
+    let currentWord = '';
+    const words = ['apple', 'banana', 'cherry'];
+    for (const w of words) {
+        if (initialDefText.includes(`for ${w} in ru`)) {
+            currentWord = w;
+            break;
+        }
+    }
+    
+    expect(currentWord).not.toBe('');
+
+    // Click 'Show variants'
+    await page.click('button:has-text("Show variants")');
+
+    // Check variants appear
+    await expect(page.locator('h6:has-text("Variants:")')).toBeVisible();
+
+    // Check there are variant buttons
+    const variantButtons = page.locator('.MuiButton-colorSecondary');
+    
+    // There should be 3 variants total since we added 3 words
+    await expect(variantButtons).toHaveCount(3);
+
+    const correctVariantBtn = variantButtons.filter({ hasText: currentWord });
+    const answerInput = page.getByLabel(/Your answer/i);
+    const submitBtn = page.locator('button:has-text("Submit")');
+    
+    // Click an incorrect variant
+    const totalVariants = await variantButtons.count();
+    let incorrectVariantIdx = 0;
+    for (let i = 0; i < totalVariants; i++) {
+        const text = await variantButtons.nth(i).innerText();
+        if (text.toLowerCase() !== currentWord.toLowerCase()) {
+            incorrectVariantIdx = i;
+            break;
+        }
+    }
+
+    await variantButtons.nth(incorrectVariantIdx).click();
+    
+    // Incorrect answer shows Incorrect message
+    await expect(page.locator('text=Incorrect 😢')).toBeVisible();
+
+    // Now click the correct variant
+    await correctVariantBtn.click();
+    await expect(page.locator('text=Success! 🎉')).toBeVisible();
+    
+    // Wait for auto-advance to next card (2000ms delay in component)
+    await expect(cardContent).not.toContainText(`for ${currentWord} in ru`, { timeout: 5000 });
+    await expect(answerInput).toBeEmpty();
+    await expect(submitBtn).toBeDisabled();
   });
 
 });
