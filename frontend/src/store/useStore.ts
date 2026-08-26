@@ -47,6 +47,7 @@ export interface QuizEvaluationData {
 
 interface AppState {
   token: string | null;
+  mercureToken: string | null;
   profile: UserProfile | null;
   appState: any | null;
   wordProcessing: WordProcessingStatus[];
@@ -56,6 +57,7 @@ interface AppState {
   quizTranslation: string | null;
   quizVariants: string[] | null;
   setToken: (token: string | null) => void;
+  setMercureToken: (token: string | null) => void;
   setProfile: (profile: UserProfile | null) => void;
   setAppState: (appState: any) => void;
   updateWordProcessing: (status: WordProcessingStatus) => void;
@@ -75,6 +77,7 @@ const useStore = create<AppState>()(
   persist(
     (set) => ({
       token: null,
+      mercureToken: null,
       profile: null,
       appState: null,
       wordProcessing: [],
@@ -84,6 +87,7 @@ const useStore = create<AppState>()(
       quizTranslation: null,
       quizVariants: null,
       setToken: (token) => set({ token }),
+      setMercureToken: (mercureToken) => set({ mercureToken }),
       setProfile: (profile) => set({ profile }),
       setAppState: (appState) => set({ appState }),
       setDictionary: (dictionary) => set({ dictionary }),

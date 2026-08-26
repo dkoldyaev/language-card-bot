@@ -72,7 +72,7 @@ export interface QuizCardMercureEvent extends BaseMercureEvent {
 
 export interface QuizVariantsMercureEvent extends BaseMercureEvent {
   type: 'quiz_variants';
-  variants: { id: number; text: string }[];
+  variants: string[];
 }
 
 export interface QuizDefinitionTranslationMercureEvent extends BaseMercureEvent {
@@ -86,6 +86,10 @@ export interface QuizAnswerEvaluationMercureEvent extends BaseMercureEvent {
   suggestion: string;
 }
 
+export interface QuizCleanupMercureEvent extends BaseMercureEvent {
+  type: 'quiz_cleanup';
+}
+
 export type MercureEvent = 
   | StateSyncMercureEvent 
   | EchoMercureEvent 
@@ -97,4 +101,5 @@ export type MercureEvent =
   | QuizCardMercureEvent
   | QuizVariantsMercureEvent
   | QuizDefinitionTranslationMercureEvent
-  | QuizAnswerEvaluationMercureEvent;
+  | QuizAnswerEvaluationMercureEvent
+  | QuizCleanupMercureEvent;

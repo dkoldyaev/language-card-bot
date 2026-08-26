@@ -74,19 +74,39 @@ export async function getNextDefinition(wordId: number, currentDefinitionId: num
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-export async function getQuizVariants(userId: number, currentWordId: number): Promise<{ id: number; text: string }[]> {
+export async function getQuizVariants(userId: number, currentWordId: number): Promise<string[]> {
   const incorrectWords = await prisma.word.findMany({
     where: {
       userId,
       id: { not: currentWordId }
     },
-    select: { id: true, text: true }
+    select: { text: true }
   });
 
-  for (let i = incorrectWords.length - 1; i > 0; i--) {
+  const correctWord = await prisma.word.findUnique({
+    where: { id: currentWordId },
+    select: { text: true }
+  });
+
+  const pool = incorrectWords.map(w => w.text);
+  
+  // Shuffle incorrect words and take up to 4
+  for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [incorrectWords[i], incorrectWords[j]] = [incorrectWords[j], incorrectWords[i]];
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const variants = pool.slice(0, 4);
+
+  // Add correct word
+  if (correctWord) {
+    variants.push(correctWord.text);
   }
 
-  return incorrectWords.slice(0, 5);
+  // Shuffle final variants
+  for (let i = variants.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [variants[i], variants[j]] = [variants[j], variants[i]];
+  }
+
+  return variants;
 }

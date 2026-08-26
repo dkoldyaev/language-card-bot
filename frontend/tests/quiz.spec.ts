@@ -1,76 +1,81 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { register, login, addWordsToDictionary, setupSettings } from './helpers';
 
-// Helper to authenticate
-async function authenticate(page: Page, username: string) {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
-
-  // Toggle to register mode if needed
-  if (await page.locator('button', { hasText: 'Need an account? Register' }).isVisible()) {
-    await page.click('button:has-text("Need an account? Register")');
-  }
-
-  await page.getByLabel('Username').fill(username);
-  await page.click('button[type="submit"]');
-  await expect(page.locator('text=Welcome to English Card Bot')).toBeVisible({ timeout: 10000 });
-}
-
-test.describe.skip('Quiz Operations', () => {
-  const username = `testuser_quiz_${Date.now()}`;
-
+test.describe('Quiz Operations', () => {
   test.beforeEach(async ({ page }) => {
-    await authenticate(page, username);
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.log(`[PAGE ERROR LOG]: ${msg.text()}`);
+      }
+    });
+    page.on('pageerror', error => console.log(`[PAGE ERROR]: ${error.message}`));
 
-    // Add a few words to make sure quiz has data
-    await page.click('text=Add Words');
-    await page.fill('textarea', 'hello\\nworld');
-    await page.click('button:has-text("Add Words")');
-    await expect(page.locator(`li:has-text("hello"):has-text("processed")`)).toBeVisible({ timeout: 25000 });
-    await expect(page.locator(`li:has-text("world"):has-text("processed")`)).toBeVisible({ timeout: 25000 });
+    const username = `testuser_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    // We register and then login the user for each test
+    await register(page, username);
+    await login(page, username);
+    // Set up default settings so worker processes jobs correctly
+    await setupSettings(page);
   });
 
-  // test('should take a quiz using added words', async ({ page }) => {
-  //   // Navigate to Quiz
-  //   await page.click('text=Quiz');
-  //   await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
+  test('should navigate to Quiz and click Start Quiz', async ({ page }) => {
+    // Add a word first so the quiz has content
+    await addWordsToDictionary(page, ['apple']);
 
-  //   // Start Quiz
-  //   await page.click('button:has-text("Start Quiz")');
+    await page.goto('/quiz');
+    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible({ timeout: 15000 });
+    await page.click('button:has-text("Start Quiz")');
     
-  //   // Expect Quiz card
-  //   await expect(page.locator('h4:has-text("Quiz")')).toBeVisible({ timeout: 10000 });
+    // Expect the quiz UI to show up
+    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible({ timeout: 5000 });
     
-  //   // Check if translation is hidden by default
-  //   await expect(page.locator('text=Translation:')).not.toBeVisible();
+    const cardContent = page.locator('.MuiCardContent-root');
+    await expect(cardContent).toContainText('[Mock] Definition');
+    await expect(cardContent).toContainText('for apple in ru');
 
-  //   // Click "Translate definition"
-  //   await page.click('button:has-text("Translate definition")');
-  //   // Translation text should appear
-  //   await expect(page.locator('text=Translation:')).toBeVisible();
+    const answerInput = page.getByLabel(/Your answer/i);
+    const submitBtn = page.locator('button:has-text("Submit")');
 
-  //   // Fill a suggestion
-  //   await page.fill('label:has-text("Your answer")', 'world'); // We just guess 'world' for whichever word came up
-  //   await page.click('button:has-text("Submit")');
+    // 1. Test Incorrect Answer
+    await answerInput.fill('banana');
+    await submitBtn.click();
+    await expect(page.locator('text=Incorrect 😢')).toBeVisible();
+    await expect(page.locator('text=Your answer: banana')).toBeVisible();
+
+    // 2. Test Typo (Close Match)
+    await answerInput.fill('aple');
+    await submitBtn.click();
+    await expect(page.locator('text=Close Match 🤔')).toBeVisible();
+    await expect(page.locator('text=Your answer: aple')).toBeVisible();
+
+    // 3. Test Correct Answer
+    await answerInput.fill('apple');
+    await submitBtn.click();
+    await expect(page.locator('text=Success! 🎉')).toBeVisible();
+    await expect(page.locator('text=Your answer: apple')).toBeVisible();
+
+    // 4. Test Translate Definition
+    await page.click('button:has-text("Translate definition")');
+    await expect(page.locator('text=Translation: [MOCK: ru -> en] [Mock] Definition')).toBeVisible();
+
+    // 5. Test Show Variants (Hints)
+    await page.click('button:has-text("Show variants")');
+    await expect(page.locator('h6:has-text("Variants:")')).toBeVisible();
+    // Click the correct variant
+    await page.getByRole('button', { name: /apple/i }).click();
+    // Clicking the variant directly submits it to the API, UI updates to Success
+    await expect(page.locator('text=Success! 🎉')).toBeVisible();
     
-  //   // Expect evaluation chip (Success, Close Match, or Incorrect)
-  //   // Since we guessed 'world', it might be Success or Incorrect depending on what came up.
-  //   // The UI renders a Chip with label Success! 🎉, Close Match 🤔, or Incorrect 😢
-  //   const hasResult = await page.locator('text=Success! 🎉').isVisible() 
-  //     || await page.locator('text=Incorrect 😢').isVisible() 
-  //     || await page.locator('text=Close Match 🤔').isVisible();
+    // 6. Test Another Definition
+    const currentDefText = await cardContent.innerText();
+    await page.click('button:has-text("Another definition")');
     
-  //   expect(hasResult).toBe(true);
+    // Wait for the definition to change
+    await expect(async () => {
+      const newDefText = await cardContent.innerText();
+      expect(newDefText).not.toEqual(currentDefText);
+      expect(newDefText).toContain('[Mock] Definition');
+    }).toPass({ timeout: 5000 });
+  });
 
-  //   // Try clicking variants
-  //   await page.click('button:has-text("Show variants")');
-  //   await expect(page.locator('h6:has-text("Variants:")')).toBeVisible();
-
-  //   // Click next definition
-  //   await page.click('button:has-text("Another definition")');
-  //   // Should get another definition. It might be hard to test if it actually changes without storing state, but we can verify it doesn't crash.
-  //   await expect(page.locator('h4:has-text("Quiz")')).toBeVisible();
-
-  //   // Click next card
-  //   await page.click('button:has-text("Next card")');
-  //   await expect(page.locator('h4:has-text("Quiz")')).toBeVisible();
-  // });
 });

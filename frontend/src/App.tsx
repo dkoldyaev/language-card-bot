@@ -7,6 +7,7 @@ import DictionaryEdit from './pages/DictionaryEdit';
 import Quiz from './pages/Quiz';
 import Auth from './pages/Auth';
 import useStore from './store/useStore';
+import { useMercure } from './api/useMercure';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useStore((state) => state.token);
@@ -17,6 +18,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  useMercure();
+
   return (
     <BrowserRouter>
       <Routes>

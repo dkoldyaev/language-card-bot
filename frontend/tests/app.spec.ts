@@ -40,12 +40,4 @@ test.describe('English Card Bot Frontend E2E', () => {
   });
 
 
-  // test('should navigate to Quiz and click Start Quiz', async ({ page }) => {
-  //   await page.goto('/quiz');
-  //   await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
-  //   await page.click('button:has-text("Start Quiz")');
-  //   // Expect the quiz UI to show up instead of failing silently
-  //   await expect(page.locator('h4:has-text("Quiz")')).toBeVisible({ timeout: 5000 });
-  // });
-
 });

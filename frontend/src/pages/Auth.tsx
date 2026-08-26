@@ -16,6 +16,7 @@ export default function Auth({ mode = 'login' }: AuthProps) {
   const navigate = useNavigate();
   
   const setToken = useStore((state) => state.setToken);
+  const setMercureToken = useStore((state) => state.setMercureToken);
   const setProfile = useStore((state) => state.setProfile);
 
   const isLogin = mode === 'login';
@@ -25,7 +26,8 @@ export default function Auth({ mode = 'login' }: AuthProps) {
     setError(null);
   }, [mode]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!username.trim()) {
       setError('Username is required');
       return;
@@ -39,8 +41,9 @@ export default function Auth({ mode = 'login' }: AuthProps) {
       const response = await apiClient.post(endpoint, { username });
       
       if (isLogin) {
-        const { token, user } = response.data;
+        const { token, mercureToken, user } = response.data;
         setToken(token);
+        if (mercureToken) setMercureToken(mercureToken);
         setProfile(user);
         navigate('/');
       } else {

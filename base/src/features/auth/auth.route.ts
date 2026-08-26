@@ -9,8 +9,21 @@ import { UserMode } from '@prisma/client';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+const MERCURE_JWT_SECRET = process.env.MERCURE_JWT_KEY || 'supersecret_mercure_key';
 
-router.post('/register', validateRequest(AuthRequestSchema), async (req: Request<{}, {}, AuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+function createMercureToken(username: string) {
+  // Use the BASE_DOMAIN from env, fallback to http://localhost
+  const baseDomain = process.env.BASE_DOMAIN || 'http://localhost';
+  const topic = `${baseDomain}/v1/users/${username}`;
+  
+  return jwt.sign(
+    { mercure: { subscribe: [topic] } },
+    MERCURE_JWT_SECRET,
+    { algorithm: 'HS256' } // Mercure supports HS256
+  );
+}
+
+router.post('/register', validateRequest(AuthRequestSchema), async (req: Request<{}, {}, AuthRequest>, res: Response<AuthResponse & { mercureToken?: string } | { error: string }>) => {
   const { username } = req.body;
 
   try {
@@ -30,15 +43,16 @@ router.post('/register', validateRequest(AuthRequestSchema), async (req: Request
       }
     });
 
+    const mercureToken = createMercureToken(user.username);
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, user: { id: user.id, username: user.username } });
+    res.json({ token, mercureToken, user: { id: user.id, username: user.username } });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.post('/login', validateRequest(AuthRequestSchema), async (req: Request<{}, {}, AuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+router.post('/login', validateRequest(AuthRequestSchema), async (req: Request<{}, {}, AuthRequest>, res: Response<AuthResponse & { mercureToken?: string } | { error: string }>) => {
   const { username } = req.body;
 
   try {
@@ -47,8 +61,9 @@ router.post('/login', validateRequest(AuthRequestSchema), async (req: Request<{}
       return res.status(401).json({ error: 'User not found' });
     }
 
+    const mercureToken = createMercureToken(user.username);
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, user: { id: user.id, username: user.username } });
+    res.json({ token, mercureToken, user: { id: user.id, username: user.username } });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
