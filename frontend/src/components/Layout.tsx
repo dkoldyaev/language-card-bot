@@ -4,13 +4,11 @@ import useStore from '../store/useStore';
 
 export default function Layout() {
   const profile = useStore((state) => state.profile);
-  const setToken = useStore((state) => state.setToken);
-  const setProfile = useStore((state) => state.setProfile);
+  const reset = useStore((state) => state.reset);
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    setToken(null);
-    setProfile(null);
+    reset();
     navigate('/login');
   };
 

@@ -71,21 +71,26 @@ interface AppState {
   setQuizEvaluation: (evalData: QuizEvaluationData | null) => void;
   setQuizTranslation: (translation: string | null) => void;
   setQuizVariants: (variants: string[] | null) => void;
+  reset: () => void;
 }
+
+const initialState = {
+  token: null,
+  mercureToken: null,
+  profile: null,
+  appState: null,
+  wordProcessing: [],
+  dictionary: [],
+  quizCard: null,
+  quizEvaluation: null,
+  quizTranslation: null,
+  quizVariants: null,
+};
 
 const useStore = create<AppState>()(
   persist(
     (set) => ({
-      token: null,
-      mercureToken: null,
-      profile: null,
-      appState: null,
-      wordProcessing: [],
-      dictionary: [],
-      quizCard: null,
-      quizEvaluation: null,
-      quizTranslation: null,
-      quizVariants: null,
+      ...initialState,
       setToken: (token) => set({ token }),
       setMercureToken: (mercureToken) => set({ mercureToken }),
       setProfile: (profile) => set({ profile }),
@@ -146,6 +151,7 @@ const useStore = create<AppState>()(
           } : word
         )
       })),
+      reset: () => set(initialState),
     }),
     {
       name: 'english-card-bot-storage', // unique name
