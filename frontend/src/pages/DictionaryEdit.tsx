@@ -1,4 +1,4 @@
-import { Typography, Box, CircularProgress, Accordion, AccordionSummary, AccordionDetails, IconButton, TextField, Button } from '@mui/material';
+import { Typography, Box, CircularProgress, Accordion, AccordionSummary, AccordionDetails, IconButton, TextField, Button, Checkbox, FormControlLabel } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -12,6 +12,7 @@ export default function DictionaryEdit() {
   const [editingTransId, setEditingTransId] = useState<number | null>(null);
   const [editDefText, setEditDefText] = useState('');
   const [editTransText, setEditTransText] = useState('');
+  const [selectedWordIds, setSelectedWordIds] = useState<Set<number>>(new Set());
 
   const dictionary = useStore((state) => state.dictionary);
   const setDictionary = useStore((state) => state.setDictionary);
@@ -27,8 +28,46 @@ export default function DictionaryEdit() {
       try {
         await apiClient.delete(`/word_delete/${wordId}`);
         removeDictionaryWord(wordId);
+        // Also remove from selected if it's there
+        if (selectedWordIds.has(wordId)) {
+          const newSelected = new Set(selectedWordIds);
+          newSelected.delete(wordId);
+          setSelectedWordIds(newSelected);
+        }
       } catch (error) {
         console.error('Failed to delete word:', error);
+      }
+    }
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedWordIds(new Set(dictionary.map(w => w.id)));
+    } else {
+      setSelectedWordIds(new Set());
+    }
+  };
+
+  const handleSelectWord = (e: React.ChangeEvent<HTMLInputElement>, wordId: number) => {
+    const newSelected = new Set(selectedWordIds);
+    if (e.target.checked) {
+      newSelected.add(wordId);
+    } else {
+      newSelected.delete(wordId);
+    }
+    setSelectedWordIds(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedWordIds.size === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedWordIds.size} word(s)?`)) {
+      try {
+        await apiClient.post('/word_delete/bulk', { wordIds: Array.from(selectedWordIds) });
+        const remaining = dictionary.filter(w => !selectedWordIds.has(w.id));
+        setDictionary(remaining);
+        setSelectedWordIds(new Set());
+      } catch (error) {
+        console.error('Failed to bulk delete words:', error);
       }
     }
   };
@@ -99,6 +138,30 @@ export default function DictionaryEdit() {
     <Box sx={{ maxWidth: 800, mx: 'auto', mt: 4 }}>
       <Typography variant="h4" gutterBottom>Edit Dictionary</Typography>
       
+      {dictionary.length > 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <FormControlLabel
+            control={
+              <Checkbox 
+                checked={dictionary.length > 0 && selectedWordIds.size === dictionary.length}
+                indeterminate={selectedWordIds.size > 0 && selectedWordIds.size < dictionary.length}
+                onChange={handleSelectAll}
+              />
+            }
+            label="Select All"
+          />
+          <Button 
+            variant="contained" 
+            color="error" 
+            startIcon={<DeleteIcon />}
+            disabled={selectedWordIds.size === 0}
+            onClick={handleBulkDelete}
+          >
+            Delete Selected ({selectedWordIds.size})
+          </Button>
+        </Box>
+      )}
+      
       {dictionary.length === 0 ? (
         <Typography color="text.secondary">Your dictionary is empty.</Typography>
       ) : (
@@ -107,6 +170,11 @@ export default function DictionaryEdit() {
             <Accordion key={word.id}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+                  <Checkbox 
+                    checked={selectedWordIds.has(word.id)}
+                    onChange={(e) => handleSelectWord(e, word.id)}
+                    onClick={(e) => e.stopPropagation()} // Prevent accordion from toggling
+                  />
                   <Typography variant="subtitle1" sx={{ width: '33%', flexShrink: 0 }}>
                     {word.text}
                   </Typography>

@@ -5,6 +5,31 @@ import { getAuthUser } from '../auth/auth.service';
 
 const router = Router();
 
+router.post('/bulk', authMiddleware, async (req: Request<{}, {}, { wordIds: number[] }>, res: Response) => {
+  const { id: userId } = getAuthUser(req);
+  const { wordIds } = req.body;
+
+  if (!wordIds || !Array.isArray(wordIds)) {
+    return res.status(400).json({ error: 'wordIds array is required' });
+  }
+
+  try {
+    await prisma.word.deleteMany({
+      where: {
+        id: {
+          in: wordIds
+        },
+        userId: userId
+      }
+    });
+
+    res.json({ message: 'Words deleted successfully' });
+  } catch (error) {
+    console.error('Bulk delete word error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.delete('/:wordId', authMiddleware, async (req: Request<{ wordId: string }>, res: Response) => {
   const { id: userId } = getAuthUser(req);
   const wordId = parseInt(req.params.wordId, 10);
