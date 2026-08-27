@@ -2,16 +2,20 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { publishEvent } from './event_bus.service';
 import { MercureEvent } from './event_bus.type';
 
+vi.mock('../../core/env', () => ({
+  env: {
+    MERCURE_URL: 'http://localhost:9090/.well-known/mercure',
+    MERCURE_JWT: 'test_jwt',
+    BASE_DOMAIN: 'http://localhost:3000',
+  }
+}));
+
+const MERCURE_URL = 'http://localhost:9090/.well-known/mercure';
+const MERCURE_JWT = 'test_jwt';
+const BASE_DOMAIN = 'http://localhost:3000';
+
 describe('event_bus.service', () => {
-  const MERCURE_URL = process.env.MERCURE_URL || 'http://localhost:9090/.well-known/mercure';
-  const MERCURE_JWT = 'test_jwt';
-  const BASE_DOMAIN = 'http://localhost:3000';
-
   beforeEach(() => {
-    process.env.MERCURE_URL = MERCURE_URL;
-    process.env.MERCURE_JWT = MERCURE_JWT;
-    process.env.BASE_DOMAIN = BASE_DOMAIN;
-
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       text: vi.fn().mockResolvedValue('ok')

@@ -1,11 +1,13 @@
 import { IDefiner } from '../core/IDefiner';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+import { env } from '../core/env';
+
 export class GeminiDefiner implements IDefiner {
   private genAI: GoogleGenerativeAI;
 
   constructor() {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is not defined in the environment.');
     }

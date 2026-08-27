@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GoogleTranslator } from './GoogleTranslator';
 
+vi.mock('../core/env', () => ({
+  env: {
+    GOOGLE_TRANSLATE_API_KEY: 'test-api-key',
+  }
+}));
+
 describe('GoogleTranslator', () => {
-  const originalEnv = process.env;
-  
   beforeEach(() => {
-    vi.resetModules();
-    process.env = { ...originalEnv, GOOGLE_TRANSLATE_API_KEY: 'test-api-key' };
     vi.stubGlobal('fetch', vi.fn());
     // Suppress console error/warn in tests
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -14,7 +16,6 @@ describe('GoogleTranslator', () => {
   });
 
   afterEach(() => {
-    process.env = originalEnv;
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });

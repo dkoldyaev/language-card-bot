@@ -1,16 +1,14 @@
 import { ITranslator } from '../core/ITranslator';
 import { Credentials, Translator } from '@translated/lara';
 
+import { env } from '../core/env';
+
 export class LaratranslateTranslator implements ITranslator {
   private lara: Translator;
 
   constructor() {
-    const accessKeyId = process.env.LARA_ACCESS_KEY_ID || '';
-    const accessKeySecret = process.env.LARA_ACCESS_KEY_SECRET || '';
-    
-    if (!accessKeyId || !accessKeySecret) {
-      console.warn('Warning: LARA_ACCESS_KEY_ID or LARA_ACCESS_KEY_SECRET is not set. Translation may fail.');
-    }
+    const accessKeyId = env.LARA_ACCESS_KEY_ID || '';
+    const accessKeySecret = env.LARA_ACCESS_KEY_SECRET || '';
 
     const credentials = new Credentials(accessKeyId, accessKeySecret);
     this.lara = new Translator(credentials);

@@ -1,9 +1,10 @@
 import { MercureEvent } from './event_bus.type';
+import { env } from '../../core/env';
 
 export async function publishEvent(username: string, payload: MercureEvent): Promise<void> {
-  const MERCURE_URL = process.env.MERCURE_URL!;
-  const MERCURE_JWT = process.env.MERCURE_JWT!;
-  const BASE_DOMAIN = process.env.BASE_DOMAIN;
+  const MERCURE_URL = env.MERCURE_URL;
+  const MERCURE_JWT = env.MERCURE_JWT;
+  const BASE_DOMAIN = env.BASE_DOMAIN;
   
   const topic = `${BASE_DOMAIN}/v1/users/${username}`;
   const body = new URLSearchParams({

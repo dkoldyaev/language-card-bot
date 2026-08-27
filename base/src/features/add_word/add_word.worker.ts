@@ -8,14 +8,13 @@ import {
   DictionaryAddDefinitionProcessedEvent 
 } from '../event_bus/event_bus.type';
 import { publishEvent } from '../event_bus/event_bus.service';
+import { env } from '../../core/env';
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const redisUrl = env.REDIS_URL;
 export const workerConnection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 
-
-
-const DEFINER_API_URL = process.env.DEFINER_API_URL!;
-const TRANSLATOR_API_URL = process.env.TRANSLATOR_API_URL!;
+const DEFINER_API_URL = env.DEFINER_API_URL;
+const TRANSLATOR_API_URL = env.TRANSLATOR_API_URL;
 
 export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) => {
   if (job.name === 'fetchDefinitions') {
@@ -44,7 +43,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       body: JSON.stringify({
         language: userSettings.targetLanguage,
         text: wordText,
-        definerApp: process.env.DEFINER_APP_TYPE
+        definerApp: env.DEFINER_APP_TYPE
       })
     });
 
@@ -109,7 +108,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
         sourceLanguage: userSettings.targetLanguage,
         targetLanguage: userSettings.baseLanguage,
         text: definitionText,
-        translatorApp: process.env.TRANSLATOR_APP_TYPE
+        translatorApp: env.TRANSLATOR_APP_TYPE
       })
     });
 

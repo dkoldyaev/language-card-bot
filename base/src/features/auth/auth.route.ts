@@ -6,14 +6,15 @@ import { authMiddleware } from '../../middleware/auth';
 import { getAuthUser } from './auth.service';
 import { AuthRequestSchema, AuthRequest, AuthResponse } from './auth.type';
 import { UserMode } from '@prisma/client';
+import { env } from '../../core/env';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
-const MERCURE_JWT_SECRET = process.env.MERCURE_JWT_KEY || 'supersecret_mercure_key';
+const JWT_SECRET = env.JWT_SECRET;
+const MERCURE_JWT_SECRET = env.MERCURE_JWT_KEY || env.MERCURE_JWT;
 
 function createMercureToken(username: string) {
   // Use the BASE_DOMAIN from env, fallback to http://localhost
-  const baseDomain = process.env.BASE_DOMAIN || 'http://localhost';
+  const baseDomain = env.BASE_DOMAIN || 'http://localhost';
   const topic = `${baseDomain}/v1/users/${username}`;
   
   return jwt.sign(

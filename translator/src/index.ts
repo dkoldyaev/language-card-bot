@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import { env } from './core/env';
 import { translateRouter } from './routes/translate';
 
 dotenv.config();
@@ -15,7 +16,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   res.status(500).json({ error: 'Internal Server Error', message: err.message });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = env.PORT;
 
 if (require.main === module) {
   app.listen(PORT, () => {

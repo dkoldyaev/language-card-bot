@@ -1,13 +1,12 @@
 import { ITranslator } from '../core/ITranslator';
 
+import { env } from '../core/env';
+
 export class GoogleTranslator implements ITranslator {
   private apiKey: string;
 
   constructor() {
-    this.apiKey = process.env.GOOGLE_TRANSLATE_API_KEY || '';
-    if (!this.apiKey) {
-      console.warn('Warning: GOOGLE_TRANSLATE_API_KEY is not set. Translation may fail.');
-    }
+    this.apiKey = env.GOOGLE_TRANSLATE_API_KEY || '';
   }
 
   async translate(text: string, sourceLang: string, targetLang: string): Promise<string> {

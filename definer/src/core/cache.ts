@@ -1,6 +1,8 @@
 import IORedis from 'ioredis';
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+import { env } from './env';
+
+const redisUrl = env.CACHE_URL;
 export const redisClient = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 
 redisClient.on('error', (err) => {

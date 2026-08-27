@@ -1,11 +1,13 @@
 import { IDefiner } from '../core/IDefiner';
 import { Mistral } from '@mistralai/mistralai';
 
+import { env } from '../core/env';
+
 export class MistralDefiner implements IDefiner {
   private client: Mistral;
 
   constructor() {
-    const apiKey = process.env.MISTRAL_API_KEY;
+    const apiKey = env.MISTRAL_API_KEY;
     if (!apiKey) {
       throw new Error('MISTRAL_API_KEY is not defined in the environment.');
     }

@@ -45,11 +45,12 @@ services:
       - "3002:3001"
     environment:
       - PORT=${TRANSLATOR_PORT}
+      - TRANSLATOR_APP_TYPE=${BASE_TRANSLATOR_APP_TYPE}
       - GOOGLE_TRANSLATE_API_KEY=${TRANSLATOR_GOOGLE_TRANSLATE_API_KEY}
       - MOCK_TIMEOUT=${TRANSLATOR_MOCK_TIMEOUT}
       - LARA_ACCESS_KEY_ID=${TRANSLATOR_LARA_ACCESS_KEY_ID}
       - LARA_ACCESS_KEY_SECRET=${TRANSLATOR_LARA_ACCESS_KEY_SECRET}
-      - REDIS_URL=${BASE_REDIS_URL}/1
+      - CACHE_URL=${TRANSLATOR_CACHE_URL:-redis://redis:6379/1}
     volumes:
       - ./translator:/app
       - /app/node_modules
@@ -62,10 +63,11 @@ services:
       - "3003:3002"
     environment:
       - PORT=${DEFINER_PORT}
+      - DEFINER_APP_TYPE=${BASE_DEFINER_APP_TYPE}
       - MISTRAL_API_KEY=${DEFINER_MISTRAL_API_KEY}
       - GEMINI_API_KEY=${DEFINER_GEMINI_API_KEY}
       - MOCK_TIMEOUT=${DEFINER_MOCK_TIMEOUT}
-      - REDIS_URL=${BASE_REDIS_URL}/2
+      - CACHE_URL=${DEFINER_CACHE_URL:-redis://redis:6379/2}
     volumes:
       - ./definer:/app
       - /app/node_modules
