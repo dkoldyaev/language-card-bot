@@ -15,7 +15,6 @@ test.describe('English Card Bot Frontend E2E', () => {
     await register(page, username);
     await login(page, username);
     // Set up default settings so worker processes jobs correctly
-    await setupSettings(page);
   });
 
   test('should display Welcome page', async ({ page }) => {

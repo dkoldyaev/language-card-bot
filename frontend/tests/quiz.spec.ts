@@ -14,8 +14,6 @@ test.describe('Quiz Operations', () => {
     // We register and then login the user for each test
     await register(page, username);
     await login(page, username);
-    // Set up default settings so worker processes jobs correctly
-    await setupSettings(page);
   });
 
   test('should navigate to Quiz and click Start Quiz', async ({ page }) => {

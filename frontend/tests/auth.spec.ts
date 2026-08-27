@@ -51,7 +51,6 @@ test.describe('Authentication Flow', () => {
     // 1. Register and login user 1
     await register(page, user1);
     await login(page, user1);
-    await setupSettings(page);
 
     // 2. Add words for user 1
     await addWordsToDictionary(page, ['apple']);

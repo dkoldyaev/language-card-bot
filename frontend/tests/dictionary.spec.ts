@@ -13,7 +13,6 @@ test.describe('Dictionary Operations', () => {
     const username = `testuser_dict_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     await register(page, username);
     await login(page, username);
-    await setupSettings(page);
   });
 
   test('should navigate to Dictionary Add, add words, and verify them in Dictionary Edit', async ({ page }) => {

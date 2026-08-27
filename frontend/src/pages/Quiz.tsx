@@ -32,6 +32,7 @@ export default function Quiz() {
     setSubmitting(true);
     try {
       await apiClient.post('/quiz/answer', { suggestion });
+      setSuggestion('');
     } catch (error) {
       console.error('Failed to submit answer:', error);
     } finally {
