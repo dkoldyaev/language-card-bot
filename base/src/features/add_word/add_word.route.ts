@@ -4,7 +4,7 @@ import { prisma } from '../../prisma';
 import { AddWordRequest, AddWordResponse } from './add_word.type';
 import { DictionaryAddDuplicateEvent } from '../event_bus/event_bus.type';
 import { publishEvent } from '../event_bus/event_bus.service';
-import { enqueueFetchDefinitions } from './add_word.queue';
+import { appEvents, Events } from '../../core/events';
 import { getAuthUser } from '../auth/auth.service';
 import { getUserState } from '../state/state.service';
 import { UserMode } from '@prisma/client';
@@ -63,8 +63,12 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordRequest>, re
 
     res.json({ message: 'Word added successfully' });
 
-    // Background processing via BullMQ
-    await enqueueFetchDefinitions(userId, username, newWord.id, wordText);
+    appEvents.emit(Events.WORD_ADDED, {
+      userId,
+      username,
+      wordId: newWord.id,
+      wordText
+    });
 
   } catch (error) {
     console.error('Add word error:', error);

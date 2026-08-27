@@ -18,6 +18,9 @@ import switchModeDictionaryEditRoutes from './features/switch_mode_dictionary_ed
 import switchModeQuizRoutes from './features/switch_mode_quiz/switch_mode_quiz.route';
 import quizRoutes from './features/quiz/quiz.route';
 import './features/add_word/add_word.worker';
+import './features/add_word/add_word.listener';
+import './features/definition_add/definition_add.listener';
+import './features/definition_translate_edit/definition_translate.listener';
 import './features/quiz/quiz_cleanup.worker';
 
 dotenv.config();

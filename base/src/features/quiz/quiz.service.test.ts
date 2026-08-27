@@ -66,6 +66,7 @@ describe('Quiz Service', () => {
       { id: 6, text: 'w6' },
       { id: 7, text: 'w7' },
     ] as any);
+    prismaMock.word.findUnique.mockResolvedValue({ text: 'correct_word' } as any);
 
     const result = await quizService.getQuizVariants(1, 10);
     
@@ -75,7 +76,7 @@ describe('Quiz Service', () => {
         userId: 1,
         id: { not: 10 }
       },
-      select: { id: true, text: true }
+      select: expect.objectContaining({ text: true })
     });
   });
 

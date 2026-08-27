@@ -3,6 +3,7 @@ import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { DefinitionTranslateEditRequestSchema } from './definition_translate_edit.type';
 import { getAuthUser } from '../auth/auth.service';
+import { appEvents, Events } from '../../core/events';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
   }
 
   const { text } = parseResult.data;
-  const { id: userId } = getAuthUser(req);
+  const { id: userId, username } = getAuthUser(req);
   const definitionId = parseInt(req.params.id as string, 10);
 
   if (isNaN(definitionId)) {
@@ -50,6 +51,12 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
         }
       });
     }
+
+    appEvents.emit(Events.TRANSLATION_ADDED, {
+      username,
+      wordId: definition.wordId,
+      wordText: definition.word.text
+    });
 
     res.json({ message: 'Definition translation edited successfully' });
   } catch (error) {

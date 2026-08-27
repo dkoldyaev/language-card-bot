@@ -9,6 +9,7 @@ import {
 } from '../event_bus/event_bus.type';
 import { publishEvent } from '../event_bus/event_bus.service';
 import { env } from '../../core/env';
+import { appEvents, Events } from '../../core/events';
 
 const redisUrl = env.REDIS_URL;
 export const workerConnection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
@@ -29,12 +30,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       return;
     }
 
-    // 1. Send "processing" event
-    await publishEvent(username, {
-      version: 'v1',
-      type: 'dictionary_add_processing',
-      word: wordText
-    } as DictionaryAddProcessingEvent);
+    // The "processing" event is now published by add_word.listener.ts when the word is added to DB.
 
     // 2. Fetch definitions from definer
     const definerRes = await fetch(DEFINER_API_URL, {
@@ -129,23 +125,11 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       }
     });
 
-    // Count how many translations exist for this word so far
-    const processedCount = await prisma.definitionTranslation.count({
-      where: {
-        definition: {
-          wordId: wordId
-        }
-      }
+    appEvents.emit(Events.TRANSLATION_ADDED, {
+      username,
+      wordId,
+      wordText
     });
-
-    // 5. Send "definition processed" event
-    await publishEvent(username, {
-      version: 'v1',
-      type: 'dictionary_add_definition_processed',
-      word: wordText,
-      processedCount: processedCount,
-      totalDefinitions: totalDefinitions
-    } as DictionaryAddDefinitionProcessedEvent);
   }
 }, { connection: workerConnection });
 

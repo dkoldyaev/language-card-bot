@@ -3,7 +3,7 @@ import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { DefinitionAddRequestSchema } from './definition_add.type';
 import { getAuthUser } from '../auth/auth.service';
-import { enqueueFetchTranslation } from '../add_word/add_word.queue';
+import { appEvents, Events } from '../../core/events';
 
 const router = Router();
 
@@ -40,15 +40,15 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
     const totalDefinitions = word.definitions.length + 1;
 
-    await enqueueFetchTranslation(
-      newDefinition.id,
-      newDefinition.text,
+    appEvents.emit(Events.DEFINITION_ADDED, {
+      definitionId: newDefinition.id,
+      definitionText: newDefinition.text,
       userId,
       username,
-      word.id,
-      word.text,
+      wordId: word.id,
+      wordText: word.text,
       totalDefinitions
-    );
+    });
 
     res.json({ message: 'Definition added successfully', definitionId: newDefinition.id });
   } catch (error) {
