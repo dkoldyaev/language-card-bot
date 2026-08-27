@@ -5,7 +5,7 @@ export async function register(page: Page, username: string, baseLang = 'en', ta
   await expect(page.locator('button:has-text("Create account")')).toBeVisible();
   await page.getByLabel(/Username|Login/i).fill(username);
 
-  // Call setupSettings which now only fills the selects by label
+  // Call setupSettings which fills the selects by label
   await setupSettings(page, baseLang, targetLang, level);
 
   await page.click('button:has-text("Create account")');
@@ -16,17 +16,18 @@ export async function register(page: Page, username: string, baseLang = 'en', ta
 
 export async function login(page: Page, username: string) {
   await page.goto('/login');
-  await expect(page.locator('h4:has-text("Log in"), h5:has-text("Log in")').first()).toBeVisible();
+  await expect(page.locator('h5:has-text("Log in")').first()).toBeVisible();
   await page.getByLabel(/Username|Login/i).fill(username);
   await page.click('button:has-text("Log in")');
   await expect(page).toHaveURL(/.*\/$/);
-  await expect(page.locator('text=Welcome to English Card Bot')).toBeVisible({ timeout: 10000 });
+  // Dashboard shows personalized welcome
+  await expect(page.locator('text=Welcome')).toBeVisible({ timeout: 10000 });
 }
 
 export async function addWordsToDictionary(page: Page, words: string[]) {
   const modeSwitchPromise = page.waitForResponse(response => response.url().includes('/switch_mode_dictionary_add') && response.status() === 200);
-  await page.goto('/dictionary/add');
-  await expect(page.locator('h4:has-text("Add Words")')).toBeVisible();
+  await page.goto('/dictionary');
+  await expect(page.locator('h4:has-text("Dictionary")')).toBeVisible();
   await modeSwitchPromise;
   
   const text = words.join('\n');
@@ -43,7 +44,7 @@ export async function addWordsAndAwaitDefinitions(page: Page, words: string[]) {
   await addWordsToDictionary(page, words);
   
   await expect(async () => {
-    await page.goto('/dictionary/edit');
+    await page.goto('/dictionary');
     for (const word of words) {
       const accordion = page.locator('.MuiAccordion-root').filter({ hasText: word });
       await expect(accordion).toBeVisible();

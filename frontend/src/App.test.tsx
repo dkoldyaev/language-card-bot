@@ -5,12 +5,11 @@ import useStore from './store/useStore';
 
 describe('App Routing', () => {
   beforeEach(() => {
-    useStore.setState({ token: 'dummy_token' });
+    useStore.setState({ token: 'dummy_token', profile: { id: 1, username: 'testuser' } });
   });
 
-  it('renders Welcome page on default route', () => {
+  it('renders Dashboard page on default route', () => {
     render(<App />);
-    expect(screen.getByText(/Welcome to English Card Bot/i)).toBeInTheDocument();
+    expect(screen.getByText(/Welcome/i)).toBeInTheDocument();
   });
 });
-

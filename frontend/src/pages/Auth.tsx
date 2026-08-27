@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, TextField, Button, Card, CardContent, Alert, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import {
+  Box, Typography, TextField, Button, Card, CardContent, Alert,
+  FormControl, InputLabel, Select, MenuItem, alpha, CircularProgress,
+} from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
 import apiClient from '../api/client';
 import useStore from '../store/useStore';
 
@@ -17,7 +21,7 @@ export default function Auth({ mode = 'login' }: AuthProps) {
   const [loading, setLoading] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const navigate = useNavigate();
-  
+
   const setToken = useStore((state) => state.setToken);
   const setMercureToken = useStore((state) => state.setMercureToken);
   const setProfile = useStore((state) => state.setProfile);
@@ -53,15 +57,15 @@ export default function Auth({ mode = 'login' }: AuthProps) {
       } else {
         const response = await apiClient.post('/auth/register', { username });
         const { token } = response.data;
-        
-        await apiClient.post('/settings', { 
-          baseLanguage, 
-          targetLanguage, 
-          desiredLevel 
+
+        await apiClient.post('/settings', {
+          baseLanguage,
+          targetLanguage,
+          desiredLevel
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         setRegistrationSuccess(true);
       }
     } catch (err: any) {
@@ -73,128 +77,202 @@ export default function Auth({ mode = 'login' }: AuthProps) {
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-      <Card sx={{ minWidth: 350 }}>
-        <CardContent>
-          <Typography variant="h5" gutterBottom align="center">
-            {isLogin ? 'Log in' : 'Create account'}
+    <Box
+      sx={{
+        minHeight: '100dvh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2,
+        background: `
+          radial-gradient(ellipse at 30% 20%, ${alpha('#7C3AED', 0.15)} 0%, transparent 50%),
+          radial-gradient(ellipse at 70% 80%, ${alpha('#06B6D4', 0.1)} 0%, transparent 50%),
+          #0B0E14
+        `,
+      }}
+    >
+      <Box className="animate-scale-in" sx={{ width: '100%', maxWidth: 420 }}>
+        {/* Logo */}
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #7C3AED, #06B6D4)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 2,
+              boxShadow: `0 8px 30px ${alpha('#7C3AED', 0.4)}`,
+            }}
+          >
+            <AutoStoriesRoundedIcon sx={{ color: '#fff', fontSize: 28 }} />
+          </Box>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #A78BFA, #22D3EE)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
+            CardBot
           </Typography>
-          
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          
-          {registrationSuccess ? (
-            <Box sx={{ textAlign: 'center' }}>
-              <Alert severity="success" sx={{ mb: 2 }}>
-                Registration successful
-              </Alert>
-              <Button 
-                component={RouterLink} 
-                to="/login"
-                variant="contained"
-                sx={{ mt: 2 }}
-              >
-                Back to login
-              </Button>
-            </Box>
-          ) : (
-            <>
-              <TextField
-                fullWidth
-                label="Username"
-                variant="outlined"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                disabled={loading}
-                margin="normal"
-              />
-              
-              {!isLogin && (
-                <>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel id="base-language-label">Native Language</InputLabel>
-                    <Select
-                      labelId="base-language-label"
-                      value={baseLanguage}
-                      label="Native Language"
-                      onChange={(e) => setBaseLanguage(e.target.value)}
-                      disabled={loading}
-                    >
-                      <MenuItem value="ru">Russian</MenuItem>
-                      <MenuItem value="en">English</MenuItem>
-                      <MenuItem value="es">Spanish</MenuItem>
-                    </Select>
-                  </FormControl>
+          <Typography variant="body2" color="text.secondary">
+            English Learning Assistant
+          </Typography>
+        </Box>
 
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel id="target-language-label">Learning Language</InputLabel>
-                    <Select
-                      labelId="target-language-label"
-                      value={targetLanguage}
-                      label="Learning Language"
-                      onChange={(e) => setTargetLanguage(e.target.value)}
-                      disabled={loading}
-                    >
-                      <MenuItem value="en">English</MenuItem>
-                      <MenuItem value="es">Spanish</MenuItem>
-                      <MenuItem value="ru">Russian</MenuItem>
-                    </Select>
-                  </FormControl>
+        <Card
+          sx={{
+            backgroundColor: alpha('#111827', 0.8),
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          <CardContent sx={{ p: 4 }}>
+            <Typography variant="h5" gutterBottom align="center" sx={{ fontWeight: 600, mb: 3 }}>
+              {isLogin ? 'Log in' : 'Create account'}
+            </Typography>
 
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel id="level-label">Level</InputLabel>
-                    <Select
-                      labelId="level-label"
-                      value={desiredLevel}
-                      label="Level"
-                      onChange={(e) => setDesiredLevel(e.target.value)}
-                      disabled={loading}
-                    >
-                      <MenuItem value="A0">A0</MenuItem>
-                      <MenuItem value="A1">A1</MenuItem>
-                      <MenuItem value="A2">A2</MenuItem>
-                      <MenuItem value="B1">B1</MenuItem>
-                      <MenuItem value="B2">B2</MenuItem>
-                      <MenuItem value="C1">C1</MenuItem>
-                      <MenuItem value="C2">C2</MenuItem>
-                    </Select>
-                  </FormControl>
-                </>
-              )}
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 3 }}>
-                <Button 
-                  fullWidth 
-                  variant="contained" 
-                  onClick={handleSubmit}
-                  disabled={loading}
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+            {registrationSuccess ? (
+              <Box sx={{ textAlign: 'center' }}>
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  Registration successful
+                </Alert>
+                <Button
+                  component={RouterLink}
+                  to="/login"
+                  variant="contained"
+                  sx={{
+                    mt: 2,
+                    background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+                    },
+                  }}
                 >
-                  {isLogin ? 'Log in' : 'Create account'}
+                  Back to login
                 </Button>
-                
-                <Box sx={{ textAlign: 'center' }}>
-                  {isLogin ? (
-                    <Button 
-                      component={RouterLink} 
-                      to="/register"
-                      variant="text"
-                    >
-                      Sign up
-                    </Button>
-                  ) : (
-                    <Button 
-                      component={RouterLink} 
-                      to="/login"
-                      variant="text"
-                    >
-                      Log in instead
-                    </Button>
-                  )}
-                </Box>
               </Box>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+              <>
+                <TextField
+                  fullWidth
+                  label="Username"
+                  variant="outlined"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  disabled={loading}
+                  margin="normal"
+                  autoComplete="username"
+                />
+
+                {!isLogin && (
+                  <>
+                    <FormControl fullWidth margin="normal">
+                      <InputLabel id="base-language-label">Native Language</InputLabel>
+                      <Select
+                        labelId="base-language-label"
+                        value={baseLanguage}
+                        label="Native Language"
+                        onChange={(e) => setBaseLanguage(e.target.value)}
+                        disabled={loading}
+                      >
+                        <MenuItem value="ru">Russian</MenuItem>
+                        <MenuItem value="en">English</MenuItem>
+                        <MenuItem value="es">Spanish</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                      <InputLabel id="target-language-label">Learning Language</InputLabel>
+                      <Select
+                        labelId="target-language-label"
+                        value={targetLanguage}
+                        label="Learning Language"
+                        onChange={(e) => setTargetLanguage(e.target.value)}
+                        disabled={loading}
+                      >
+                        <MenuItem value="en">English</MenuItem>
+                        <MenuItem value="es">Spanish</MenuItem>
+                        <MenuItem value="ru">Russian</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                      <InputLabel id="level-label">Level</InputLabel>
+                      <Select
+                        labelId="level-label"
+                        value={desiredLevel}
+                        label="Level"
+                        onChange={(e) => setDesiredLevel(e.target.value)}
+                        disabled={loading}
+                      >
+                        <MenuItem value="A0">A0</MenuItem>
+                        <MenuItem value="A1">A1</MenuItem>
+                        <MenuItem value="A2">A2</MenuItem>
+                        <MenuItem value="B1">B1</MenuItem>
+                        <MenuItem value="B2">B2</MenuItem>
+                        <MenuItem value="C1">C1</MenuItem>
+                        <MenuItem value="C2">C2</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </>
+                )}
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 3 }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    sx={{
+                      py: 1.3,
+                      background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+                      },
+                    }}
+                  >
+                    {loading ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : (
+                      isLogin ? 'Log in' : 'Create account'
+                    )}
+                  </Button>
+
+                  <Box sx={{ textAlign: 'center' }}>
+                    {isLogin ? (
+                      <Button
+                        component={RouterLink}
+                        to="/register"
+                        variant="text"
+                        sx={{ color: 'primary.light' }}
+                      >
+                        Sign up
+                      </Button>
+                    ) : (
+                      <Button
+                        component={RouterLink}
+                        to="/login"
+                        variant="text"
+                        sx={{ color: 'primary.light' }}
+                      >
+                        Log in instead
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 }

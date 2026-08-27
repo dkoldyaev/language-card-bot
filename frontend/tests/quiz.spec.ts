@@ -32,7 +32,7 @@ test.describe('Quiz Operations', () => {
     await expect(cardContent).toContainText('for apple in ru');
 
     const answerInput = page.getByLabel(/Your answer/i);
-    const submitBtn = page.locator('button:has-text("Submit")');
+    const submitBtn = page.locator('button[type="submit"]');
 
     // 1. Test Incorrect Answer
     await answerInput.fill('banana');
@@ -94,7 +94,7 @@ test.describe('Quiz Operations', () => {
     await expect(cardContent).toContainText(`for ${currentWord} in ru`);
 
     const answerInput = page.getByLabel(/Your answer/i);
-    const submitBtn = page.locator('button:has-text("Submit")');
+    const submitBtn = page.locator('button[type="submit"]');
 
     // Test Correct Answer
     await answerInput.fill(currentWord);
@@ -141,7 +141,7 @@ test.describe('Quiz Operations', () => {
     await page.click('button:has-text("Show variants")');
 
     // Check variants appear
-    await expect(page.locator('h6:has-text("Variants:")')).toBeVisible();
+    await expect(page.locator('text=Variants:')).toBeVisible();
 
     // Check there are variant buttons
     const variantButtons = page.locator('.MuiButton-colorSecondary');
@@ -151,7 +151,7 @@ test.describe('Quiz Operations', () => {
 
     const correctVariantBtn = variantButtons.filter({ hasText: currentWord });
     const answerInput = page.getByLabel(/Your answer/i);
-    const submitBtn = page.locator('button:has-text("Submit")');
+    const submitBtn = page.locator('button[type="submit"]');
     
     // Click an incorrect variant
     const totalVariants = await variantButtons.count();

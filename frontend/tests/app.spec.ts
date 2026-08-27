@@ -14,12 +14,11 @@ test.describe('English Card Bot Frontend E2E', () => {
     // We register and then login the user for each test
     await register(page, username);
     await login(page, username);
-    // Set up default settings so worker processes jobs correctly
   });
 
-  test('should display Welcome page', async ({ page }) => {
+  test('should display Dashboard page', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('text=Welcome to English Card Bot')).toBeVisible();
+    await expect(page.locator('text=Welcome')).toBeVisible();
   });
 
   test('should navigate to Settings and save settings', async ({ page }) => {
@@ -32,11 +31,7 @@ test.describe('English Card Bot Frontend E2E', () => {
     await expect(page.locator('[data-testid="learned-language-select"]')).toBeVisible();
     await expect(page.locator('[data-testid="level-select"]')).toBeVisible();
 
-    // In a real e2e test, we'd interact with MUI selects and click save, 
-    // but this depends on if backend is returning properly mocked data or real data.
-    // Let's at least check if Save button is there.
+    // Check if Save button is there.
     await expect(page.locator('button:has-text("Save Settings")')).toBeVisible();
   });
-
-
 });

@@ -1,35 +1,38 @@
-import { Outlet, Link as RouterLink, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
-import useStore from '../store/useStore';
+import { Outlet } from 'react-router-dom';
+import { Box, useMediaQuery, useTheme } from '@mui/material';
+import Sidebar from './Sidebar';
 
 export default function Layout() {
-  const profile = useStore((state) => state.profile);
-  const reset = useStore((state) => state.reset);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    reset();
-    navigate('/login');
-  };
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            English Card Bot {profile && `(${profile.username})`}
-          </Typography>
-          <Button color="inherit" component={RouterLink} to="/">Home</Button>
-          <Button color="inherit" component={RouterLink} to="/settings">Settings</Button>
-          <Button color="inherit" component={RouterLink} to="/dictionary/add">Add Words</Button>
-          <Button color="inherit" component={RouterLink} to="/dictionary/edit">Edit Dictionary</Button>
-          <Button color="inherit" component={RouterLink} to="/quiz">Quiz</Button>
-          <Button color="inherit" onClick={handleLogout}>Logout</Button>
-        </Toolbar>
-      </AppBar>
-      <Container component="main" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
-        <Outlet />
-      </Container>
+    <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
+      <Sidebar />
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          ml: isMobile ? 0 : '240px',
+          pb: isMobile ? '80px' : 0,
+          minHeight: '100dvh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 960,
+            width: '100%',
+            mx: 'auto',
+            px: { xs: 2, sm: 3, md: 4 },
+            py: { xs: 3, md: 4 },
+            flexGrow: 1,
+          }}
+        >
+          <Outlet />
+        </Box>
+      </Box>
     </Box>
   );
 }
