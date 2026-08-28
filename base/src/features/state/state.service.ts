@@ -1,5 +1,5 @@
 import { prisma } from '../../prisma';
-import { UserState, UserMode } from '@prisma/client';
+import { UserState } from '@prisma/client';
 
 export async function getUserState(userId: number): Promise<UserState | null> {
   return prisma.userState.findUnique({
@@ -15,9 +15,3 @@ export async function requireUserState(userId: number): Promise<UserState> {
   return state;
 }
 
-export async function updateUserMode(userId: number, mode: UserMode): Promise<UserState> {
-  return prisma.userState.update({
-    where: { userId },
-    data: { mode }
-  });
-}

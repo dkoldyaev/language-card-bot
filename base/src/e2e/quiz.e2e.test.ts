@@ -3,7 +3,6 @@ import request from 'supertest';
 import app from '../app';
 import { prisma } from '../prisma';
 import { clearDatabase, setupTestUser, setupMercureListener, teardownMercureListener } from './helpers';
-import { UserMode } from '@prisma/client';
 
 describe('Quiz E2E', () => {
   const testUsername = 'quiz_user';
@@ -81,7 +80,6 @@ describe('Quiz E2E', () => {
     // Check DB state
     const userState = await prisma.userState.findUnique({ where: { userId } });
     expect(userState).toMatchObject({
-      mode: UserMode.QUIZ,
       showVariants: false,
       showDefinitionTranslation: false,
       currentWordId: word.id,
@@ -112,7 +110,7 @@ describe('Quiz E2E', () => {
 
     await prisma.userState.update({
       where: { userId },
-      data: { mode: UserMode.QUIZ, currentWordId: w1.id }
+      data: { currentWordId: w1.id }
     });
 
     const res = await request(app)
@@ -148,7 +146,7 @@ describe('Quiz E2E', () => {
 
     await prisma.userState.update({
       where: { userId },
-      data: { mode: UserMode.QUIZ, currentDefinitionId: word.definitions[0].id }
+      data: { currentDefinitionId: word.definitions[0].id }
     });
 
     const res = await request(app)
@@ -172,7 +170,7 @@ describe('Quiz E2E', () => {
 
     await prisma.userState.update({
       where: { userId },
-      data: { mode: UserMode.QUIZ, currentWordId: word.id }
+      data: { currentWordId: word.id }
     });
 
     const checkAnswer = async (suggestion: string, expectedResult: string) => {
@@ -204,7 +202,7 @@ describe('Quiz E2E', () => {
 
     await prisma.userState.update({
       where: { userId },
-      data: { mode: 'QUIZ', currentWordId: w1.id, currentDefinitionId: w1.definitions[0].id }
+      data: { currentWordId: w1.id, currentDefinitionId: w1.definitions[0].id }
     });
 
     const res = await request(app)
@@ -236,7 +234,7 @@ describe('Quiz E2E', () => {
     
     await prisma.userState.update({
       where: { userId },
-      data: { mode: 'QUIZ', currentWordId: word.id, currentDefinitionId: word.definitions[0].id }
+      data: { currentWordId: word.id, currentDefinitionId: word.definitions[0].id }
     });
 
     const res = await request(app)

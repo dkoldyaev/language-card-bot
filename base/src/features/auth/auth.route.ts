@@ -5,7 +5,7 @@ import { validateRequest } from '../../middleware/validate';
 import { authMiddleware } from '../../middleware/auth';
 import { getAuthUser } from './auth.service';
 import { AuthRequestSchema, AuthRequest, AuthResponse } from './auth.type';
-import { UserMode } from '@prisma/client';
+
 import { env } from '../../core/env';
 
 const router = Router();
@@ -37,9 +37,7 @@ router.post('/register', validateRequest(AuthRequestSchema), async (req: Request
       data: {
         username,
         state: {
-          create: {
-            mode: UserMode.DEFAULT
-          }
+          create: {}
         }
       }
     });

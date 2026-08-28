@@ -1,4 +1,3 @@
-import { UserMode } from '@prisma/client';
 
 export type MercureVersion = 'v1';
 
@@ -9,7 +8,6 @@ export interface BaseMercureEvent {
 
 export interface StateSyncMercureEvent extends BaseMercureEvent {
   type: 'state_sync';
-  mode: UserMode;
   currentWordId?: number | null;
   currentWord?: { id: number; text: string } | null;
   showVariants?: boolean;

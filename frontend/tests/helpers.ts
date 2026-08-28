@@ -25,10 +25,8 @@ export async function login(page: Page, username: string) {
 }
 
 export async function addWordsToDictionary(page: Page, words: string[]) {
-  const modeSwitchPromise = page.waitForResponse(response => response.url().includes('/switch_mode_dictionary_add') && response.status() === 200);
   await page.goto('/dictionary');
   await expect(page.locator('h4:has-text("Dictionary")')).toBeVisible();
-  await modeSwitchPromise;
   
   const text = words.join('\n');
   await page.fill('textarea', text);

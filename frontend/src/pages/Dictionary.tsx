@@ -13,6 +13,8 @@ import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import useStore from '../store/useStore';
+import StatusChip from '../components/StatusChip';
+
 
 export default function Dictionary() {
   // Add words state
@@ -46,46 +48,12 @@ export default function Dictionary() {
   // Words that are processing but not yet in the dictionary
   const processingOnlyWords = wordProcessing
     .filter((wp) => !dictionary.some((d) => d.text.toLowerCase() === wp.word.toLowerCase()))
-    .filter((wp) => wp.status !== 'processed' && wp.status !== 'duplicate')
+    .filter((wp) => wp.status !== 'duplicate')
     .filter((wp) => (searchQuery ? wp.word.toLowerCase().includes(searchQuery.toLowerCase()) : true));
 
-  const getProcessingChipProps = (item: any) => {
-    let label = item.status;
-    let icon = undefined;
-    let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default';
 
-    switch (item.status) {
-      case 'processing':
-        label = 'Fetching...';
-        icon = <CircularProgress size={14} color="inherit" />;
-        color = 'primary';
-        break;
-      case 'definitions_received':
-        label = `Processing (${item.definitionsCount})`;
-        icon = <CircularProgress size={14} color="inherit" />;
-        color = 'info';
-        break;
-      case 'processed':
-        label = `Processed ${item.processedCount}/${item.totalDefinitions}`;
-        if (item.processedCount === item.totalDefinitions) {
-          color = 'success';
-        } else {
-          icon = <CircularProgress size={14} color="inherit" />;
-          color = 'info';
-        }
-        break;
-      case 'duplicate':
-        label = 'Duplicate';
-        color = 'warning';
-        break;
-    }
-    return { label, color, icon };
-  };
 
-  // ===== Add Words Logic =====
-  useEffect(() => {
-    apiClient.post('/switch_mode_dictionary_add');
-  }, []);
+
 
   const handleSubmitWords = async () => {
     const words = wordsText.split('\n').map((w) => w.trim()).filter(Boolean);
@@ -361,7 +329,6 @@ export default function Dictionary() {
       ) : (
         <Box className="stagger-children">
           {processingOnlyWords.map((wp, idx) => {
-            const chipProps = getProcessingChipProps(wp);
             return (
               <Box
                 key={`wp-${idx}`}
@@ -382,11 +349,7 @@ export default function Dictionary() {
                 >
                   {wp.word}
                 </Typography>
-                <Chip
-                  size="small"
-                  {...chipProps}
-                  sx={{ mr: 1, fontWeight: 600, fontSize: '0.7rem' }}
-                />
+                <StatusChip status={wp.status} definitionsCount={wp.definitionsCount} />
                 <IconButton size="small" disabled sx={{ visibility: 'hidden' }}>
                   <DeleteIcon fontSize="small" />
                 </IconButton>
@@ -398,7 +361,6 @@ export default function Dictionary() {
             const processingItem = wordProcessing.find(
               (wp) => wp.word.toLowerCase() === word.text.toLowerCase()
             );
-            const chipProps = processingItem ? getProcessingChipProps(processingItem) : null;
 
             return (
               <Accordion key={word.id}>
@@ -420,17 +382,7 @@ export default function Dictionary() {
                   >
                     {word.text}
                   </Typography>
-                  {chipProps && (
-                    <Chip
-                      size="small"
-                      {...chipProps}
-                      sx={{
-                        mr: 1,
-                        fontWeight: 600,
-                        fontSize: '0.7rem',
-                      }}
-                    />
-                  )}
+                  <StatusChip status={processingItem?.status} definitionsCount={processingItem?.definitionsCount} />
                   <Chip
                     label={`${word.definitions.length} definition(s)`}
                     size="small"

@@ -3,7 +3,6 @@ import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { StateSyncMercureEvent } from '../event_bus/event_bus.type';
 import { publishEvent } from '../event_bus/event_bus.service';
-import { UserMode } from '@prisma/client';
 import { SyncResponse } from './state.type';
 import { getAuthUser } from '../auth/auth.service';
 import { getUserState } from './state.service';
@@ -24,14 +23,13 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
     const payload: StateSyncMercureEvent = {
       version: 'v1',
       type: 'state_sync',
-      mode: userState.mode as UserMode,
       currentWordId: userState.currentWordId,
       showVariants: userState.showVariants,
       showDefinitionTranslation: userState.showDefinitionTranslation,
       currentDefinitionId: userState.currentDefinitionId
     };
 
-    if (userState.mode === UserMode.QUIZ) {
+
       if (userState.currentWordId) {
         const word = await prisma.word.findUnique({ where: { id: userState.currentWordId } });
         if (word) {
@@ -51,7 +49,7 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
           };
         }
       }
-    }
+
 
     try {
       await publishEvent(username, payload);

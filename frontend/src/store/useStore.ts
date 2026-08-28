@@ -6,12 +6,16 @@ interface UserProfile {
   username: string;
 }
 
+export interface SettingsState {
+  baseLanguage: string;
+  targetLanguage: string;
+  desiredLevel: string;
+}
+
 export interface WordProcessingStatus {
   word: string;
-  status: 'processing' | 'definitions_received' | 'processed' | 'duplicate';
+  status: 'processing' | 'definitions_received' | 'duplicate';
   definitionsCount?: number;
-  processedCount?: number;
-  totalDefinitions?: number;
 }
 
 export interface DictionaryTranslation {
@@ -49,6 +53,7 @@ interface AppState {
   token: string | null;
   mercureToken: string | null;
   profile: UserProfile | null;
+  settings: SettingsState | null;
   appState: any | null;
   wordProcessing: WordProcessingStatus[];
   dictionary: DictionaryWord[];
@@ -59,6 +64,7 @@ interface AppState {
   setToken: (token: string | null) => void;
   setMercureToken: (token: string | null) => void;
   setProfile: (profile: UserProfile | null) => void;
+  setSettings: (settings: SettingsState | null) => void;
   setAppState: (appState: any) => void;
   updateWordProcessing: (status: WordProcessingStatus) => void;
   setDictionary: (dictionary: DictionaryWord[]) => void;
@@ -78,6 +84,7 @@ const initialState = {
   token: null,
   mercureToken: null,
   profile: null,
+  settings: null,
   appState: null,
   wordProcessing: [],
   dictionary: [],
@@ -94,7 +101,21 @@ const useStore = create<AppState>()(
       setToken: (token) => set({ token }),
       setMercureToken: (mercureToken) => set({ mercureToken }),
       setProfile: (profile) => set({ profile }),
-      setAppState: (appState) => set({ appState }),
+      setSettings: (settings) => set({ settings }),
+      setAppState: (appState) => set((state) => {
+        let quizCard = state.quizCard;
+        if (appState && appState.currentWord && appState.currentDefinition) {
+          quizCard = {
+            wordId: appState.currentWord.id,
+            definition: {
+              id: appState.currentDefinition.id,
+              text: appState.currentDefinition.text,
+              translation: appState.currentDefinition.translation
+            }
+          };
+        }
+        return { appState, quizCard };
+      }),
       setDictionary: (dictionary) => set((state) => {
         const dictionaryWordIds = new Set(dictionary.map(w => w.id));
         const shouldResetQuiz = state.quizCard && !dictionaryWordIds.has(state.quizCard.wordId);

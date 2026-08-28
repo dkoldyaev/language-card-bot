@@ -4,7 +4,7 @@ import app from '../../app';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../prisma';
 import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient, UserMode } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { publishEvent } from '../event_bus/event_bus.service';
 import * as quizService from './quiz.service';
 
@@ -69,7 +69,6 @@ describe('Quiz Route', () => {
     expect(prismaMock.userState.update).toHaveBeenCalledWith({
       where: { userId: 1 },
       data: {
-        mode: UserMode.QUIZ,
         showVariants: false,
         showDefinitionTranslation: false,
         currentDefinitionId: 100,
@@ -91,7 +90,7 @@ describe('Quiz Route', () => {
   describe('POST /api/v1/quiz/variants', () => {
     it('should return 400 if user state is not QUIZ', async () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
-      prismaMock.userState.findUnique.mockResolvedValue({ mode: UserMode.DEFAULT } as any);
+      prismaMock.userState.findUnique.mockResolvedValue({ currentWordId: null } as any);
 
       const res = await request(app)
         .post('/api/v1/quiz/variants')
@@ -105,7 +104,6 @@ describe('Quiz Route', () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
       
       prismaMock.userState.findUnique.mockResolvedValue({
-        mode: UserMode.QUIZ,
         currentWordId: 10
       } as any);
 
@@ -141,7 +139,7 @@ describe('Quiz Route', () => {
   describe('POST /api/v1/quiz/translate_definition', () => {
     it('should return 400 if user state is not QUIZ or no currentDefinitionId', async () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
-      prismaMock.userState.findUnique.mockResolvedValue({ mode: UserMode.QUIZ, currentDefinitionId: null } as any);
+      prismaMock.userState.findUnique.mockResolvedValue({ currentDefinitionId: null } as any);
 
       const res = await request(app)
         .post('/api/v1/quiz/translate_definition')
@@ -155,7 +153,6 @@ describe('Quiz Route', () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
       
       prismaMock.userState.findUnique.mockResolvedValue({
-        mode: UserMode.QUIZ,
         currentDefinitionId: 100
       } as any);
 
@@ -173,7 +170,6 @@ describe('Quiz Route', () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
       
       prismaMock.userState.findUnique.mockResolvedValue({
-        mode: UserMode.QUIZ,
         currentDefinitionId: 100
       } as any);
 
@@ -208,7 +204,6 @@ describe('Quiz Route', () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
       
       prismaMock.userState.findUnique.mockResolvedValue({
-        mode: UserMode.QUIZ,
         currentWordId: 10
       } as any);
 
@@ -238,7 +233,6 @@ describe('Quiz Route', () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
       
       prismaMock.userState.findUnique.mockResolvedValue({
-        mode: UserMode.QUIZ,
         currentWordId: 10
       } as any);
 
@@ -275,7 +269,6 @@ describe('Quiz Route', () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
       
       prismaMock.userState.findUnique.mockResolvedValue({
-        mode: UserMode.QUIZ,
         currentWordId: 10,
         currentDefinitionId: 100
       } as any);

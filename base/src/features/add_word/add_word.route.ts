@@ -6,8 +6,7 @@ import { DictionaryAddDuplicateEvent } from '../event_bus/event_bus.type';
 import { publishEvent } from '../event_bus/event_bus.service';
 import { appEvents, Events } from '../../core/events';
 import { getAuthUser } from '../auth/auth.service';
-import { getUserState } from '../state/state.service';
-import { UserMode } from '@prisma/client';
+
 
 const router = Router();
 
@@ -23,11 +22,7 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordRequest>, re
   const { id: userId, username } = getAuthUser(req);
 
   try {
-    const userState = await getUserState(userId);
 
-    if (!userState || userState.mode !== UserMode.DICTIONARY_ADD) {
-      return res.status(403).json({ error: 'User is not in DICTIONARY_ADD mode' });
-    }
 
     const existingWord = await prisma.word.findUnique({
       where: {

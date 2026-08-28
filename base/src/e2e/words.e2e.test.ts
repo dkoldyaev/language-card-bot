@@ -55,24 +55,6 @@ describe('Words E2E', () => {
       return originalFetch(url, options);
     });
 
-    // 1. Fails when not in DICTIONARY_ADD mode
-    const addWordFailRes = await request(app)
-      .post('/api/v1/add_word')
-      .set('Authorization', `Bearer ${userToken}`)
-      .send({ word: 'apple' });
-
-    expect(addWordFailRes).toMatchObject({
-      status: 403,
-      body: { error: 'User is not in DICTIONARY_ADD mode' }
-    });
-
-    // Переключаемся в DICTIONARY_ADD
-    await request(app)
-      .post('/api/v1/switch_mode_dictionary_add')
-      .set('Authorization', `Bearer ${userToken}`);
-
-    await new Promise(resolve => setTimeout(resolve, 500));
-
     // 2. Successfully adds word
     const addWordSuccessRes = await request(app)
       .post('/api/v1/add_word')

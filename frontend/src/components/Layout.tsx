@@ -1,10 +1,42 @@
 import { Outlet } from 'react-router-dom';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import Sidebar from './Sidebar';
+import { useEffect } from 'react';
+import apiClient from '../api/client';
+import useStore from '../store/useStore';
 
 export default function Layout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const setDictionary = useStore((state) => state.setDictionary);
+  const setSettings = useStore((state) => state.setSettings);
+  const setAppState = useStore((state) => state.setAppState);
+
+  useEffect(() => {
+    apiClient.get('/dictionary')
+      .then((res) => {
+        if (res.data.dictionary) {
+          setDictionary(res.data.dictionary);
+        }
+      })
+      .catch((error) => console.error('Failed to load dictionary:', error));
+
+    apiClient.get('/settings')
+      .then((res) => {
+        if (res.data.settings) {
+          setSettings(res.data.settings);
+        }
+      })
+      .catch((error) => console.error('Failed to load settings:', error));
+
+    apiClient.post('/state/sync')
+      .then((res) => {
+        if (res.data.state) {
+          setAppState(res.data.state);
+        }
+      })
+      .catch((error) => console.error('Failed to sync state:', error));
+  }, [setDictionary, setSettings, setAppState]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh' }}>

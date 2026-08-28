@@ -6,8 +6,11 @@ import { useState, useEffect } from 'react';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import apiClient from '../api/client';
+import useStore from '../store/useStore';
 
 export default function Settings() {
+  const settings = useStore((state) => state.settings);
+  const setSettings = useStore((state) => state.setSettings);
   const [baseLanguage, setBaseLanguage] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('');
   const [desiredLevel, setDesiredLevel] = useState('');
@@ -16,24 +19,20 @@ export default function Settings() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    apiClient.get('/settings')
-      .then((res) => {
-        const { settings } = res.data;
-        if (settings) {
-          setBaseLanguage(settings.baseLanguage || '');
-          setTargetLanguage(settings.targetLanguage || '');
-          setDesiredLevel(settings.desiredLevel || '');
-        }
-      })
-      .catch((error) => console.error('Failed to load settings', error))
-      .finally(() => setLoading(false));
-  }, []);
+    if (settings) {
+      setBaseLanguage(settings.baseLanguage || '');
+      setTargetLanguage(settings.targetLanguage || '');
+      setDesiredLevel(settings.desiredLevel || '');
+    }
+    setLoading(false);
+  }, [settings]);
 
   const handleSave = () => {
     setSaving(true);
     setSuccess(false);
     apiClient.post('/settings', { baseLanguage, targetLanguage, desiredLevel })
       .then(() => {
+        setSettings({ baseLanguage, targetLanguage, desiredLevel });
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       })

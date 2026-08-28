@@ -3,7 +3,6 @@ import request from 'supertest';
 import app from '../app';
 import { prisma } from '../prisma';
 import { clearDatabase, setupTestUser, setupMercureListener, teardownMercureListener } from './helpers';
-import { UserMode } from '@prisma/client';
 
 describe('State Sync E2E', () => {
   const testUsername = 'state_sync_user';
@@ -57,7 +56,6 @@ describe('State Sync E2E', () => {
     await prisma.userState.update({
       where: { userId },
       data: {
-        mode: UserMode.QUIZ,
         showVariants: true,
         showDefinitionTranslation: false,
         currentWordId: word.id,
@@ -76,7 +74,6 @@ describe('State Sync E2E', () => {
 
     expect(res.body.state).toMatchObject({
       type: 'state_sync',
-      mode: UserMode.QUIZ,
       showVariants: true,
       showDefinitionTranslation: false,
       currentWordId: word.id,
@@ -94,10 +91,9 @@ describe('State Sync E2E', () => {
 
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    const event = messages.find(m => m.type === 'state_sync' && m.mode === UserMode.QUIZ);
+    const event = messages.find(m => m.type === 'state_sync');
     expect(event).toMatchObject({
       type: 'state_sync',
-      mode: UserMode.QUIZ,
       showVariants: true,
       showDefinitionTranslation: false,
       currentWordId: word.id,
