@@ -28,5 +28,6 @@ export interface DefinitionAddedPayload {
 export interface TranslationAddedPayload {
   username: string;
   wordId: number;
-  wordText: string;
+  definitionId: number;
+  translation: string;
 }

@@ -55,7 +55,8 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
     appEvents.emit(Events.TRANSLATION_ADDED, {
       username,
       wordId: definition.wordId,
-      wordText: definition.word.text
+      definitionId,
+      translation: text
     });
 
     res.json({ message: 'Definition translation edited successfully' });

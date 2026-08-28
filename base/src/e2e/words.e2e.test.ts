@@ -95,7 +95,7 @@ describe('Words E2E', () => {
     };
 
     await waitForCondition(() => 
-      messages.filter(m => m.type === 'dictionary_add_definition_processed').length >= 2
+      messages.filter(m => m.type === 'definition_translate_loaded').length >= 2
     );
 
     const userInDbAfterAdd = await prisma.user.findUnique({
@@ -146,11 +146,11 @@ describe('Words E2E', () => {
       definitionsCount: 2
     });
 
-    const defProcessedEvents = messages.filter(m => m.type === 'dictionary_add_definition_processed');
+    const defProcessedEvents = messages.filter(m => m.type === 'definition_translate_loaded');
     expect(defProcessedEvents.length).toBe(2);
     expect(defProcessedEvents[0]).toMatchObject({
-      type: 'dictionary_add_definition_processed',
-      totalDefinitions: 2
+      type: 'definition_translate_loaded',
+      translation: 'mocked_translation'
     });
 
     const duplicateEvents = messages.filter(m => m.type === 'dictionary_add_duplicate');

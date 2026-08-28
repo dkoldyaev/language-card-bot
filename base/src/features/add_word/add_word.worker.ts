@@ -128,7 +128,8 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
     appEvents.emit(Events.TRANSLATION_ADDED, {
       username,
       wordId,
-      wordText
+      definitionId,
+      translation: translatedText
     });
   }
 }, { connection: workerConnection });

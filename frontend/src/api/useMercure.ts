@@ -46,8 +46,8 @@ export function useMercure() {
                 updateWordProcessing({ word: data.word, status: 'processing' });
               } else if (data.type === 'dictionary_add_definitions_received') {
                 updateWordProcessing({ word: data.word, status: 'definitions_received', definitionsCount: data.definitionsCount });
-              } else if (data.type === 'dictionary_add_definition_processed') {
-                updateWordProcessing({ word: data.word, status: 'processed', processedCount: data.processedCount, totalDefinitions: data.totalDefinitions });
+              } else if (data.type === 'definition_translate_loaded') {
+                useStore.getState().updateDictionaryTranslation(data.wordId, data.definitionId, data.translation);
               } else if (data.type === 'state_sync') {
                 useStore.getState().setAppState(data);
               } else if (data.type === 'quiz_card') {

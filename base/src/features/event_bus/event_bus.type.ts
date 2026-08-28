@@ -53,11 +53,11 @@ export interface DictionaryAddDefinitionsReceivedEvent extends BaseMercureEvent 
   definitionsCount: number;
 }
 
-export interface DictionaryAddDefinitionProcessedEvent extends BaseMercureEvent {
-  type: 'dictionary_add_definition_processed';
-  word: string;
-  processedCount: number;
-  totalDefinitions: number;
+export interface DefinitionTranslateLoadedEvent extends BaseMercureEvent {
+  type: 'definition_translate_loaded';
+  wordId: number;
+  definitionId: number;
+  translation: string;
 }
 
 export interface QuizCardMercureEvent extends BaseMercureEvent {
@@ -97,7 +97,7 @@ export type MercureEvent =
   | DictionaryAddDuplicateEvent
   | DictionaryAddProcessingEvent
   | DictionaryAddDefinitionsReceivedEvent
-  | DictionaryAddDefinitionProcessedEvent
+  | DefinitionTranslateLoadedEvent
   | QuizCardMercureEvent
   | QuizVariantsMercureEvent
   | QuizDefinitionTranslationMercureEvent
