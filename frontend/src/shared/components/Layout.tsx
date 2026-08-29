@@ -3,7 +3,7 @@ import { Box, useMediaQuery, useTheme } from '@mui/material';
 import Sidebar from './Sidebar';
 import { useEffect } from 'react';
 import apiClient from '../api/client';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 
 export default function Layout() {
   const theme = useTheme();

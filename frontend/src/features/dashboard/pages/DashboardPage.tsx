@@ -4,7 +4,7 @@ import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import LibraryBooksRoundedIcon from '@mui/icons-material/LibraryBooksRounded';
-import useStore from '../store/useStore';
+import useStore from '../../../store/useStore';
 
 export default function Dashboard() {
   const profile = useStore((state) => state.profile);

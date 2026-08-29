@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { register, login, addWordsToDictionary, setupSettings } from './helpers';
+import { register, login, addWordsToDictionary, addWordsAndAwaitDefinitions, setupSettings } from './helpers';
 
 test.describe('Authentication Flow', () => {
   test('navigation between login and register', async ({ page }) => {
@@ -53,15 +53,7 @@ test.describe('Authentication Flow', () => {
     await login(page, user1);
 
     // 2. Add words for user 1
-    await addWordsToDictionary(page, ['apple']);
-
-    // Ensure the word is visible and processed for user 1
-    await expect(async () => {
-      await page.goto('/dictionary');
-      const appleAccordion = page.locator('.MuiAccordion-root').filter({ hasText: 'apple' });
-      await expect(appleAccordion).toBeVisible();
-      await expect(appleAccordion.locator('text=definition(s)')).toBeVisible();
-    }).toPass();
+    await addWordsAndAwaitDefinitions(page, ['apple']);
     
     // Start quiz for user 1
     await page.goto('/quiz');

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import App from './App';
-import useStore from './store/useStore';
+import useStore from '../store/useStore';
 
 describe('App Routing', () => {
   beforeEach(() => {

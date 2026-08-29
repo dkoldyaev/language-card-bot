@@ -69,7 +69,7 @@ test.describe('Dictionary Operations', () => {
         
         await expect(acc.locator(`text=1. Edited definition for ${word}`)).toBeVisible();
         await expect(acc.locator(`text=Translation: [MOCK: ru -> en] Edited definition for ${word}`)).toBeVisible();
-      }).toPass();
+      }).toPass({ timeout: 30000 });
 
       // Now edit the translation directly
       const updatedAccordion = page.locator('.MuiAccordion-root').filter({ hasText: word });

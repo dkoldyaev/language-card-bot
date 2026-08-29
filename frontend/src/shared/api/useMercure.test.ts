@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useMercure } from './useMercure';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 
 class MockEventSource {
   url: string;

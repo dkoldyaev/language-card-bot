@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import apiClient from './client';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 
 describe('apiClient interceptor', () => {
   beforeEach(() => {

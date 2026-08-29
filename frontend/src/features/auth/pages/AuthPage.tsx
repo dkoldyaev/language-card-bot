@@ -5,8 +5,8 @@ import {
 } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
-import apiClient from '../api/client';
-import useStore from '../store/useStore';
+import apiClient from '../../../shared/api/client';
+import useStore from '../../../store/useStore';
 
 interface AuthProps {
   mode?: 'login' | 'register';

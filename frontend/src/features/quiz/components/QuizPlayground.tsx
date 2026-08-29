@@ -8,12 +8,10 @@ import ShuffleRoundedIcon from '@mui/icons-material/ShuffleRounded';
 import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
 import SkipNextRoundedIcon from '@mui/icons-material/SkipNextRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
-import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
-import apiClient from '../api/client';
-import useStore from '../store/useStore';
+import apiClient from '../../../shared/api/client';
+import useStore from '../../../store/useStore';
 
-export default function Quiz() {
-  const [starting, setStarting] = useState(false);
+export default function QuizPlayground() {
   const [submitting, setSubmitting] = useState(false);
   const [suggestion, setSuggestion] = useState('');
 
@@ -21,18 +19,6 @@ export default function Quiz() {
   const quizEvaluation = useStore((state) => state.quizEvaluation);
   const quizTranslation = useStore((state) => state.quizTranslation);
   const quizVariants = useStore((state) => state.quizVariants);
-
-  const handleStartQuiz = async () => {
-    setStarting(true);
-    try {
-      await apiClient.post('/quiz/start');
-    } catch (error) {
-      console.error('Failed to start quiz:', error);
-      alert('Failed to start quiz.');
-    } finally {
-      setStarting(false);
-    }
-  };
 
   const handleSubmitSuggestion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +80,6 @@ export default function Quiz() {
     setSuggestion('');
   }, [quizCard]);
 
-  // Determine evaluation state for styling
   const evalColor =
     quizEvaluation?.result === 'SUCCESS' ? '#10B981' :
     quizEvaluation?.result === 'CLOSE_MATCH' ? '#F59E0B' :
@@ -105,64 +90,8 @@ export default function Quiz() {
     quizEvaluation?.result === 'CLOSE_MATCH' ? 'pulseWarning' :
     quizEvaluation?.result === 'INCORRECT' ? 'pulseError' : null;
 
-  // ===== Start Screen =====
-  if (!quizCard) {
-    return (
-      <Box
-        className="animate-fade-in"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-          textAlign: 'center',
-        }}
-      >
-        <Box
-          sx={{
-            width: 80,
-            height: 80,
-            borderRadius: 4,
-            background: 'linear-gradient(135deg, #7C3AED, #06B6D4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mb: 3,
-            animation: 'float 3s ease-in-out infinite',
-            boxShadow: `0 12px 40px ${alpha('#7C3AED', 0.3)}`,
-          }}
-        >
-          <SchoolRoundedIcon sx={{ fontSize: 40, color: '#fff' }} />
-        </Box>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-          Ready to test your vocabulary?
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400 }}>
-          We&apos;ll show you definitions and you guess the word. Let&apos;s see how many you know!
-        </Typography>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={handleStartQuiz}
-          disabled={starting}
-          sx={{
-            px: 5,
-            py: 1.5,
-            fontSize: '1rem',
-            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
-            },
-          }}
-        >
-          {starting ? <CircularProgress size={24} color="inherit" /> : 'Start Quiz'}
-        </Button>
-      </Box>
-    );
-  }
+  if (!quizCard) return null;
 
-  // ===== Quiz Card =====
   return (
     <Box className="animate-fade-in" sx={{ maxWidth: 640, mx: 'auto' }}>
       <Typography
@@ -179,7 +108,6 @@ export default function Quiz() {
         Quiz
       </Typography>
 
-      {/* Definition Card */}
       <Card
         className="animate-scale-in"
         sx={{
@@ -231,7 +159,6 @@ export default function Quiz() {
         </CardContent>
       </Card>
 
-      {/* Answer Input */}
       <Box
         component="form"
         onSubmit={handleSubmitSuggestion}
@@ -264,7 +191,6 @@ export default function Quiz() {
         </Button>
       </Box>
 
-      {/* Evaluation Result */}
       {quizEvaluation && (
         <Box
           className="animate-scale-in"
@@ -294,7 +220,6 @@ export default function Quiz() {
         </Box>
       )}
 
-      {/* Hint Buttons */}
       <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', mb: 3, flexWrap: 'wrap' }}>
         <Tooltip title="Show translated definition">
           <span>
@@ -348,7 +273,6 @@ export default function Quiz() {
         </Tooltip>
       </Box>
 
-      {/* Variants */}
       {quizVariants && (
         <Box className="animate-fade-in" sx={{ mt: 2 }}>
           <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.7rem' }}>

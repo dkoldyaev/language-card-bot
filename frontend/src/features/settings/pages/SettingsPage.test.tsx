@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import Settings from './Settings';
-import apiClient from '../api/client';
-import useStore from '../store/useStore';
+import Settings from './SettingsPage';
+import apiClient from '../../../shared/api/client';
+import useStore from '../../../store/useStore';
 
 describe('Settings', () => {
   beforeEach(() => {

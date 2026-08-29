@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 export function useMercure() {

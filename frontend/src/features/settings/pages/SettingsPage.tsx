@@ -5,8 +5,8 @@ import {
 import { useState, useEffect } from 'react';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
-import apiClient from '../api/client';
-import useStore from '../store/useStore';
+import apiClient from '../../../shared/api/client';
+import useStore from '../../../store/useStore';
 
 export default function Settings() {
   const settings = useStore((state) => state.settings);

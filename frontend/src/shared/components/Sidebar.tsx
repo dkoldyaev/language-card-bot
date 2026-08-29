@@ -18,7 +18,7 @@ import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
-import useStore from '../store/useStore';
+import useStore from '../../store/useStore';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: <HomeRoundedIcon /> },
@@ -214,11 +214,12 @@ export default function Sidebar() {
                 {item.icon}
               </ListItemIcon>
               <ListItemText
-                primary={item.label}
-                primaryTypographyProps={{
-                  fontSize: '0.875rem',
-                  fontWeight: isActive ? 600 : 500,
-                }}
+                disableTypography
+                primary={
+                  <Typography sx={{ fontSize: '0.875rem', fontWeight: isActive ? 600 : 500 }}>
+                    {item.label}
+                  </Typography>
+                }
               />
             </ListItemButton>
           );
@@ -263,11 +264,12 @@ export default function Sidebar() {
             <LogoutRoundedIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText
-            primary="Logout"
-            primaryTypographyProps={{
-              fontSize: '0.875rem',
-              fontWeight: 500,
-            }}
+            disableTypography
+            primary={
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                Logout
+              </Typography>
+            }
           />
         </ListItemButton>
       </Box>

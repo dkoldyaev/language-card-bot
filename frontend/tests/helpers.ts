@@ -49,6 +49,7 @@ export async function addWordsAndAwaitDefinitions(page: Page, words: string[]) {
     
     await accordion.click();
     await expect(accordion.locator('[aria-label="Edit definition"]').first()).toBeVisible();
+    await expect(accordion.locator('[aria-label="Edit translation"]').first()).toBeVisible();
     await accordion.click(); // collapse it back
   }
 }

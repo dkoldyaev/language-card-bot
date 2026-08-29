@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Settings from './pages/Settings';
-import Dictionary from './pages/Dictionary';
-import Quiz from './pages/Quiz';
-import Auth from './pages/Auth';
-import useStore from './store/useStore';
-import { useMercure } from './api/useMercure';
+import Layout from '../shared/components/Layout';
+import Dashboard from '../features/dashboard/pages/DashboardPage';
+import Settings from '../features/settings/pages/SettingsPage';
+import Dictionary from '../features/dictionary/pages/DictionaryPage';
+import Quiz from '../features/quiz/pages/QuizPage';
+import Auth from '../features/auth/pages/AuthPage';
+import useStore from '../store/useStore';
+import { useMercure } from '../shared/api/useMercure';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useStore((state) => state.token);

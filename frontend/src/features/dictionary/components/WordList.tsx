@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Typography, Box, TextField, Button, CircularProgress,
   Accordion, AccordionSummary, AccordionDetails,
@@ -9,19 +10,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import SendRoundedIcon from '@mui/icons-material/SendRounded';
-import { useEffect, useState } from 'react';
-import apiClient from '../api/client';
-import useStore from '../store/useStore';
-import StatusChip from '../components/StatusChip';
+import apiClient from '../../../shared/api/client';
+import useStore from '../../../store/useStore';
+import StatusChip from '../../../shared/components/StatusChip';
 
-export default function Dictionary() {
-  // Add words state
-  const [wordsText, setWordsText] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  // Edit dictionary state
-  const [loading, setLoading] = useState(true);
+export default function WordList({ loading }: { loading: boolean }) {
   const [editingDefId, setEditingDefId] = useState<number | null>(null);
   const [editingTransId, setEditingTransId] = useState<number | null>(null);
   const [editDefText, setEditDefText] = useState('');
@@ -36,32 +29,11 @@ export default function Dictionary() {
   const updateDictionaryTranslation = useStore((state) => state.updateDictionaryTranslation);
   const addDictionaryDefinition = useStore((state) => state.addDictionaryDefinition);
   const removeDictionaryDefinition = useStore((state) => state.removeDictionaryDefinition);
-  // Filtered dictionary
+
   const filteredDictionary = searchQuery
     ? dictionary.filter((w) => w.text.toLowerCase().includes(searchQuery.toLowerCase()))
     : dictionary;
 
-
-
-
-  const handleSubmitWords = async () => {
-    const words = wordsText.split('\n').map((w) => w.trim()).filter(Boolean);
-    if (words.length === 0) return;
-
-    setSubmitting(true);
-    try {
-      for (const word of words) {
-        await apiClient.post('/add_word', { word });
-      }
-      setWordsText('');
-    } catch (error) {
-      console.error('Failed to add words:', error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // ===== Edit Dictionary Logic =====
   const handleDelete = async (e: React.MouseEvent, wordId: number, text: string) => {
     e.stopPropagation();
     if (window.confirm(`Are you sure you want to delete "${text}"?`)) {
@@ -154,146 +126,72 @@ export default function Dictionary() {
     }
   };
 
-  useEffect(() => {
-    apiClient.get('/dictionary')
-      .then((res) => {
-        if (res.data.dictionary) {
-          setDictionary(res.data.dictionary);
-        }
-      })
-      .catch((error) => console.error('Failed to load dictionary:', error))
-      .finally(() => setLoading(false));
-  }, [setDictionary]);
-
   return (
-    <Box className="animate-fade-in">
-      {/* Page Header */}
-      <Typography
-        variant="h4"
-        sx={{
-          fontWeight: 700,
-          mb: 0.5,
-          background: 'linear-gradient(135deg, #F3F4F6 0%, #A78BFA 100%)',
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          color: 'transparent',
-        }}
-      >
-        Dictionary
-      </Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-        Add new words and manage your vocabulary
-      </Typography>
-
-      {/* Add Words Section */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <AddRoundedIcon sx={{ color: 'primary.light', fontSize: 20 }} />
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              Add Words
-            </Typography>
-          </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Enter words to add to your dictionary, one per line.
-          </Typography>
-
-          <TextField
-            label="Words list"
-            multiline
-            rows={4}
-            fullWidth
-            value={wordsText}
-            onChange={(e) => setWordsText(e.target.value)}
-            placeholder={"apple\nbanana\ncherry"}
-            disabled={submitting}
-            sx={{ mb: 2 }}
-          />
-
-          <Button
-            variant="contained"
-            fullWidth
-            disabled={!wordsText.trim() || submitting}
-            onClick={handleSubmitWords}
-            endIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <SendRoundedIcon />}
-            sx={{
-              py: 1.3,
-              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
-              },
-            }}
-          >
-            {submitting ? 'Submitting...' : 'Submit Words'}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Dictionary Section */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-          Your Words
-          {dictionary.length > 0 && (
-            <Chip
-              label={dictionary.length}
-              size="small"
-              sx={{
-                ml: 1.5,
-                backgroundColor: alpha('#7C3AED', 0.15),
-                color: '#A78BFA',
-                fontWeight: 700,
-                fontSize: '0.75rem',
-              }}
-            />
-          )}
-        </Typography>
-
-        {/* Search + Bulk Actions */}
+    <Box sx={{ mb: 2 }}>
+      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+        Your Words
         {dictionary.length > 0 && (
-          <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-            <TextField
-              size="small"
-              placeholder="Search words..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
+          <Chip
+            label={dictionary.length}
+            size="small"
+            sx={{
+              ml: 1.5,
+              backgroundColor: alpha('#7C3AED', 0.15),
+              color: '#A78BFA',
+              fontWeight: 700,
+              fontSize: '0.75rem',
+            }}
+          />
+        )}
+      </Typography>
+
+      {/* Search + Bulk Actions */}
+      {dictionary.length > 0 && (
+        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <TextField
+            size="small"
+            placeholder="Search words..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            slotProps={{
+              input: {
                 startAdornment: (
                   <InputAdornment position="start">
                     <SearchRoundedIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
                   </InputAdornment>
                 ),
-              }}
-              sx={{ flex: 1, minWidth: 200 }}
-            />
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={dictionary.length > 0 && selectedWordIds.size === dictionary.length}
-                    indeterminate={selectedWordIds.size > 0 && selectedWordIds.size < dictionary.length}
-                    onChange={handleSelectAll}
-                    size="small"
-                  />
-                }
-                label={<Typography variant="body2">All</Typography>}
-                sx={{ mr: 0 }}
-              />
-              {selectedWordIds.size > 0 && (
-                <Button
-                  variant="outlined"
-                  color="error"
+              },
+            }}
+            sx={{ flex: 1, minWidth: 200 }}
+          />
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={dictionary.length > 0 && selectedWordIds.size === dictionary.length}
+                  indeterminate={selectedWordIds.size > 0 && selectedWordIds.size < dictionary.length}
+                  onChange={handleSelectAll}
                   size="small"
-                  startIcon={<DeleteIcon />}
-                  onClick={handleBulkDelete}
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  Delete ({selectedWordIds.size})
-                </Button>
-              )}
-            </Box>
+                />
+              }
+              label={<Typography variant="body2">All</Typography>}
+              sx={{ mr: 0 }}
+            />
+            {selectedWordIds.size > 0 && (
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                startIcon={<DeleteIcon />}
+                onClick={handleBulkDelete}
+                sx={{ whiteSpace: 'nowrap' }}
+              >
+                Delete ({selectedWordIds.size})
+              </Button>
+            )}
           </Box>
-        )}
-      </Box>
+        </Box>
+      )}
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -318,7 +216,6 @@ export default function Dictionary() {
       ) : (
         <Box className="stagger-children">
           {filteredDictionary.map((word) => {
-
             return (
               <Accordion key={word.id}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -389,6 +286,7 @@ export default function Dictionary() {
                       </Box>
                     ) : (
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        {/* @ts-ignore */}
                         <Typography variant="body1" fontWeight="bold">
                           {idx + 1}. {def.text}
                         </Typography>
@@ -485,8 +383,8 @@ export default function Dictionary() {
                 </Box>
               </AccordionDetails>
             </Accordion>
-          );
-        })}
+            );
+          })}
         </Box>
       )}
     </Box>
