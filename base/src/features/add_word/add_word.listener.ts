@@ -5,12 +5,13 @@ import { DictionaryAddProcessingEvent } from '../event_bus/event_bus.type';
 
 // 1. Trigger: Send Mercure event that the word appeared in the dictionary
 appEvents.on(Events.WORD_ADDED, async (payload: WordAddedPayload) => {
-  const { username, wordText } = payload;
+  const { username, wordId, wordText } = payload;
   
   try {
     const processingEvent: DictionaryAddProcessingEvent = {
       version: 'v1',
       type: 'dictionary_add_processing',
+      wordId,
       word: wordText
     };
     await publishEvent(username, processingEvent);

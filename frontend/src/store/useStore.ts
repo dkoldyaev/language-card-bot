@@ -12,11 +12,6 @@ export interface SettingsState {
   desiredLevel: string;
 }
 
-export interface WordProcessingStatus {
-  word: string;
-  status: 'processing' | 'definitions_received' | 'duplicate';
-  definitionsCount?: number;
-}
 
 export interface DictionaryTranslation {
   id: number;
@@ -55,7 +50,6 @@ interface AppState {
   profile: UserProfile | null;
   settings: SettingsState | null;
   appState: any | null;
-  wordProcessing: WordProcessingStatus[];
   dictionary: DictionaryWord[];
   quizCard: QuizCardData | null;
   quizEvaluation: QuizEvaluationData | null;
@@ -66,9 +60,10 @@ interface AppState {
   setProfile: (profile: UserProfile | null) => void;
   setSettings: (settings: SettingsState | null) => void;
   setAppState: (appState: any) => void;
-  updateWordProcessing: (status: WordProcessingStatus) => void;
   setDictionary: (dictionary: DictionaryWord[]) => void;
+  addDictionaryWord: (word: DictionaryWord) => void;
   removeDictionaryWord: (wordId: number) => void;
+  setDictionaryDefinitions: (wordId: number, definitions: { id: number; text: string }[]) => void;
   updateDictionaryDefinition: (wordId: number, definitionId: number, text: string) => void;
   updateDictionaryTranslation: (wordId: number, definitionId: number, text: string) => void;
   addDictionaryDefinition: (wordId: number, definition: DictionaryDefinition) => void;
@@ -86,7 +81,6 @@ const initialState = {
   profile: null,
   settings: null,
   appState: null,
-  wordProcessing: [],
   dictionary: [],
   quizCard: null,
   quizEvaluation: null,
@@ -128,14 +122,10 @@ const useStore = create<AppState>()(
       setQuizEvaluation: (evalData) => set({ quizEvaluation: evalData }),
       setQuizTranslation: (translation) => set({ quizTranslation: translation }),
       setQuizVariants: (variants) => set({ quizVariants: variants }),
-      updateWordProcessing: (status) => set((state) => {
-        const existingIndex = state.wordProcessing.findIndex((w) => w.word === status.word);
-        if (existingIndex >= 0) {
-          const newList = [...state.wordProcessing];
-          newList[existingIndex] = { ...newList[existingIndex], ...status };
-          return { wordProcessing: newList };
-        }
-        return { wordProcessing: [...state.wordProcessing, status] };
+      addDictionaryWord: (word) => set((state) => {
+        const exists = state.dictionary.some(w => w.id === word.id || w.text.toLowerCase() === word.text.toLowerCase());
+        if (exists) return state;
+        return { dictionary: [word, ...state.dictionary] };
       }),
       removeDictionaryWord: (wordId) => set((state) => {
         const shouldResetQuiz = state.quizCard?.wordId === wordId;
@@ -144,6 +134,25 @@ const useStore = create<AppState>()(
           ...(shouldResetQuiz && { quizCard: null, quizEvaluation: null, quizTranslation: null, quizVariants: null })
         };
       }),
+      setDictionaryDefinitions: (wordId, definitions) => set((state) => ({
+        dictionary: state.dictionary.map(word => {
+          if (word.id === wordId) {
+            const existingDefs = word.definitions || [];
+            const newDefs = definitions.map(d => ({ id: d.id, text: d.text, translation: null }));
+            const mergedDefs = [...existingDefs];
+            for (const nd of newDefs) {
+              if (!mergedDefs.some(ed => ed.id === nd.id)) {
+                mergedDefs.push(nd);
+              }
+            }
+            return {
+              ...word,
+              definitions: mergedDefs
+            };
+          }
+          return word;
+        })
+      })),
       updateDictionaryDefinition: (wordId, definitionId, text) => set((state) => ({
         dictionary: state.dictionary.map(word => 
           word.id === wordId ? {

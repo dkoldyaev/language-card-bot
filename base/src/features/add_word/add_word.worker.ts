@@ -70,8 +70,9 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
     await publishEvent(username, {
       version: 'v1',
       type: 'dictionary_add_definitions_received',
+      wordId: wordId,
       word: wordText,
-      definitionsCount: definitions.length
+      definitions: createdDefinitions.map(d => ({ id: d.id, text: d.text }))
     } as DictionaryAddDefinitionsReceivedEvent);
 
     // 4. Enqueue translation jobs

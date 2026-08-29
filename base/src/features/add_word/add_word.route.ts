@@ -40,8 +40,7 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordRequest>, re
       const payload: DictionaryAddDuplicateEvent = {
         version: 'v1',
         type: 'dictionary_add_duplicate',
-        word: wordText,
-        definitionsCount: existingWord.definitions.length
+        word: wordText
       };
 
       await publishEvent(username, payload);

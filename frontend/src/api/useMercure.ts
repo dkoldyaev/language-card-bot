@@ -38,14 +38,19 @@ export function useMercure() {
           onmessage(event) {
             try {
               const data = JSON.parse(event.data);
-              const updateWordProcessing = useStore.getState().updateWordProcessing;
-
-              if (data.type === 'dictionary_add_duplicate') {
-                updateWordProcessing({ word: data.word, status: 'duplicate', definitionsCount: data.definitionsCount });
-              } else if (data.type === 'dictionary_add_processing') {
-                updateWordProcessing({ word: data.word, status: 'processing' });
-              } else if (data.type === 'dictionary_add_definitions_received') {
-                updateWordProcessing({ word: data.word, status: 'definitions_received', definitionsCount: data.definitionsCount });
+              if (data.type === 'dictionary_add_duplicate' || 
+                  data.type === 'dictionary_add_processing' || 
+                  data.type === 'dictionary_add_definitions_received') {
+                if (data.type === 'dictionary_add_processing' && data.wordId && data.word) {
+                  useStore.getState().addDictionaryWord({
+                    id: data.wordId,
+                    text: data.word,
+                    definitions: []
+                  });
+                } else if (data.type === 'dictionary_add_definitions_received' && data.wordId && data.definitions) {
+                  useStore.getState().setDictionaryDefinitions(data.wordId, data.definitions);
+                }
+                window.dispatchEvent(new CustomEvent('mercure-word-status', { detail: data }));
               } else if (data.type === 'definition_translate_loaded') {
                 useStore.getState().updateDictionaryTranslation(data.wordId, data.definitionId, data.translation);
               } else if (data.type === 'state_sync') {

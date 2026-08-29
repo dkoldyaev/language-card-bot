@@ -15,7 +15,6 @@ import apiClient from '../api/client';
 import useStore from '../store/useStore';
 import StatusChip from '../components/StatusChip';
 
-
 export default function Dictionary() {
   // Add words state
   const [wordsText, setWordsText] = useState('');
@@ -37,20 +36,10 @@ export default function Dictionary() {
   const updateDictionaryTranslation = useStore((state) => state.updateDictionaryTranslation);
   const addDictionaryDefinition = useStore((state) => state.addDictionaryDefinition);
   const removeDictionaryDefinition = useStore((state) => state.removeDictionaryDefinition);
-
-  const wordProcessing = useStore((state) => state.wordProcessing);
-
   // Filtered dictionary
   const filteredDictionary = searchQuery
     ? dictionary.filter((w) => w.text.toLowerCase().includes(searchQuery.toLowerCase()))
     : dictionary;
-
-  // Words that are processing but not yet in the dictionary
-  const processingOnlyWords = wordProcessing
-    .filter((wp) => !dictionary.some((d) => d.text.toLowerCase() === wp.word.toLowerCase()))
-    .filter((wp) => wp.status !== 'duplicate')
-    .filter((wp) => (searchQuery ? wp.word.toLowerCase().includes(searchQuery.toLowerCase()) : true));
-
 
 
 
@@ -310,16 +299,16 @@ export default function Dictionary() {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
           <CircularProgress />
         </Box>
-      ) : filteredDictionary.length === 0 && processingOnlyWords.length === 0 ? (
+      ) : filteredDictionary.length === 0 ? (
         <Card sx={{ textAlign: 'center', py: 4 }}>
           <CardContent>
             <Typography color="text.secondary" sx={{ fontSize: '2rem', mb: 1 }}>
-              {dictionary.length === 0 && processingOnlyWords.length === 0 ? '📚' : '🔍'}
+              {dictionary.length === 0 ? '📚' : '🔍'}
             </Typography>
             <Typography color="text.secondary">
-              {dictionary.length === 0 && processingOnlyWords.length === 0 ? 'Your dictionary is empty.' : 'No words match your search.'}
+              {dictionary.length === 0 ? 'Your dictionary is empty.' : 'No words match your search.'}
             </Typography>
-            {dictionary.length === 0 && processingOnlyWords.length === 0 && (
+            {dictionary.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 Add your first words above to get started!
               </Typography>
@@ -328,39 +317,7 @@ export default function Dictionary() {
         </Card>
       ) : (
         <Box className="stagger-children">
-          {processingOnlyWords.map((wp, idx) => {
-            return (
-              <Box
-                key={`wp-${idx}`}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  p: 1.5,
-                  mb: 1,
-                  borderRadius: '12px',
-                  border: `1px solid ${alpha('#6B7280', 0.15)}`,
-                  backgroundColor: alpha('#111827', 0.5),
-                }}
-              >
-                <Checkbox size="small" disabled sx={{ visibility: 'hidden' }} />
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: 600, flexGrow: 1, color: 'text.secondary' }}
-                >
-                  {wp.word}
-                </Typography>
-                <StatusChip status={wp.status} definitionsCount={wp.definitionsCount} />
-                <IconButton size="small" disabled sx={{ visibility: 'hidden' }}>
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Box>
-            );
-          })}
-
           {filteredDictionary.map((word) => {
-            const processingItem = wordProcessing.find(
-              (wp) => wp.word.toLowerCase() === word.text.toLowerCase()
-            );
 
             return (
               <Accordion key={word.id}>
@@ -382,7 +339,7 @@ export default function Dictionary() {
                   >
                     {word.text}
                   </Typography>
-                  <StatusChip status={processingItem?.status} definitionsCount={processingItem?.definitionsCount} />
+                  <StatusChip word={word.text} />
                   <Chip
                     label={`${word.definitions.length} definition(s)`}
                     size="small"

@@ -11,8 +11,9 @@ appEvents.on(Events.DEFINITION_ADDED, async (payload: DefinitionAddedPayload) =>
     const event: DictionaryAddDefinitionsReceivedEvent = {
       version: 'v1',
       type: 'dictionary_add_definitions_received',
+      wordId: payload.wordId,
       word: wordText,
-      definitionsCount: totalDefinitions
+      definitions: [{ id: payload.definitionId, text: payload.definitionText }]
     };
     await publishEvent(username, event);
   } catch (error) {

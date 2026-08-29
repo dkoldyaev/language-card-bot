@@ -37,18 +37,19 @@ export interface SettingsSyncMercureEvent extends BaseMercureEvent {
 export interface DictionaryAddDuplicateEvent extends BaseMercureEvent {
   type: 'dictionary_add_duplicate';
   word: string;
-  definitionsCount: number;
 }
 
 export interface DictionaryAddProcessingEvent extends BaseMercureEvent {
   type: 'dictionary_add_processing';
+  wordId: number;
   word: string;
 }
 
 export interface DictionaryAddDefinitionsReceivedEvent extends BaseMercureEvent {
   type: 'dictionary_add_definitions_received';
+  wordId: number;
   word: string;
-  definitionsCount: number;
+  definitions: { id: number; text: string }[];
 }
 
 export interface DefinitionTranslateLoadedEvent extends BaseMercureEvent {
