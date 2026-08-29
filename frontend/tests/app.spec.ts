@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 import { register, login, addWordsToDictionary, setupSettings } from './helpers';
 
 test.describe('English Card Bot Frontend E2E', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    // ... setup console logging ...
     page.on('console', msg => {
       if (msg.type() === 'error') {
         console.log(`[PAGE ERROR LOG]: ${msg.text()}`);
@@ -10,7 +11,7 @@ test.describe('English Card Bot Frontend E2E', () => {
     });
     page.on('pageerror', error => console.log(`[PAGE ERROR]: ${error.message}`));
 
-    const username = `testuser_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const username = `testuser_${Date.now()}_${testInfo.workerIndex}`;
     // We register and then login the user for each test
     await register(page, username);
     await login(page, username);

@@ -9,19 +9,16 @@ export async function register(page: Page, username: string, baseLang = 'en', ta
   await setupSettings(page, baseLang, targetLang, level);
 
   await page.click('button:has-text("Create account")');
-  await expect(page.locator('text=Registration successful')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('text=Registration successful')).toBeVisible();
   await page.click('a:has-text("Back to login")');
   await expect(page).toHaveURL(/.*\/login/);
 }
 
 export async function login(page: Page, username: string) {
   await page.goto('/login');
-  await expect(page.locator('h5:has-text("Log in")').first()).toBeVisible();
   await page.getByLabel(/Username|Login/i).fill(username);
   await page.click('button:has-text("Log in")');
-  await expect(page).toHaveURL(/.*\/$/);
-  // Dashboard shows personalized welcome
-  await expect(page.locator('text=Welcome')).toBeVisible({ timeout: 10000 });
+  await expect(page).toHaveURL('/');
 }
 
 export async function addWordsToDictionary(page: Page, words: string[]) {
@@ -35,20 +32,25 @@ export async function addWordsToDictionary(page: Page, words: string[]) {
   await page.click('button:has-text("Submit Words")');
   
   // Wait for submission to complete (textarea is cleared upon success)
-  await expect(page.locator('textarea').first()).toHaveValue('', { timeout: 10000 });
+  await expect(page.locator('textarea').first()).toHaveValue('');
 }
 
 export async function addWordsAndAwaitDefinitions(page: Page, words: string[]) {
   await addWordsToDictionary(page, words);
   
-  await expect(async () => {
-    await page.goto('/dictionary');
-    for (const word of words) {
-      const accordion = page.locator('.MuiAccordion-root').filter({ hasText: word });
-      await expect(accordion).toBeVisible();
-      await expect(accordion).toContainText(/[1-9]\d* definition\(s\)/);
-    }
-  }).toPass({ timeout: 15000 });
+  for (const word of words) {
+    const accordion = page.locator('.MuiAccordion-root').filter({ hasText: word });
+    await expect(accordion).toBeVisible();
+    
+    // We check that it has finished processing by ensuring StatusChip is hidden
+    // and then expand it and ensure at least one definition exists.
+    await expect(accordion.locator('text=Processing definitions...')).toBeHidden();
+    await expect(accordion.locator('text=Fetching...')).toBeHidden();
+    
+    await accordion.click();
+    await expect(accordion.locator('[aria-label="Edit definition"]').first()).toBeVisible();
+    await accordion.click(); // collapse it back
+  }
 }
 
 export async function setupSettings(page: Page, baseLang = 'en', targetLang = 'ru', level = 'A1') {

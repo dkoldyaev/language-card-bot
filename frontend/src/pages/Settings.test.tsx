@@ -3,26 +3,28 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Settings from './Settings';
 import apiClient from '../api/client';
+import useStore from '../store/useStore';
 
 describe('Settings', () => {
   beforeEach(() => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue({
-      data: { settings: { baseLanguage: 'ru', targetLanguage: 'en', desiredLevel: 'B2' } }
+    // Reset store and add some initial state
+    useStore.setState({
+      settings: { baseLanguage: 'ru', targetLanguage: 'en', desiredLevel: 'B2' }
     });
+    
+    vi.spyOn(apiClient, 'get').mockResolvedValue({ data: {} });
     vi.spyOn(apiClient, 'post').mockResolvedValue({});
   });
 
-  it('loads settings on mount and allows saving', async () => {
+  it('loads settings from store and allows saving without fetching on mount', async () => {
     const user = userEvent.setup();
     render(<Settings />);
     
-    // Should show loading state initially
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    // Form should render immediately (synchronously from store)
+    expect(screen.getByText('Settings')).toBeInTheDocument();
     
-    // Wait for form to render after loading
-    await waitFor(() => {
-      expect(screen.getByText('Settings')).toBeInTheDocument();
-    });
+    // apiClient.get should NOT be called on mount
+    expect(apiClient.get).not.toHaveBeenCalled();
 
     // Check if the save button exists
     const saveButton = screen.getByRole('button', { name: /Save Settings/i });
@@ -37,4 +39,3 @@ describe('Settings', () => {
     });
   });
 });
-

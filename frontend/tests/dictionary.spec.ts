@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { register, login, addWordsToDictionary, setupSettings } from './helpers';
 
 test.describe('Dictionary Operations', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     page.on('console', msg => {
       if (msg.type() === 'error') {
         console.log(`[PAGE ERROR LOG]: ${msg.text()}`);
@@ -10,7 +10,7 @@ test.describe('Dictionary Operations', () => {
     });
     page.on('pageerror', error => console.log(`[PAGE ERROR]: ${error.message}`));
 
-    const username = `testuser_dict_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const username = `testuser_dict_${Date.now()}_${testInfo.workerIndex}`;
     await register(page, username);
     await login(page, username);
   });
@@ -48,7 +48,7 @@ test.describe('Dictionary Operations', () => {
         // Verify mock translations are present
         await expect(wordAccordion.locator(`text=Translation: [MOCK: ru -> en] [Mock] Definition 1 for ${word} in ru`)).toBeVisible();
         await expect(wordAccordion.locator(`text=Translation: [MOCK: ru -> en] [Mock] Definition 2 for ${word} in ru`)).toBeVisible();
-      }).toPass({ timeout: 30000 });
+      }).toPass();
 
       // Edit Definition 1
       const wordAccordion = page.locator('.MuiAccordion-root').filter({ hasText: word });
@@ -69,7 +69,7 @@ test.describe('Dictionary Operations', () => {
         
         await expect(acc.locator(`text=1. Edited definition for ${word}`)).toBeVisible();
         await expect(acc.locator(`text=Translation: [MOCK: ru -> en] Edited definition for ${word}`)).toBeVisible();
-      }).toPass({ timeout: 15000 });
+      }).toPass();
 
       // Now edit the translation directly
       const updatedAccordion = page.locator('.MuiAccordion-root').filter({ hasText: word });

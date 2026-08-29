@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { register, login, addWordsAndAwaitDefinitions, setupSettings } from './helpers';
 
 test.describe('Quiz Operations', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     page.on('console', msg => {
       if (msg.type() === 'error') {
         console.log(`[PAGE ERROR LOG]: ${msg.text()}`);
@@ -10,7 +10,7 @@ test.describe('Quiz Operations', () => {
     });
     page.on('pageerror', error => console.log(`[PAGE ERROR]: ${error.message}`));
 
-    const username = `testuser_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const username = `testuser_${Date.now()}_${testInfo.workerIndex}`;
     // We register and then login the user for each test
     await register(page, username);
     await login(page, username);
@@ -21,11 +21,11 @@ test.describe('Quiz Operations', () => {
     await addWordsAndAwaitDefinitions(page, ['apple']);
 
     await page.goto('/quiz');
-    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
     await page.click('button:has-text("Start Quiz")');
     
     // Expect the quiz UI to show up
-    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible();
     
     const cardContent = page.locator('.MuiCardContent-root');
     await expect(cardContent).toContainText('[Mock] Definition');
@@ -59,14 +59,14 @@ test.describe('Quiz Operations', () => {
       const newDefText = await cardContent.innerText();
       expect(newDefText).not.toEqual(currentDefText);
       expect(newDefText).toContain('[Mock] Definition');
-    }).toPass({ timeout: 5000 });
+    }).toPass();
 
     // 5. Test Correct Answer
     await answerInput.fill('apple');
     await submitBtn.click();
     await expect(page.locator('text=Success! 🎉')).toBeVisible();
     await expect(page.locator('text=Your answer: apple')).toBeVisible();
-    await expect(page.locator('text=Success! 🎉')).toBeHidden({ timeout: 5000 });
+    await expect(page.locator('text=Success! 🎉')).toBeHidden();
   });
 
   test('should go to the next card in case of success answer', async ({ page }) => {
@@ -74,11 +74,11 @@ test.describe('Quiz Operations', () => {
     await addWordsAndAwaitDefinitions(page, ['apple', 'banana']);
 
     await page.goto('/quiz');
-    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
     await page.click('button:has-text("Start Quiz")');
     
     // Expect the quiz UI to show up
-    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible();
     
     const cardContent = page.locator('.MuiCardContent-root');
     await expect(cardContent).toContainText('[Mock] Definition');
@@ -101,10 +101,10 @@ test.describe('Quiz Operations', () => {
     await submitBtn.click();
     await expect(page.locator('text=Success! 🎉')).toBeVisible();
     await expect(page.locator(`text=Your answer: ${currentWord}`)).toBeVisible();
-    await expect(page.locator('text=Success! 🎉')).toBeHidden({ timeout: 5000 });
+    await expect(page.locator('text=Success! 🎉')).toBeHidden();
 
     // Verify it switched to the next word
-    await expect(cardContent).toContainText(`for ${nextWord} in ru`, { timeout: 5000 });
+    await expect(cardContent).toContainText(`for ${nextWord} in ru`);
     await expect(answerInput).toBeEmpty();
     await expect(submitBtn).toBeDisabled();
   });
@@ -114,11 +114,11 @@ test.describe('Quiz Operations', () => {
     await addWordsAndAwaitDefinitions(page, ['apple', 'banana', 'cherry']);
 
     await page.goto('/quiz');
-    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
     await page.click('button:has-text("Start Quiz")');
     
     // Expect the quiz UI to show up
-    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible();
     
     const cardContent = page.locator('.MuiCardContent-root');
     await expect(cardContent).toContainText('[Mock] Definition');
@@ -174,7 +174,7 @@ test.describe('Quiz Operations', () => {
     await expect(page.locator('text=Success! 🎉')).toBeVisible();
     
     // Wait for auto-advance to next card (2000ms delay in component)
-    await expect(cardContent).not.toContainText(`for ${currentWord} in ru`, { timeout: 5000 });
+    await expect(cardContent).not.toContainText(`for ${currentWord} in ru`);
     await expect(answerInput).toBeEmpty();
     await expect(submitBtn).toBeDisabled();
   });

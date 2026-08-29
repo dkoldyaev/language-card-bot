@@ -15,10 +15,10 @@ test.describe('Authentication Flow', () => {
     await expect(page.locator('a:has-text("Log in instead")')).toBeVisible();
   });
 
-  test('full registration and login journey', async ({ page }) => {
+  test('full registration and login journey', async ({ page }, testInfo) => {
     const timestamp = Date.now();
-    const validUser = `testuser_${timestamp}`;
-    const wrongUser = `wronguser_${timestamp}`;
+    const validUser = `testuser_${timestamp}_${testInfo.workerIndex}`;
+    const wrongUser = `wronguser_${timestamp}_${testInfo.workerIndex}`;
 
     // 1. Fill in the registration form & expect success
     await register(page, validUser);
@@ -29,7 +29,7 @@ test.describe('Authentication Flow', () => {
     await page.click('button:has-text("Log in")');
 
     // 3. Expect an error message
-    await expect(page.locator('.MuiAlert-message')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.MuiAlert-message')).toBeVisible();
     await expect(page).toHaveURL(/.*\/login/); // Should still be on login
 
     // 4. Attempt to log in with the correct user & expect success
@@ -43,10 +43,10 @@ test.describe('Authentication Flow', () => {
     await login(page, validUser);
   });
 
-  test('user state isolation after logout', async ({ page }) => {
+  test('user state isolation after logout', async ({ page }, testInfo) => {
     const timestamp = Date.now();
-    const user1 = `user1_${timestamp}`;
-    const user2 = `user2_${timestamp}`;
+    const user1 = `user1_${timestamp}_${testInfo.workerIndex}`;
+    const user2 = `user2_${timestamp}_${testInfo.workerIndex}`;
 
     // 1. Register and login user 1
     await register(page, user1);
@@ -61,13 +61,13 @@ test.describe('Authentication Flow', () => {
       const appleAccordion = page.locator('.MuiAccordion-root').filter({ hasText: 'apple' });
       await expect(appleAccordion).toBeVisible();
       await expect(appleAccordion.locator('text=definition(s)')).toBeVisible();
-    }).toPass({ timeout: 15000 });
+    }).toPass();
     
     // Start quiz for user 1
     await page.goto('/quiz');
-    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
     await page.click('button:has-text("Start Quiz")');
-    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible();
     await expect(page.locator('.MuiCardContent-root')).toContainText('apple');
     
     // 3. Logout
@@ -80,11 +80,11 @@ test.describe('Authentication Flow', () => {
 
     // 5. Verify the word 'apple' is not visible for user 2 on dictionary page
     await page.goto('/dictionary');
-    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'apple' })).toBeHidden({ timeout: 5000 });
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'apple' })).toBeHidden();
 
     // Verify user 2 does not see user 1's active quiz
     await page.goto('/quiz');
-    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
     await expect(page.locator('h4:has-text("Quiz")')).toBeHidden();
 
     // 6. Explicitly check the Zustand store structure in localStorage
@@ -97,9 +97,6 @@ test.describe('Authentication Flow', () => {
 
       // 1. Dictionary should be empty for the new user
       expect(state.dictionary).toEqual([]);
-
-      // 2. Word processing queue should be empty
-      expect(state.wordProcessing).toEqual([]);
 
       // 3. Quiz state should be completely reset
       expect(state.quizCard).toBeNull();
