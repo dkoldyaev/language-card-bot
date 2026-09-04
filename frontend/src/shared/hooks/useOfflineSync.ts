@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import useStore from '../../store/useStore';
-import api from '../api/axios';
+import api from '../api/client';
 
 export function useOfflineSync() {
   const setIsOffline = useStore(state => state.setIsOffline);

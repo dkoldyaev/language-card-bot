@@ -44,10 +44,12 @@ export interface QuizEvaluationData {
   suggestion: string;
 }
 
-export type SyncAction = 
-  | { type: 'EDIT_TRANSLATION'; wordId: number; definitionId: number; text: string; timestamp: number }
-  | { type: 'DELETE_WORD'; wordId: number; timestamp: number }
-  | { type: 'DELETE_DEFINITION'; wordId: number; definitionId: number; timestamp: number };
+export type SyncActionPayload = 
+  | { type: 'EDIT_TRANSLATION'; wordId: number; definitionId: number; text: string }
+  | { type: 'DELETE_WORD'; wordId: number }
+  | { type: 'DELETE_DEFINITION'; wordId: number; definitionId: number };
+
+export type SyncAction = SyncActionPayload & { timestamp: number };
 
 interface AppState {
   token: string | null;
@@ -63,7 +65,7 @@ interface AppState {
   quizTranslation: string | null;
   quizVariants: string[] | null;
   setIsOffline: (isOffline: boolean) => void;
-  enqueueSyncAction: (action: Omit<SyncAction, 'timestamp'>) => void;
+  enqueueSyncAction: (action: SyncActionPayload) => void;
   clearSyncQueue: () => void;
   setToken: (token: string | null) => void;
   setMercureToken: (token: string | null) => void;

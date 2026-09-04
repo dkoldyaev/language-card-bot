@@ -18,13 +18,13 @@ describe('useMercure', () => {
   let originalEventSource: any;
 
   beforeEach(() => {
-    originalEventSource = global.EventSource;
-    (global as any).EventSource = MockEventSource;
+    originalEventSource = globalThis.EventSource;
+    (globalThis as any).EventSource = MockEventSource;
     useStore.getState().setProfile(null);
   });
 
   afterEach(() => {
-    (global as any).EventSource = originalEventSource;
+    (globalThis as any).EventSource = originalEventSource;
   });
 
   it('should not connect if profile is not set', () => {
