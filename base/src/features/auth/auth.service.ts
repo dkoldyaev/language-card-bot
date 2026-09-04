@@ -2,7 +2,7 @@ import { Request } from 'express';
 
 export interface AuthUser {
   id: number;
-  username: string;
+  email: string;
 }
 
 export function getAuthUser(req: Request): AuthUser {

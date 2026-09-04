@@ -21,6 +21,7 @@ services:
       - BASE_DOMAIN=${BASE_DOMAIN}
       - REDIS_URL=${BASE_REDIS_URL}
       - CORS_ORIGIN=${BASE_CORS_ORIGIN}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     volumes:
       - ./base:/app
       - /app/node_modules
@@ -90,6 +91,7 @@ services:
       - VITE_API_BASE_URL=${FRONTEND_VITE_API_BASE_URL}
       - VITE_MERCURE_PUBLIC_URL=${FRONTEND_VITE_MERCURE_PUBLIC_URL}
       - VITE_BASE_DOMAIN=${FRONTEND_VITE_BASE_DOMAIN}
+      - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     volumes:
       - ./frontend:/app
       - /app/node_modules
