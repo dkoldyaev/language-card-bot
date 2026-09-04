@@ -7,6 +7,7 @@ import Quiz from '../features/quiz/pages/QuizPage';
 import Auth from '../features/auth/pages/AuthPage';
 import useStore from '../store/useStore';
 import { useMercure } from '../shared/api/useMercure';
+import { useOfflineSync } from '../shared/hooks/useOfflineSync';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useStore((state) => state.token);
@@ -18,6 +19,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   useMercure();
+  useOfflineSync();
 
   return (
     <BrowserRouter>

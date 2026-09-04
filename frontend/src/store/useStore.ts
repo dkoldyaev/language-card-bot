@@ -44,9 +44,16 @@ export interface QuizEvaluationData {
   suggestion: string;
 }
 
+export type SyncAction = 
+  | { type: 'EDIT_TRANSLATION'; wordId: number; definitionId: number; text: string; timestamp: number }
+  | { type: 'DELETE_WORD'; wordId: number; timestamp: number }
+  | { type: 'DELETE_DEFINITION'; wordId: number; definitionId: number; timestamp: number };
+
 interface AppState {
   token: string | null;
   mercureToken: string | null;
+  isOffline: boolean;
+  syncQueue: SyncAction[];
   profile: UserProfile | null;
   settings: SettingsState | null;
   appState: any | null;
@@ -55,6 +62,9 @@ interface AppState {
   quizEvaluation: QuizEvaluationData | null;
   quizTranslation: string | null;
   quizVariants: string[] | null;
+  setIsOffline: (isOffline: boolean) => void;
+  enqueueSyncAction: (action: Omit<SyncAction, 'timestamp'>) => void;
+  clearSyncQueue: () => void;
   setToken: (token: string | null) => void;
   setMercureToken: (token: string | null) => void;
   setProfile: (profile: UserProfile | null) => void;
@@ -78,6 +88,8 @@ interface AppState {
 const initialState = {
   token: null,
   mercureToken: null,
+  isOffline: !navigator.onLine,
+  syncQueue: [] as SyncAction[],
   profile: null,
   settings: null,
   appState: null,
@@ -92,6 +104,11 @@ const useStore = create<AppState>()(
   persist(
     (set) => ({
       ...initialState,
+      setIsOffline: (isOffline) => set({ isOffline }),
+      enqueueSyncAction: (action) => set((state) => ({ 
+        syncQueue: [...state.syncQueue, { ...action, timestamp: Date.now() } as SyncAction] 
+      })),
+      clearSyncQueue: () => set({ syncQueue: [] }),
       setToken: (token) => set({ token }),
       setMercureToken: (mercureToken) => set({ mercureToken }),
       setProfile: (profile) => set({ profile }),
@@ -129,6 +146,9 @@ const useStore = create<AppState>()(
       }),
       removeDictionaryWord: (wordId) => set((state) => {
         const shouldResetQuiz = state.quizCard?.wordId === wordId;
+        if (state.isOffline) {
+          state.enqueueSyncAction({ type: 'DELETE_WORD', wordId });
+        }
         return {
           dictionary: state.dictionary.filter((w) => w.id !== wordId),
           ...(shouldResetQuiz && { quizCard: null, quizEvaluation: null, quizTranslation: null, quizVariants: null })
@@ -163,19 +183,24 @@ const useStore = create<AppState>()(
           } : word
         )
       })),
-      updateDictionaryTranslation: (wordId, definitionId, text) => set((state) => ({
-        dictionary: state.dictionary.map(word => 
-          word.id === wordId ? {
-            ...word,
-            definitions: word.definitions.map(def => 
-              def.id === definitionId ? { 
-                ...def, 
-                translation: def.translation ? { ...def.translation, text } : { id: Date.now(), text } 
-              } : def
-            )
-          } : word
-        )
-      })),
+      updateDictionaryTranslation: (wordId, definitionId, text) => set((state) => {
+        if (state.isOffline) {
+          state.enqueueSyncAction({ type: 'EDIT_TRANSLATION', wordId, definitionId, text });
+        }
+        return {
+          dictionary: state.dictionary.map(word => 
+            word.id === wordId ? {
+              ...word,
+              definitions: word.definitions.map(def => 
+                def.id === definitionId ? { 
+                  ...def, 
+                  translation: def.translation ? { ...def.translation, text } : { id: Date.now(), text } 
+                } : def
+              )
+            } : word
+          )
+        };
+      }),
       addDictionaryDefinition: (wordId, definition) => set((state) => ({
         dictionary: state.dictionary.map(word => 
           word.id === wordId ? {
@@ -184,15 +209,20 @@ const useStore = create<AppState>()(
           } : word
         )
       })),
-      removeDictionaryDefinition: (wordId, definitionId) => set((state) => ({
-        dictionary: state.dictionary.map(word => 
-          word.id === wordId ? {
-            ...word,
-            definitions: word.definitions.filter(def => def.id !== definitionId)
-          } : word
-        )
-      })),
-      reset: () => set(initialState),
+      removeDictionaryDefinition: (wordId, definitionId) => set((state) => {
+        if (state.isOffline) {
+          state.enqueueSyncAction({ type: 'DELETE_DEFINITION', wordId, definitionId });
+        }
+        return {
+          dictionary: state.dictionary.map(word => 
+            word.id === wordId ? {
+              ...word,
+              definitions: word.definitions.filter(def => def.id !== definitionId)
+            } : word
+          )
+        };
+      }),
+      reset: () => set({ ...initialState, isOffline: !navigator.onLine }),
     }),
     {
       name: 'english-card-bot-storage', // unique name
