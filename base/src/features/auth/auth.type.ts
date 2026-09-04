@@ -1,15 +1,19 @@
 import { z } from 'zod';
 
-export const AuthRequestSchema = z.object({
-  username: z.string().min(3).max(50),
+export const GoogleAuthRequestSchema = z.object({
+  credential: z.string(),
 });
 
-export type AuthRequest = z.infer<typeof AuthRequestSchema>;
+export type GoogleAuthRequest = z.infer<typeof GoogleAuthRequestSchema>;
 
 export interface AuthResponse {
   token: string;
+  mercureToken?: string;
   user: {
     id: number;
-    username: string;
+    email: string;
+    name?: string | null;
+    picture?: string | null;
+    isNewUser?: boolean;
   };
 }

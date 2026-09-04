@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import { Box, useMediaQuery, useTheme } from '@mui/material';
+import { Box, useMediaQuery, useTheme, Alert } from '@mui/material';
 import Sidebar from './Sidebar';
 import { useEffect } from 'react';
 import apiClient from '../api/client';
@@ -11,6 +11,7 @@ export default function Layout() {
   const setDictionary = useStore((state) => state.setDictionary);
   const setSettings = useStore((state) => state.setSettings);
   const setAppState = useStore((state) => state.setAppState);
+  const isOffline = useStore((state) => state.isOffline);
 
   useEffect(() => {
     apiClient.get('/dictionary')
@@ -52,6 +53,11 @@ export default function Layout() {
           flexDirection: 'column',
         }}
       >
+        {isOffline && (
+          <Alert severity="warning" variant="filled" square sx={{ width: '100%' }}>
+            You are offline. Only the quiz and offline dictionary edits are available. Changes will be synced when you reconnect.
+          </Alert>
+        )}
         <Box
           sx={{
             maxWidth: 960,

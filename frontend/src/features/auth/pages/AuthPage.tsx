@@ -1,76 +1,93 @@
 import { useState, useEffect } from 'react';
 import {
-  Box, Typography, TextField, Button, Card, CardContent, Alert,
+  Box, Typography, Button, Card, CardContent, Alert,
   FormControl, InputLabel, Select, MenuItem, alpha, CircularProgress,
 } from '@mui/material';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
+import { GoogleLogin } from '@react-oauth/google';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
 
-interface AuthProps {
-  mode?: 'login' | 'register';
-}
-
-export default function Auth({ mode = 'login' }: AuthProps) {
-  const [username, setUsername] = useState('');
+export default function Auth() {
   const [baseLanguage, setBaseLanguage] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('');
   const [desiredLevel, setDesiredLevel] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
+  const [tempToken, setTempToken] = useState<string | null>(null);
+  
   const navigate = useNavigate();
 
   const setToken = useStore((state) => state.setToken);
   const setMercureToken = useStore((state) => state.setMercureToken);
   const setProfile = useStore((state) => state.setProfile);
 
-  const isLogin = mode === 'login';
-
-  useEffect(() => {
-    setRegistrationSuccess(false);
-    setError(null);
-  }, [mode]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username.trim()) {
-      setError('Username is required');
-      return;
-    }
-    if (!isLogin && (!baseLanguage || !targetLanguage || !desiredLevel)) {
-      setError('Please select all language settings');
-      return;
-    }
+  const handleGoogleSuccess = async (credentialResponse: any) => {
     setError(null);
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const response = await apiClient.post('/auth/login', { username });
-        const { token, mercureToken, user } = response.data;
+      const response = await apiClient.post('/auth/google', {
+        credential: credentialResponse.credential,
+      });
+
+      const { token, mercureToken, user } = response.data;
+      
+      if (user.isNewUser) {
+        setTempToken(token);
+        setNeedsProfileCompletion(true);
+      } else {
         setToken(token);
         if (mercureToken) setMercureToken(mercureToken);
         setProfile(user);
         navigate('/');
-      } else {
-        const response = await apiClient.post('/auth/register', { username });
-        const { token } = response.data;
-
-        await apiClient.post('/settings', {
-          baseLanguage,
-          targetLanguage,
-          desiredLevel
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        setRegistrationSuccess(true);
       }
     } catch (err: any) {
       console.error('Auth error', err.response?.data);
       setError(err.response?.data?.error || 'Authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google Login Failed');
+  };
+
+  const handleProfileCompletion = async () => {
+    if (!baseLanguage || !targetLanguage || !desiredLevel) {
+      setError('Please select all language settings');
+      return;
+    }
+
+    if (!tempToken) return;
+
+    setLoading(true);
+    try {
+      await apiClient.post('/settings', {
+        baseLanguage,
+        targetLanguage,
+        desiredLevel
+      }, {
+        headers: { Authorization: `Bearer ${tempToken}` }
+      });
+
+      // Complete login
+      setToken(tempToken);
+      
+      // Ideally we'd fetch profile and mercure token again, or they are passed down.
+      // For simplicity, let's redirect to main page, it might fetch /me on reload,
+      // but let's assume we need to reload or we can fetch /me here:
+      const meResponse = await apiClient.get('/auth/me', {
+        headers: { Authorization: `Bearer ${tempToken}` }
+      });
+      setProfile(meResponse.data.user);
+      navigate('/');
+    } catch (err: any) {
+      console.error('Profile completion error', err);
+      setError('Failed to save profile settings');
     } finally {
       setLoading(false);
     }
@@ -92,7 +109,6 @@ export default function Auth({ mode = 'login' }: AuthProps) {
       }}
     >
       <Box className="animate-scale-in" sx={{ width: '100%', maxWidth: 420 }}>
-        {/* Logo */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Box
             sx={{
@@ -132,143 +148,97 @@ export default function Auth({ mode = 'login' }: AuthProps) {
             backdropFilter: 'blur(20px)',
           }}
         >
-          <CardContent sx={{ p: 4 }}>
+          <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="h5" gutterBottom align="center" sx={{ fontWeight: 600, mb: 3 }}>
-              {isLogin ? 'Log in' : 'Create account'}
+              {needsProfileCompletion ? 'Complete your profile' : 'Sign in'}
             </Typography>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {error && <Alert severity="error" sx={{ mb: 2, width: '100%' }}>{error}</Alert>}
 
-            {registrationSuccess ? (
-              <Box sx={{ textAlign: 'center' }}>
-                <Alert severity="success" sx={{ mb: 2 }}>
-                  Registration successful
-                </Alert>
+            {needsProfileCompletion ? (
+              <Box sx={{ width: '100%' }}>
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="base-language-label">Native Language</InputLabel>
+                  <Select
+                    labelId="base-language-label"
+                    value={baseLanguage}
+                    label="Native Language"
+                    onChange={(e) => setBaseLanguage(e.target.value)}
+                    disabled={loading}
+                  >
+                    <MenuItem value="ru">Russian</MenuItem>
+                    <MenuItem value="en">English</MenuItem>
+                    <MenuItem value="es">Spanish</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="target-language-label">Learning Language</InputLabel>
+                  <Select
+                    labelId="target-language-label"
+                    value={targetLanguage}
+                    label="Learning Language"
+                    onChange={(e) => setTargetLanguage(e.target.value)}
+                    disabled={loading}
+                  >
+                    <MenuItem value="en">English</MenuItem>
+                    <MenuItem value="es">Spanish</MenuItem>
+                    <MenuItem value="ru">Russian</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth margin="normal">
+                  <InputLabel id="level-label">Level</InputLabel>
+                  <Select
+                    labelId="level-label"
+                    value={desiredLevel}
+                    label="Level"
+                    onChange={(e) => setDesiredLevel(e.target.value)}
+                    disabled={loading}
+                  >
+                    <MenuItem value="A0">A0</MenuItem>
+                    <MenuItem value="A1">A1</MenuItem>
+                    <MenuItem value="A2">A2</MenuItem>
+                    <MenuItem value="B1">B1</MenuItem>
+                    <MenuItem value="B2">B2</MenuItem>
+                    <MenuItem value="C1">C1</MenuItem>
+                    <MenuItem value="C2">C2</MenuItem>
+                  </Select>
+                </FormControl>
+
                 <Button
-                  component={RouterLink}
-                  to="/login"
+                  fullWidth
                   variant="contained"
+                  onClick={handleProfileCompletion}
+                  disabled={loading}
                   sx={{
-                    mt: 2,
+                    mt: 3,
+                    py: 1.3,
                     background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
                     '&:hover': {
                       background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
                     },
                   }}
                 >
-                  Back to login
+                  {loading ? <CircularProgress size={24} color="inherit" /> : 'Continue'}
                 </Button>
               </Box>
             ) : (
-              <>
-                <TextField
-                  fullWidth
-                  label="Username"
-                  variant="outlined"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  disabled={loading}
-                  margin="normal"
-                  autoComplete="username"
-                />
-
-                {!isLogin && (
-                  <>
-                    <FormControl fullWidth margin="normal">
-                      <InputLabel id="base-language-label">Native Language</InputLabel>
-                      <Select
-                        labelId="base-language-label"
-                        value={baseLanguage}
-                        label="Native Language"
-                        onChange={(e) => setBaseLanguage(e.target.value)}
-                        disabled={loading}
-                      >
-                        <MenuItem value="ru">Russian</MenuItem>
-                        <MenuItem value="en">English</MenuItem>
-                        <MenuItem value="es">Spanish</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth margin="normal">
-                      <InputLabel id="target-language-label">Learning Language</InputLabel>
-                      <Select
-                        labelId="target-language-label"
-                        value={targetLanguage}
-                        label="Learning Language"
-                        onChange={(e) => setTargetLanguage(e.target.value)}
-                        disabled={loading}
-                      >
-                        <MenuItem value="en">English</MenuItem>
-                        <MenuItem value="es">Spanish</MenuItem>
-                        <MenuItem value="ru">Russian</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth margin="normal">
-                      <InputLabel id="level-label">Level</InputLabel>
-                      <Select
-                        labelId="level-label"
-                        value={desiredLevel}
-                        label="Level"
-                        onChange={(e) => setDesiredLevel(e.target.value)}
-                        disabled={loading}
-                      >
-                        <MenuItem value="A0">A0</MenuItem>
-                        <MenuItem value="A1">A1</MenuItem>
-                        <MenuItem value="A2">A2</MenuItem>
-                        <MenuItem value="B1">B1</MenuItem>
-                        <MenuItem value="B2">B2</MenuItem>
-                        <MenuItem value="C1">C1</MenuItem>
-                        <MenuItem value="C2">C2</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </>
+              <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {loading ? (
+                   <CircularProgress size={24} sx={{ my: 2 }} />
+                ) : (
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    theme="filled_black"
+                    size="large"
+                    shape="pill"
+                    text="continue_with"
+                    width="100%"
+                  />
                 )}
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 3 }}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    sx={{
-                      py: 1.3,
-                      background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
-                      },
-                    }}
-                  >
-                    {loading ? (
-                      <CircularProgress size={24} color="inherit" />
-                    ) : (
-                      isLogin ? 'Log in' : 'Create account'
-                    )}
-                  </Button>
-
-                  <Box sx={{ textAlign: 'center' }}>
-                    {isLogin ? (
-                      <Button
-                        component={RouterLink}
-                        to="/register"
-                        variant="text"
-                        sx={{ color: 'primary.light' }}
-                      >
-                        Sign up
-                      </Button>
-                    ) : (
-                      <Button
-                        component={RouterLink}
-                        to="/login"
-                        variant="text"
-                        sx={{ color: 'primary.light' }}
-                      >
-                        Log in instead
-                      </Button>
-                    )}
-                  </Box>
-                </Box>
-              </>
+              </Box>
             )}
           </CardContent>
         </Card>
