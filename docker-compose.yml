@@ -4,7 +4,7 @@ services:
   app:
     build:
       context: ./base
-      target: development
+      target: ${BASE_TARGET}
     environment:
       - DATABASE_URL=${BASE_DATABASE_URL}
       - JWT_SECRET=${BASE_JWT_SECRET}
@@ -38,9 +38,7 @@ services:
   translator:
     build:
       context: ./translator
-      target: development
-    ports:
-      - "3002:3001"
+      target: ${TRANSLATOR_TARGET}
     environment:
       - PORT=${TRANSLATOR_PORT}
       - TRANSLATOR_APP_TYPE=${BASE_TRANSLATOR_APP_TYPE}
@@ -56,9 +54,7 @@ services:
   definer:
     build:
       context: ./definer
-      target: development
-    ports:
-      - "3003:3002"
+      target: ${DEFINER_TARGET}
     environment:
       - PORT=${DEFINER_PORT}
       - DEFINER_APP_TYPE=${BASE_DEFINER_APP_TYPE}
@@ -72,17 +68,13 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
 
   frontend:
     build:
       context: ./frontend
-      target: development
-    ports:
-      - "5174:5173"
+      target: ${FRONTEND_TARGET}
     environment:
       - VITE_API_BASE_URL=${FRONTEND_VITE_API_BASE_URL}
       - VITE_MERCURE_PUBLIC_URL=${FRONTEND_VITE_MERCURE_PUBLIC_URL}
