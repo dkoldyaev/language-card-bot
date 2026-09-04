@@ -3,6 +3,7 @@ import { Request } from 'express';
 export interface AuthUser {
   id: number;
   email: string;
+  username: string;
 }
 
 export function getAuthUser(req: Request): AuthUser {
@@ -13,5 +14,5 @@ export function getAuthUser(req: Request): AuthUser {
     throw new Error('User not authenticated');
   }
   
-  return user as AuthUser;
+  return { ...user, username: user.email } as AuthUser;
 }

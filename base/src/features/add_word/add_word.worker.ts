@@ -4,8 +4,7 @@ import { prisma } from '../../prisma';
 import { enqueueFetchTranslation } from './add_word.queue';
 import { 
   DictionaryAddProcessingEvent, 
-  DictionaryAddDefinitionsReceivedEvent, 
-  DictionaryAddDefinitionProcessedEvent 
+  DictionaryAddDefinitionsReceivedEvent
 } from '../event_bus/event_bus.type';
 import { publishEvent } from '../event_bus/event_bus.service';
 import { env } from '../../core/env';
