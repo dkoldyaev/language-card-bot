@@ -68,7 +68,8 @@ services:
     extends:
       file: docker-compose.yml
       service: frontend
-
     depends_on:
       - app
+    ports:
+      - 
 
