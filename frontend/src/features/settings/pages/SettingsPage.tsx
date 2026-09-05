@@ -7,6 +7,7 @@ import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
+import { trackEvent } from '../../../shared/lib/analytics';
 
 export default function Settings() {
   const settings = useStore((state) => state.settings);
@@ -32,6 +33,7 @@ export default function Settings() {
     setSuccess(false);
     apiClient.post('/settings', { baseLanguage, targetLanguage, desiredLevel })
       .then(() => {
+        trackEvent('Settings Updated');
         setSettings({ baseLanguage, targetLanguage, desiredLevel });
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);

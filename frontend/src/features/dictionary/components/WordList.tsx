@@ -13,6 +13,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
 import StatusChip from '../../../shared/components/StatusChip';
+import { trackEvent } from '../../../shared/lib/analytics';
 
 export default function WordList({ loading }: { loading: boolean }) {
   const [editingDefId, setEditingDefId] = useState<number | null>(null);
@@ -39,6 +40,7 @@ export default function WordList({ loading }: { loading: boolean }) {
     if (window.confirm(`Are you sure you want to delete "${text}"?`)) {
       try {
         await apiClient.delete(`/word_delete/${wordId}`);
+        trackEvent('Word Deleted');
         removeDictionaryWord(wordId);
         if (selectedWordIds.has(wordId)) {
           const newSelected = new Set(selectedWordIds);
@@ -74,6 +76,7 @@ export default function WordList({ loading }: { loading: boolean }) {
     if (window.confirm(`Are you sure you want to delete ${selectedWordIds.size} word(s)?`)) {
       try {
         await apiClient.post('/word_delete/bulk', { wordIds: Array.from(selectedWordIds) });
+        trackEvent('Word Deleted', { count: selectedWordIds.size });
         const remaining = dictionary.filter(w => !selectedWordIds.has(w.id));
         setDictionary(remaining);
         setSelectedWordIds(new Set());

@@ -10,6 +10,7 @@ import SkipNextRoundedIcon from '@mui/icons-material/SkipNextRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
+import { trackEvent } from '../../../shared/lib/analytics';
 
 export default function QuizPlayground() {
   const [submitting, setSubmitting] = useState(false);
@@ -26,6 +27,7 @@ export default function QuizPlayground() {
 
     setSubmitting(true);
     try {
+      trackEvent('Card Answered');
       await apiClient.post('/quiz/answer', { suggestion });
       setSuggestion('');
     } catch (error) {
@@ -286,6 +288,7 @@ export default function QuizPlayground() {
                 color="secondary"
                 onClick={() => {
                   setSuggestion(variant);
+                  trackEvent('Card Answered');
                   apiClient.post('/quiz/answer', { suggestion: variant })
                     .catch(err => console.error(err));
                 }}

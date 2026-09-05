@@ -77,6 +77,9 @@ export default defineConfig({
   preview: {
     allowedHosts: process.env.VITE_ALLOWED_HOSTS ? process.env.VITE_ALLOWED_HOSTS.split(',') : undefined,
   },
+  define: {
+    'import.meta.env.FRONTEND_BASE_DOMAIN': JSON.stringify(process.env.FRONTEND_BASE_DOMAIN || ''),
+  },
   test: {
     globals: true,
     testTimeout: 15000,

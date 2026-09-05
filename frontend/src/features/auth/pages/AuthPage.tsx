@@ -8,6 +8,7 @@ import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
 import { GoogleLogin } from '@react-oauth/google';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
+import { trackEvent } from '../../../shared/lib/analytics';
 
 export default function Auth() {
   const [baseLanguage, setBaseLanguage] = useState('');
@@ -39,6 +40,7 @@ export default function Auth() {
         setTempToken(token);
         setNeedsProfileCompletion(true);
       } else {
+        trackEvent('Sign In');
         setToken(token);
         if (mercureToken) setMercureToken(mercureToken);
         setProfile(user);
@@ -84,6 +86,7 @@ export default function Auth() {
         headers: { Authorization: `Bearer ${tempToken}` }
       });
       setProfile(meResponse.data.user);
+      trackEvent('Sign Up');
       navigate('/');
     } catch (err: any) {
       console.error('Profile completion error', err);

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import useStore from '../../store/useStore';
+import { trackEvent } from '../lib/analytics';
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
@@ -94,6 +95,15 @@ apiClient.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       useStore.getState().reset();
     }
+    
+    // Ignore aborted requests or offline mocks for error tracking
+    if (!axios.isCancel(error) && !error.isOfflineMock) {
+      trackEvent('API Error', { 
+        status: error.response?.status || 'network_error', 
+        url: error.config?.url || 'unknown_url' 
+      });
+    }
+
     return Promise.reject(error);
   }
 );

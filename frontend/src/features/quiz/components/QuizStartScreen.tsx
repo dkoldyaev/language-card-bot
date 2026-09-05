@@ -2,6 +2,7 @@ import { Box, Typography, Button, CircularProgress, alpha } from '@mui/material'
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import { useState } from 'react';
 import apiClient from '../../../shared/api/client';
+import { trackEvent } from '../../../shared/lib/analytics';
 
 export default function QuizStartScreen() {
   const [starting, setStarting] = useState(false);
@@ -9,6 +10,7 @@ export default function QuizStartScreen() {
   const handleStartQuiz = async () => {
     setStarting(true);
     try {
+      trackEvent('Quiz Started');
       await apiClient.post('/quiz/start');
     } catch (error) {
       console.error('Failed to start quiz:', error);

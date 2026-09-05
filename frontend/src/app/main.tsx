@@ -7,8 +7,17 @@ import App from './App.tsx'
 import theme from './theme'
 
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import { trackEvent } from '../shared/lib/analytics'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
+window.addEventListener('error', (event) => {
+  trackEvent('Error', { message: event.message, source: 'window' });
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  trackEvent('Error', { message: event.reason?.toString() || 'Unknown rejection', source: 'promise' });
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

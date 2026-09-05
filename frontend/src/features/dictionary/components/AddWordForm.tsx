@@ -3,6 +3,7 @@ import { Box, TextField, Button, CircularProgress, Typography, Card, CardContent
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import apiClient from '../../../shared/api/client';
+import { trackEvent } from '../../../shared/lib/analytics';
 
 export default function AddWordForm() {
   const [wordsText, setWordsText] = useState('');
@@ -16,6 +17,7 @@ export default function AddWordForm() {
     try {
       for (const word of words) {
         await apiClient.post('/add_word', { word });
+        trackEvent('Word Added');
       }
       setWordsText('');
     } catch (error) {
