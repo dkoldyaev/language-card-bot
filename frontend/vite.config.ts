@@ -74,6 +74,9 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    allowedHosts: true,
+  },
   test: {
     globals: true,
     testTimeout: 15000,
