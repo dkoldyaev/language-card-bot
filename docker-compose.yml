@@ -20,6 +20,9 @@ services:
       - REDIS_URL=${BASE_REDIS_URL}
       - CORS_ORIGIN=${BASE_CORS_ORIGIN}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    volumes:
+      - ./base:/app
+      - /app/node_modules
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -44,7 +47,9 @@ services:
       - LARA_ACCESS_KEY_ID=${TRANSLATOR_LARA_ACCESS_KEY_ID}
       - LARA_ACCESS_KEY_SECRET=${TRANSLATOR_LARA_ACCESS_KEY_SECRET}
       - CACHE_URL=${TRANSLATOR_CACHE_URL:-redis://redis:6379/1}
-
+    volumes:
+      - ./translator:/app
+      - /app/node_modules
 
   definer:
     build:
@@ -57,7 +62,9 @@ services:
       - GEMINI_API_KEY=${DEFINER_GEMINI_API_KEY}
       - MOCK_TIMEOUT=${DEFINER_MOCK_TIMEOUT}
       - CACHE_URL=${DEFINER_CACHE_URL:-redis://redis:6379/2}
-
+    volumes:
+      - ./definer:/app
+      - /app/node_modules
 
   redis:
     image: redis:7-alpine
@@ -68,15 +75,14 @@ services:
     build:
       context: ./frontend
       target: ${FRONTEND_TARGET}
-      args:
-        - PORT=${FRONTEND_PORT}
     environment:
-      - PORT=${FRONTEND_PORT}
       - VITE_API_BASE_URL=${FRONTEND_VITE_API_BASE_URL}
       - VITE_MERCURE_PUBLIC_URL=${FRONTEND_VITE_MERCURE_PUBLIC_URL}
       - VITE_BASE_DOMAIN=${FRONTEND_VITE_BASE_DOMAIN}
       - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
 volumes:
   redis_data:
