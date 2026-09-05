@@ -70,6 +70,4 @@ services:
       service: frontend
     depends_on:
       - app
-    ports:
-      - 
 
