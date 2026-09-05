@@ -75,7 +75,7 @@ export default defineConfig({
     },
   },
   preview: {
-    allowedHosts: true,
+    allowedHosts: process.env.VITE_ALLOWED_HOSTS ? process.env.VITE_ALLOWED_HOSTS.split(',') : undefined,
   },
   test: {
     globals: true,
