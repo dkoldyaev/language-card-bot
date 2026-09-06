@@ -22,23 +22,17 @@ export default function DictionaryPage() {
 
   return (
     <Box className="animate-fade-in">
-      {/* Page Header */}
-      <Typography
-        variant="h4"
-        sx={{
-          fontWeight: 700,
-          mb: 0.5,
-          background: 'linear-gradient(135deg, #F3F4F6 0%, #A78BFA 100%)',
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          color: 'transparent',
-        }}
-      >
-        Dictionary
-      </Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-        Add new words and manage your vocabulary
-      </Typography>
+      <Box sx={{ mb: 3.5 }}>
+        <Typography variant="overline" color="secondary.main">
+          Vocabulary
+        </Typography>
+        <Typography variant="h1" sx={{ fontSize: { xs: '2.35rem', sm: '3rem' }, mt: 0.45 }}>
+          Dictionary
+        </Typography>
+        <Typography variant="body1" sx={{ color: 'text.secondary', mt: 1, maxWidth: 570 }}>
+          Capture new words while they are useful, then keep their meanings easy to find.
+        </Typography>
+      </Box>
 
       <AddWordForm />
       

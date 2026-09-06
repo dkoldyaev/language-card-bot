@@ -29,11 +29,11 @@ export default defineConfig({
         ]
       },
       manifest: {
-        name: 'English Card Bot',
-        short_name: 'EngBot',
-        description: 'Learn English words with spaced repetition',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
+        name: 'CardBot — Your word studio',
+        short_name: 'CardBot',
+        description: 'Build a personal vocabulary deck and practise recall',
+        theme_color: '#F7F5EF',
+        background_color: '#F7F5EF',
         display: 'standalone',
         start_url: '/',
         icons: [

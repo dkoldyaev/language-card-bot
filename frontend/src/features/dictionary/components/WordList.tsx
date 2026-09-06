@@ -3,7 +3,7 @@ import {
   Typography, Box, TextField, Button, CircularProgress,
   Accordion, AccordionSummary, AccordionDetails,
   IconButton, Checkbox, FormControlLabel, Card, CardContent,
-  Chip, alpha, InputAdornment, Divider,
+  Chip, InputAdornment, Divider,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -131,16 +131,16 @@ export default function WordList({ loading }: { loading: boolean }) {
 
   return (
     <Box sx={{ mb: 2 }}>
-      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-        Your Words
+      <Typography variant="h5" sx={{ mb: 1.75 }}>
+        Your words
         {dictionary.length > 0 && (
           <Chip
             label={dictionary.length}
             size="small"
             sx={{
               ml: 1.5,
-              backgroundColor: alpha('#7C3AED', 0.15),
-              color: '#A78BFA',
+              backgroundColor: '#E7EEF9',
+              color: 'primary.dark',
               fontWeight: 700,
               fontSize: '0.75rem',
             }}
@@ -222,7 +222,7 @@ export default function WordList({ loading }: { loading: boolean }) {
             return (
               <Accordion key={word.id}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', width: '100%', alignItems: 'center', minWidth: 0 }}>
                   <Checkbox
                     checked={selectedWordIds.has(word.id)}
                     onChange={(e) => handleSelectWord(e, word.id)}
@@ -232,8 +232,11 @@ export default function WordList({ loading }: { loading: boolean }) {
                   <Typography
                     variant="subtitle1"
                     sx={{
-                      fontWeight: 600,
                       flexGrow: 1,
+                      minWidth: 0,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                       color: 'text.primary',
                     }}
                   >
@@ -245,8 +248,9 @@ export default function WordList({ loading }: { loading: boolean }) {
                     size="small"
                     sx={{
                       mr: 1,
-                      backgroundColor: alpha('#06B6D4', 0.12),
-                      color: '#22D3EE',
+                      display: { xs: 'none', sm: 'inline-flex' },
+                      backgroundColor: '#E8F3F1',
+                      color: '#15554F',
                       fontWeight: 600,
                       fontSize: '0.7rem',
                     }}
@@ -289,8 +293,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                       </Box>
                     ) : (
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        {/* @ts-ignore */}
-                        <Typography variant="body1" fontWeight="bold">
+                        <Typography variant="body1" sx={{ fontWeight: 700 }}>
                           {idx + 1}. {def.text}
                         </Typography>
                         <IconButton
@@ -370,7 +373,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                     )}
 
                     {idx < word.definitions.length - 1 && (
-                      <Divider sx={{ mt: 2, borderColor: alpha('#6B7280', 0.1) }} />
+                      <Divider sx={{ mt: 2 }} />
                     )}
                   </Box>
                 ))}

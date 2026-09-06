@@ -1,4 +1,4 @@
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   List,
@@ -6,8 +6,6 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-  IconButton,
-  Tooltip,
   alpha,
   useMediaQuery,
   useTheme,
@@ -17,7 +15,6 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
-import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
 import useStore from '../../store/useStore';
 
 const navItems = [
@@ -26,6 +23,29 @@ const navItems = [
   { path: '/quiz', label: 'Quiz', icon: <SchoolRoundedIcon /> },
   { path: '/settings', label: 'Settings', icon: <SettingsRoundedIcon /> },
 ];
+
+function Brand({ compact = false }: { compact?: boolean }) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+      <Box
+        component="img"
+        src="/favicon.svg"
+        alt=""
+        sx={{ width: compact ? 30 : 38, height: compact ? 30 : 38, display: 'block' }}
+      />
+      {!compact && (
+        <Box>
+          <Typography sx={{ color: '#FFFFFF', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.04em' }}>
+            CardBot
+          </Typography>
+          <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.58), display: 'block', mt: 0.2 }}>
+            Your word studio
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+}
 
 export default function Sidebar() {
   const profile = useStore((state) => state.profile);
@@ -40,137 +60,120 @@ export default function Sidebar() {
     navigate('/login');
   };
 
-  // Mobile: bottom tab bar
   if (isMobile) {
     return (
       <Box
         component="nav"
+        aria-label="Main navigation"
         sx={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          height: 64,
-          backgroundColor: alpha('#111827', 0.95),
-          backdropFilter: 'blur(20px)',
-          borderTop: `1px solid ${alpha('#6B7280', 0.15)}`,
+          minHeight: 76,
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'stretch',
           justifyContent: 'space-around',
-          px: 1,
+          px: 0.5,
           zIndex: 1200,
+          backgroundColor: alpha('#FFFFFF', 0.97),
+          borderTop: '1px solid #DDDCD5',
+          backdropFilter: 'blur(16px)',
         }}
       >
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
-            <Tooltip key={item.path} title={item.label} placement="top">
-              <IconButton
-                component={NavLink}
-                to={item.path}
-                sx={{
-                  color: isActive ? 'primary.main' : 'text.secondary',
-                  backgroundColor: isActive ? alpha('#7C3AED', 0.12) : 'transparent',
-                  borderRadius: 2,
-                  p: 1.2,
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    backgroundColor: alpha('#7C3AED', 0.08),
-                    color: 'primary.light',
-                  },
-                }}
-              >
+            <ListItemButton
+              key={item.path}
+              component={NavLink}
+              to={item.path}
+              aria-label={item.label}
+              sx={{
+                minWidth: 62,
+                maxWidth: 86,
+                flex: 1,
+                px: 0.5,
+                py: 0.8,
+                borderRadius: 0,
+                flexDirection: 'column',
+                justifyContent: 'center',
+                color: isActive ? 'primary.main' : 'text.secondary',
+                '&::before': isActive ? {
+                  content: '""',
+                  position: 'absolute',
+                  top: 5,
+                  width: 26,
+                  height: 3,
+                  borderRadius: 3,
+                  backgroundColor: 'secondary.main',
+                } : undefined,
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 0, mb: 0.25, color: 'inherit' }}>
                 {item.icon}
-              </IconButton>
-            </Tooltip>
+              </ListItemIcon>
+              <Typography variant="caption" sx={{ fontWeight: isActive ? 800 : 700, fontSize: '0.62rem' }}>
+                {item.label}
+              </Typography>
+            </ListItemButton>
           );
         })}
-        <Tooltip title="Logout" placement="top">
-          <IconButton
-            onClick={handleLogout}
-            sx={{
-              color: 'text.secondary',
-              borderRadius: 2,
-              p: 1.2,
-              '&:hover': {
-                backgroundColor: alpha('#EF4444', 0.08),
-                color: 'error.main',
-              },
-            }}
-          >
+        <ListItemButton
+          onClick={handleLogout}
+          aria-label="Sign out"
+          sx={{
+            minWidth: 62,
+            maxWidth: 76,
+            flex: 1,
+            px: 0.5,
+            py: 0.8,
+            borderRadius: 0,
+            flexDirection: 'column',
+            justifyContent: 'center',
+            color: 'text.secondary',
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 0, mb: 0.25, color: 'inherit' }}>
             <LogoutRoundedIcon />
-          </IconButton>
-        </Tooltip>
+          </ListItemIcon>
+          <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem' }}>
+            Sign out
+          </Typography>
+        </ListItemButton>
       </Box>
     );
   }
 
-  // Desktop: sidebar
   return (
     <Box
       component="nav"
+      aria-label="Main navigation"
       sx={{
-        width: 240,
-        minWidth: 240,
+        width: 264,
         height: '100dvh',
         position: 'fixed',
         left: 0,
         top: 0,
-        backgroundColor: alpha('#111827', 0.7),
-        backdropFilter: 'blur(20px)',
-        borderRight: `1px solid ${alpha('#6B7280', 0.12)}`,
         display: 'flex',
         flexDirection: 'column',
         zIndex: 1100,
         overflowY: 'auto',
+        color: '#FFFFFF',
+        backgroundColor: '#172033',
       }}
     >
-      {/* Logo / Brand */}
-      <Box
-        sx={{
-          p: 3,
-          pb: 2,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-        }}
-      >
-        <Box
-          sx={{
-            width: 38,
-            height: 38,
-            borderRadius: 2.5,
-            background: 'linear-gradient(135deg, #7C3AED, #06B6D4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: `0 4px 15px ${alpha('#7C3AED', 0.4)}`,
-          }}
-        >
-          <AutoStoriesRoundedIcon sx={{ color: '#fff', fontSize: 20 }} />
-        </Box>
-        <Box>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #A78BFA, #22D3EE)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              color: 'transparent',
-              lineHeight: 1.2,
-            }}
-          >
-            CardBot
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary', lineHeight: 1 }}>
-            English Learning
-          </Typography>
-        </Box>
+      <Box sx={{ px: 3, pt: 3.25, pb: 4 }}>
+        <Brand />
       </Box>
 
-      {/* Navigation */}
-      <List sx={{ px: 1.5, py: 1, flexGrow: 1 }}>
+      <Box sx={{ px: 2.5, pb: 1 }}>
+        <Typography variant="overline" sx={{ color: alpha('#FFFFFF', 0.42), fontSize: '0.64rem' }}>
+          Workspace
+        </Typography>
+      </Box>
+
+      <List sx={{ px: 1.5, pt: 0, flexGrow: 1 }}>
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -179,44 +182,35 @@ export default function Sidebar() {
               component={NavLink}
               to={item.path}
               sx={{
-                borderRadius: 2.5,
-                mb: 0.5,
-                px: 2,
-                py: 1.2,
-                color: isActive ? 'primary.light' : 'text.secondary',
-                backgroundColor: isActive ? alpha('#7C3AED', 0.12) : 'transparent',
-                transition: 'all 0.2s ease',
+                position: 'relative',
+                minHeight: 52,
+                mb: 0.75,
+                px: 1.5,
+                borderRadius: 3,
+                color: isActive ? '#FFFFFF' : alpha('#FFFFFF', 0.65),
+                backgroundColor: isActive ? alpha('#FFFFFF', 0.12) : 'transparent',
                 '&:hover': {
-                  backgroundColor: isActive ? alpha('#7C3AED', 0.15) : alpha('#6B7280', 0.08),
-                  color: isActive ? 'primary.light' : 'text.primary',
+                  color: '#FFFFFF',
+                  backgroundColor: alpha('#FFFFFF', isActive ? 0.15 : 0.075),
                 },
-                '&::before': isActive
-                  ? {
-                      content: '""',
-                      position: 'absolute',
-                      left: 0,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: 3,
-                      height: '60%',
-                      borderRadius: 4,
-                      backgroundColor: 'primary.main',
-                    }
-                  : {},
+                '&::before': isActive ? {
+                  content: '""',
+                  position: 'absolute',
+                  left: 0,
+                  top: 14,
+                  width: 3,
+                  height: 24,
+                  borderRadius: 2,
+                  backgroundColor: '#E8A17F',
+                } : undefined,
               }}
             >
-              <ListItemIcon
-                sx={{
-                  minWidth: 36,
-                  color: 'inherit',
-                }}
-              >
+              <ListItemIcon sx={{ minWidth: 39, color: 'inherit' }}>
                 {item.icon}
               </ListItemIcon>
               <ListItemText
-                disableTypography
                 primary={
-                  <Typography sx={{ fontSize: '0.875rem', fontWeight: isActive ? 600 : 500 }}>
+                  <Typography sx={{ fontSize: '0.9rem', fontWeight: isActive ? 800 : 700 }}>
                     {item.label}
                   </Typography>
                 }
@@ -226,22 +220,13 @@ export default function Sidebar() {
         })}
       </List>
 
-      {/* User / Logout */}
-      <Box
-        sx={{
-          p: 2,
-          borderTop: `1px solid ${alpha('#6B7280', 0.12)}`,
-        }}
-      >
+      <Box sx={{ p: 2.25, borderTop: '1px solid rgba(255, 255, 255, 0.12)' }}>
         {profile && (
-          <Box sx={{ px: 1, pb: 1.5 }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Logged in as
+          <Box sx={{ px: 1.25, pb: 1.5 }}>
+            <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.5), display: 'block', mb: 0.25 }}>
+              Learning as
             </Typography>
-            <Typography
-              variant="body2"
-              sx={{ fontWeight: 600, color: 'text.primary' }}
-            >
+            <Typography variant="body2" sx={{ color: '#FFFFFF', fontWeight: 800 }} noWrap>
               {profile.username}
             </Typography>
           </Box>
@@ -249,27 +234,21 @@ export default function Sidebar() {
         <ListItemButton
           onClick={handleLogout}
           sx={{
-            borderRadius: 2.5,
-            px: 2,
-            py: 1,
-            color: 'text.secondary',
-            transition: 'all 0.2s ease',
+            minHeight: 48,
+            borderRadius: 3,
+            px: 1.5,
+            color: alpha('#FFFFFF', 0.7),
             '&:hover': {
-              backgroundColor: alpha('#EF4444', 0.08),
-              color: 'error.main',
+              color: '#FFFFFF',
+              backgroundColor: alpha('#FFFFFF', 0.075),
             },
           }}
         >
-          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+          <ListItemIcon sx={{ minWidth: 39, color: 'inherit' }}>
             <LogoutRoundedIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText
-            disableTypography
-            primary={
-              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                Logout
-              </Typography>
-            }
+            primary={<Typography sx={{ fontSize: '0.875rem', fontWeight: 700 }}>Sign out</Typography>}
           />
         </ListItemButton>
       </Box>

@@ -28,20 +28,32 @@ export default function AddWordForm() {
   };
 
   return (
-    <Card sx={{ mb: 3 }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <AddRoundedIcon sx={{ color: 'primary.light', fontSize: 20 }} />
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Add Words
-          </Typography>
+    <Card sx={{ mb: 4, backgroundColor: '#FFFDF9' }}>
+      <CardContent sx={{ p: { xs: 2, sm: 3 }, '&:last-child': { pb: { xs: 2, sm: 3 } } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.75 }}>
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              display: 'grid',
+              placeItems: 'center',
+              borderRadius: 2.5,
+              color: 'secondary.dark',
+              backgroundColor: '#FBE8E0',
+            }}
+          >
+            <AddRoundedIcon fontSize="small" />
+          </Box>
+          <Box>
+            <Typography variant="subtitle1">Add words</Typography>
+            <Typography variant="body2" color="text.secondary">
+              One word per line works best.
+            </Typography>
+          </Box>
         </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Enter words to add to your dictionary, one per line.
-        </Typography>
 
         <TextField
-          label="Words list"
+          label="Words to add"
           multiline
           rows={4}
           fullWidth
@@ -49,22 +61,15 @@ export default function AddWordForm() {
           onChange={(e) => setWordsText(e.target.value)}
           placeholder={"apple\nbanana\ncherry"}
           disabled={submitting}
-          sx={{ mb: 2 }}
+          helperText="We will create a card for every line."
+          sx={{ mb: 2.25 }}
         />
 
         <Button
           variant="contained"
-          fullWidth
           disabled={!wordsText.trim() || submitting}
           onClick={handleSubmitWords}
           endIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <SendRoundedIcon />}
-          sx={{
-            py: 1.3,
-            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
-            },
-          }}
         >
           {submitting ? 'Submitting...' : 'Submit Words'}
         </Button>

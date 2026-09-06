@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import { Box, useMediaQuery, useTheme, Alert } from '@mui/material';
+import { Alert, Box, Typography, useMediaQuery, useTheme } from '@mui/material';
 import Sidebar from './Sidebar';
 import { useEffect } from 'react';
 import apiClient from '../api/client';
@@ -46,25 +46,42 @@ export default function Layout() {
         component="main"
         sx={{
           flexGrow: 1,
-          ml: isMobile ? 0 : '240px',
-          pb: isMobile ? '80px' : 0,
+          ml: isMobile ? 0 : '264px',
+          pb: isMobile ? '92px' : 0,
           minHeight: '100dvh',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
+        {isMobile && (
+          <Box
+            sx={{
+              minHeight: 64,
+              px: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              backgroundColor: 'rgba(247, 245, 239, 0.92)',
+              borderBottom: '1px solid #DDDCD5',
+              backdropFilter: 'blur(14px)',
+            }}
+          >
+            <Box component="img" src="/favicon.svg" alt="" sx={{ width: 28, height: 28 }} />
+            <Typography sx={{ fontWeight: 800, letterSpacing: '-0.035em' }}>CardBot</Typography>
+          </Box>
+        )}
         {isOffline && (
-          <Alert severity="warning" variant="filled" square sx={{ width: '100%' }}>
+          <Alert severity="warning" sx={{ mx: { xs: 2, sm: 3 }, mt: 2 }}>
             You are offline. Only the quiz and offline dictionary edits are available. Changes will be synced when you reconnect.
           </Alert>
         )}
         <Box
           sx={{
-            maxWidth: 960,
+            maxWidth: 1120,
             width: '100%',
             mx: 'auto',
             px: { xs: 2, sm: 3, md: 4 },
-            py: { xs: 3, md: 4 },
+            py: { xs: 3, md: 5 },
             flexGrow: 1,
           }}
         >

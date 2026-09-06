@@ -1,9 +1,9 @@
-import { Box, Typography, Card, CardContent, Button, alpha, Chip } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, Divider, Typography, alpha } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
-import LibraryBooksRoundedIcon from '@mui/icons-material/LibraryBooksRounded';
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
+import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded';
 import useStore from '../../../store/useStore';
 
 export default function Dashboard() {
@@ -12,149 +12,131 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const totalWords = dictionary.length;
-  const totalDefinitions = dictionary.reduce((sum, w) => sum + w.definitions.length, 0);
+  const totalDefinitions = dictionary.reduce((sum, word) => sum + word.definitions.length, 0);
   const recentWords = dictionary.slice(-5).reverse();
-
-  const stats = [
-    {
-      label: 'Words',
-      value: totalWords,
-      icon: <MenuBookRoundedIcon />,
-      color: '#7C3AED',
-      bg: alpha('#7C3AED', 0.1),
-    },
-    {
-      label: 'Definitions',
-      value: totalDefinitions,
-      icon: <LibraryBooksRoundedIcon />,
-      color: '#06B6D4',
-      bg: alpha('#06B6D4', 0.1),
-    },
-    {
-      label: 'Progress',
-      value: totalWords > 0 ? 'Active' : 'Start!',
-      icon: <TrendingUpRoundedIcon />,
-      color: '#10B981',
-      bg: alpha('#10B981', 0.1),
-    },
-  ];
 
   return (
     <Box className="animate-fade-in">
-      {/* Hero greeting */}
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 700,
-            mb: 1,
-            background: 'linear-gradient(135deg, #F3F4F6 0%, #A78BFA 100%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            color: 'transparent',
-          }}
-        >
-          Welcome{profile ? `, ${profile.username}` : ''}! 👋
-        </Typography>
-        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-          Ready to expand your vocabulary today?
-        </Typography>
-      </Box>
-
-      {/* Stats Cards */}
       <Box
-        className="stagger-children"
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-          gap: 2,
-          mb: 4,
+          gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.55fr) minmax(270px, 0.75fr)' },
+          gap: 2.5,
+          alignItems: 'stretch',
+          mb: 5,
         }}
       >
-        {stats.map((stat) => (
+        <Box sx={{ pt: { xs: 0, lg: 1 } }}>
+          <Typography variant="overline" color="secondary.main">
+            Your learning space
+          </Typography>
+          <Typography variant="h1" sx={{ fontSize: { xs: '2.45rem', sm: '3.35rem' }, mt: 0.7, maxWidth: 680 }}>
+            Welcome{profile && <>, {profile.username}</>}. Let&apos;s make words stick.
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 560, mt: 1.6, mb: 3 }}>
+            Build a deck you recognise at a glance, then practise from a focused card—one definition at a time.
+          </Typography>
+
           <Card
-            key={stat.label}
             sx={{
-              position: 'relative',
-              overflow: 'hidden',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: `0 12px 40px ${alpha(stat.color, 0.15)}`,
-              },
+              maxWidth: 640,
+              color: '#FFFFFF',
+              backgroundColor: '#172033',
+              border: 'none',
+              boxShadow: '0 18px 38px rgba(23, 32, 51, 0.16)',
             }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}
-                  >
-                    {stat.label}
-                  </Typography>
-                  <Typography
-                    variant="h3"
-                    sx={{ fontWeight: 700, color: stat.color, mt: 0.5 }}
-                  >
-                    {stat.value}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 2.5,
-                    backgroundColor: stat.bg,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: stat.color,
-                  }}
-                >
-                  {stat.icon}
-                </Box>
-              </Box>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3.25 }, '&:last-child': { pb: { xs: 2.5, sm: 3.25 } } }}>
+              <Typography variant="overline" sx={{ color: '#E8A17F' }}>
+                Ready when you are
+              </Typography>
+              <Typography variant="h4" sx={{ color: '#FFFFFF', mt: 0.4, mb: 0.8 }}>
+                Recall, don&apos;t just reread.
+              </Typography>
+              <Typography variant="body2" sx={{ color: alpha('#FFFFFF', 0.7), maxWidth: 430, mb: 2.5 }}>
+                Open a round based on the words you have already saved.
+              </Typography>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => navigate('/quiz')}
+                endIcon={<ArrowForwardRoundedIcon />}
+              >
+                Start a quiz
+              </Button>
             </CardContent>
           </Card>
-        ))}
+        </Box>
+
+        <Card sx={{ alignSelf: { xs: 'auto', lg: 'end' }, backgroundColor: '#FFFDF9' }}>
+          <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+              <Box
+                sx={{
+                  width: 38,
+                  height: 38,
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: 2.5,
+                  color: 'primary.main',
+                  backgroundColor: alpha('#2453A6', 0.1),
+                }}
+              >
+                <MenuBookRoundedIcon fontSize="small" />
+              </Box>
+              <Typography variant="subtitle1">Your deck</Typography>
+            </Box>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box>
+                <Typography variant="h3" sx={{ fontSize: '2.2rem', color: 'primary.dark' }}>
+                  {totalWords}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">words saved</Typography>
+              </Box>
+              <Box>
+                <Typography variant="h3" sx={{ fontSize: '2.2rem', color: 'primary.dark' }}>
+                  {totalDefinitions}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">definitions</Typography>
+              </Box>
+            </Box>
+
+            <Divider sx={{ my: 2.5 }} />
+            <Button
+              variant="text"
+              color="primary"
+              onClick={() => navigate('/dictionary')}
+              startIcon={<TranslateRoundedIcon />}
+              sx={{ px: 0.25 }}
+            >
+              Manage vocabulary
+            </Button>
+          </CardContent>
+        </Card>
       </Box>
 
-      {/* Quick Actions */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap' }}>
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<SchoolRoundedIcon />}
-          onClick={() => navigate('/quiz')}
-          sx={{
-            flex: { xs: '1 1 100%', sm: '1 1 auto' },
-            py: 1.5,
-            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
-            },
-          }}
-        >
-          Start Quiz
-        </Button>
+      <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, mb: 1.75 }}>
+        <Box>
+          <Typography variant="h5">Fresh in your deck</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.3 }}>
+            The last words you added, ready for the next recall round.
+          </Typography>
+        </Box>
         <Button
           variant="outlined"
-          size="large"
-          startIcon={<MenuBookRoundedIcon />}
+          size="small"
           onClick={() => navigate('/dictionary')}
-          sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' }, py: 1.5 }}
+          startIcon={<MenuBookRoundedIcon />}
+          sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
         >
-          Open Dictionary
+          Dictionary
         </Button>
       </Box>
 
-      {/* Recent Words */}
-      {recentWords.length > 0 && (
-        <Card>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-              Recent Words
-            </Typography>
+      <Card sx={{ backgroundColor: '#FFFFFF' }}>
+        <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
+          {recentWords.length > 0 ? (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {recentWords.map((word) => (
                 <Chip
@@ -162,20 +144,27 @@ export default function Dashboard() {
                   label={word.text}
                   variant="outlined"
                   sx={{
-                    borderColor: alpha('#A78BFA', 0.3),
+                    px: 0.5,
+                    py: 0.3,
+                    borderColor: '#D4D8E0',
                     color: 'text.primary',
-                    fontWeight: 500,
-                    '&:hover': {
-                      borderColor: '#A78BFA',
-                      backgroundColor: alpha('#7C3AED', 0.08),
-                    },
+                    backgroundColor: '#FBFCFE',
+                    '&:hover': { borderColor: 'primary.main', backgroundColor: alpha('#2453A6', 0.04) },
                   }}
                 />
               ))}
             </Box>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.5 }}>
+              <SchoolRoundedIcon sx={{ color: 'secondary.main' }} />
+              <Typography variant="body2" color="text.secondary">
+                Your first saved word will appear here.
+              </Typography>
+              <Button size="small" onClick={() => navigate('/dictionary')}>Add words</Button>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
     </Box>
   );
 }

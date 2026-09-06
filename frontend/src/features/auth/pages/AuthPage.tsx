@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import {
-  Box, Typography, Button, Card, CardContent, Alert,
-  FormControl, InputLabel, Select, MenuItem, alpha, CircularProgress,
+  Alert, Box, Button, Card, CardContent, CircularProgress, FormControl, InputLabel,
+  MenuItem, Select, Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { GoogleLogin } from '@react-oauth/google';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
@@ -18,7 +18,6 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
   const [tempToken, setTempToken] = useState<string | null>(null);
-  
   const navigate = useNavigate();
 
   const setToken = useStore((state) => state.setToken);
@@ -35,7 +34,7 @@ export default function Auth() {
       });
 
       const { token, mercureToken, user } = response.data;
-      
+
       if (user.isNewUser) {
         setTempToken(token);
         setNeedsProfileCompletion(true);
@@ -71,19 +70,14 @@ export default function Auth() {
       await apiClient.post('/settings', {
         baseLanguage,
         targetLanguage,
-        desiredLevel
+        desiredLevel,
       }, {
-        headers: { Authorization: `Bearer ${tempToken}` }
+        headers: { Authorization: `Bearer ${tempToken}` },
       });
 
-      // Complete login
       setToken(tempToken);
-      
-      // Ideally we'd fetch profile and mercure token again, or they are passed down.
-      // For simplicity, let's redirect to main page, it might fetch /me on reload,
-      // but let's assume we need to reload or we can fetch /me here:
       const meResponse = await apiClient.get('/auth/me', {
-        headers: { Authorization: `Bearer ${tempToken}` }
+        headers: { Authorization: `Bearer ${tempToken}` },
       });
       setProfile(meResponse.data.user);
       trackEvent('Sign Up');
@@ -100,150 +94,145 @@ export default function Auth() {
     <Box
       sx={{
         minHeight: '100dvh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: 2,
-        background: `
-          radial-gradient(ellipse at 30% 20%, ${alpha('#7C3AED', 0.15)} 0%, transparent 50%),
-          radial-gradient(ellipse at 70% 80%, ${alpha('#06B6D4', 0.1)} 0%, transparent 50%),
-          #0B0E14
-        `,
+        display: 'grid',
+        placeItems: 'center',
+        p: { xs: 2, sm: 4 },
       }}
     >
-      <Box className="animate-scale-in" sx={{ width: '100%', maxWidth: 420 }}>
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Box
-            sx={{
-              width: 56,
-              height: 56,
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #7C3AED, #06B6D4)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: 2,
-              boxShadow: `0 8px 30px ${alpha('#7C3AED', 0.4)}`,
-            }}
-          >
-            <AutoStoriesRoundedIcon sx={{ color: '#fff', fontSize: 28 }} />
+      <Box className="animate-scale-in" sx={{ width: '100%', maxWidth: 960 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.25, mb: 3 }}>
+          <Box component="img" src="/favicon.svg" alt="" sx={{ width: 42, height: 42 }} />
+          <Box>
+            <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+              CardBot
+            </Typography>
+            <Typography variant="caption" color="text.secondary">Your word studio</Typography>
           </Box>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #A78BFA, #22D3EE)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              color: 'transparent',
-            }}
-          >
-            CardBot
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            English Learning Assistant
-          </Typography>
         </Box>
 
-        <Card
-          sx={{
-            backgroundColor: alpha('#111827', 0.8),
-            backdropFilter: 'blur(20px)',
-          }}
-        >
-          <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Typography variant="h5" gutterBottom align="center" sx={{ fontWeight: 600, mb: 3 }}>
-              {needsProfileCompletion ? 'Complete your profile' : 'Sign in'}
-            </Typography>
-
-            {error && <Alert severity="error" sx={{ mb: 2, width: '100%' }}>{error}</Alert>}
-
-            {needsProfileCompletion ? (
-              <Box sx={{ width: '100%' }}>
-                <FormControl fullWidth margin="normal">
-                  <InputLabel id="base-language-label">Native Language</InputLabel>
-                  <Select
-                    labelId="base-language-label"
-                    value={baseLanguage}
-                    label="Native Language"
-                    onChange={(e) => setBaseLanguage(e.target.value)}
-                    disabled={loading}
-                  >
-                    <MenuItem value="ru">Russian</MenuItem>
-                    <MenuItem value="en">English</MenuItem>
-                    <MenuItem value="es">Spanish</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <FormControl fullWidth margin="normal">
-                  <InputLabel id="target-language-label">Learning Language</InputLabel>
-                  <Select
-                    labelId="target-language-label"
-                    value={targetLanguage}
-                    label="Learning Language"
-                    onChange={(e) => setTargetLanguage(e.target.value)}
-                    disabled={loading}
-                  >
-                    <MenuItem value="en">English</MenuItem>
-                    <MenuItem value="es">Spanish</MenuItem>
-                    <MenuItem value="ru">Russian</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <FormControl fullWidth margin="normal">
-                  <InputLabel id="level-label">Level</InputLabel>
-                  <Select
-                    labelId="level-label"
-                    value={desiredLevel}
-                    label="Level"
-                    onChange={(e) => setDesiredLevel(e.target.value)}
-                    disabled={loading}
-                  >
-                    <MenuItem value="A0">A0</MenuItem>
-                    <MenuItem value="A1">A1</MenuItem>
-                    <MenuItem value="A2">A2</MenuItem>
-                    <MenuItem value="B1">B1</MenuItem>
-                    <MenuItem value="B2">B2</MenuItem>
-                    <MenuItem value="C1">C1</MenuItem>
-                    <MenuItem value="C2">C2</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={handleProfileCompletion}
-                  disabled={loading}
-                  sx={{
-                    mt: 3,
-                    py: 1.3,
-                    background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
-                    },
-                  }}
-                >
-                  {loading ? <CircularProgress size={24} color="inherit" /> : 'Continue'}
-                </Button>
+        <Card sx={{ overflow: 'hidden' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '0.86fr 1.14fr' } }}>
+            <Box
+              sx={{
+                display: { xs: 'none', md: 'flex' },
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: 520,
+                p: 5,
+                backgroundColor: '#172033',
+                color: '#FFFFFF',
+              }}
+            >
+              <Typography variant="overline" sx={{ color: '#E8A17F' }}>A smaller, stronger deck</Typography>
+              <Box>
+                <Typography variant="h2" sx={{ color: '#FFFFFF', fontSize: '2.75rem', maxWidth: 330 }}>
+                  Learn the words that matter to you.
+                </Typography>
+                <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 2, maxWidth: 315 }}>
+                  Save unfamiliar words as you meet them. Practise by recalling, not scrolling.
+                </Typography>
               </Box>
-            ) : (
-              <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                {loading ? (
-                   <CircularProgress size={24} sx={{ my: 2 }} />
-                ) : (
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={handleGoogleError}
-                    theme="filled_black"
-                    size="large"
-                    shape="pill"
-                    text="continue_with"
-                    width="100%"
-                  />
-                )}
-              </Box>
-            )}
-          </CardContent>
+              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.52)' }}>
+                Built for calm, deliberate study.
+              </Typography>
+            </Box>
+
+            <CardContent sx={{ p: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: { xs: 420, md: 520 } }}>
+              <Typography variant="overline" color="secondary.main">
+                {needsProfileCompletion ? 'Step 2 of 2' : 'Welcome'}
+              </Typography>
+              <Typography variant="h2" sx={{ fontSize: { xs: '2rem', sm: '2.45rem' }, mt: 0.45, mb: 1 }}>
+                {needsProfileCompletion ? 'Set up your deck' : 'Make every new word count.'}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                {needsProfileCompletion
+                  ? 'Choose a language pair and level so your cards give you the right support.'
+                  : 'Sign in to collect words and turn them into focused practice.'}
+              </Typography>
+
+              {error && <Alert severity="error" sx={{ mb: 2.5 }}>{error}</Alert>}
+
+              {needsProfileCompletion ? (
+                <Box sx={{ display: 'grid', gap: 1.5 }}>
+                  <FormControl fullWidth>
+                    <InputLabel id="base-language-label">Native Language</InputLabel>
+                    <Select
+                      labelId="base-language-label"
+                      value={baseLanguage}
+                      label="Native Language"
+                      onChange={(event) => setBaseLanguage(event.target.value)}
+                      disabled={loading}
+                    >
+                      <MenuItem value="ru">Russian</MenuItem>
+                      <MenuItem value="en">English</MenuItem>
+                      <MenuItem value="es">Spanish</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <FormControl fullWidth>
+                    <InputLabel id="target-language-label">Learning Language</InputLabel>
+                    <Select
+                      labelId="target-language-label"
+                      value={targetLanguage}
+                      label="Learning Language"
+                      onChange={(event) => setTargetLanguage(event.target.value)}
+                      disabled={loading}
+                    >
+                      <MenuItem value="en">English</MenuItem>
+                      <MenuItem value="es">Spanish</MenuItem>
+                      <MenuItem value="ru">Russian</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <FormControl fullWidth>
+                    <InputLabel id="level-label">Level</InputLabel>
+                    <Select
+                      labelId="level-label"
+                      value={desiredLevel}
+                      label="Level"
+                      onChange={(event) => setDesiredLevel(event.target.value)}
+                      disabled={loading}
+                    >
+                      <MenuItem value="A0">A0</MenuItem>
+                      <MenuItem value="A1">A1</MenuItem>
+                      <MenuItem value="A2">A2</MenuItem>
+                      <MenuItem value="B1">B1</MenuItem>
+                      <MenuItem value="B2">B2</MenuItem>
+                      <MenuItem value="C1">C1</MenuItem>
+                      <MenuItem value="C2">C2</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleProfileCompletion}
+                    disabled={loading}
+                    endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
+                    sx={{ mt: 1 }}
+                  >
+                    Continue
+                  </Button>
+                </Box>
+              ) : (
+                <Box sx={{ width: '100%', minHeight: 44, display: 'flex', alignItems: 'center' }}>
+                  {loading ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      theme="outline"
+                      size="large"
+                      shape="rectangular"
+                      text="continue_with"
+                      width="100%"
+                    />
+                  )}
+                </Box>
+              )}
+            </CardContent>
+          </Box>
         </Card>
       </Box>
     </Box>
