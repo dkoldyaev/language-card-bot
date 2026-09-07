@@ -14,5 +14,5 @@ export function getAuthUser(req: Request): AuthUser {
     throw new Error('User not authenticated');
   }
   
-  return { ...user, username: user.email } as AuthUser;
+  return { ...user, username: user.username || user.name || user.email } as AuthUser;
 }

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, CircularProgress, FormControl, InputLabel,
-  MenuItem, Select, Typography,
+  MenuItem, Select, TextField, Typography,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { GoogleLogin } from '@react-oauth/google';
 import apiClient from '../../../shared/api/client';
@@ -11,19 +11,37 @@ import useStore from '../../../store/useStore';
 import { trackEvent } from '../../../shared/lib/analytics';
 
 export default function Auth() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'google';
+  const isTestAuth = authProvider === 'test-username';
+  const isRegisterRoute = location.pathname === '/register';
+
+  const [username, setUsername] = useState('');
   const [baseLanguage, setBaseLanguage] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('');
   const [desiredLevel, setDesiredLevel] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+
+  // Google OAuth specific states
   const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
   const [tempToken, setTempToken] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   const setToken = useStore((state) => state.setToken);
   const setMercureToken = useStore((state) => state.setMercureToken);
   const setProfile = useStore((state) => state.setProfile);
 
+  useEffect(() => {
+    setError(null);
+    setRegistrationSuccess(false);
+  }, [location.pathname]);
+
+  // ==========================================
+  // GOOGLE OAUTH HANDLERS
+  // ==========================================
   const handleGoogleSuccess = async (credentialResponse: any) => {
     setError(null);
     setLoading(true);
@@ -42,7 +60,13 @@ export default function Auth() {
         trackEvent('Sign In');
         setToken(token);
         if (mercureToken) setMercureToken(mercureToken);
-        setProfile(user);
+        setProfile({
+          id: user.id,
+          username: user.username || user.name || user.email,
+          email: user.email,
+          name: user.name,
+          picture: user.picture,
+        });
         navigate('/');
       }
     } catch (err: any) {
@@ -85,6 +109,59 @@ export default function Auth() {
     } catch (err: any) {
       console.error('Profile completion error', err);
       setError('Failed to save profile settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==========================================
+  // TEST USERNAME AUTH HANDLERS
+  // ==========================================
+  const handleTestAuthSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!username.trim()) {
+      setError('Please enter a username');
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (!isRegisterRoute) {
+        // Login
+        const response = await apiClient.post('/auth/login', { username: username.trim() });
+        const { token, mercureToken, user } = response.data;
+        trackEvent('Sign In');
+        setToken(token);
+        if (mercureToken) setMercureToken(mercureToken);
+        setProfile(user);
+        navigate('/');
+      } else {
+        // Registration
+        if (!baseLanguage || !targetLanguage || !desiredLevel) {
+          setError('Please select all language settings');
+          setLoading(false);
+          return;
+        }
+
+        const response = await apiClient.post('/auth/register', { username: username.trim() });
+        const { token } = response.data;
+
+        await apiClient.post('/settings', {
+          baseLanguage,
+          targetLanguage,
+          desiredLevel,
+        }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        trackEvent('Sign Up');
+        setRegistrationSuccess(true);
+      }
+    } catch (err: any) {
+      console.error('Auth error', err.response?.data);
+      setError(err.response?.data?.error || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -138,96 +215,238 @@ export default function Auth() {
             </Box>
 
             <CardContent sx={{ p: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: { xs: 420, md: 520 } }}>
-              <Typography variant="overline" color="secondary.main">
-                {needsProfileCompletion ? 'Step 2 of 2' : 'Welcome'}
-              </Typography>
-              <Typography variant="h2" sx={{ fontSize: { xs: '2rem', sm: '2.45rem' }, mt: 0.45, mb: 1 }}>
-                {needsProfileCompletion ? 'Set up your deck' : 'Make every new word count.'}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                {needsProfileCompletion
-                  ? 'Choose a language pair and level so your cards give you the right support.'
-                  : 'Sign in to collect words and turn them into focused practice.'}
-              </Typography>
+              {isTestAuth ? (
+                // ==========================================
+                // TEST USERNAME FORM
+                // ==========================================
+                <Box>
+                  <Typography variant="overline" color="secondary.main">
+                    {isRegisterRoute ? 'Create Account' : 'Welcome Back'}
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontSize: { xs: '1.75rem', sm: '2.1rem' }, mt: 0.45, mb: 1, fontWeight: 700 }}>
+                    {isRegisterRoute ? 'Create account' : 'Log in'}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                    {isRegisterRoute
+                      ? 'Choose your username and language settings to get started.'
+                      : 'Sign in to collect words and turn them into focused practice.'}
+                  </Typography>
 
-              {error && <Alert severity="error" sx={{ mb: 2.5 }}>{error}</Alert>}
+                  {error && <Alert severity="error" sx={{ mb: 2.5 }}>{error}</Alert>}
 
-              {needsProfileCompletion ? (
-                <Box sx={{ display: 'grid', gap: 1.5 }}>
-                  <FormControl fullWidth>
-                    <InputLabel id="base-language-label">Native Language</InputLabel>
-                    <Select
-                      labelId="base-language-label"
-                      value={baseLanguage}
-                      label="Native Language"
-                      onChange={(event) => setBaseLanguage(event.target.value)}
-                      disabled={loading}
-                    >
-                      <MenuItem value="ru">Russian</MenuItem>
-                      <MenuItem value="en">English</MenuItem>
-                      <MenuItem value="es">Spanish</MenuItem>
-                    </Select>
-                  </FormControl>
+                  {registrationSuccess ? (
+                    <Box sx={{ textAlign: 'center', py: 2 }}>
+                      <Alert severity="success" sx={{ mb: 2 }}>
+                        Registration successful
+                      </Alert>
+                      <Button
+                        component={RouterLink}
+                        to="/login"
+                        variant="contained"
+                        color="secondary"
+                        sx={{ mt: 1 }}
+                      >
+                        Back to login
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Box component="form" onSubmit={handleTestAuthSubmit} sx={{ display: 'grid', gap: 2 }}>
+                      <TextField
+                        fullWidth
+                        label="Username"
+                        variant="outlined"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        disabled={loading}
+                        autoComplete="username"
+                        autoFocus
+                      />
 
-                  <FormControl fullWidth>
-                    <InputLabel id="target-language-label">Learning Language</InputLabel>
-                    <Select
-                      labelId="target-language-label"
-                      value={targetLanguage}
-                      label="Learning Language"
-                      onChange={(event) => setTargetLanguage(event.target.value)}
-                      disabled={loading}
-                    >
-                      <MenuItem value="en">English</MenuItem>
-                      <MenuItem value="es">Spanish</MenuItem>
-                      <MenuItem value="ru">Russian</MenuItem>
-                    </Select>
-                  </FormControl>
+                      {isRegisterRoute && (
+                        <>
+                          <FormControl fullWidth>
+                            <InputLabel id="base-language-label">Native Language</InputLabel>
+                            <Select
+                              labelId="base-language-label"
+                              value={baseLanguage}
+                              label="Native Language"
+                              onChange={(event) => setBaseLanguage(event.target.value)}
+                              disabled={loading}
+                            >
+                              <MenuItem value="ru">Russian</MenuItem>
+                              <MenuItem value="en">English</MenuItem>
+                              <MenuItem value="es">Spanish</MenuItem>
+                            </Select>
+                          </FormControl>
 
-                  <FormControl fullWidth>
-                    <InputLabel id="level-label">Level</InputLabel>
-                    <Select
-                      labelId="level-label"
-                      value={desiredLevel}
-                      label="Level"
-                      onChange={(event) => setDesiredLevel(event.target.value)}
-                      disabled={loading}
-                    >
-                      <MenuItem value="A0">A0</MenuItem>
-                      <MenuItem value="A1">A1</MenuItem>
-                      <MenuItem value="A2">A2</MenuItem>
-                      <MenuItem value="B1">B1</MenuItem>
-                      <MenuItem value="B2">B2</MenuItem>
-                      <MenuItem value="C1">C1</MenuItem>
-                      <MenuItem value="C2">C2</MenuItem>
-                    </Select>
-                  </FormControl>
+                          <FormControl fullWidth>
+                            <InputLabel id="target-language-label">Learning Language</InputLabel>
+                            <Select
+                              labelId="target-language-label"
+                              value={targetLanguage}
+                              label="Learning Language"
+                              onChange={(event) => setTargetLanguage(event.target.value)}
+                              disabled={loading}
+                            >
+                              <MenuItem value="en">English</MenuItem>
+                              <MenuItem value="es">Spanish</MenuItem>
+                              <MenuItem value="ru">Russian</MenuItem>
+                            </Select>
+                          </FormControl>
 
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={handleProfileCompletion}
-                    disabled={loading}
-                    endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
-                    sx={{ mt: 1 }}
-                  >
-                    Continue
-                  </Button>
+                          <FormControl fullWidth>
+                            <InputLabel id="level-label">Level</InputLabel>
+                            <Select
+                              labelId="level-label"
+                              value={desiredLevel}
+                              label="Level"
+                              onChange={(event) => setDesiredLevel(event.target.value)}
+                              disabled={loading}
+                            >
+                              <MenuItem value="A0">A0</MenuItem>
+                              <MenuItem value="A1">A1</MenuItem>
+                              <MenuItem value="A2">A2</MenuItem>
+                              <MenuItem value="B1">B1</MenuItem>
+                              <MenuItem value="B2">B2</MenuItem>
+                              <MenuItem value="C1">C1</MenuItem>
+                              <MenuItem value="C2">C2</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </>
+                      )}
+
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        color="secondary"
+                        disabled={loading}
+                        endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
+                        sx={{ mt: 1, py: 1.2 }}
+                      >
+                        {isRegisterRoute ? 'Create account' : 'Log in'}
+                      </Button>
+
+                      <Box sx={{ textAlign: 'center', mt: 1 }}>
+                        {isRegisterRoute ? (
+                          <Button
+                            component={RouterLink}
+                            to="/login"
+                            variant="text"
+                            sx={{ color: 'text.secondary' }}
+                          >
+                            Log in instead
+                          </Button>
+                        ) : (
+                          <Button
+                            component={RouterLink}
+                            to="/register"
+                            variant="text"
+                            sx={{ color: 'text.secondary' }}
+                          >
+                            Sign up
+                          </Button>
+                        )}
+                      </Box>
+                    </Box>
+                  )}
                 </Box>
               ) : (
-                <Box sx={{ width: '100%', minHeight: 44, display: 'flex', alignItems: 'center' }}>
-                  {loading ? (
-                    <CircularProgress size={24} />
+                // ==========================================
+                // GOOGLE OAUTH FLOW
+                // ==========================================
+                <Box>
+                  <Typography variant="overline" color="secondary.main">
+                    {needsProfileCompletion ? 'Step 2 of 2' : 'Welcome'}
+                  </Typography>
+                  <Typography variant="h2" sx={{ fontSize: { xs: '2rem', sm: '2.45rem' }, mt: 0.45, mb: 1 }}>
+                    {needsProfileCompletion ? 'Set up your deck' : 'Make every new word count.'}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                    {needsProfileCompletion
+                      ? 'Choose a language pair and level so your cards give you the right support.'
+                      : 'Sign in to collect words and turn them into focused practice.'}
+                  </Typography>
+
+                  {error && <Alert severity="error" sx={{ mb: 2.5 }}>{error}</Alert>}
+
+                  {needsProfileCompletion ? (
+                    <Box sx={{ display: 'grid', gap: 1.5 }}>
+                      <FormControl fullWidth>
+                        <InputLabel id="base-language-label">Native Language</InputLabel>
+                        <Select
+                          labelId="base-language-label"
+                          value={baseLanguage}
+                          label="Native Language"
+                          onChange={(event) => setBaseLanguage(event.target.value)}
+                          disabled={loading}
+                        >
+                          <MenuItem value="ru">Russian</MenuItem>
+                          <MenuItem value="en">English</MenuItem>
+                          <MenuItem value="es">Spanish</MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      <FormControl fullWidth>
+                        <InputLabel id="target-language-label">Learning Language</InputLabel>
+                        <Select
+                          labelId="target-language-label"
+                          value={targetLanguage}
+                          label="Learning Language"
+                          onChange={(event) => setTargetLanguage(event.target.value)}
+                          disabled={loading}
+                        >
+                          <MenuItem value="en">English</MenuItem>
+                          <MenuItem value="es">Spanish</MenuItem>
+                          <MenuItem value="ru">Russian</MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      <FormControl fullWidth>
+                        <InputLabel id="level-label">Level</InputLabel>
+                        <Select
+                          labelId="level-label"
+                          value={desiredLevel}
+                          label="Level"
+                          onChange={(event) => setDesiredLevel(event.target.value)}
+                          disabled={loading}
+                        >
+                          <MenuItem value="A0">A0</MenuItem>
+                          <MenuItem value="A1">A1</MenuItem>
+                          <MenuItem value="A2">A2</MenuItem>
+                          <MenuItem value="B1">B1</MenuItem>
+                          <MenuItem value="B2">B2</MenuItem>
+                          <MenuItem value="C1">C1</MenuItem>
+                          <MenuItem value="C2">C2</MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={handleProfileCompletion}
+                        disabled={loading}
+                        endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
+                        sx={{ mt: 1 }}
+                      >
+                        Continue
+                      </Button>
+                    </Box>
                   ) : (
-                    <GoogleLogin
-                      onSuccess={handleGoogleSuccess}
-                      onError={handleGoogleError}
-                      theme="outline"
-                      size="large"
-                      shape="rectangular"
-                      text="continue_with"
-                      width="100%"
-                    />
+                    <Box sx={{ width: '100%', minHeight: 44, display: 'flex', alignItems: 'center' }}>
+                      {loading ? (
+                        <CircularProgress size={24} />
+                      ) : (
+                        <GoogleLogin
+                          onSuccess={handleGoogleSuccess}
+                          onError={handleGoogleError}
+                          theme="outline"
+                          size="large"
+                          shape="rectangular"
+                          text="continue_with"
+                          width="100%"
+                        />
+                      )}
+                    </Box>
                   )}
                 </Box>
               )}

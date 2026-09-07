@@ -5,19 +5,25 @@ import { prisma } from '../../prisma';
 import { validateRequest } from '../../middleware/validate';
 import { authMiddleware } from '../../middleware/auth';
 import { getAuthUser } from './auth.service';
-import { GoogleAuthRequestSchema, GoogleAuthRequest, AuthResponse } from './auth.type';
+import {
+  GoogleAuthRequestSchema,
+  GoogleAuthRequest,
+  UsernameAuthRequestSchema,
+  UsernameAuthRequest,
+  AuthResponse
+} from './auth.type';
 import { env } from '../../core/env';
 
 const router = Router();
 const JWT_SECRET = env.JWT_SECRET;
 const MERCURE_JWT_SECRET = env.MERCURE_JWT_KEY || env.MERCURE_JWT;
 
-const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID || undefined);
 
-function createMercureToken(userId: number) {
+function createMercureToken(identifier: string | number) {
   // Use the BASE_DOMAIN from env, fallback to http://localhost
   const baseDomain = env.BASE_DOMAIN || 'http://localhost';
-  const topic = `${baseDomain}/v1/users/${userId}`;
+  const topic = `${baseDomain}/v1/users/${identifier}`;
   
   return jwt.sign(
     { mercure: { subscribe: [topic] } },
@@ -26,7 +32,144 @@ function createMercureToken(userId: number) {
   );
 }
 
+// ==========================================
+// TEST USERNAME AUTH (for tests & dev)
+// ==========================================
+
+router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req: Request<{}, {}, UsernameAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+  if (env.ENABLE_TEST_AUTH !== 'true') {
+    return res.status(403).json({ error: 'Test authentication is disabled' });
+  }
+
+  const { username } = req.body;
+
+  try {
+    const email = username.includes('@') ? username : `${username}@test.local`;
+
+    const existingAccount = await prisma.account.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: 'test-username',
+          providerAccountId: username,
+        },
+      },
+    });
+
+    const existingUser = existingAccount ? true : await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          { email: username }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name: username,
+        state: {
+          create: {}
+        },
+        accounts: {
+          create: {
+            provider: 'test-username',
+            providerAccountId: username,
+          }
+        }
+      }
+    });
+
+    const mercureToken = createMercureToken(username);
+    const token = jwt.sign({ id: user.id, email: user.email, username }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.json({
+      token,
+      mercureToken,
+      user: {
+        id: user.id,
+        username,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+        isNewUser: true,
+      }
+    });
+  } catch (error) {
+    console.error('Test register error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/login', validateRequest(UsernameAuthRequestSchema), async (req: Request<{}, {}, UsernameAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+  if (env.ENABLE_TEST_AUTH !== 'true') {
+    return res.status(403).json({ error: 'Test authentication is disabled' });
+  }
+
+  const { username } = req.body;
+
+  try {
+    const existingAccount = await prisma.account.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: 'test-username',
+          providerAccountId: username,
+        },
+      },
+      include: { user: true },
+    });
+
+    let user = existingAccount?.user;
+
+    if (!user) {
+      const email = username.includes('@') ? username : `${username}@test.local`;
+      user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email },
+            { email: username }
+          ]
+        }
+      }) || undefined;
+    }
+
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    const mercureToken = createMercureToken(username);
+    const token = jwt.sign({ id: user.id, email: user.email, username }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.json({
+      token,
+      mercureToken,
+      user: {
+        id: user.id,
+        username,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+      }
+    });
+  } catch (error) {
+    console.error('Test login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ==========================================
+// GOOGLE OAUTH
+// ==========================================
+
 router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Request<{}, {}, GoogleAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+  if (!env.GOOGLE_CLIENT_ID) {
+    return res.status(500).json({ error: 'Google OAuth is not configured on the server' });
+  }
+
   const { credential } = req.body;
 
   try {
@@ -92,8 +235,9 @@ router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Req
       }
     }
 
-    const mercureToken = createMercureToken(user.id);
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    const username = user.name || user.email;
+    const mercureToken = createMercureToken(username);
+    const token = jwt.sign({ id: user.id, email: user.email, username }, JWT_SECRET, { expiresIn: '7d' });
     
     res.json({
       token,
@@ -101,6 +245,7 @@ router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Req
       user: {
         id: user.id,
         email: user.email,
+        username,
         name: user.name,
         picture: user.picture,
         isNewUser,
@@ -112,6 +257,10 @@ router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Req
   }
 });
 
+// ==========================================
+// CURRENT USER PROFILE
+// ==========================================
+
 router.get('/me', authMiddleware, async (req: Request, res: Response) => {
   const authUser = getAuthUser(req);
   const user = await prisma.user.findUnique({ where: { id: authUser.id } });
@@ -120,7 +269,15 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
-  res.json({ user: { id: user.id, email: user.email, name: user.name, picture: user.picture } });
+  res.json({
+    user: {
+      id: user.id,
+      email: user.email,
+      username: authUser.username || user.name || user.email,
+      name: user.name,
+      picture: user.picture
+    }
+  });
 });
 
 export default router;

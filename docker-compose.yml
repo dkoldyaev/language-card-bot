@@ -20,6 +20,7 @@ services:
       - REDIS_URL=${BASE_REDIS_URL}
       - CORS_ORIGIN=${BASE_CORS_ORIGIN}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - ENABLE_TEST_AUTH=${BASE_ENABLE_TEST_AUTH:-true}
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -72,12 +73,14 @@ services:
         - BASE_DOMAIN=${FRONTEND_BASE_DOMAIN}
         - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
         - ALLOWED_HOSTS=${FRONTEND_ALLOWED_HOSTS}
+        - AUTH_PROVIDER=${FRONTEND_AUTH_PROVIDER:-google}
     environment:
       - API_BASE_URL=${FRONTEND_API_BASE_URL}
       - MERCURE_PUBLIC_URL=${FRONTEND_MERCURE_PUBLIC_URL}
       - BASE_DOMAIN=${FRONTEND_BASE_DOMAIN}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - ALLOWED_HOSTS=${FRONTEND_ALLOWED_HOSTS}
+      - AUTH_PROVIDER=${FRONTEND_AUTH_PROVIDER:-google}
 
 volumes:
   redis_data:

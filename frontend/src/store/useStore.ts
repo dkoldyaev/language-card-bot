@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface UserProfile {
+export interface UserProfile {
   id: number;
   username: string;
+  email?: string;
+  name?: string | null;
+  picture?: string | null;
 }
 
 export interface SettingsState {

@@ -17,7 +17,8 @@ const envSchema = z.object({
   BASE_DOMAIN: z.string(),
   REDIS_URL: z.string(),
   CORS_ORIGIN: z.string(),
-  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_ID: z.string().optional().default(''),
+  ENABLE_TEST_AUTH: z.string().optional().default('true'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

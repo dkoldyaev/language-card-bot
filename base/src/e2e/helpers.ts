@@ -14,8 +14,14 @@ export async function setupTestUser(username: string): Promise<{ token: string, 
   await request(app).post('/api/v1/auth/register').send({ username });
   const loginRes = await request(app).post('/api/v1/auth/login').send({ username });
   
-  const userInDb = await prisma.user.findUnique({
-    where: { username },
+  const email = username.includes('@') ? username : `${username}@test.local`;
+  const userInDb = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email },
+        { accounts: { some: { provider: 'test-username', providerAccountId: username } } }
+      ]
+    },
     include: { state: true, settings: true }
   });
   
