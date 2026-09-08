@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { register, login, addWordsToDictionary, setupSettings } from './helpers';
+import { register, login } from './helpers';
 
 test.describe('English Card Bot Frontend E2E', () => {
   test.beforeEach(async ({ page }, testInfo) => {
@@ -25,12 +25,11 @@ test.describe('English Card Bot Frontend E2E', () => {
   test('should navigate to Settings and save settings', async ({ page }) => {
     // Navigate to settings
     await page.goto('/settings');
-    await expect(page.locator('h4:has-text("Settings")')).toBeVisible();
+    await expect(page.locator('h1:has-text("Settings & Dictionaries")')).toBeVisible();
 
     // Select options if possible (checking the selects exist)
     await expect(page.locator('[data-testid="base-language-select"]')).toBeVisible();
     await expect(page.locator('[data-testid="learned-language-select"]')).toBeVisible();
-    await expect(page.locator('[data-testid="level-select"]')).toBeVisible();
 
     // Check if Save button is there.
     await expect(page.locator('button:has-text("Save Settings")')).toBeVisible();

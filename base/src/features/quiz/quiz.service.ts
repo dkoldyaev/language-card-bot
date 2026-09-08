@@ -6,10 +6,11 @@ export type QuizCardData = {
   definition: Definition & { translation: DefinitionTranslation | null };
 };
 
-export async function generateQuizCard(userId: number, excludeWordId?: number): Promise<QuizCardData | null> {
+export async function generateQuizCard(userId: number, dictionaryId: number, excludeWordId?: number): Promise<QuizCardData | null> {
   const wordsWithDefs = await prisma.word.findMany({
     where: {
-      userId,
+      dictionaryId,
+      dictionary: { userId },
       ...(excludeWordId ? { id: { not: excludeWordId } } : {}),
       definitions: {
         some: {} // Must have at least one definition
@@ -22,7 +23,7 @@ export async function generateQuizCard(userId: number, excludeWordId?: number): 
     if (excludeWordId) {
       // Fallback to any word if no other words exist
       const fallback = await prisma.word.findMany({
-        where: { userId, definitions: { some: {} } },
+        where: { dictionaryId, dictionary: { userId }, definitions: { some: {} } },
         select: { id: true }
       });
       if (fallback.length === 0) return null;
@@ -55,7 +56,7 @@ export async function generateQuizCard(userId: number, excludeWordId?: number): 
     word: {
       id: word.id,
       text: word.text,
-      userId: word.userId,
+      dictionaryId: word.dictionaryId,
       createdAt: word.createdAt
     },
     definition: randomDef
@@ -82,10 +83,11 @@ export async function getNextDefinition(wordId: number, currentDefinitionId: num
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-export async function getQuizVariants(userId: number, currentWordId: number): Promise<string[]> {
+export async function getQuizVariants(userId: number, dictionaryId: number, currentWordId: number): Promise<string[]> {
   const incorrectWords = await prisma.word.findMany({
     where: {
-      userId,
+      dictionaryId,
+      dictionary: { userId },
       id: { not: currentWordId }
     },
     select: { text: true }

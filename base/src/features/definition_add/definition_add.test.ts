@@ -60,9 +60,17 @@ describe('POST /api/v1/definition_add', () => {
     const mockWord = {
       id: 1,
       text: 'test',
-      userId: 1,
+      dictionaryId: 1,
       createdAt: new Date(),
-      definitions: [{ id: 1, text: 'old def', wordId: 1, createdAt: new Date() }]
+      definitions: [{ id: 1, text: 'old def', wordId: 1, createdAt: new Date() }],
+      dictionary: {
+        id: 1,
+        userId: 1,
+        name: 'EN (RU)',
+        targetLanguage: 'en',
+        baseLanguage: 'ru',
+        createdAt: new Date(),
+      }
     };
 
     const newDef = {

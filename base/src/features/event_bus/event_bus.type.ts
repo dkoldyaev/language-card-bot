@@ -8,6 +8,8 @@ export interface BaseMercureEvent {
 
 export interface StateSyncMercureEvent extends BaseMercureEvent {
   type: 'state_sync';
+  activeDictionaryId?: number | null;
+  activeDictionary?: { id: number; name: string; targetLanguage: string; baseLanguage: string } | null;
   currentWordId?: number | null;
   currentWord?: { id: number; text: string } | null;
   showVariants?: boolean;
@@ -30,8 +32,20 @@ export interface SettingsSyncMercureEvent extends BaseMercureEvent {
   settings: {
     baseLanguage: string;
     targetLanguage: string;
-    desiredLevel: string;
   };
+}
+
+export interface DictionariesSyncMercureEvent extends BaseMercureEvent {
+  type: 'dictionaries_sync';
+  dictionaries: {
+    id: number;
+    name: string;
+    targetLanguage: string;
+    baseLanguage: string;
+    wordCount?: number;
+    isActive?: boolean;
+  }[];
+  activeDictionaryId?: number | null;
 }
 
 export interface DictionaryAddDuplicateEvent extends BaseMercureEvent {
@@ -93,6 +107,7 @@ export type MercureEvent =
   | StateSyncMercureEvent 
   | EchoMercureEvent 
   | SettingsSyncMercureEvent
+  | DictionariesSyncMercureEvent
   | DictionaryAddDuplicateEvent
   | DictionaryAddProcessingEvent
   | DictionaryAddDefinitionsReceivedEvent

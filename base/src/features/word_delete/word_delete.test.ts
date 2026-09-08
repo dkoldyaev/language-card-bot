@@ -56,9 +56,17 @@ describe('Word Delete Endpoint', () => {
     prismaMock.word.findUnique.mockResolvedValue({
       id: 99,
       text: 'hello',
-      userId: 2, // belongs to another user
-      createdAt: new Date()
-    });
+      dictionaryId: 2,
+      createdAt: new Date(),
+      dictionary: {
+        id: 2,
+        userId: 2,
+        name: 'Other',
+        targetLanguage: 'en',
+        baseLanguage: 'ru',
+        createdAt: new Date(),
+      }
+    } as any);
 
     const res = await request(app)
       .delete('/api/v1/word_delete/99')
@@ -74,16 +82,24 @@ describe('Word Delete Endpoint', () => {
     prismaMock.word.findUnique.mockResolvedValue({
       id: 99,
       text: 'hello',
-      userId: 1,
-      createdAt: new Date()
-    });
+      dictionaryId: 1,
+      createdAt: new Date(),
+      dictionary: {
+        id: 1,
+        userId: 1,
+        name: 'Mine',
+        targetLanguage: 'en',
+        baseLanguage: 'ru',
+        createdAt: new Date(),
+      }
+    } as any);
 
     prismaMock.word.delete.mockResolvedValue({
       id: 99,
       text: 'hello',
-      userId: 1,
+      dictionaryId: 1,
       createdAt: new Date()
-    });
+    } as any);
 
     const res = await request(app)
       .delete('/api/v1/word_delete/99')

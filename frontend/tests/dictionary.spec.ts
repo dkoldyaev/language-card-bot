@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { register, login, addWordsToDictionary, setupSettings } from './helpers';
+import { register, login, addWordsToDictionary } from './helpers';
 
 test.describe('Dictionary Operations', () => {
   test.beforeEach(async ({ page }, testInfo) => {

@@ -10,6 +10,9 @@ import useStore from '../../../store/useStore';
 export default function QuizStartScreen() {
   const [starting, setStarting] = useState(false);
   const dictionary = useStore((state) => state.dictionary);
+  const dictionaries = useStore((state) => state.dictionaries);
+  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
+  const activeDict = dictionaries.find((d) => d.id === activeDictionaryId) || dictionaries[0];
 
   const handleStartQuiz = async () => {
     if (dictionary.length === 0) return;
@@ -73,13 +76,15 @@ export default function QuizStartScreen() {
 
           <Box sx={{ p: { xs: 3, sm: 4.5 }, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <Typography variant="overline" color="secondary.main">
-              Quiz
+              Quiz Practice {activeDict && `• ${activeDict.name} (${activeDict.targetLanguage.toUpperCase()})`}
             </Typography>
             <Typography variant="h2" sx={{ fontSize: { xs: '2rem', sm: '2.55rem' }, mt: 0.5, mb: 1.25 }}>
               Ready to test your vocabulary?
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 440, mb: 3 }}>
-              We show a definition. You recall the word. Hints are there when you need them.
+              {activeDict
+                ? `Practising words from "${activeDict.name}". Recall the word from its definition.`
+                : 'We show a definition. You recall the word. Hints are there when you need them.'}
             </Typography>
             <Box sx={{ display: 'grid', gap: 1.25, mb: 3.25 }}>
               {['Use definitions from your own dictionary', 'Type an answer or choose from variants', 'Move on whenever you are ready'].map((item) => (

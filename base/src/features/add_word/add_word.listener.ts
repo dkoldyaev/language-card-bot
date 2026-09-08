@@ -22,10 +22,10 @@ appEvents.on(Events.WORD_ADDED, async (payload: WordAddedPayload) => {
 
 // 2. Trigger: Start asynchronous loading of translations (definitions)
 appEvents.on(Events.WORD_ADDED, async (payload: WordAddedPayload) => {
-  const { userId, username, wordId, wordText } = payload;
+  const { userId, username, wordId, wordText, dictionaryId } = payload;
   
   try {
-    await enqueueFetchDefinitions(userId, username, wordId, wordText);
+    await enqueueFetchDefinitions(userId, username, wordId, wordText, dictionaryId);
   } catch (error) {
     console.error('Error in WORD_ADDED listener (BullMQ):', error);
   }

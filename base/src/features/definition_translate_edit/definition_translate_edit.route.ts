@@ -25,7 +25,9 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
     const definition = await prisma.definition.findUnique({
       where: { id: definitionId },
       include: {
-        word: true,
+        word: {
+          include: { dictionary: true }
+        },
         translation: true
       }
     });
@@ -34,7 +36,7 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Definition not found' });
     }
 
-    if (definition.word.userId !== userId) {
+    if (definition.word.dictionary.userId !== userId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 

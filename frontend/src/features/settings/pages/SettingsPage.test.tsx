@@ -9,7 +9,7 @@ describe('Settings', () => {
   beforeEach(() => {
     // Reset store and add some initial state
     useStore.setState({
-      settings: { baseLanguage: 'ru', targetLanguage: 'en', desiredLevel: 'B2' }
+      settings: { baseLanguage: 'ru', targetLanguage: 'en' }
     });
     
     vi.spyOn(apiClient, 'get').mockResolvedValue({ data: {} });
@@ -21,7 +21,7 @@ describe('Settings', () => {
     render(<Settings />);
     
     // Form should render immediately (synchronously from store)
-    expect(screen.getByText('Settings')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Settings/i })).toBeInTheDocument();
     
     // apiClient.get should NOT be called on mount
     expect(apiClient.get).not.toHaveBeenCalled();
@@ -34,8 +34,7 @@ describe('Settings', () => {
     await user.click(saveButton);
     expect(apiClient.post).toHaveBeenCalledWith('/settings', {
       baseLanguage: 'ru',
-      targetLanguage: 'en',
-      desiredLevel: 'B2'
+      targetLanguage: 'en'
     });
   });
 });

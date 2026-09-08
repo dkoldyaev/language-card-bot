@@ -65,9 +65,13 @@ describe('PUT /api/v1/definition_edit/:id', () => {
       word: {
         id: 1,
         text: 'word',
-        userId: 99, // Different user
+        dictionaryId: 99,
         createdAt: new Date(),
-        definitions: []
+        definitions: [],
+        dictionary: {
+          id: 99,
+          userId: 99,
+        }
       }
     } as any);
 
@@ -86,12 +90,16 @@ describe('PUT /api/v1/definition_edit/:id', () => {
     const mockWord = {
       id: 10,
       text: 'word',
-      userId: 1,
+      dictionaryId: 1,
       createdAt: new Date(),
       definitions: [
         { id: 1, text: 'old text', wordId: 10, createdAt: new Date() },
         { id: 2, text: 'another text', wordId: 10, createdAt: new Date() }
-      ]
+      ],
+      dictionary: {
+        id: 1,
+        userId: 1,
+      }
     };
 
     const mockDefinition = {

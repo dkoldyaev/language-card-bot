@@ -7,12 +7,19 @@ export const queueConnection = new IORedis(redisUrl, { maxRetriesPerRequest: nul
 
 export const dictionaryQueue = new Queue('dictionaryQueue', { connection: queueConnection });
 
-export async function enqueueFetchDefinitions(userId: number, username: string, wordId: number, wordText: string) {
+export async function enqueueFetchDefinitions(
+  userId: number,
+  username: string,
+  wordId: number,
+  wordText: string,
+  dictionaryId?: number
+) {
   await dictionaryQueue.add('fetchDefinitions', {
     userId,
     username,
     wordId,
-    wordText
+    wordText,
+    dictionaryId,
   });
 }
 
@@ -23,7 +30,9 @@ export async function enqueueFetchTranslation(
   username: string,
   wordId: number,
   wordText: string,
-  totalDefinitions: number
+  totalDefinitions: number,
+  sourceLanguage?: string,
+  targetLanguage?: string
 ) {
   await dictionaryQueue.add('fetchTranslation', {
     definitionId,
@@ -32,6 +41,8 @@ export async function enqueueFetchTranslation(
     username,
     wordId,
     wordText,
-    totalDefinitions
+    totalDefinitions,
+    sourceLanguage,
+    targetLanguage,
   });
 }

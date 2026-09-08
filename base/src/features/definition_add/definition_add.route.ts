@@ -20,10 +20,13 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
     const word = await prisma.word.findFirst({
       where: {
         id: wordId,
-        userId: userId
+        dictionary: {
+          userId: userId
+        }
       },
       include: {
-        definitions: true
+        definitions: true,
+        dictionary: true
       }
     });
 
@@ -47,7 +50,8 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       username,
       wordId: word.id,
       wordText: word.text,
-      totalDefinitions
+      totalDefinitions,
+      dictionaryId: word.dictionaryId
     });
 
     res.json({ message: 'Definition added successfully', definitionId: newDefinition.id });

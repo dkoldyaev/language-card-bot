@@ -19,7 +19,9 @@ router.post('/bulk', authMiddleware, async (req: Request<{}, {}, { wordIds: numb
         id: {
           in: wordIds
         },
-        userId: userId
+        dictionary: {
+          userId: userId
+        }
       }
     });
 
@@ -42,6 +44,9 @@ router.delete('/:wordId', authMiddleware, async (req: Request<{ wordId: string }
     const existingWord = await prisma.word.findUnique({
       where: {
         id: wordId
+      },
+      include: {
+        dictionary: true
       }
     });
 
@@ -49,7 +54,7 @@ router.delete('/:wordId', authMiddleware, async (req: Request<{ wordId: string }
       return res.status(404).json({ error: 'Word not found' });
     }
 
-    if (existingWord.userId !== userId) {
+    if (existingWord.dictionary.userId !== userId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 

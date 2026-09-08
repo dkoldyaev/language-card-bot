@@ -13,6 +13,7 @@ import definitionAddRoutes from './features/definition_add/definition_add.route'
 import definitionEditRoutes from './features/definition_edit/definition_edit.route';
 import definitionTranslateEditRoutes from './features/definition_translate_edit/definition_translate_edit.route';
 import quizRoutes from './features/quiz/quiz.route';
+import dictionariesRoutes from './features/dictionaries/dictionaries.route';
 import './features/add_word/add_word.worker';
 import './features/add_word/add_word.listener';
 import './features/definition_add/definition_add.listener';
@@ -33,6 +34,7 @@ app.use('/api/v1/state', stateRoutes);
 app.use('/api/v1/add_word', addWordRoutes);
 app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/dictionary', dictionaryRoutes);
+app.use('/api/v1/dictionaries', dictionariesRoutes);
 app.use('/api/v1/definition_delete', definitionDeleteRoutes);
 app.use('/api/v1/word_delete', wordDeleteRoutes);
 app.use('/api/v1/definition_add', definitionAddRoutes);

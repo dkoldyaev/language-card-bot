@@ -1,12 +1,12 @@
 import { Page, expect } from '@playwright/test';
 
-export async function register(page: Page, username: string, baseLang = 'en', targetLang = 'ru', level = 'A1') {
+export async function register(page: Page, username: string, baseLang = 'en', targetLang = 'ru') {
   await page.goto('/register');
   await expect(page.locator('button:has-text("Create account")')).toBeVisible();
   await page.getByLabel(/Username|Login/i).fill(username);
 
   // Call setupSettings which fills the selects by label
-  await setupSettings(page, baseLang, targetLang, level);
+  await setupSettings(page, baseLang, targetLang);
 
   await page.click('button:has-text("Create account")');
   await expect(page.locator('text=Registration successful')).toBeVisible();
@@ -54,7 +54,7 @@ export async function addWordsAndAwaitDefinitions(page: Page, words: string[]) {
   }
 }
 
-export async function setupSettings(page: Page, baseLang = 'en', targetLang = 'ru', level = 'A1') {
+export async function setupSettings(page: Page, baseLang = 'en', targetLang = 'ru') {
   // Select base language
   await page.getByLabel('Native Language').click();
   await page.locator(`li[data-value="${baseLang}"]`).click();
@@ -62,8 +62,4 @@ export async function setupSettings(page: Page, baseLang = 'en', targetLang = 'r
   // Select target language
   await page.getByLabel('Learning Language').click();
   await page.locator(`li[data-value="${targetLang}"]`).click();
-
-  // Select level
-  await page.getByLabel('Level').click();
-  await page.locator(`li[data-value="${level}"]`).click();
 }

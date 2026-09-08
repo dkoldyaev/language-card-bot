@@ -6,7 +6,7 @@ import { publishEvent } from '../event_bus/event_bus.service';
 import { QuizCardMercureEvent, QuizVariantsMercureEvent, QuizDefinitionTranslationMercureEvent, QuizAnswerEvaluationMercureEvent } from '../event_bus/event_bus.type';
 import { generateQuizCard, getQuizVariants, getNextDefinition } from './quiz.service';
 import { evaluateSuggestion } from './evaluation.service';
-
+import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
 
 const router = Router();
 
@@ -14,7 +14,8 @@ router.post('/start', authMiddleware, async (req: Request, res: Response) => {
   const user = getAuthUser(req);
   
   try {
-    const cardData = await generateQuizCard(user.id);
+    const dict = await ensureActiveDictionary(user.id);
+    const cardData = await generateQuizCard(user.id, dict.id);
     
     if (!cardData) {
       return res.status(400).json({ error: 'Not enough words in dictionary to start quiz' });
@@ -23,6 +24,7 @@ router.post('/start', authMiddleware, async (req: Request, res: Response) => {
     await prisma.userState.update({
       where: { userId: user.id },
       data: {
+        activeDictionaryId: dict.id,
         showVariants: false,
         showDefinitionTranslation: false,
         currentDefinitionId: cardData.definition.id,
@@ -41,7 +43,7 @@ router.post('/start', authMiddleware, async (req: Request, res: Response) => {
       }
     };
     
-    await publishEvent(user.username, event);
+    await publishEvent(user.username, event).catch((e) => console.error('Mercure publish error:', e));
 
     res.json({ message: 'Quiz started', card: event });
   } catch (error) {
@@ -60,7 +62,8 @@ router.post('/variants', authMiddleware, async (req: Request, res: Response) => 
       return res.status(400).json({ error: 'Quiz not active or current word not set' });
     }
 
-    const variants = await getQuizVariants(user.id, userState.currentWordId);
+    const dictId = userState.activeDictionaryId || (await ensureActiveDictionary(user.id)).id;
+    const variants = await getQuizVariants(user.id, dictId, userState.currentWordId);
 
     await prisma.userState.update({
       where: { userId: user.id },
@@ -73,7 +76,7 @@ router.post('/variants', authMiddleware, async (req: Request, res: Response) => 
       variants
     };
 
-    await publishEvent(user.username, event);
+    await publishEvent(user.username, event).catch((e) => console.error('Mercure publish error:', e));
 
     res.json({ message: 'Variants fetched', variants });
   } catch (error) {
@@ -112,7 +115,7 @@ router.post('/translate_definition', authMiddleware, async (req: Request, res: R
       translation: definition.translation.text
     };
 
-    await publishEvent(user.username, event);
+    await publishEvent(user.username, event).catch((e) => console.error('Mercure publish error:', e));
 
     res.json({ message: 'Translation fetched', translation: definition.translation.text });
   } catch (error) {
@@ -153,7 +156,7 @@ router.post('/answer', authMiddleware, async (req: Request, res: Response) => {
       suggestion: suggestion.trim()
     };
 
-    await publishEvent(user.username, event);
+    await publishEvent(user.username, event).catch((e) => console.error('Mercure publish error:', e));
 
     res.json({ message: 'Answer evaluated', evaluation: event });
   } catch (error) {
@@ -171,7 +174,8 @@ router.post('/next_card', authMiddleware, async (req: Request, res: Response) =>
       return res.status(400).json({ error: 'Quiz not active' });
     }
 
-    const cardData = await generateQuizCard(user.id, userState.currentWordId || undefined);
+    const dictId = userState.activeDictionaryId || (await ensureActiveDictionary(user.id)).id;
+    const cardData = await generateQuizCard(user.id, dictId, userState.currentWordId || undefined);
     
     if (!cardData) {
       return res.status(400).json({ error: 'Not enough words to pick a new card' });
@@ -180,6 +184,7 @@ router.post('/next_card', authMiddleware, async (req: Request, res: Response) =>
     await prisma.userState.update({
       where: { userId: user.id },
       data: {
+        activeDictionaryId: dictId,
         showVariants: false,
         showDefinitionTranslation: false,
         currentDefinitionId: cardData.definition.id,
@@ -198,7 +203,7 @@ router.post('/next_card', authMiddleware, async (req: Request, res: Response) =>
       }
     };
     
-    await publishEvent(user.username, event);
+    await publishEvent(user.username, event).catch((e) => console.error('Mercure publish error:', e));
     res.json({ message: 'Next card generated', card: event });
   } catch (error) {
     console.error('Failed to generate next quiz card:', error);
@@ -241,7 +246,7 @@ router.post('/next_definition', authMiddleware, async (req: Request, res: Respon
       }
     };
 
-    await publishEvent(user.username, event);
+    await publishEvent(user.username, event).catch((e) => console.error('Mercure publish error:', e));
     res.json({ message: 'Next definition fetched', card: event });
   } catch (error) {
     console.error('Failed to fetch next definition:', error);

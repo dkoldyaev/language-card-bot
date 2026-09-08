@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import { useEffect } from 'react';
 import apiClient from '../api/client';
 import useStore from '../../store/useStore';
+import DictionarySelector from './DictionarySelector';
 
 export default function Layout() {
   const theme = useTheme();
@@ -11,9 +12,22 @@ export default function Layout() {
   const setDictionary = useStore((state) => state.setDictionary);
   const setSettings = useStore((state) => state.setSettings);
   const setAppState = useStore((state) => state.setAppState);
+  const setDictionaries = useStore((state) => state.setDictionaries);
+  const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
   const isOffline = useStore((state) => state.isOffline);
 
   useEffect(() => {
+    apiClient.get('/dictionaries')
+      .then((res) => {
+        if (res.data.dictionaries) {
+          setDictionaries(res.data.dictionaries);
+          if (res.data.activeDictionaryId) {
+            setActiveDictionaryId(res.data.activeDictionaryId);
+          }
+        }
+      })
+      .catch((error) => console.error('Failed to load dictionaries:', error));
+
     apiClient.get('/dictionary')
       .then((res) => {
         if (res.data.dictionary) {
@@ -37,7 +51,7 @@ export default function Layout() {
         }
       })
       .catch((error) => console.error('Failed to sync state:', error));
-  }, [setDictionary, setSettings, setAppState]);
+  }, [setDictionary, setSettings, setAppState, setDictionaries, setActiveDictionaryId]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
@@ -53,35 +67,55 @@ export default function Layout() {
           flexDirection: 'column',
         }}
       >
-        {isMobile && (
+        {isMobile ? (
           <Box
             sx={{
               minHeight: 64,
               px: 2,
               display: 'flex',
               alignItems: 'center',
-              gap: 1,
+              justifyContent: 'space-between',
               backgroundColor: 'rgba(247, 245, 239, 0.92)',
               borderBottom: '1px solid #DDDCD5',
               backdropFilter: 'blur(14px)',
             }}
           >
-            <Box component="img" src="/favicon.svg" alt="" sx={{ width: 28, height: 28 }} />
-            <Typography sx={{ fontWeight: 800, letterSpacing: '-0.035em' }}>CardBot</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box component="img" src="/favicon.svg" alt="" sx={{ width: 28, height: 28 }} />
+              <Typography sx={{ fontWeight: 800, letterSpacing: '-0.035em' }}>CardBot</Typography>
+            </Box>
+            <DictionarySelector />
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              maxWidth: 1120,
+              width: '100%',
+              mx: 'auto',
+              px: { xs: 2, sm: 3, md: 4 },
+              pt: 2.5,
+              pb: 0,
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <DictionarySelector />
           </Box>
         )}
+
         {isOffline && (
           <Alert severity="warning" sx={{ mx: { xs: 2, sm: 3 }, mt: 2 }}>
             You are offline. Only the quiz and offline dictionary edits are available. Changes will be synced when you reconnect.
           </Alert>
         )}
+
         <Box
           sx={{
             maxWidth: 1120,
             width: '100%',
             mx: 'auto',
             px: { xs: 2, sm: 3, md: 4 },
-            py: { xs: 3, md: 5 },
+            py: { xs: 3, md: 4 },
             flexGrow: 1,
           }}
         >

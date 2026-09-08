@@ -12,9 +12,17 @@ export interface UserProfile {
 export interface SettingsState {
   baseLanguage: string;
   targetLanguage: string;
-  desiredLevel: string;
 }
 
+export interface DictionaryItem {
+  id: number;
+  name: string;
+  targetLanguage: string;
+  baseLanguage: string;
+  wordCount: number;
+  isActive: boolean;
+  createdAt?: string;
+}
 
 export interface DictionaryTranslation {
   id: number;
@@ -61,6 +69,8 @@ interface AppState {
   syncQueue: SyncAction[];
   profile: UserProfile | null;
   settings: SettingsState | null;
+  dictionaries: DictionaryItem[];
+  activeDictionaryId: number | null;
   appState: any | null;
   dictionary: DictionaryWord[];
   quizCard: QuizCardData | null;
@@ -74,6 +84,11 @@ interface AppState {
   setMercureToken: (token: string | null) => void;
   setProfile: (profile: UserProfile | null) => void;
   setSettings: (settings: SettingsState | null) => void;
+  setDictionaries: (dictionaries: DictionaryItem[]) => void;
+  setActiveDictionaryId: (activeDictionaryId: number | null) => void;
+  addDictionary: (dictionary: DictionaryItem) => void;
+  removeDictionary: (id: number) => void;
+  updateDictionaryItem: (id: number, partial: Partial<DictionaryItem>) => void;
   setAppState: (appState: any) => void;
   setDictionary: (dictionary: DictionaryWord[]) => void;
   addDictionaryWord: (word: DictionaryWord) => void;
@@ -97,6 +112,8 @@ const initialState = {
   syncQueue: [] as SyncAction[],
   profile: null,
   settings: null,
+  dictionaries: [] as DictionaryItem[],
+  activeDictionaryId: null as number | null,
   appState: null,
   dictionary: [],
   quizCard: null,
@@ -118,6 +135,24 @@ const useStore = create<AppState>()(
       setMercureToken: (mercureToken) => set({ mercureToken }),
       setProfile: (profile) => set({ profile }),
       setSettings: (settings) => set({ settings }),
+      setDictionaries: (dictionaries) => set({ dictionaries }),
+      setActiveDictionaryId: (activeDictionaryId) => set((state) => ({
+        activeDictionaryId,
+        dictionaries: state.dictionaries.map(d => ({
+          ...d,
+          isActive: d.id === activeDictionaryId
+        }))
+      })),
+      addDictionary: (dict) => set((state) => ({
+        dictionaries: [...state.dictionaries, dict]
+      })),
+      removeDictionary: (id) => set((state) => ({
+        dictionaries: state.dictionaries.filter(d => d.id !== id),
+        activeDictionaryId: state.activeDictionaryId === id ? null : state.activeDictionaryId
+      })),
+      updateDictionaryItem: (id, partial) => set((state) => ({
+        dictionaries: state.dictionaries.map(d => d.id === id ? { ...d, ...partial } : d)
+      })),
       setAppState: (appState) => set((state) => {
         let quizCard = state.quizCard;
         if (appState && appState.currentWord && appState.currentDefinition) {
@@ -130,7 +165,16 @@ const useStore = create<AppState>()(
             }
           };
         }
-        return { appState, quizCard };
+        const activeDictionaryId = appState?.activeDictionaryId ?? state.activeDictionaryId;
+        return {
+          appState,
+          quizCard,
+          activeDictionaryId,
+          dictionaries: state.dictionaries.map(d => ({
+            ...d,
+            isActive: d.id === activeDictionaryId
+          }))
+        };
       }),
       setDictionary: (dictionary) => set((state) => {
         const dictionaryWordIds = new Set(dictionary.map(w => w.id));
@@ -230,9 +274,7 @@ const useStore = create<AppState>()(
       reset: () => set({ ...initialState, isOffline: !navigator.onLine }),
     }),
     {
-      name: 'english-card-bot-storage', // unique name
-      // you can also specify partialize here if you don't want to save some states (e.g., wordProcessing)
-      // but for now saving everything is fine to keep the user logged in
+      name: 'english-card-bot-storage',
     }
   )
 );

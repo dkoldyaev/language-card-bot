@@ -4,6 +4,7 @@ import { prisma } from '../../prisma';
 import { SettingsSyncMercureEvent } from '../event_bus/event_bus.type';
 import { publishEvent } from '../event_bus/event_bus.service';
 import { getAuthUser } from '../auth/auth.service';
+import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
 
 const router = Router();
 
@@ -11,22 +12,14 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
   const { id: userId } = getAuthUser(req);
 
   try {
-    let settings = await prisma.userSettings.findUnique({
-      where: { userId }
+    const dict = await ensureActiveDictionary(userId);
+
+    res.json({
+      settings: {
+        baseLanguage: dict.baseLanguage,
+        targetLanguage: dict.targetLanguage,
+      },
     });
-
-    if (!settings) {
-      settings = await prisma.userSettings.create({
-        data: {
-          userId,
-          baseLanguage: 'ru',
-          targetLanguage: 'en',
-          desiredLevel: 'B2',
-        }
-      });
-    }
-
-    res.json({ settings });
   } catch (error) {
     console.error('Get settings error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -34,35 +27,27 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
 });
 
 router.post('/', authMiddleware, async (req: Request, res: Response) => {
-
-
   const { id: userId, username } = getAuthUser(req);
-  const { baseLanguage, targetLanguage, desiredLevel } = req.body;
+  const { baseLanguage, targetLanguage } = req.body;
 
   try {
-    const settings = await prisma.userSettings.upsert({
-      where: { userId },
-      update: {
-        ...(baseLanguage && { baseLanguage }),
-        ...(targetLanguage && { targetLanguage }),
-        ...(desiredLevel && { desiredLevel }),
+    const dict = await ensureActiveDictionary(userId);
+
+    const updated = await prisma.dictionary.update({
+      where: { id: dict.id },
+      data: {
+        ...(baseLanguage && { baseLanguage: baseLanguage.toLowerCase() }),
+        ...(targetLanguage && { targetLanguage: targetLanguage.toLowerCase() }),
       },
-      create: {
-        userId,
-        baseLanguage: baseLanguage || 'ru',
-        targetLanguage: targetLanguage || 'en',
-        desiredLevel: desiredLevel || 'B2',
-      }
     });
 
     const payload: SettingsSyncMercureEvent = {
       version: 'v1',
       type: 'settings_sync',
       settings: {
-        baseLanguage: settings.baseLanguage,
-        targetLanguage: settings.targetLanguage,
-        desiredLevel: settings.desiredLevel,
-      }
+        baseLanguage: updated.baseLanguage,
+        targetLanguage: updated.targetLanguage,
+      },
     };
 
     try {
@@ -72,7 +57,13 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to publish to Mercure' });
     }
 
-    res.json({ settings, message: 'Settings saved and synced' });
+    res.json({
+      settings: {
+        baseLanguage: updated.baseLanguage,
+        targetLanguage: updated.targetLanguage,
+      },
+      message: 'Settings saved and synced',
+    });
   } catch (error) {
     console.error('Update settings error:', error);
     res.status(500).json({ error: 'Internal server error' });

@@ -13,6 +13,7 @@ export interface WordAddedPayload {
   username: string;
   wordId: number;
   wordText: string;
+  dictionaryId?: number;
 }
 
 export interface DefinitionAddedPayload {
@@ -23,6 +24,7 @@ export interface DefinitionAddedPayload {
   wordId: number;
   wordText: string;
   totalDefinitions: number;
+  dictionaryId?: number;
 }
 
 export interface TranslationAddedPayload {

@@ -4,12 +4,13 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 
 ## Completed Tasks
 
-- [x] **Settings Management Schema & API**: Implement database schema for `UserSettings` (baseLanguage, targetLanguage, desiredLevel) and create the `/api/v1/settings` endpoint to save/update user settings.
-- [x] **Mode Switching Endpoints**: Implement API endpoints (`/api/v1/switch_mode_dictionary_add`, `/api/v1/switch_mode_dictionary_edit`, `/api/v1/switch_mode_quiz`) to change the user's mode and update the `UserState` table in the database.
-- [x] **Word Addition Pipeline**: Implement the `/api/v1/add_word` endpoint to receive words and a background worker (`add_word.worker`) to process them (split by lines, check existence, download translations and definitions, save to DB).
-- [x] **Dictionary Edit - Word Deletion**: Implement the `/api/v1/word_delete` endpoint to remove a word from the database.
-- [x] **Dictionary Edit - Definition Management**: Implement endpoints to add (`/api/v1/definition_add`), delete (`/api/v1/definition_delete`), edit text (`/api/v1/definition_edit`), and edit translation (`/api/v1/definition_translate_edit`).
-- [x] **Mercure Integration Base**: Set up the generic event bus to publish state syncs and asynchronous word processing updates to clients via Mercure.
+- [x] **Multi-Dictionary Refactoring & CEFR Level Removal**:
+  - Implemented multi-dictionary architecture with independent `Dictionary` models per user (`name`, `targetLanguage`, `baseLanguage`, `userId`, `activeDictionaryId` on `UserState`).
+  - Scoped words to `dictionaryId` with uniqueness on `[dictionaryId, text]`.
+  - Scoped definitions, translations, word addition workers, and quiz (words and variants) strictly to the active dictionary.
+  - Added full dictionary CRUD endpoints (`GET /api/v1/dictionaries`, `POST /api/v1/dictionaries`, `POST /api/v1/dictionaries/:id/select`, `PUT /api/v1/dictionaries/:id`, `DELETE /api/v1/dictionaries/:id`).
+  - Added frontend `DictionarySelector`, `CreateDictionaryDialog`, and dictionary management panel in `SettingsPage`.
+  - Completely removed CEFR levels (`desiredLevel`, A1-C2) from backend database, models, routes, events, frontend state, registration, and UI.
 
 ## Pending Tasks (Quiz Mode)
 

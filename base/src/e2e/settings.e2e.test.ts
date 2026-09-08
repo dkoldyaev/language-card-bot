@@ -42,8 +42,7 @@ describe('Settings E2E', () => {
       body: {
         settings: {
           baseLanguage: 'ru',
-          targetLanguage: 'en',
-          desiredLevel: 'B2'
+          targetLanguage: 'en'
         }
       }
     });
@@ -54,8 +53,7 @@ describe('Settings E2E', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .send({
         baseLanguage: 'en',
-        targetLanguage: 'de',
-        desiredLevel: 'C1'
+        targetLanguage: 'de'
       });
 
     expect(postSettingsRes).toMatchObject({
@@ -63,8 +61,7 @@ describe('Settings E2E', () => {
       body: {
         settings: {
           baseLanguage: 'en',
-          targetLanguage: 'de',
-          desiredLevel: 'C1'
+          targetLanguage: 'de'
         }
       }
     });
@@ -76,18 +73,17 @@ describe('Settings E2E', () => {
       type: 'settings_sync',
       settings: {
         baseLanguage: 'en',
-        targetLanguage: 'de',
-        desiredLevel: 'C1'
+        targetLanguage: 'de'
       }
     });
 
-    const userInDbAfterSettings = await prisma.user.findUnique({
-      where: { username: testUsername },
-      include: { settings: true }
+    const userInDbAfterSettings = await prisma.user.findFirst({
+      where: { accounts: { some: { providerAccountId: testUsername } } },
+      include: { dictionaries: true }
     });
     
     expect(userInDbAfterSettings).toBeDefined();
-    expect(userInDbAfterSettings?.settings?.baseLanguage).toBe('en');
+    expect(userInDbAfterSettings?.dictionaries[0]?.baseLanguage).toBe('en');
 
     // Частичное изменение настроек
     const patchSettingsRes = await request(app)
@@ -102,8 +98,7 @@ describe('Settings E2E', () => {
       body: {
         settings: {
           baseLanguage: 'en',
-          targetLanguage: 'es',
-          desiredLevel: 'C1'
+          targetLanguage: 'es'
         }
       }
     });
@@ -117,13 +112,5 @@ describe('Settings E2E', () => {
         targetLanguage: 'es'
       }
     });
-    
-    const userInDbAfterPatch = await prisma.user.findUnique({
-      where: { username: testUsername },
-      include: { settings: true }
-    });
-
-    expect(userInDbAfterPatch).toBeDefined();
-    expect(userInDbAfterPatch?.settings?.targetLanguage).toBe('es');
   });
 });

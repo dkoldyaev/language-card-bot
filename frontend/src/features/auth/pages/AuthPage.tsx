@@ -21,7 +21,6 @@ export default function Auth() {
   const [username, setUsername] = useState('');
   const [baseLanguage, setBaseLanguage] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('');
-  const [desiredLevel, setDesiredLevel] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
@@ -82,8 +81,8 @@ export default function Auth() {
   };
 
   const handleProfileCompletion = async () => {
-    if (!baseLanguage || !targetLanguage || !desiredLevel) {
-      setError('Please select all language settings');
+    if (!baseLanguage || !targetLanguage) {
+      setError('Please select both languages');
       return;
     }
 
@@ -94,7 +93,6 @@ export default function Auth() {
       await apiClient.post('/settings', {
         baseLanguage,
         targetLanguage,
-        desiredLevel,
       }, {
         headers: { Authorization: `Bearer ${tempToken}` },
       });
@@ -139,8 +137,8 @@ export default function Auth() {
         navigate('/');
       } else {
         // Registration
-        if (!baseLanguage || !targetLanguage || !desiredLevel) {
-          setError('Please select all language settings');
+        if (!baseLanguage || !targetLanguage) {
+          setError('Please select both languages');
           setLoading(false);
           return;
         }
@@ -151,7 +149,6 @@ export default function Auth() {
         await apiClient.post('/settings', {
           baseLanguage,
           targetLanguage,
-          desiredLevel,
         }, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -293,25 +290,6 @@ export default function Auth() {
                               <MenuItem value="ru">Russian</MenuItem>
                             </Select>
                           </FormControl>
-
-                          <FormControl fullWidth>
-                            <InputLabel id="level-label">Level</InputLabel>
-                            <Select
-                              labelId="level-label"
-                              value={desiredLevel}
-                              label="Level"
-                              onChange={(event) => setDesiredLevel(event.target.value)}
-                              disabled={loading}
-                            >
-                              <MenuItem value="A0">A0</MenuItem>
-                              <MenuItem value="A1">A1</MenuItem>
-                              <MenuItem value="A2">A2</MenuItem>
-                              <MenuItem value="B1">B1</MenuItem>
-                              <MenuItem value="B2">B2</MenuItem>
-                              <MenuItem value="C1">C1</MenuItem>
-                              <MenuItem value="C2">C2</MenuItem>
-                            </Select>
-                          </FormControl>
                         </>
                       )}
 
@@ -398,25 +376,6 @@ export default function Auth() {
                           <MenuItem value="en">English</MenuItem>
                           <MenuItem value="es">Spanish</MenuItem>
                           <MenuItem value="ru">Russian</MenuItem>
-                        </Select>
-                      </FormControl>
-
-                      <FormControl fullWidth>
-                        <InputLabel id="level-label">Level</InputLabel>
-                        <Select
-                          labelId="level-label"
-                          value={desiredLevel}
-                          label="Level"
-                          onChange={(event) => setDesiredLevel(event.target.value)}
-                          disabled={loading}
-                        >
-                          <MenuItem value="A0">A0</MenuItem>
-                          <MenuItem value="A1">A1</MenuItem>
-                          <MenuItem value="A2">A2</MenuItem>
-                          <MenuItem value="B1">B1</MenuItem>
-                          <MenuItem value="B2">B2</MenuItem>
-                          <MenuItem value="C1">C1</MenuItem>
-                          <MenuItem value="C2">C2</MenuItem>
                         </Select>
                       </FormControl>
 

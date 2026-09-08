@@ -45,6 +45,7 @@ describe('State Endpoint', () => {
     prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,
       userId,
+      activeDictionaryId: null,
       currentWordId: null,
       showVariants: false,
       showDefinitionTranslation: false,

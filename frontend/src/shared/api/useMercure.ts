@@ -55,6 +55,8 @@ export function useMercure() {
                 useStore.getState().updateDictionaryTranslation(data.wordId, data.definitionId, data.translation);
               } else if (data.type === 'state_sync') {
                 useStore.getState().setAppState(data);
+              } else if (data.type === 'dictionaries_sync' && data.dictionaries) {
+                useStore.getState().setDictionaries(data.dictionaries);
               } else if (data.type === 'quiz_card') {
                 useStore.getState().setQuizCard(data);
                 useStore.getState().setQuizEvaluation(null); // Reset evaluation on new card

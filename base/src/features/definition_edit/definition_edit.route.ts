@@ -27,7 +27,8 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
       include: {
         word: {
           include: {
-            definitions: true
+            definitions: true,
+            dictionary: true
           }
         }
       }
@@ -37,7 +38,7 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Definition not found' });
     }
 
-    if (definition.word.userId !== userId) {
+    if (definition.word.dictionary.userId !== userId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 

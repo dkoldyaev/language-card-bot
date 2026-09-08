@@ -30,33 +30,51 @@ describe('Dictionary Fetch Endpoint', () => {
     const username = 'test_user';
     const token = jwt.sign({ id: userId, username }, JWT_SECRET, { expiresIn: '1h' });
 
+    const mockDict = {
+      id: 10,
+      name: 'EN (RU)',
+      targetLanguage: 'en',
+      baseLanguage: 'ru',
+      userId,
+      createdAt: new Date(),
+    };
+
+    prismaMock.userState.findUnique.mockResolvedValue({
+      id: 1,
+      userId,
+      activeDictionaryId: 10,
+      currentWordId: null,
+      currentDefinitionId: null,
+      showVariants: false,
+      showDefinitionTranslation: false,
+    } as any);
+
+    prismaMock.dictionary.findFirst.mockResolvedValue(mockDict);
+
     const mockWords = [
       {
         id: 1,
-        userId,
+        dictionaryId: 10,
         text: 'apple',
         createdAt: new Date(),
-        updatedAt: new Date(),
         definitions: [
           {
             id: 1,
             wordId: 1,
             text: 'A fruit',
             createdAt: new Date(),
-            updatedAt: new Date(),
             translation: {
               id: 1,
               definitionId: 1,
               text: 'Яблоко',
               createdAt: new Date(),
-              updatedAt: new Date(),
             }
           }
         ]
       }
     ];
 
-    prismaMock.word.findMany.mockResolvedValue(mockWords);
+    prismaMock.word.findMany.mockResolvedValue(mockWords as any);
 
     const res = await request(app)
       .get('/api/v1/dictionary')
@@ -69,7 +87,7 @@ describe('Dictionary Fetch Endpoint', () => {
     expect(res.body.dictionary[0].definitions[0].translation.text).toBe('Яблоко');
 
     expect(prismaMock.word.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { userId }
+      where: { dictionaryId: 10 }
     }));
   });
 });

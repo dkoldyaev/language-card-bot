@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { register, login, addWordsAndAwaitDefinitions, setupSettings } from './helpers';
+import { register, login, addWordsAndAwaitDefinitions } from './helpers';
 
 test.describe('Quiz Operations', () => {
   test.beforeEach(async ({ page }, testInfo) => {

@@ -18,7 +18,7 @@ describe('Quiz Service', () => {
 
   it('should return null if user has no words with definitions', async () => {
     prismaMock.word.findMany.mockResolvedValue([]);
-    const result = await quizService.generateQuizCard(1);
+    const result = await quizService.generateQuizCard(1, 10);
     expect(result).toBeNull();
   });
 
@@ -28,7 +28,7 @@ describe('Quiz Service', () => {
     const mockWord = {
       id: 10,
       text: 'hello',
-      userId: 1,
+      dictionaryId: 10,
       createdAt: new Date(),
       definitions: [
         {
@@ -48,7 +48,7 @@ describe('Quiz Service', () => {
     
     prismaMock.word.findUnique.mockResolvedValue(mockWord as any);
 
-    const result = await quizService.generateQuizCard(1);
+    const result = await quizService.generateQuizCard(1, 10);
 
     expect(result).not.toBeNull();
     expect(result?.word.text).toBe('hello');
@@ -68,12 +68,13 @@ describe('Quiz Service', () => {
     ] as any);
     prismaMock.word.findUnique.mockResolvedValue({ text: 'correct_word' } as any);
 
-    const result = await quizService.getQuizVariants(1, 10);
+    const result = await quizService.getQuizVariants(1, 10, 10);
     
     expect(result.length).toBe(5);
     expect(prismaMock.word.findMany).toHaveBeenCalledWith({
       where: {
-        userId: 1,
+        dictionaryId: 10,
+        dictionary: { userId: 1 },
         id: { not: 10 }
       },
       select: expect.objectContaining({ text: true })

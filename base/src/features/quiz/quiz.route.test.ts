@@ -23,6 +23,25 @@ describe('Quiz Route', () => {
     vi.mocked(publishEvent).mockResolvedValue();
     mockReset(prismaMock);
     vi.restoreAllMocks();
+
+    prismaMock.userState.findUnique.mockResolvedValue({
+      id: 1,
+      userId: 1,
+      activeDictionaryId: 5,
+      currentWordId: null,
+      currentDefinitionId: null,
+      showVariants: false,
+      showDefinitionTranslation: false,
+    } as any);
+
+    prismaMock.dictionary.findFirst.mockResolvedValue({
+      id: 5,
+      name: 'EN (RU)',
+      targetLanguage: 'en',
+      baseLanguage: 'ru',
+      userId: 1,
+      createdAt: new Date(),
+    });
   });
 
   afterEach(() => {
@@ -46,7 +65,7 @@ describe('Quiz Route', () => {
     const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
     
     const mockCardData = {
-      word: { id: 10, text: 'hello', userId: 1, createdAt: new Date() },
+      word: { id: 10, text: 'hello', dictionaryId: 5, createdAt: new Date() },
       definition: {
         id: 100,
         text: 'a greeting',
@@ -56,7 +75,7 @@ describe('Quiz Route', () => {
       }
     };
     
-    vi.spyOn(quizService, 'generateQuizCard').mockResolvedValue(mockCardData);
+    vi.spyOn(quizService, 'generateQuizCard').mockResolvedValue(mockCardData as any);
     prismaMock.userState.update.mockResolvedValue({} as any);
 
     const res = await request(app)
@@ -66,15 +85,15 @@ describe('Quiz Route', () => {
     expect(res.status).toBe(200);
     expect(res.body.message).toBe('Quiz started');
     
-    expect(prismaMock.userState.update).toHaveBeenCalledWith({
+    expect(prismaMock.userState.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { userId: 1 },
-      data: {
+      data: expect.objectContaining({
         showVariants: false,
         showDefinitionTranslation: false,
         currentDefinitionId: 100,
         currentWordId: 10
-      }
-    });
+      })
+    }));
 
     expect(publishEvent).toHaveBeenCalledWith('test_user', expect.objectContaining({
       type: 'quiz_card',
@@ -104,15 +123,13 @@ describe('Quiz Route', () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
       
       prismaMock.userState.findUnique.mockResolvedValue({
-        currentWordId: 10
+        userId: 1,
+        currentWordId: 10,
+        activeDictionaryId: 5,
       } as any);
 
       vi.spyOn(quizService, 'getQuizVariants').mockResolvedValue([
-        { id: 1, text: 'w1' },
-        { id: 2, text: 'w2' },
-        { id: 3, text: 'w3' },
-        { id: 4, text: 'w4' },
-        { id: 5, text: 'w5' },
+        'w1', 'w2', 'w3', 'w4', 'w5'
       ]);
       prismaMock.userState.update.mockResolvedValue({} as any);
 
@@ -122,7 +139,7 @@ describe('Quiz Route', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.variants.length).toBe(5);
-      expect(res.body.variants[0].text).toBe('w1');
+      expect(res.body.variants[0]).toBe('w1');
 
       expect(prismaMock.userState.update).toHaveBeenCalledWith({
         where: { userId: 1 },
@@ -233,7 +250,8 @@ describe('Quiz Route', () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
       
       prismaMock.userState.findUnique.mockResolvedValue({
-        currentWordId: 10
+        currentWordId: 10,
+        activeDictionaryId: 5,
       } as any);
 
       vi.spyOn(quizService, 'generateQuizCard').mockResolvedValue({
@@ -248,15 +266,15 @@ describe('Quiz Route', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);
-      expect(prismaMock.userState.update).toHaveBeenCalledWith({
+      expect(prismaMock.userState.update).toHaveBeenCalledWith(expect.objectContaining({
         where: { userId: 1 },
-        data: {
+        data: expect.objectContaining({
           showVariants: false,
           showDefinitionTranslation: false,
           currentDefinitionId: 200,
           currentWordId: 20
-        }
-      });
+        })
+      }));
       expect(publishEvent).toHaveBeenCalledWith('test_user', expect.objectContaining({
         type: 'quiz_card',
         wordId: 20

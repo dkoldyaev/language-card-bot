@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { register, login, addWordsToDictionary, addWordsAndAwaitDefinitions, setupSettings } from './helpers';
+import { register, login, addWordsAndAwaitDefinitions } from './helpers';
 
 test.describe('Authentication Flow', () => {
   test('navigation between login and register', async ({ page }) => {

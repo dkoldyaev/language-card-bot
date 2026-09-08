@@ -40,18 +40,24 @@ describe('Settings Endpoint', () => {
     expect(resPost.status).toBe(401);
   });
 
-  it('should get settings and create defaults if not exist', async () => {
+  it('should get settings from active dictionary', async () => {
     const userId = 20;
     const username = 'test_user';
     const token = jwt.sign({ id: userId, username }, JWT_SECRET, { expiresIn: '1h' });
 
-    prismaMock.userSettings.findUnique.mockResolvedValue(null);
-    prismaMock.userSettings.create.mockResolvedValue({
+    prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,
       userId,
+      activeDictionaryId: 10,
+    } as any);
+
+    prismaMock.dictionary.findFirst.mockResolvedValue({
+      id: 10,
+      userId,
+      name: 'EN (RU)',
       baseLanguage: 'ru',
       targetLanguage: 'en',
-      desiredLevel: 'B2'
+      createdAt: new Date(),
     });
 
     const res = await request(app)
@@ -60,31 +66,37 @@ describe('Settings Endpoint', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.settings.baseLanguage).toBe('ru');
-
-    expect(prismaMock.userSettings.findUnique).toHaveBeenCalledWith({
-      where: { userId }
-    });
-    expect(prismaMock.userSettings.create).toHaveBeenCalledWith({
-      data: {
-        userId,
-        baseLanguage: 'ru',
-        targetLanguage: 'en',
-        desiredLevel: 'B2',
-      }
-    });
+    expect(res.body.settings.targetLanguage).toBe('en');
+    expect(res.body.settings.desiredLevel).toBeUndefined();
   });
 
-  it('should update settings', async () => {
+  it('should update active dictionary settings without desiredLevel', async () => {
     const userId = 20;
     const username = 'test_user';
     const token = jwt.sign({ id: userId, username }, JWT_SECRET, { expiresIn: '1h' });
 
-    prismaMock.userSettings.upsert.mockResolvedValue({
+    prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,
       userId,
+      activeDictionaryId: 10,
+    } as any);
+
+    prismaMock.dictionary.findFirst.mockResolvedValue({
+      id: 10,
+      userId,
+      name: 'ES (FR)',
       baseLanguage: 'es',
       targetLanguage: 'fr',
-      desiredLevel: 'C1'
+      createdAt: new Date(),
+    });
+
+    prismaMock.dictionary.update.mockResolvedValue({
+      id: 10,
+      userId,
+      name: 'ES (FR)',
+      baseLanguage: 'es',
+      targetLanguage: 'fr',
+      createdAt: new Date(),
     });
 
     const res = await request(app)
@@ -93,81 +105,29 @@ describe('Settings Endpoint', () => {
       .send({
         baseLanguage: 'es',
         targetLanguage: 'fr',
-        desiredLevel: 'C1'
       });
 
     expect(res.status).toBe(200);
     expect(res.body.settings.baseLanguage).toBe('es');
     expect(res.body.settings.targetLanguage).toBe('fr');
-    expect(res.body.settings.desiredLevel).toBe('C1');
+    expect(res.body.settings.desiredLevel).toBeUndefined();
 
-    expect(prismaMock.userSettings.upsert).toHaveBeenCalledWith({
-      where: { userId },
-      update: {
+    expect(prismaMock.dictionary.update).toHaveBeenCalledWith({
+      where: { id: 10 },
+      data: {
         baseLanguage: 'es',
         targetLanguage: 'fr',
-        desiredLevel: 'C1',
-      },
-      create: {
-        userId,
-        baseLanguage: 'es',
-        targetLanguage: 'fr',
-        desiredLevel: 'C1',
       }
     });
 
     expect(publishEvent).toHaveBeenCalledTimes(1);
-    expect(publishEvent).toHaveBeenCalledWith(username, expect.objectContaining({
+    expect(publishEvent).toHaveBeenCalledWith(username, {
+      version: 'v1',
       type: 'settings_sync',
-      settings: expect.objectContaining({
+      settings: {
         baseLanguage: 'es',
         targetLanguage: 'fr',
-        desiredLevel: 'C1'
-      })
-    }));
-  });
-
-  it('should update settings partially', async () => {
-    const userId = 20;
-    const username = 'test_user';
-    const token = jwt.sign({ id: userId, username }, JWT_SECRET, { expiresIn: '1h' });
-
-    prismaMock.userSettings.upsert.mockResolvedValue({
-      id: 1,
-      userId,
-      baseLanguage: 'ru',
-      targetLanguage: 'de',
-      desiredLevel: 'B2'
-    });
-
-    const res = await request(app)
-      .post('/api/v1/settings')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        targetLanguage: 'de'
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body.settings.targetLanguage).toBe('de');
-
-    expect(prismaMock.userSettings.upsert).toHaveBeenCalledWith({
-      where: { userId },
-      update: {
-        targetLanguage: 'de',
-      },
-      create: {
-        userId,
-        baseLanguage: 'ru',
-        targetLanguage: 'de',
-        desiredLevel: 'B2',
       }
     });
-
-    expect(publishEvent).toHaveBeenCalledTimes(1);
-    expect(publishEvent).toHaveBeenCalledWith(username, expect.objectContaining({
-      settings: expect.objectContaining({
-        targetLanguage: 'de'
-      })
-    }));
   });
 });

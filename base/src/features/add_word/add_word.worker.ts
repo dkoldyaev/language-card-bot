@@ -3,7 +3,6 @@ import IORedis from 'ioredis';
 import { prisma } from '../../prisma';
 import { enqueueFetchTranslation } from './add_word.queue';
 import { 
-  DictionaryAddProcessingEvent, 
   DictionaryAddDefinitionsReceivedEvent
 } from '../event_bus/event_bus.type';
 import { publishEvent } from '../event_bus/event_bus.service';
@@ -20,23 +19,24 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
   if (job.name === 'fetchDefinitions') {
     const { userId, username, wordId, wordText } = job.data;
 
-    const userSettings = await prisma.userSettings.findUnique({
-      where: { userId }
+    const word = await prisma.word.findUnique({
+      where: { id: wordId },
+      include: { dictionary: true }
     });
 
-    if (!userSettings) {
-      console.error(`User settings not found for user ${userId}`);
+    if (!word || !word.dictionary) {
+      console.error(`Word or dictionary not found for wordId ${wordId}`);
       return;
     }
 
-    // The "processing" event is now published by add_word.listener.ts when the word is added to DB.
+    const { targetLanguage, baseLanguage } = word.dictionary;
 
     // 2. Fetch definitions from definer
     const definerRes = await fetch(DEFINER_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        language: userSettings.targetLanguage,
+        language: targetLanguage,
         text: wordText,
         definerApp: env.DEFINER_APP_TYPE
       })
@@ -83,26 +83,43 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
         username,
         wordId,
         wordText,
-        definitions.length
+        definitions.length,
+        targetLanguage,
+        baseLanguage
       );
     }
   } else if (job.name === 'fetchTranslation') {
-    const { definitionId, definitionText, userId, username, wordId, wordText, totalDefinitions } = job.data;
+    const { definitionId, definitionText, userId, username, wordId, wordText, totalDefinitions, sourceLanguage, targetLanguage } = job.data;
 
-    const userSettings = await prisma.userSettings.findUnique({
-      where: { userId }
-    });
+    let srcLang = sourceLanguage;
+    let tgtLang = targetLanguage;
 
-    if (!userSettings) {
-      throw new Error(`User settings not found for user ${userId}`);
+    if (!srcLang || !tgtLang) {
+      const definition = await prisma.definition.findUnique({
+        where: { id: definitionId },
+        include: {
+          word: {
+            include: { dictionary: true }
+          }
+        }
+      });
+
+      if (definition?.word?.dictionary) {
+        srcLang = definition.word.dictionary.targetLanguage;
+        tgtLang = definition.word.dictionary.baseLanguage;
+      }
+    }
+
+    if (!srcLang || !tgtLang) {
+      throw new Error(`Dictionary languages not found for definition ${definitionId}`);
     }
 
     const translatorRes = await fetch(TRANSLATOR_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        sourceLanguage: userSettings.targetLanguage,
-        targetLanguage: userSettings.baseLanguage,
+        sourceLanguage: srcLang,
+        targetLanguage: tgtLang,
         text: definitionText,
         translatorApp: env.TRANSLATOR_APP_TYPE
       })

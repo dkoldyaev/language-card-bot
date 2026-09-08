@@ -57,8 +57,12 @@ describe('Definition Delete Endpoint', () => {
       word: {
         id: 1,
         text: 'test',
-        userId: 2, // belongs to user 2
+        dictionaryId: 2,
         createdAt: new Date(),
+        dictionary: {
+          id: 2,
+          userId: 2,
+        }
       }
     } as any);
 
@@ -80,8 +84,12 @@ describe('Definition Delete Endpoint', () => {
       word: {
         id: 1,
         text: 'test',
-        userId: 1, // belongs to user 1
+        dictionaryId: 1,
         createdAt: new Date(),
+        dictionary: {
+          id: 1,
+          userId: 1,
+        }
       }
     } as any);
 

@@ -10,7 +10,6 @@ import { getUserState } from './state.service';
 const router = Router();
 
 router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResponse | { error: string }>) => {
-
   const { id: userId, username } = getAuthUser(req);
 
   try {
@@ -20,36 +19,45 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
       return res.status(404).json({ error: 'User state not found' });
     }
 
+    const dict = userState.activeDictionaryId
+      ? await prisma.dictionary.findUnique({ where: { id: userState.activeDictionaryId } })
+      : null;
+
     const payload: StateSyncMercureEvent = {
       version: 'v1',
       type: 'state_sync',
+      activeDictionaryId: userState.activeDictionaryId,
+      activeDictionary: dict ? {
+        id: dict.id,
+        name: dict.name,
+        targetLanguage: dict.targetLanguage,
+        baseLanguage: dict.baseLanguage,
+      } : null,
       currentWordId: userState.currentWordId,
       showVariants: userState.showVariants,
       showDefinitionTranslation: userState.showDefinitionTranslation,
       currentDefinitionId: userState.currentDefinitionId
     };
 
-
-      if (userState.currentWordId) {
-        const word = await prisma.word.findUnique({ where: { id: userState.currentWordId } });
-        if (word) {
-          payload.currentWord = { id: word.id, text: word.text };
-        }
+    if (userState.currentWordId) {
+      const word = await prisma.word.findUnique({ where: { id: userState.currentWordId } });
+      if (word) {
+        payload.currentWord = { id: word.id, text: word.text };
       }
-      if (userState.currentDefinitionId) {
-        const definition = await prisma.definition.findUnique({
-          where: { id: userState.currentDefinitionId },
-          include: { translation: true }
-        });
-        if (definition) {
-          payload.currentDefinition = {
-            id: definition.id,
-            text: definition.text,
-            translation: definition.translation?.text || null
-          };
-        }
+    }
+    if (userState.currentDefinitionId) {
+      const definition = await prisma.definition.findUnique({
+        where: { id: userState.currentDefinitionId },
+        include: { translation: true }
+      });
+      if (definition) {
+        payload.currentDefinition = {
+          id: definition.id,
+          text: definition.text,
+          translation: definition.translation?.text || null
+        };
       }
-
+    }
 
     try {
       await publishEvent(username, payload);
