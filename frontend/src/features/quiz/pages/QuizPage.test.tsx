@@ -1,13 +1,39 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import Quiz from './QuizPage';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
 
 describe('Quiz', () => {
   beforeEach(() => {
-    useStore.setState({ quizCard: null });
+    useStore.setState({
+      quizCard: null,
+      quizEvaluation: null,
+      quizTranslation: null,
+      quizVariants: null,
+      dictionary: [
+        {
+          id: 1,
+          text: 'apple',
+          definitions: [{ id: 1, text: 'A fruit', translation: null }],
+        },
+      ],
+    });
+  });
+
+  it('renders locked/empty state when dictionary is empty', () => {
+    useStore.setState({ dictionary: [], quizCard: null });
+    render(
+      <MemoryRouter>
+        <Quiz />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Quiz is locked')).toBeInTheDocument();
+    expect(screen.getByText('Your dictionary is empty')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Go to Dictionary/i })).toBeInTheDocument();
   });
 
   it('renders start quiz button when no card is set', () => {

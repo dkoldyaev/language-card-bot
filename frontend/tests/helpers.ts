@@ -23,7 +23,7 @@ export async function login(page: Page, username: string) {
 
 export async function addWordsToDictionary(page: Page, words: string[]) {
   await page.goto('/dictionary');
-  await expect(page.locator('h4:has-text("Dictionary")')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Dictionary' })).toBeVisible();
   
   const text = words.join('\n');
   await page.fill('textarea', text);

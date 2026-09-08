@@ -16,6 +16,31 @@ test.describe('Quiz Operations', () => {
     await login(page, username);
   });
 
+  test('should disable quiz when dictionary is empty and show locked state on /quiz', async ({ page }) => {
+    // User starts with 0 words in dictionary on Dashboard
+    const dashboardQuizBtn = page.locator('button:has-text("Start a quiz")');
+    await expect(dashboardQuizBtn).toBeDisabled();
+    await expect(page.locator('text=Add words to your dictionary to unlock quiz practice.')).toBeVisible();
+
+    // Check Sidebar Quiz item is disabled
+    const sidebarQuizBtn = page.locator('button:has-text("Quiz")').first();
+    await expect(sidebarQuizBtn).toBeDisabled();
+
+    // Navigate directly to /quiz
+    await page.goto('/quiz');
+
+    // Should show Quiz is locked empty state
+    await expect(page.locator('text=Quiz is locked')).toBeVisible();
+    await expect(page.locator('text=Your dictionary is empty')).toBeVisible();
+
+    const goToDictionaryBtn = page.locator('button:has-text("Go to Dictionary")');
+    await expect(goToDictionaryBtn).toBeVisible();
+
+    // Click Go to Dictionary and verify navigation
+    await goToDictionaryBtn.click();
+    await expect(page).toHaveURL(/\/dictionary$/);
+  });
+
   test('should navigate to Quiz and click Start Quiz', async ({ page }) => {
     // Add a word first so the quiz has content
     await addWordsAndAwaitDefinitions(page, ['apple']);
@@ -25,9 +50,9 @@ test.describe('Quiz Operations', () => {
     await page.click('button:has-text("Start Quiz")');
     
     // Expect the quiz UI to show up
-    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Quiz' })).toBeVisible();
     
-    const cardContent = page.locator('.MuiCardContent-root');
+    const cardContent = page.locator('.MuiCardContent-root').first();
     await expect(cardContent).toContainText('[Mock] Definition');
     await expect(cardContent).toContainText('for apple in ru');
 
@@ -38,13 +63,13 @@ test.describe('Quiz Operations', () => {
     await answerInput.fill('banana');
     await submitBtn.click();
     await expect(page.locator('text=Incorrect 😢')).toBeVisible();
-    await expect(page.locator('text=Your answer: banana')).toBeVisible();
+    await expect(page.locator('text=banana')).toBeVisible();
 
     // 2. Test Typo (Close Match)
     await answerInput.fill('aple');
     await submitBtn.click();
     await expect(page.locator('text=Close Match 🤔')).toBeVisible();
-    await expect(page.locator('text=Your answer: aple')).toBeVisible();
+    await expect(page.locator('text=aple')).toBeVisible();
 
     // 3. Test Translate Definition
     await page.click('button:has-text("Translate definition")');
@@ -65,7 +90,7 @@ test.describe('Quiz Operations', () => {
     await answerInput.fill('apple');
     await submitBtn.click();
     await expect(page.locator('text=Success! 🎉')).toBeVisible();
-    await expect(page.locator('text=Your answer: apple')).toBeVisible();
+    await expect(page.getByText('apple', { exact: true })).toBeVisible();
     await expect(page.locator('text=Success! 🎉')).toBeHidden();
   });
 
@@ -78,9 +103,9 @@ test.describe('Quiz Operations', () => {
     await page.click('button:has-text("Start Quiz")');
     
     // Expect the quiz UI to show up
-    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Quiz' })).toBeVisible();
     
-    const cardContent = page.locator('.MuiCardContent-root');
+    const cardContent = page.locator('.MuiCardContent-root').first();
     await expect(cardContent).toContainText('[Mock] Definition');
     const initialDefText = await cardContent.innerText();
     let currentWord = 'apple';
@@ -100,7 +125,7 @@ test.describe('Quiz Operations', () => {
     await answerInput.fill(currentWord);
     await submitBtn.click();
     await expect(page.locator('text=Success! 🎉')).toBeVisible();
-    await expect(page.locator(`text=Your answer: ${currentWord}`)).toBeVisible();
+    await expect(page.getByText(currentWord, { exact: true })).toBeVisible();
     await expect(page.locator('text=Success! 🎉')).toBeHidden();
 
     // Verify it switched to the next word
@@ -118,9 +143,9 @@ test.describe('Quiz Operations', () => {
     await page.click('button:has-text("Start Quiz")');
     
     // Expect the quiz UI to show up
-    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Quiz' })).toBeVisible();
     
-    const cardContent = page.locator('.MuiCardContent-root');
+    const cardContent = page.locator('.MuiCardContent-root').first();
     await expect(cardContent).toContainText('[Mock] Definition');
 
     const initialDefText = await cardContent.innerText();
@@ -141,7 +166,8 @@ test.describe('Quiz Operations', () => {
     await page.click('button:has-text("Show variants")');
 
     // Check variants appear
-    await expect(page.locator('text=Variants:')).toBeVisible();
+    await expect(page.locator('text=Choose an answer')).toBeVisible();
+
 
     // Check there are variant buttons
     const variantButtons = page.locator('.MuiButton-colorSecondary');

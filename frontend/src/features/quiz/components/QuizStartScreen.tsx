@@ -5,11 +5,14 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { trackEvent } from '../../../shared/lib/analytics';
+import useStore from '../../../store/useStore';
 
 export default function QuizStartScreen() {
   const [starting, setStarting] = useState(false);
+  const dictionary = useStore((state) => state.dictionary);
 
   const handleStartQuiz = async () => {
+    if (dictionary.length === 0) return;
     setStarting(true);
     try {
       trackEvent('Quiz Started');
@@ -104,7 +107,7 @@ export default function QuizStartScreen() {
                 color="secondary"
                 size="large"
                 onClick={handleStartQuiz}
-                disabled={starting}
+                disabled={starting || dictionary.length === 0}
                 endIcon={starting ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
               >
                 Start Quiz

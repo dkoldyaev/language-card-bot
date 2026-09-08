@@ -54,12 +54,15 @@ export default function Dashboard() {
                 Recall, don&apos;t just reread.
               </Typography>
               <Typography variant="body2" sx={{ color: alpha('#FFFFFF', 0.7), maxWidth: 430, mb: 2.5 }}>
-                Open a round based on the words you have already saved.
+                {totalWords === 0
+                  ? 'Add words to your dictionary to unlock quiz practice.'
+                  : 'Open a round based on the words you have already saved.'}
               </Typography>
               <Button
                 variant="contained"
                 color="secondary"
                 onClick={() => navigate('/quiz')}
+                disabled={totalWords === 0}
                 endIcon={<ArrowForwardRoundedIcon />}
               >
                 Start a quiz

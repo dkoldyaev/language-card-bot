@@ -6,6 +6,7 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
+  Tooltip,
   alpha,
   useMediaQuery,
   useTheme,
@@ -49,11 +50,14 @@ function Brand({ compact = false }: { compact?: boolean }) {
 
 export default function Sidebar() {
   const profile = useStore((state) => state.profile);
+  const dictionary = useStore((state) => state.dictionary);
   const reset = useStore((state) => state.reset);
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const hasWords = dictionary.length > 0;
 
   const handleLogout = () => {
     reset();
@@ -83,11 +87,13 @@ export default function Sidebar() {
       >
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
-          return (
+          const isDisabled = item.path === '/quiz' && !hasWords;
+          const button = (
             <ListItemButton
               key={item.path}
-              component={NavLink}
-              to={item.path}
+              component={isDisabled ? 'button' : NavLink}
+              to={isDisabled ? undefined : item.path}
+              disabled={isDisabled}
               aria-label={item.label}
               sx={{
                 minWidth: 62,
@@ -98,7 +104,9 @@ export default function Sidebar() {
                 borderRadius: 0,
                 flexDirection: 'column',
                 justifyContent: 'center',
-                color: isActive ? 'primary.main' : 'text.secondary',
+                color: isDisabled ? 'text.disabled' : isActive ? 'primary.main' : 'text.secondary',
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                opacity: isDisabled ? 0.4 : 1,
                 '&::before': isActive ? {
                   content: '""',
                   position: 'absolute',
@@ -118,6 +126,18 @@ export default function Sidebar() {
               </Typography>
             </ListItemButton>
           );
+
+          if (isDisabled) {
+            return (
+              <Tooltip key={item.path} title="Add words to your dictionary to unlock Quiz" placement="top">
+                <Box component="div" sx={{ display: 'flex', flex: 1, minWidth: 62, maxWidth: 86 }}>
+                  {button}
+                </Box>
+              </Tooltip>
+            );
+          }
+
+          return button;
         })}
         <ListItemButton
           onClick={handleLogout}
@@ -176,22 +196,25 @@ export default function Sidebar() {
       <List sx={{ px: 1.5, pt: 0, flexGrow: 1 }}>
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
-          return (
+          const isDisabled = item.path === '/quiz' && !hasWords;
+          const button = (
             <ListItemButton
               key={item.path}
-              component={NavLink}
-              to={item.path}
+              component={isDisabled ? 'button' : NavLink}
+              to={isDisabled ? undefined : item.path}
+              disabled={isDisabled}
               sx={{
                 position: 'relative',
                 minHeight: 52,
                 mb: 0.75,
                 px: 1.5,
                 borderRadius: 3,
-                color: isActive ? '#FFFFFF' : alpha('#FFFFFF', 0.65),
+                color: isDisabled ? alpha('#FFFFFF', 0.28) : isActive ? '#FFFFFF' : alpha('#FFFFFF', 0.65),
                 backgroundColor: isActive ? alpha('#FFFFFF', 0.12) : 'transparent',
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
                 '&:hover': {
-                  color: '#FFFFFF',
-                  backgroundColor: alpha('#FFFFFF', isActive ? 0.15 : 0.075),
+                  color: isDisabled ? alpha('#FFFFFF', 0.28) : '#FFFFFF',
+                  backgroundColor: isDisabled ? 'transparent' : alpha('#FFFFFF', isActive ? 0.15 : 0.075),
                 },
                 '&::before': isActive ? {
                   content: '""',
@@ -217,6 +240,18 @@ export default function Sidebar() {
               />
             </ListItemButton>
           );
+
+          if (isDisabled) {
+            return (
+              <Tooltip key={item.path} title="Add words to your dictionary to unlock Quiz" placement="right">
+                <Box component="div" sx={{ display: 'block' }}>
+                  {button}
+                </Box>
+              </Tooltip>
+            );
+          }
+
+          return button;
         })}
       </List>
 
