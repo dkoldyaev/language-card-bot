@@ -27,7 +27,7 @@ describe('Definitions E2E', () => {
     const word = await prisma.word.create({
       data: {
         text: 'apple',
-        userId: setup.user.id
+        dictionaryId: setup.dictionary.id
       }
     });
     wordId = word.id;

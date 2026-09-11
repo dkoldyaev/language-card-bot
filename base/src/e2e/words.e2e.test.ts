@@ -7,6 +7,7 @@ import { clearDatabase, setupTestUser, setupMercureListener, teardownMercureList
 describe('Words E2E', () => {
   const testUsername = 'words_user';
   let userToken: string;
+  let setup: { token: string; user: any; dictionary: any };
   let reader: ReadableStreamDefaultReader<Uint8Array>;
   let messages: any[] = [];
   let streamPromise: Promise<void>;
@@ -14,7 +15,7 @@ describe('Words E2E', () => {
   beforeEach(async () => {
     await clearDatabase();
     
-    const setup = await setupTestUser(testUsername);
+    setup = await setupTestUser(testUsername);
     userToken = setup.token;
     
     const sse = await setupMercureListener(testUsername);
@@ -80,17 +81,18 @@ describe('Words E2E', () => {
       messages.filter(m => m.type === 'definition_translate_loaded').length >= 2
     );
 
-    const userInDbAfterAdd = await prisma.user.findUnique({
-      where: { username: testUsername },
-    });
-
     const createdWord = await prisma.word.findUnique({
-      where: { userId_text: { userId: userInDbAfterAdd!.id, text: 'apple' } },
+      where: {
+        dictionaryId_text: {
+          dictionaryId: setup.dictionary.id,
+          text: 'apple',
+        },
+      },
       include: {
         definitions: {
-          include: { translation: true }
-        }
-      }
+          include: { translation: true },
+        },
+      },
     });
 
     expect(createdWord).toBeDefined();
@@ -125,8 +127,9 @@ describe('Words E2E', () => {
     expect(defsReceivedEvents.length).toBe(1);
     expect(defsReceivedEvents[0]).toMatchObject({
       type: 'dictionary_add_definitions_received',
-      definitionsCount: 2
+      definitions: expect.any(Array),
     });
+    expect(defsReceivedEvents[0].definitions.length).toBe(2);
 
     const defProcessedEvents = messages.filter(m => m.type === 'definition_translate_loaded');
     expect(defProcessedEvents.length).toBe(2);
@@ -140,7 +143,6 @@ describe('Words E2E', () => {
     expect(duplicateEvents[0]).toMatchObject({
       type: 'dictionary_add_duplicate',
       word: 'apple',
-      definitionsCount: 2
     });
 
     // 4. Delete word

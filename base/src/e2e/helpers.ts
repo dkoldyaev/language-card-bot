@@ -4,13 +4,15 @@ import { prisma } from '../prisma';
 
 import { dictionaryQueue } from '../features/add_word/add_word.queue';
 
+import { ensureActiveDictionary } from '../features/dictionaries/dictionaries.service';
+
 export async function clearDatabase() {
   const deleteUsers = prisma.user.deleteMany();
   await prisma.$transaction([deleteUsers]);
   await dictionaryQueue.obliterate({ force: true });
 }
 
-export async function setupTestUser(username: string): Promise<{ token: string, user: any }> {
+export async function setupTestUser(username: string): Promise<{ token: string, user: any, dictionary: any }> {
   await request(app).post('/api/v1/auth/register').send({ username });
   const loginRes = await request(app).post('/api/v1/auth/login').send({ username });
   
@@ -25,7 +27,13 @@ export async function setupTestUser(username: string): Promise<{ token: string, 
     include: { state: true, dictionaries: true }
   });
   
-  return { token: loginRes.body.token, user: userInDb };
+  const dictionary = await ensureActiveDictionary(userInDb!.id);
+  const refreshedUser = await prisma.user.findUnique({
+    where: { id: userInDb!.id },
+    include: { state: true, dictionaries: true }
+  });
+  
+  return { token: loginRes.body.token, user: refreshedUser, dictionary };
 }
 
 export async function setupMercureListener(username: string): Promise<{ reader: ReadableStreamDefaultReader<Uint8Array>, messages: any[], streamPromise: Promise<void> }> {

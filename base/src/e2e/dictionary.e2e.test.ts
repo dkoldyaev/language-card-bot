@@ -6,6 +6,7 @@ import { clearDatabase, setupTestUser, setupMercureListener, teardownMercureList
 describe('Dictionary E2E', () => {
   const testUsername = 'dict_user';
   let userToken: string;
+  let setup: { token: string; user: any; dictionary: any };
   let reader: ReadableStreamDefaultReader<Uint8Array>;
   let messages: any[] = [];
   let streamPromise: Promise<void>;
@@ -13,7 +14,7 @@ describe('Dictionary E2E', () => {
   beforeEach(async () => {
     await clearDatabase();
     
-    const setup = await setupTestUser(testUsername);
+    setup = await setupTestUser(testUsername);
     userToken = setup.token;
     
     const sse = await setupMercureListener(testUsername);
@@ -33,10 +34,9 @@ describe('Dictionary E2E', () => {
 
   it('should fetch the dictionary', async () => {
     // Add some dictionary data
-    const user = await prisma.user.findUnique({ where: { username: testUsername } });
     const word = await prisma.word.create({
       data: {
-        userId: user!.id,
+        dictionaryId: setup.dictionary.id,
         text: 'hello',
         definitions: {
           create: {

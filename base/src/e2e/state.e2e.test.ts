@@ -8,6 +8,7 @@ describe('State Sync E2E', () => {
   const testUsername = 'state_sync_user';
   let userToken: string;
   let userId: number;
+  let dictionaryId: number;
   let reader: ReadableStreamDefaultReader<Uint8Array>;
   let messages: any[] = [];
   let streamPromise: Promise<void>;
@@ -18,6 +19,7 @@ describe('State Sync E2E', () => {
     const setup = await setupTestUser(testUsername);
     userToken = setup.token;
     userId = setup.user.id;
+    dictionaryId = setup.dictionary.id;
     
     const sse = await setupMercureListener(testUsername);
     reader = sse.reader;
@@ -36,7 +38,7 @@ describe('State Sync E2E', () => {
   it('should sync full user state including quiz fields', async () => {
     const word = await prisma.word.create({
       data: {
-        userId,
+        dictionaryId,
         text: 'test_word',
         definitions: {
           create: {

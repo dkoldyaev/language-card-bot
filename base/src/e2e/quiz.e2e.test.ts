@@ -8,6 +8,7 @@ describe('Quiz E2E', () => {
   const testUsername = 'quiz_user';
   let userToken: string;
   let userId: number;
+  let dictionaryId: number;
   let reader: ReadableStreamDefaultReader<Uint8Array>;
   let messages: any[] = [];
   let streamPromise: Promise<void>;
@@ -18,6 +19,7 @@ describe('Quiz E2E', () => {
     const setup = await setupTestUser(testUsername);
     userToken = setup.token;
     userId = setup.user.id;
+    dictionaryId = setup.dictionary.id;
     
     const sse = await setupMercureListener(testUsername);
     reader = sse.reader;
@@ -48,7 +50,7 @@ describe('Quiz E2E', () => {
     // Add a word with definition and translation
     const word = await prisma.word.create({
       data: {
-        userId,
+        dictionaryId,
         text: 'apple',
         definitions: {
           create: {
@@ -104,9 +106,9 @@ describe('Quiz E2E', () => {
 
   it('should fetch variants successfully and update state', async () => {
     // Add multiple words
-    const w1 = await prisma.word.create({ data: { userId, text: 'apple' } });
-    await prisma.word.create({ data: { userId, text: 'banana' } });
-    await prisma.word.create({ data: { userId, text: 'orange' } });
+    const w1 = await prisma.word.create({ data: { dictionaryId, text: 'apple' } });
+    await prisma.word.create({ data: { dictionaryId, text: 'banana' } });
+    await prisma.word.create({ data: { dictionaryId, text: 'orange' } });
 
     await prisma.userState.update({
       where: { userId },
@@ -132,7 +134,7 @@ describe('Quiz E2E', () => {
   it('should fetch definition translation successfully and update state', async () => {
     const word = await prisma.word.create({
       data: {
-        userId,
+        dictionaryId,
         text: 'apple',
         definitions: {
           create: {
@@ -166,7 +168,7 @@ describe('Quiz E2E', () => {
   });
 
   it('should evaluate answers correctly and send event', async () => {
-    const word = await prisma.word.create({ data: { userId, text: 'strawberry' } });
+    const word = await prisma.word.create({ data: { dictionaryId, text: 'strawberry' } });
 
     await prisma.userState.update({
       where: { userId },
@@ -197,8 +199,8 @@ describe('Quiz E2E', () => {
 
   it('should get next card', async () => {
     // Setup state and words
-    const w1 = await prisma.word.create({ data: { userId, text: 'apple', definitions: { create: { text: 'a red fruit' } } }, include: { definitions: true } });
-    const w2 = await prisma.word.create({ data: { userId, text: 'pear', definitions: { create: { text: 'a green fruit' } } } });
+    const w1 = await prisma.word.create({ data: { dictionaryId, text: 'apple', definitions: { create: { text: 'a red fruit' } } }, include: { definitions: true } });
+    const w2 = await prisma.word.create({ data: { dictionaryId, text: 'pear', definitions: { create: { text: 'a green fruit' } } } });
 
     await prisma.userState.update({
       where: { userId },
@@ -223,7 +225,7 @@ describe('Quiz E2E', () => {
     // Create a word with 2 definitions
     const word = await prisma.word.create({ 
       data: { 
-        userId, 
+        dictionaryId, 
         text: 'pear', 
         definitions: { 
           create: [{ text: 'a green fruit' }, { text: 'a sweet fruit' }] 
