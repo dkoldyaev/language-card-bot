@@ -56,10 +56,10 @@ export async function addWordsAndAwaitDefinitions(page: Page, words: string[]) {
 
 export async function setupSettings(page: Page, baseLang = 'en', targetLang = 'ru') {
   // Select base language
-  await page.getByLabel('Native Language').click();
+  await page.getByLabel(/Native/i).click();
   await page.locator(`li[data-value="${baseLang}"]`).click();
 
   // Select target language
-  await page.getByLabel('Learning Language').click();
+  await page.getByLabel(/Learned|Target/i).click();
   await page.locator(`li[data-value="${targetLang}"]`).click();
 }

@@ -135,7 +135,7 @@ export default function Settings() {
               </Box>
               <Box>
                 <Typography variant="subtitle1">My Dictionaries</Typography>
-                <Typography variant="body2" color="text.secondary">Each dictionary has its own target and native languages.</Typography>
+                (<Typography variant="body2" color="text.secondary">Each dictionary has its own target and native languages.</Typography>
               </Box>
             </Box>
 

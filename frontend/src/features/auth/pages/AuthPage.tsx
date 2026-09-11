@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Alert, Box, Button, Card, CardContent, CircularProgress, FormControl, InputLabel,
-  MenuItem, Select, TextField, Typography,
+  Alert, Box, Button, Card, CardContent, CircularProgress, TextField, Typography,
 } from '@mui/material';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -9,6 +8,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
 import { trackEvent } from '../../../shared/lib/analytics';
+import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 
 export default function Auth() {
   const location = useLocation();
@@ -260,37 +260,13 @@ export default function Auth() {
                       />
 
                       {isRegisterRoute && (
-                        <>
-                          <FormControl fullWidth>
-                            <InputLabel id="base-language-label">Native Language</InputLabel>
-                            <Select
-                              labelId="base-language-label"
-                              value={baseLanguage}
-                              label="Native Language"
-                              onChange={(event) => setBaseLanguage(event.target.value)}
-                              disabled={loading}
-                            >
-                              <MenuItem value="ru">Russian</MenuItem>
-                              <MenuItem value="en">English</MenuItem>
-                              <MenuItem value="es">Spanish</MenuItem>
-                            </Select>
-                          </FormControl>
-
-                          <FormControl fullWidth>
-                            <InputLabel id="target-language-label">Learning Language</InputLabel>
-                            <Select
-                              labelId="target-language-label"
-                              value={targetLanguage}
-                              label="Learning Language"
-                              onChange={(event) => setTargetLanguage(event.target.value)}
-                              disabled={loading}
-                            >
-                              <MenuItem value="en">English</MenuItem>
-                              <MenuItem value="es">Spanish</MenuItem>
-                              <MenuItem value="ru">Russian</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </>
+                        <ActiveDictionaryLanguagesForm
+                          targetLanguage={targetLanguage}
+                          baseLanguage={baseLanguage}
+                          onTargetLanguageChange={setTargetLanguage}
+                          onBaseLanguageChange={setBaseLanguage}
+                          disabled={loading}
+                        />
                       )}
 
                       <Button
@@ -337,47 +313,25 @@ export default function Auth() {
                     {needsProfileCompletion ? 'Step 2 of 2' : 'Welcome'}
                   </Typography>
                   <Typography variant="h2" sx={{ fontSize: { xs: '2rem', sm: '2.45rem' }, mt: 0.45, mb: 1 }}>
-                    {needsProfileCompletion ? 'Set up your deck' : 'Make every new word count.'}
+                    {needsProfileCompletion ? 'Set up your dictionary' : 'Make every new word count.'}
                   </Typography>
                   <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                     {needsProfileCompletion
-                      ? 'Choose a language pair and level so your cards give you the right support.'
+                      ? 'Choose your learning and native languages to get started.'
                       : 'Sign in to collect words and turn them into focused practice.'}
                   </Typography>
 
                   {error && <Alert severity="error" sx={{ mb: 2.5 }}>{error}</Alert>}
 
                   {needsProfileCompletion ? (
-                    <Box sx={{ display: 'grid', gap: 1.5 }}>
-                      <FormControl fullWidth>
-                        <InputLabel id="base-language-label">Native Language</InputLabel>
-                        <Select
-                          labelId="base-language-label"
-                          value={baseLanguage}
-                          label="Native Language"
-                          onChange={(event) => setBaseLanguage(event.target.value)}
-                          disabled={loading}
-                        >
-                          <MenuItem value="ru">Russian</MenuItem>
-                          <MenuItem value="en">English</MenuItem>
-                          <MenuItem value="es">Spanish</MenuItem>
-                        </Select>
-                      </FormControl>
-
-                      <FormControl fullWidth>
-                        <InputLabel id="target-language-label">Learning Language</InputLabel>
-                        <Select
-                          labelId="target-language-label"
-                          value={targetLanguage}
-                          label="Learning Language"
-                          onChange={(event) => setTargetLanguage(event.target.value)}
-                          disabled={loading}
-                        >
-                          <MenuItem value="en">English</MenuItem>
-                          <MenuItem value="es">Spanish</MenuItem>
-                          <MenuItem value="ru">Russian</MenuItem>
-                        </Select>
-                      </FormControl>
+                    <Box sx={{ display: 'grid', gap: 2 }}>
+                      <ActiveDictionaryLanguagesForm
+                        targetLanguage={targetLanguage}
+                        baseLanguage={baseLanguage}
+                        onTargetLanguageChange={setTargetLanguage}
+                        onBaseLanguageChange={setBaseLanguage}
+                        disabled={loading}
+                      />
 
                       <Button
                         variant="contained"
