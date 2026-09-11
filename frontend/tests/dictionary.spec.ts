@@ -198,5 +198,42 @@ test.describe('Dictionary Operations', () => {
     await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'apricot' })).not.toBeVisible();
     await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'banana' })).toBeVisible();
   });
+
+  test('should allow editing dictionary name with pencil icon and contenteditable', async ({ page }) => {
+    test.setTimeout(60000);
+    await page.goto('/dictionary');
+    await expect(page.locator('text=Vocabulary Deck')).toBeVisible();
+
+    const heading = page.locator('h1');
+
+    // Pencil button is visible
+    const editBtn = page.locator('[data-testid="edit-dictionary-title-btn"]');
+    await expect(editBtn).toBeVisible();
+    await editBtn.click();
+
+    // Heading is now contenteditable
+    await expect(heading).toHaveAttribute('contenteditable', 'true');
+    const saveBtn = page.locator('[data-testid="save-dictionary-title-btn"]');
+    const cancelBtn = page.locator('[data-testid="cancel-dictionary-title-btn"]');
+    await expect(saveBtn).toBeVisible();
+    await expect(cancelBtn).toBeVisible();
+
+    // Fill new name and save
+    const newName = 'Renamed Deck';
+    await heading.fill(newName);
+    await saveBtn.click();
+
+    // Heading updated and no longer editable
+    await expect(heading).toHaveText(newName);
+    await expect(heading).not.toHaveAttribute('contenteditable', 'true');
+
+    // In-page switcher tab also reflects the new name
+    const pageSwitcher = page.locator('[data-testid="dictionary-page-switcher"]');
+    await expect(pageSwitcher.locator(`button:has-text("${newName}")`)).toBeVisible();
+
+    // Reload page to verify persistence
+    await page.reload();
+    await expect(page.locator('h1')).toHaveText(newName);
+  });
 });
 

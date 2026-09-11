@@ -65,4 +65,64 @@ describe('DictionaryPage', () => {
     expect(useStore.getState().selectedDictionaryId).toBe(2);
     expect(postSpy).not.toHaveBeenCalledWith(expect.stringContaining('/select'), expect.anything());
   });
+
+  it('toggles edit mode when pencil icon is clicked and saves new name', async () => {
+    const user = userEvent.setup();
+    const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({
+      data: {
+        dictionary: {
+          id: 1,
+          name: 'Super English Deck',
+          targetLanguage: 'en',
+          baseLanguage: 'ru',
+        },
+      },
+    });
+
+    render(<DictionaryPage />);
+
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('English Deck');
+    expect(heading).not.toHaveAttribute('contenteditable', 'true');
+
+    // Click pencil icon
+    const editBtn = screen.getByTestId('edit-dictionary-title-btn');
+    await user.click(editBtn);
+
+    // Now heading has contenteditable="true"
+    expect(heading).toHaveAttribute('contenteditable', 'true');
+    const saveBtn = screen.getByTestId('save-dictionary-title-btn');
+    const cancelBtn = screen.getByTestId('cancel-dictionary-title-btn');
+    expect(saveBtn).toBeInTheDocument();
+    expect(cancelBtn).toBeInTheDocument();
+
+    // Edit the text
+    heading.innerText = 'Super English Deck';
+    await user.click(saveBtn);
+
+    expect(patchSpy).toHaveBeenCalledWith('/dictionaries/1', {
+      name: 'Super English Deck',
+    });
+    expect(useStore.getState().dictionaries.find((d) => d.id === 1)?.name).toBe('Super English Deck');
+    expect(heading).not.toHaveAttribute('contenteditable', 'true');
+  });
+
+  it('cancels edit mode without saving when cancel button is clicked', async () => {
+    const user = userEvent.setup();
+    const patchSpy = vi.spyOn(apiClient, 'patch');
+
+    render(<DictionaryPage />);
+
+    const heading = screen.getByRole('heading', { level: 1 });
+    const editBtn = screen.getByTestId('edit-dictionary-title-btn');
+    await user.click(editBtn);
+
+    heading.innerText = 'Temporary Name';
+    const cancelBtn = screen.getByTestId('cancel-dictionary-title-btn');
+    await user.click(cancelBtn);
+
+    expect(patchSpy).not.toHaveBeenCalled();
+    expect(heading).toHaveTextContent('English Deck');
+    expect(heading).not.toHaveAttribute('contenteditable', 'true');
+  });
 });

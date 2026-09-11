@@ -99,7 +99,7 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
 
 // PATCH update dictionary
 router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
-  const { id: userId } = getAuthUser(req);
+  const { id: userId, username } = getAuthUser(req);
   const dictId = parseInt(req.params.id as string, 10);
 
   if (isNaN(dictId)) {
@@ -113,6 +113,16 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
   try {
     const updated = await updateDictionary(userId, dictId, parseResult.data);
+
+    const all = await getUserDictionaries(userId);
+    const syncEvent: DictionariesSyncMercureEvent = {
+      version: 'v1',
+      type: 'dictionaries_sync',
+      dictionaries: all.dictionaries,
+      activeDictionaryId: all.activeDictionaryId,
+    };
+    await publishEvent(username, syncEvent).catch((err) => console.error('Mercure publish error:', err));
+
     res.json({ dictionary: updated });
   } catch (error: any) {
     if (error.message === 'Dictionary not found') {
@@ -125,7 +135,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
 // DELETE dictionary
 router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
-  const { id: userId } = getAuthUser(req);
+  const { id: userId, username } = getAuthUser(req);
   const dictId = parseInt(req.params.id as string, 10);
 
   if (isNaN(dictId)) {
@@ -134,6 +144,16 @@ router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
 
   try {
     await deleteDictionary(userId, dictId);
+
+    const all = await getUserDictionaries(userId);
+    const syncEvent: DictionariesSyncMercureEvent = {
+      version: 'v1',
+      type: 'dictionaries_sync',
+      dictionaries: all.dictionaries,
+      activeDictionaryId: all.activeDictionaryId,
+    };
+    await publishEvent(username, syncEvent).catch((err) => console.error('Mercure publish error:', err));
+
     res.json({ message: 'Dictionary deleted successfully' });
   } catch (error: any) {
     if (error.message === 'Dictionary not found') {

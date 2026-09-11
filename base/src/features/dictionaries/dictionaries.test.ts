@@ -160,6 +160,7 @@ describe('Dictionaries API', () => {
     });
 
     prismaMock.dictionary.delete.mockResolvedValue({} as any);
+    prismaMock.dictionary.findMany.mockResolvedValue([] as any);
     prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,
       userId,
@@ -176,5 +177,55 @@ describe('Dictionaries API', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe('Dictionary deleted successfully');
+  });
+
+  it('PATCH /api/v1/dictionaries/:id should update dictionary name', async () => {
+    prismaMock.dictionary.findFirst.mockResolvedValue({
+      id: 11,
+      name: 'Old Name',
+      targetLanguage: 'fr',
+      baseLanguage: 'de',
+      userId,
+      createdAt: new Date(),
+    });
+
+    prismaMock.dictionary.update.mockResolvedValue({
+      id: 11,
+      name: 'New Custom Name',
+      targetLanguage: 'fr',
+      baseLanguage: 'de',
+      userId,
+      createdAt: new Date(),
+    } as any);
+
+    prismaMock.dictionary.findMany.mockResolvedValue([
+      {
+        id: 11,
+        name: 'New Custom Name',
+        targetLanguage: 'fr',
+        baseLanguage: 'de',
+        userId,
+        createdAt: new Date(),
+        _count: { words: 0 },
+      },
+    ] as any);
+
+    prismaMock.userState.findUnique.mockResolvedValue({
+      id: 1,
+      userId,
+      activeDictionaryId: 11,
+      currentWordId: null,
+      currentDefinitionId: null,
+      showVariants: false,
+      showDefinitionTranslation: false,
+    } as any);
+
+    const res = await request(app)
+      .patch('/api/v1/dictionaries/11')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'New Custom Name' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.dictionary.name).toBe('New Custom Name');
   });
 });
