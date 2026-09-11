@@ -58,23 +58,13 @@ export default defineConfig({
   ],
   server: {
     host: true,
-    port: 5173,
+    port: Number(process.env.FRONTEND_PORT || process.env.PORT || 5173),
     watch: {
       usePolling: true,
     },
-    proxy: {
-      '/.well-known/mercure': {
-        target: 'http://localhost:9090',
-        changeOrigin: true,
-        ws: true,
-      },
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-    },
   },
   preview: {
+    port: Number(process.env.FRONTEND_PORT || process.env.PORT || 5173),
     allowedHosts: process.env.VITE_ALLOWED_HOSTS ? process.env.VITE_ALLOWED_HOSTS.split(',') : undefined,
   },
   define: {

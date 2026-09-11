@@ -22,7 +22,7 @@ export async function setupTestUser(username: string): Promise<{ token: string, 
         { accounts: { some: { provider: 'test-username', providerAccountId: username } } }
       ]
     },
-    include: { state: true, settings: true }
+    include: { state: true, dictionaries: true }
   });
   
   return { token: loginRes.body.token, user: userInDb };

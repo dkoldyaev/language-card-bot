@@ -20,12 +20,21 @@ import './features/definition_add/definition_add.listener';
 import './features/definition_translate_edit/definition_translate.listener';
 import './features/quiz/quiz_cleanup.worker';
 
+import { env } from './core/env';
+
 dotenv.config();
 
 const app: Express = express();
 
+const corsOrigin = env.CORS_ORIGIN === '*'
+  ? true
+  : env.CORS_ORIGIN.includes(',')
+  ? env.CORS_ORIGIN.split(',').map((origin) => origin.trim())
+  : env.CORS_ORIGIN;
+
 app.use(cors({
-  origin: true
+  origin: corsOrigin,
+  credentials: true,
 }));
 app.use(express.json());
 

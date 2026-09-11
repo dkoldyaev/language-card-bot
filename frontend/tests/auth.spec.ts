@@ -36,7 +36,7 @@ test.describe('Authentication Flow', () => {
     await login(page, validUser);
 
     // 5. Logout
-    await page.click('text=Logout');
+    await page.locator('button, [role="button"]').filter({ hasText: /Sign out|Logout/i }).first().click();
     await expect(page).toHaveURL(/.*\/login/);
     
     // 6. Log in again
@@ -59,11 +59,11 @@ test.describe('Authentication Flow', () => {
     await page.goto('/quiz');
     await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
     await page.click('button:has-text("Start Quiz")');
-    await expect(page.locator('h4:has-text("Quiz")')).toBeVisible();
-    await expect(page.locator('.MuiCardContent-root')).toContainText('apple');
+    await expect(page.locator('h1:has-text("Quiz"), h4:has-text("Quiz")')).toBeVisible();
+    await expect(page.locator('.MuiCardContent-root').first()).toContainText('apple');
     
     // 3. Logout
-    await page.click('text=Logout');
+    await page.locator('button, [role="button"]').filter({ hasText: /Sign out|Logout/i }).first().click();
     await expect(page).toHaveURL(/.*\/login/);
 
     // 4. Register and login user 2
@@ -74,10 +74,10 @@ test.describe('Authentication Flow', () => {
     await page.goto('/dictionary');
     await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'apple' })).toBeHidden();
 
-    // Verify user 2 does not see user 1's active quiz
+    // Verify user 2 does not see user 1's active quiz (quiz should be locked because dictionary is empty)
     await page.goto('/quiz');
-    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
-    await expect(page.locator('h4:has-text("Quiz")')).toBeHidden();
+    await expect(page.locator('text=Quiz is locked')).toBeVisible();
+    await expect(page.locator('h1:has-text("Quiz"), h4:has-text("Quiz")')).toBeHidden();
 
     // 6. Explicitly check the Zustand store structure in localStorage
     const user2StorageStr = await page.evaluate(() => localStorage.getItem('english-card-bot-storage'));
