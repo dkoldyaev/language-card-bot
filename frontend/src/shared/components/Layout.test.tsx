@@ -15,7 +15,7 @@ describe('Layout', () => {
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Dictionary')).toBeInTheDocument();
     expect(screen.getByText('Quiz')).toBeInTheDocument();
-    expect(screen.getByText('Settings')).toBeInTheDocument();
+    expect(screen.queryByText('Settings')).not.toBeInTheDocument();
   });
 
   it('disables Quiz navigation when dictionary is empty', () => {

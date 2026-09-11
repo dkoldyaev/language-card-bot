@@ -14,7 +14,6 @@ import {
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import useStore from '../../store/useStore';
 
@@ -22,7 +21,6 @@ const navItems = [
   { path: '/', label: 'Dashboard', icon: <HomeRoundedIcon /> },
   { path: '/dictionary', label: 'Dictionary', icon: <MenuBookRoundedIcon /> },
   { path: '/quiz', label: 'Quiz', icon: <SchoolRoundedIcon /> },
-  { path: '/settings', label: 'Settings', icon: <SettingsRoundedIcon /> },
 ];
 
 function Brand({ compact = false }: { compact?: boolean }) {
