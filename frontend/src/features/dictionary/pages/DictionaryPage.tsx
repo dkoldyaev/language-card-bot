@@ -4,18 +4,31 @@ import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
 import AddWordForm from '../components/AddWordForm';
 import WordList from '../components/WordList';
+import DictionarySwitcher from '../components/DictionarySwitcher';
+import CreateDictionaryDialog from '../components/CreateDictionaryDialog';
 
 export default function DictionaryPage() {
   const [loading, setLoading] = useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
   const setDictionary = useStore((state) => state.setDictionary);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
+  const selectedDictionaryId = useStore((state) => state.selectedDictionaryId);
+  const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
   const dictionaries = useStore((state) => state.dictionaries);
+  const setDictionaries = useStore((state) => state.setDictionaries);
+  const removeDictionary = useStore((state) => state.removeDictionary);
 
-  const activeDict = dictionaries.find((d) => d.id === activeDictionaryId) || dictionaries[0];
+  const currentDictId = selectedDictionaryId ?? activeDictionaryId ?? dictionaries[0]?.id ?? null;
+  const currentDict = dictionaries.find((d) => d.id === currentDictId) || dictionaries[0];
 
   useEffect(() => {
+    if (!currentDictId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    apiClient.get('/dictionary')
+    apiClient.get('/dictionary', { params: { dictionaryId: currentDictId } })
       .then((res) => {
         if (res.data.dictionary) {
           setDictionary(res.data.dictionary);
@@ -23,18 +36,40 @@ export default function DictionaryPage() {
       })
       .catch((error) => console.error('Failed to load dictionary:', error))
       .finally(() => setLoading(false));
-  }, [setDictionary, activeDictionaryId]);
+  }, [setDictionary, currentDictId]);
+
+  const handleSelectDictionary = (dictId: number) => {
+    // Only switch working dictionary, do NOT switch active learning language
+    setSelectedDictionaryId(dictId);
+  };
+
+  const handleDeleteDictionary = async (dictId: number, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${name}" and all its words?`)) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(`/dictionaries/${dictId}`);
+      removeDictionary(dictId);
+      const dictsRes = await apiClient.get('/dictionaries');
+      if (dictsRes.data.dictionaries) {
+        setDictionaries(dictsRes.data.dictionaries);
+      }
+    } catch (err) {
+      console.error('Failed to delete dictionary:', err);
+    }
+  };
 
   return (
     <Box className="animate-fade-in">
-      <Box sx={{ mb: 3.5 }}>
+      <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
           <Typography variant="overline" color="secondary.main">
             Vocabulary Deck
           </Typography>
-          {activeDict && (
+          {currentDict && (
             <Chip
-              label={`${activeDict.targetLanguage.toUpperCase()} → ${activeDict.baseLanguage.toUpperCase()}`}
+              label={`${currentDict.targetLanguage.toUpperCase()} → ${currentDict.baseLanguage.toUpperCase()}`}
               size="small"
               sx={{
                 height: 22,
@@ -47,18 +82,37 @@ export default function DictionaryPage() {
           )}
         </Box>
         <Typography variant="h1" sx={{ fontSize: { xs: '2.35rem', sm: '3rem' }, mt: 0.45 }}>
-          {activeDict ? activeDict.name : 'Dictionary'}
+          {currentDict ? currentDict.name : 'Dictionary'}
         </Typography>
         <Typography variant="body1" sx={{ color: 'text.secondary', mt: 1, maxWidth: 620 }}>
-          {activeDict
-            ? `Learning ${activeDict.targetLanguage.toUpperCase()} with definitions and translations in ${activeDict.baseLanguage.toUpperCase()}.`
+          {currentDict
+            ? `Learning ${currentDict.targetLanguage.toUpperCase()} with definitions and translations in ${currentDict.baseLanguage.toUpperCase()}.`
             : 'Capture new words while they are useful, then keep their meanings easy to find.'}
         </Typography>
       </Box>
 
-      <AddWordForm />
+      {dictionaries.length > 0 && (
+        <DictionarySwitcher
+          dictionaries={dictionaries}
+          selectedDictionaryId={currentDictId}
+          activeDictionaryId={activeDictionaryId}
+          onSelectDictionary={handleSelectDictionary}
+          onOpenCreateDialog={() => setCreateDialogOpen(true)}
+          onDeleteDictionary={handleDeleteDictionary}
+        />
+      )}
+
+      <AddWordForm dictionaryId={currentDictId ?? undefined} />
       
       <WordList loading={loading} />
+
+      <CreateDictionaryDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onCreated={(newDict) => {
+          setSelectedDictionaryId(newDict.id);
+        }}
+      />
     </Box>
   );
 }

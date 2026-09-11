@@ -5,9 +5,22 @@ import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import apiClient from '../../../shared/api/client';
 import { trackEvent } from '../../../shared/lib/analytics';
 
-export default function AddWordForm() {
+import useStore from '../../../store/useStore';
+
+interface AddWordFormProps {
+  dictionaryId?: number;
+}
+
+export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
   const [wordsText, setWordsText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const selectedDictionaryId = useStore((state) => state.selectedDictionaryId);
+  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
+  const dictionaries = useStore((state) => state.dictionaries);
+
+  const targetDictId = dictionaryId ?? selectedDictionaryId ?? activeDictionaryId ?? dictionaries[0]?.id;
+  const targetDict = dictionaries.find((d) => d.id === targetDictId);
 
   const handleSubmitWords = async () => {
     const words = wordsText.split('\n').map((w) => w.trim()).filter(Boolean);
@@ -16,7 +29,7 @@ export default function AddWordForm() {
     setSubmitting(true);
     try {
       for (const word of words) {
-        await apiClient.post('/add_word', { word });
+        await apiClient.post('/add_word', { word, dictionaryId: targetDictId });
         trackEvent('Word Added');
       }
       setWordsText('');
@@ -45,9 +58,11 @@ export default function AddWordForm() {
             <AddRoundedIcon fontSize="small" />
           </Box>
           <Box>
-            <Typography variant="subtitle1">Add words</Typography>
+            <Typography variant="subtitle1">
+              Add words{targetDict ? ` to ${targetDict.name}` : ''}
+            </Typography>
             <Typography variant="body2" color="text.secondary">
-              One word per line works best.
+              {targetDict ? `Target language: ${targetDict.targetLanguage.toUpperCase()} • ` : ''}One word per line works best.
             </Typography>
           </Box>
         </Box>

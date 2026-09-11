@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Typography, Box, TextField, Button, CircularProgress,
   Accordion, AccordionSummary, AccordionDetails,
@@ -35,6 +35,17 @@ export default function WordList({ loading }: { loading: boolean }) {
     ? dictionary.filter((w) => w.text.toLowerCase().includes(searchQuery.toLowerCase()))
     : dictionary;
 
+  const filteredSelectedCount = filteredDictionary.filter((w) => selectedWordIds.has(w.id)).length;
+  const isAllFilteredSelected = filteredDictionary.length > 0 && filteredSelectedCount === filteredDictionary.length;
+  const isFilteredIndeterminate = filteredSelectedCount > 0 && filteredSelectedCount < filteredDictionary.length;
+
+  useEffect(() => {
+    setSelectedWordIds((prev) => {
+      const valid = new Set([...prev].filter((id) => dictionary.some((w) => w.id === id)));
+      return valid.size === prev.size ? prev : valid;
+    });
+  }, [dictionary]);
+
   const handleDelete = async (e: React.MouseEvent, wordId: number, text: string) => {
     e.stopPropagation();
     if (window.confirm(`Are you sure you want to delete "${text}"?`)) {
@@ -54,11 +65,13 @@ export default function WordList({ loading }: { loading: boolean }) {
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSelected = new Set(selectedWordIds);
     if (e.target.checked) {
-      setSelectedWordIds(new Set(dictionary.map(w => w.id)));
+      filteredDictionary.forEach((w) => newSelected.add(w.id));
     } else {
-      setSelectedWordIds(new Set());
+      filteredDictionary.forEach((w) => newSelected.delete(w.id));
     }
+    setSelectedWordIds(newSelected);
   };
 
   const handleSelectWord = (e: React.ChangeEvent<HTMLInputElement>, wordId: number) => {
@@ -171,8 +184,9 @@ export default function WordList({ loading }: { loading: boolean }) {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={dictionary.length > 0 && selectedWordIds.size === dictionary.length}
-                  indeterminate={selectedWordIds.size > 0 && selectedWordIds.size < dictionary.length}
+                  checked={isAllFilteredSelected}
+                  indeterminate={isFilteredIndeterminate}
+                  disabled={filteredDictionary.length === 0}
                   onChange={handleSelectAll}
                   size="small"
                 />

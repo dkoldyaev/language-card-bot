@@ -47,6 +47,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
 
   const addDictionary = useStore((state) => state.addDictionary);
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
+  const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
   const setDictionary = useStore((state) => state.setDictionary);
 
   const handleSubmit = async (e?: FormEvent) => {
@@ -75,7 +76,10 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
       const newDict: DictionaryItem = res.data.dictionary;
 
       addDictionary(newDict);
-      setActiveDictionaryId(newDict.id);
+      if (newDict.isActive) {
+        setActiveDictionaryId(newDict.id);
+      }
+      setSelectedDictionaryId(newDict.id);
       setDictionary([]); // New dictionary starts with empty words list
 
       if (onCreated) {

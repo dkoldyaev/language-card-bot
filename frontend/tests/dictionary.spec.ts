@@ -100,4 +100,103 @@ test.describe('Dictionary Operations', () => {
     // After deleting all words, the dictionary should be empty
     await expect(page.locator('text=Your dictionary is empty.')).toBeVisible();
   });
+
+  test('should switch dictionaries in Dictionary page without altering active learning language', async ({ page }) => {
+    test.setTimeout(60000);
+    await page.goto('/dictionary');
+    await expect(page.locator('text=Vocabulary Deck')).toBeVisible();
+
+    // Top-right selector represents the active learning language
+    const headerSelector = page.locator('[data-testid="dictionary-selector-button"]');
+    await expect(headerSelector).toBeVisible();
+    await expect(headerSelector).toContainText('EN (RU)');
+
+    // Verify initial dictionary has ACTIVE badge in the in-page switcher
+    const pageSwitcher = page.locator('[data-testid="dictionary-page-switcher"]');
+    await expect(pageSwitcher.locator('text=ACTIVE')).toBeVisible();
+
+    // Create a new dictionary
+    await page.click('button:has-text("New Dictionary")');
+    await expect(page.locator('h2:has-text("Create New Dictionary")')).toBeVisible();
+
+    await page.fill('input[name="name"], input[placeholder*="Spanish"], input[type="text"]:visible >> nth=0', 'Spanish Vocab');
+    await page.click('button:has-text("Create Dictionary")');
+
+    // Both dictionaries should be visible in page switcher, and Spanish Vocab is selected
+    const spanishTab = pageSwitcher.locator('button:has-text("Spanish Vocab")');
+    await expect(spanishTab).toBeVisible();
+
+    // CRITICAL: Top-right corner selector must NOT change (active learning language is preserved)
+    await expect(headerSelector).toContainText('EN (RU)');
+    await expect(headerSelector).not.toContainText('Spanish');
+
+    // Initial dictionary still has the ACTIVE badge in page switcher
+    await expect(pageSwitcher.locator('text=ACTIVE')).toBeVisible();
+
+    // The header for AddWordForm indicates Spanish Vocab
+    await expect(page.locator('text=Add words to Spanish Vocab')).toBeVisible();
+
+    // Add a word to Spanish Vocab
+    await page.fill('textarea', 'hola');
+    await page.click('button:has-text("Submit Words")');
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'hola' })).toBeVisible();
+
+    // Switch back to the first dictionary (which has ACTIVE chip) in page switcher
+    const activeDictBtn = pageSwitcher.locator('button:has(.MuiChip-root:has-text("ACTIVE"))');
+    await activeDictBtn.click();
+
+    // In the first dictionary, "hola" should NOT be present
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'hola' })).not.toBeVisible();
+
+    // CRITICAL: Top-right corner selector still unchanged
+    await expect(headerSelector).toContainText('EN (RU)');
+    await expect(headerSelector).not.toContainText('Spanish');
+  });
+
+  test('should only select visible words when filtering with search and clicking All', async ({ page }) => {
+    test.setTimeout(60000);
+    const wordsToAdd = ['apple', 'apricot', 'banana'];
+    await addWordsToDictionary(page, wordsToAdd);
+
+    await page.goto('/dictionary');
+    await expect(page.locator('text=Vocabulary Deck')).toBeVisible();
+
+    // Verify all 3 words are visible initially
+    for (const word of wordsToAdd) {
+      await expect(page.locator('.MuiAccordion-root').filter({ hasText: word })).toBeVisible();
+    }
+
+    // Filter by "ap"
+    const searchInput = page.getByPlaceholder('Search words...');
+    await searchInput.fill('ap');
+
+    // Only apple and apricot should be visible
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'apple' })).toBeVisible();
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'apricot' })).toBeVisible();
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'banana' })).not.toBeVisible();
+
+    // Click "All" checkbox
+    await page.locator('label:has-text("All")').click();
+
+    // Only the 2 visible words should be selected
+    const deleteButton = page.locator('button:has-text("Delete (2)")');
+    await expect(deleteButton).toBeVisible();
+
+    // Clear the filter
+    await searchInput.clear();
+
+    // Banana reappears, but selection count should still be 2
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'banana' })).toBeVisible();
+    await expect(deleteButton).toBeVisible();
+
+    // Bulk delete the selected 2 words
+    page.once('dialog', dialog => dialog.accept());
+    await deleteButton.click();
+
+    // Verify apple and apricot were deleted, but banana remains
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'apple' })).not.toBeVisible();
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'apricot' })).not.toBeVisible();
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'banana' })).toBeVisible();
+  });
 });
+

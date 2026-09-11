@@ -71,6 +71,8 @@ interface AppState {
   settings: SettingsState | null;
   dictionaries: DictionaryItem[];
   activeDictionaryId: number | null;
+  selectedDictionaryId: number | null;
+  setSelectedDictionaryId: (selectedDictionaryId: number | null) => void;
   appState: any | null;
   dictionary: DictionaryWord[];
   quizCard: QuizCardData | null;
@@ -114,6 +116,7 @@ const initialState = {
   settings: null,
   dictionaries: [] as DictionaryItem[],
   activeDictionaryId: null as number | null,
+  selectedDictionaryId: null as number | null,
   appState: null,
   dictionary: [],
   quizCard: null,
@@ -143,12 +146,16 @@ const useStore = create<AppState>()(
           isActive: d.id === activeDictionaryId
         }))
       })),
+      setSelectedDictionaryId: (selectedDictionaryId) => set({ selectedDictionaryId }),
       addDictionary: (dict) => set((state) => ({
-        dictionaries: [...state.dictionaries, dict]
+        dictionaries: state.dictionaries.some(d => d.id === dict.id)
+          ? state.dictionaries.map(d => d.id === dict.id ? dict : d)
+          : [...state.dictionaries, dict]
       })),
       removeDictionary: (id) => set((state) => ({
         dictionaries: state.dictionaries.filter(d => d.id !== id),
-        activeDictionaryId: state.activeDictionaryId === id ? null : state.activeDictionaryId
+        activeDictionaryId: state.activeDictionaryId === id ? null : state.activeDictionaryId,
+        selectedDictionaryId: state.selectedDictionaryId === id ? null : state.selectedDictionaryId,
       })),
       updateDictionaryItem: (id, partial) => set((state) => ({
         dictionaries: state.dictionaries.map(d => d.id === id ? { ...d, ...partial } : d)
