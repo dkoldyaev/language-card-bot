@@ -13,12 +13,14 @@ COPY src ./src
 RUN npm run build
 
 # Development stage
-FROM node:22-alpine AS development
+FROM node:22-alpine AS dev
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 CMD ["npm", "run", "dev"]
+
+FROM dev AS development
 
 # Production stage
 FROM node:22-alpine AS production

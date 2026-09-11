@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  app:
+    extends:
+      file: docker-compose.yml
+      service: app
+    build:
+      target: dev
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-testuser}:${POSTGRES_PASSWORD:-testpass}@db_test:5432/${POSTGRES_DB:-english_card_bot_test}?schema=public
+      - REDIS_URL=redis://redis_test:6379
+      - DEFINER_APP_TYPE=mock
+      - TRANSLATOR_APP_TYPE=mock
+      - ENABLE_TEST_AUTH=true
+      - PORT=${BASE_PORT:-3001}
+      - BASE_DOMAIN=${BASE_DOMAIN:-http://localhost}
+      - CORS_ORIGIN=${BASE_CORS_ORIGIN}
+    ports:
+      - "${BASE_PORT:-3001}:${BASE_PORT:-3001}"
+    volumes:
+      - ./base:/app
+      - /app/node_modules
+    depends_on:
+      - db_test
+      - redis_test
+
+  mercure:
+    extends:
+      file: docker-compose.yml
+      service: mercure
+    environment:
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins ${MERCURE_CORS_ALLOWED_ORIGINS}
+        anonymous
+    ports:
+      - "${MERCURE_PORT}:80"
+
+  db_test:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-testuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-testpass}
+      POSTGRES_DB: ${POSTGRES_DB:-english_card_bot_test}
+    ports:
+      - "5434:5432"
+    volumes:
+      - db_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-testuser} -d ${POSTGRES_DB:-english_card_bot_test}"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
+  redis_test:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_test_data:/data
+
+  translator:
+    extends:
+      file: docker-compose.yml
+      service: translator
+    build:
+      target: dev
+    environment:
+      - MOCK_TIMEOUT=0
+      - TRANSLATOR_APP_TYPE=mock
+      - CACHE_URL=redis://redis_test:6379/1
+      # - CHOKIDAR_USEPOLLING=1
+    volumes:
+      - ./translator:/app
+      - /app/node_modules
+    depends_on:
+      - redis_test
+
+  definer:
+    extends:
+      file: docker-compose.yml
+      service: definer
+    build:
+      target: dev
+    environment:
+      - MOCK_TIMEOUT=0
+      - DEFINER_APP_TYPE=mock
+      - CACHE_URL=redis://redis_test:6379/2
+      # - CHOKIDAR_USEPOLLING=1
+    volumes:
+      - ./definer:/app
+      - /app/node_modules
+    depends_on:
+      - redis_test
+
+  mercure_monitor:
+    build:
+      context: ./mercure-monitor
+    environment:
+      - MERCURE_URL=${BASE_MERCURE_URL:-http://mercure/.well-known/mercure}
+      - MERCURE_JWT_KEY=${MERCURE_JWT_KEY:-supersecret_mercure_key}
+    volumes:
+      - ./mercure-monitor:/app
+      - /app/node_modules
+    depends_on:
+      - mercure
+
+  frontend:
+    extends:
+      file: docker-compose.yml
+      service: frontend
+    build:
+      target: dev
+      args:
+        - MERCURE_PUBLIC_URL=http://localhost:${MERCURE_PORT:-9091}/.well-known/mercure
+        - API_BASE_URL=http://localhost:${BASE_PORT:-3001}/api/v1
+        - BASE_DOMAIN=${BASE_DOMAIN:-http://localhost}
+        - AUTH_PROVIDER=test-username
+    environment:
+      - AUTH_PROVIDER=test-username
+      - API_BASE_URL=http://localhost:${BASE_PORT:-3001}/api/v1
+      - MERCURE_PUBLIC_URL=http://localhost:${MERCURE_PORT:-9090}/.well-known/mercure
+      - BASE_DOMAIN=${BASE_DOMAIN:-http://localhost}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - app
+    ports:
+      - "${FRONTEND_PORT:-5173}:${FRONTEND_PORT:-5173}"
+
+volumes:
+  db_test_data:
+  redis_test_data:

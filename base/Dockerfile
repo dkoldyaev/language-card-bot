@@ -18,7 +18,7 @@ COPY src ./src
 RUN npm run build
 
 # Development stage
-FROM node:22-alpine AS development
+FROM node:22-alpine AS dev
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -27,6 +27,8 @@ COPY prisma.config.ts ./
 RUN DATABASE_URL="postgresql://dummy:5432/dummy" npx prisma generate
 COPY . .
 CMD sh -c "npx prisma db push && npm run dev"
+
+FROM dev AS development
 
 # Production stage
 FROM node:22-alpine AS production
