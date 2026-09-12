@@ -11,6 +11,14 @@ vi.mock('../core/TranslatorFactory', () => ({
   },
 }));
 
+// Mock Redis cache client
+vi.mock('../core/cache', () => ({
+  redisClient: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+  },
+}));
+
 describe('POST /api/v1/translate', () => {
   beforeEach(() => {
     vi.clearAllMocks();

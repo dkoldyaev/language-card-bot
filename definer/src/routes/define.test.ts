@@ -12,6 +12,14 @@ vi.mock('../core/DefinerFactory', () => ({
   },
 }));
 
+// Mock Redis cache client
+vi.mock('../core/cache', () => ({
+  redisClient: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+  },
+}));
+
 const app = express();
 app.use(express.json());
 app.use('/api/v1/define', defineRouter);
@@ -95,5 +103,27 @@ describe('POST /api/v1/define', () => {
 
     expect(DefinerFactory.getDefiner).toHaveBeenCalledWith('gemini');
     expect(geminiMock.define).toHaveBeenCalledWith('hola', 'es');
+  });
+
+  it('should call llm adapter when specified and return mocked results', async () => {
+    const llmMock: IDefiner = {
+      define: vi.fn().mockResolvedValue(['LLM Definition 1']),
+    };
+    vi.mocked(DefinerFactory.getDefiner).mockReturnValue(llmMock);
+
+    const res = await request(app)
+      .post('/api/v1/define')
+      .send({
+        text: 'ciao',
+        language: 'it',
+        definerApp: 'llm'
+      });
+      
+    expect(res.status).toBe(200);
+    expect(res.body.definitions).toHaveLength(1);
+    expect(res.body.definitions[0]).toBe('LLM Definition 1');
+
+    expect(DefinerFactory.getDefiner).toHaveBeenCalledWith('llm');
+    expect(llmMock.define).toHaveBeenCalledWith('ciao', 'it');
   });
 });

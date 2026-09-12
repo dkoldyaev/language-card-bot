@@ -7,6 +7,7 @@
     "test:base": "npm run --prefix base test",
     "test:definer": "npm run --prefix definer test",
     "test:translator": "npm run --prefix translator test",
-    "test": "npm run test:frontend && npm run test:base && npm run test:definer && npm run test:translator"
+    "test:llm": "npm run --prefix llm test",
+    "test": "npm run test:frontend && npm run test:base && npm run test:definer && npm run test:translator && npm run test:llm"
   }
 }

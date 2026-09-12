@@ -46,6 +46,17 @@ services:
       - LARA_ACCESS_KEY_SECRET=${TRANSLATOR_LARA_ACCESS_KEY_SECRET}
       - CACHE_URL=${TRANSLATOR_CACHE_URL:-redis://redis:6379/1}
 
+  llm:
+    build:
+      context: ./llm
+      target: ${LLM_TARGET}
+    environment:
+      - PORT=${LLM_PORT}
+      - MISTRAL_API_KEY=${LLM_MISTRAL_API_KEY}
+      - GEMINI_API_KEY=${LLM_GEMINI_API_KEY}
+      - MOCK_TIMEOUT=${LLM_MOCK_TIMEOUT}
+      - CACHE_URL=${LLM_CACHE_URL:-redis://redis:6379/3}
+
   definer:
     build:
       context: ./definer
@@ -53,10 +64,11 @@ services:
     environment:
       - PORT=${DEFINER_PORT}
       - DEFINER_APP_TYPE=${BASE_DEFINER_APP_TYPE}
-      - MISTRAL_API_KEY=${DEFINER_MISTRAL_API_KEY}
-      - GEMINI_API_KEY=${DEFINER_GEMINI_API_KEY}
+      - LLM_SERVICE_URL=${DEFINER_LLM_SERVICE_URL:-http://llm:3003/api/v1/generate}
       - MOCK_TIMEOUT=${DEFINER_MOCK_TIMEOUT}
       - CACHE_URL=${DEFINER_CACHE_URL:-redis://redis:6379/2}
+    depends_on:
+      - llm
 
   redis:
     image: redis:7-alpine

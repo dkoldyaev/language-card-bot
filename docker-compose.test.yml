@@ -60,6 +60,16 @@ services:
     depends_on:
       - redis_test
 
+  llm:
+    extends:
+      file: docker-compose.yml
+      service: llm
+    environment:
+      - MOCK_TIMEOUT=0
+      - CACHE_URL=redis://redis_test:6379/3
+    depends_on:
+      - redis_test
+
   definer:
     extends:
       file: docker-compose.yml
@@ -70,6 +80,7 @@ services:
       - CACHE_URL=redis://redis_test:6379/2
     depends_on:
       - redis_test
+      - llm
 
   mercure_monitor:
     build:

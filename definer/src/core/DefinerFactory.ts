@@ -1,16 +1,17 @@
 import { IDefiner, DefinerAppType } from './IDefiner';
 import { MockDefiner } from '../adapters/MockDefiner';
-import { MistralDefiner } from '../adapters/MistralDefiner';
-import { GeminiDefiner } from '../adapters/GeminiDefiner';
+import { LLMAdapter } from '../adapters/LLMAdapter';
 import { FreeDictionaryDefiner } from '../adapters/FreeDictionaryDefiner';
 
 export class DefinerFactory {
   static getDefiner(definerApp: DefinerAppType): IDefiner {
     switch (definerApp) {
       case 'mistral':
-        return new MistralDefiner();
+        return new LLMAdapter({ provider: 'mistral', model: 'mistral-large-latest' });
       case 'gemini':
-        return new GeminiDefiner();
+        return new LLMAdapter({ provider: 'gemini', model: 'gemini-1.5-flash' });
+      case 'llm':
+        return new LLMAdapter();
       case 'freedictionary':
         return new FreeDictionaryDefiner();
       case 'mock':
