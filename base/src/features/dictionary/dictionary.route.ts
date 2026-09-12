@@ -26,9 +26,21 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     const dictionary = await prisma.word.findMany({
       where: { dictionaryId: dict.id },
       include: {
+        presets: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
         definitions: {
           include: {
-            translation: true
+            translation: true,
+            presets: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
           },
           orderBy: {
             id: 'asc'

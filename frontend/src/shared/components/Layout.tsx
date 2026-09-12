@@ -14,9 +14,17 @@ export default function Layout() {
   const setAppState = useStore((state) => state.setAppState);
   const setDictionaries = useStore((state) => state.setDictionaries);
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
+  const setProfile = useStore((state) => state.setProfile);
   const isOffline = useStore((state) => state.isOffline);
 
   useEffect(() => {
+    apiClient.get('/auth/me')
+      .then((res) => {
+        if (res.data.user) {
+          setProfile(res.data.user);
+        }
+      })
+      .catch((error) => console.error('Failed to refresh user profile:', error));
     apiClient.get('/dictionaries')
       .then((res) => {
         if (res.data.dictionaries) {

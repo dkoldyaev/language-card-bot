@@ -22,6 +22,8 @@ export interface AuthResponse {
     name?: string | null;
     picture?: string | null;
     isNewUser?: boolean;
+    isAdmin?: boolean;
+    is_admin?: boolean;
   };
 }
 

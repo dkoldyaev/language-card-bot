@@ -9,7 +9,11 @@
     "start": "node dist/index.js",
     "test:unit": "vitest run --fileParallelism false",
     "test:e2e": "vitest run -c vitest.e2e.config.ts",
-    "test": "npm run test:unit && npm run test:e2e"
+    "test": "npm run test:unit && npm run test:e2e",
+    "users:list": "tsx scripts/manage-users.ts list",
+    "users:make-admin": "tsx scripts/manage-users.ts make-admin",
+    "users:make-regular": "tsx scripts/manage-users.ts make-regular",
+    "users:revoke-admin": "tsx scripts/manage-users.ts make-regular"
   },
   "keywords": [],
   "author": "",

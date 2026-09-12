@@ -45,7 +45,8 @@ export function useMercure() {
                   useStore.getState().addDictionaryWord({
                     id: data.wordId,
                     text: data.word,
-                    definitions: []
+                    definitions: [],
+                    presets: data.presets || []
                   });
                 } else if (data.type === 'dictionary_add_definitions_received' && data.wordId && data.definitions) {
                   useStore.getState().setDictionaryDefinitions(data.wordId, data.definitions);

@@ -13,7 +13,7 @@ appEvents.on(Events.DEFINITION_ADDED, async (payload: DefinitionAddedPayload) =>
       type: 'dictionary_add_definitions_received',
       wordId: payload.wordId,
       word: wordText,
-      definitions: [{ id: payload.definitionId, text: payload.definitionText }]
+      definitions: [{ id: payload.definitionId, text: payload.definitionText, presets: payload.presets }]
     };
     await publishEvent(username, event);
   } catch (error) {

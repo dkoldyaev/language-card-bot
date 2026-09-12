@@ -57,13 +57,14 @@ export interface DictionaryAddProcessingEvent extends BaseMercureEvent {
   type: 'dictionary_add_processing';
   wordId: number;
   word: string;
+  presets?: { id: number; title: string }[];
 }
 
 export interface DictionaryAddDefinitionsReceivedEvent extends BaseMercureEvent {
   type: 'dictionary_add_definitions_received';
   wordId: number;
   word: string;
-  definitions: { id: number; text: string }[];
+  definitions: { id: number; text: string; presets?: { id: number; title: string }[] }[];
 }
 
 export interface DefinitionTranslateLoadedEvent extends BaseMercureEvent {

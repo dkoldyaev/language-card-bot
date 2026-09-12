@@ -74,4 +74,36 @@ describe('WordList Search and Select All', () => {
     // Only banana is deselected, 2 words ("apple", "apricot") remain selected
     expect(screen.getByRole('button', { name: /Delete \(2\)/i })).toBeInTheDocument();
   });
+
+  it('renders mini chips for presets on words and definitions', () => {
+    useStore.setState({
+      dictionary: [
+        {
+          id: 10,
+          text: 'hola',
+          presets: [{ id: 101, title: 'Spanish A1' }],
+          definitions: [
+            {
+              id: 201,
+              text: 'an informal greeting',
+              translation: { id: 301, text: 'привет' },
+              presets: [{ id: 101, title: 'Spanish A1' }],
+            },
+          ],
+        },
+      ],
+    });
+
+    render(<WordList loading={false} />);
+
+    // Word preset chip
+    const wordPresetChip = screen.getByTestId('word-preset-chip-101');
+    expect(wordPresetChip).toBeInTheDocument();
+    expect(wordPresetChip).toHaveTextContent('Spanish A1');
+
+    // Definition preset chip
+    const defPresetChip = screen.getByTestId('def-preset-chip-101');
+    expect(defPresetChip).toBeInTheDocument();
+    expect(defPresetChip).toHaveTextContent('Spanish A1');
+  });
 });

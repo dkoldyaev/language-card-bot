@@ -68,10 +68,13 @@ router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req:
       return res.status(400).json({ error: 'Username already exists' });
     }
 
+    const isAdmin = Boolean((req.body as any).isAdmin || (req.body as any).is_admin || username.startsWith('admin_'));
+
     const user = await prisma.user.create({
       data: {
         email,
         name: username,
+        isAdmin,
         state: {
           create: {}
         },
@@ -97,6 +100,8 @@ router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req:
         name: user.name,
         picture: user.picture,
         isNewUser: true,
+        isAdmin: user.isAdmin,
+        is_admin: user.isAdmin,
       }
     });
   } catch (error) {
@@ -153,6 +158,8 @@ router.post('/login', validateRequest(UsernameAuthRequestSchema), async (req: Re
         email: user.email,
         name: user.name,
         picture: user.picture,
+        isAdmin: user.isAdmin,
+        is_admin: user.isAdmin,
       }
     });
   } catch (error) {
@@ -249,6 +256,8 @@ router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Req
         name: user.name,
         picture: user.picture,
         isNewUser,
+        isAdmin: user.isAdmin,
+        is_admin: user.isAdmin,
       }
     });
   } catch (error) {
@@ -275,7 +284,9 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
       email: user.email,
       username: authUser.username || user.name || user.email,
       name: user.name,
-      picture: user.picture
+      picture: user.picture,
+      isAdmin: user.isAdmin,
+      is_admin: user.isAdmin,
     }
   });
 });

@@ -20,6 +20,7 @@ model User {
   email     String   @unique
   name      String?
   picture   String?
+  isAdmin   Boolean  @default(false) @map("is_admin")
   createdAt DateTime @default(now())
 
   accounts     Account[]
@@ -84,6 +85,7 @@ model Word {
 
   definitions Definition[]
   userStates  UserState[]
+  presets     Preset[]
 
   @@unique([dictionaryId, text])
 }
@@ -97,6 +99,7 @@ model Definition {
 
   translation DefinitionTranslation?
   userStates  UserState[]
+  presets     Preset[]
 }
 
 model DefinitionTranslation {
@@ -105,5 +108,20 @@ model DefinitionTranslation {
   definitionId Int        @unique
   definition   Definition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now())
+}
+
+model Preset {
+  id          Int      @id @default(autoincrement())
+  title       String
+  forLanguage String   @map("for_language")
+  body        Json
+  type        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  words       Word[]
+  definitions Definition[]
+
+  @@index([forLanguage])
 }
 

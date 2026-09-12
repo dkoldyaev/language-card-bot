@@ -15,6 +15,7 @@ import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import useStore from '../../store/useStore';
 
 const navItems = [
@@ -56,6 +57,10 @@ export default function Sidebar() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const hasWords = dictionary.length > 0;
+  const isAdmin = Boolean(profile?.isAdmin || profile?.is_admin);
+  const currentNavItems = isAdmin
+    ? [...navItems, { path: '/presets', label: 'Presets', icon: <AutoAwesomeRoundedIcon /> }]
+    : navItems;
 
   const handleLogout = () => {
     reset();
@@ -83,7 +88,7 @@ export default function Sidebar() {
           backdropFilter: 'blur(16px)',
         }}
       >
-        {navItems.map((item) => {
+        {currentNavItems.map((item) => {
           const isActive = location.pathname === item.path;
           const isDisabled = item.path === '/quiz' && !hasWords;
           const button = (
@@ -192,7 +197,7 @@ export default function Sidebar() {
       </Box>
 
       <List sx={{ px: 1.5, pt: 0, flexGrow: 1 }}>
-        {navItems.map((item) => {
+        {currentNavItems.map((item) => {
           const isActive = location.pathname === item.path;
           const isDisabled = item.path === '/quiz' && !hasWords;
           const button = (

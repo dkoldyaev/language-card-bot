@@ -7,6 +7,8 @@ export interface UserProfile {
   email?: string;
   name?: string | null;
   picture?: string | null;
+  isAdmin?: boolean;
+  is_admin?: boolean;
 }
 
 export interface SettingsState {
@@ -29,16 +31,23 @@ export interface DictionaryTranslation {
   text: string;
 }
 
+export interface PresetBadge {
+  id: number;
+  title: string;
+}
+
 export interface DictionaryDefinition {
   id: number;
   text: string;
   translation: DictionaryTranslation | null;
+  presets?: PresetBadge[];
 }
 
 export interface DictionaryWord {
   id: number;
   text: string;
   definitions: DictionaryDefinition[];
+  presets?: PresetBadge[];
 }
 
 export interface QuizCardData {
@@ -214,11 +223,22 @@ const useStore = create<AppState>()(
         dictionary: state.dictionary.map(word => {
           if (word.id === wordId) {
             const existingDefs = word.definitions || [];
-            const newDefs = definitions.map(d => ({ id: d.id, text: d.text, translation: null }));
+            const newDefs = definitions.map(d => ({
+              id: d.id,
+              text: d.text,
+              translation: (d as any).translation ?? null,
+              presets: (d as any).presets ?? [],
+            }));
             const mergedDefs = [...existingDefs];
             for (const nd of newDefs) {
-              if (!mergedDefs.some(ed => ed.id === nd.id)) {
+              const existingIdx = mergedDefs.findIndex(ed => ed.id === nd.id);
+              if (existingIdx === -1) {
                 mergedDefs.push(nd);
+              } else if (nd.presets && nd.presets.length > 0) {
+                mergedDefs[existingIdx] = {
+                  ...mergedDefs[existingIdx],
+                  presets: nd.presets,
+                };
               }
             }
             return {

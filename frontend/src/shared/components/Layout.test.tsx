@@ -51,4 +51,23 @@ describe('Layout', () => {
     const quizLinks = screen.getAllByRole('link', { name: /Quiz/i });
     expect(quizLinks.length).toBeGreaterThan(0);
   });
+
+  it('renders Presets link only for admin users', () => {
+    useStore.setState({ profile: { id: 1, username: 'normal_user', isAdmin: false, is_admin: false } });
+    const { unmount } = render(
+      <MemoryRouter>
+        <Layout />
+      </MemoryRouter>
+    );
+    expect(screen.queryByText('Presets')).not.toBeInTheDocument();
+    unmount();
+
+    useStore.setState({ profile: { id: 1, username: 'admin_user', isAdmin: true, is_admin: true } });
+    render(
+      <MemoryRouter>
+        <Layout />
+      </MemoryRouter>
+    );
+    expect(screen.getAllByText('Presets').length).toBeGreaterThan(0);
+  });
 });

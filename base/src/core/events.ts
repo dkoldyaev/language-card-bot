@@ -25,6 +25,7 @@ export interface DefinitionAddedPayload {
   wordText: string;
   totalDefinitions: number;
   dictionaryId?: number;
+  presets?: { id: number; title: string }[];
 }
 
 export interface TranslationAddedPayload {

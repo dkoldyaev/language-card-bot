@@ -3,7 +3,7 @@ import {
   Typography, Box, TextField, Button, CircularProgress,
   Accordion, AccordionSummary, AccordionDetails,
   IconButton, Checkbox, FormControlLabel, Card, CardContent,
-  Chip, InputAdornment, Divider,
+  Chip, InputAdornment, Divider, Tooltip, alpha,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -246,16 +246,45 @@ export default function WordList({ loading }: { loading: boolean }) {
                   <Typography
                     variant="subtitle1"
                     sx={{
-                      flexGrow: 1,
-                      minWidth: 0,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      fontWeight: 700,
                       color: 'text.primary',
+                      mr: 1,
                     }}
                   >
                     {word.text}
                   </Typography>
+
+                  {word.presets && word.presets.length > 0 && (
+                    <Box sx={{ display: 'inline-flex', gap: 0.5, mr: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                      {word.presets.map((preset) => (
+                        <Tooltip key={preset.id} title={`Preset: ${preset.title}`}>
+                          <Chip
+                            data-testid={`word-preset-chip-${preset.id}`}
+                            label={preset.title}
+                            size="small"
+                            sx={{
+                              height: 20,
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              backgroundColor: alpha('#7C3AED', 0.1),
+                              color: '#6D28D9',
+                              border: '1px solid',
+                              borderColor: alpha('#7C3AED', 0.25),
+                              borderRadius: 1.5,
+                              maxWidth: { xs: 90, sm: 140 },
+                              '& .MuiChip-label': {
+                                px: 0.75,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              },
+                            }}
+                          />
+                        </Tooltip>
+                      ))}
+                    </Box>
+                  )}
+
+                  <Box sx={{ flexGrow: 1 }} />
                   <StatusChip word={word.text} />
                   <Chip
                     label={`${word.definitions.length} definition(s)`}
@@ -306,10 +335,39 @@ export default function WordList({ loading }: { loading: boolean }) {
                         </Button>
                       </Box>
                     ) : (
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}>
                         <Typography variant="body1" sx={{ fontWeight: 700 }}>
                           {idx + 1}. {def.text}
                         </Typography>
+                        {def.presets && def.presets.length > 0 && (
+                          <Box sx={{ display: 'inline-flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                            {def.presets.map((preset) => (
+                              <Tooltip key={preset.id} title={`Preset: ${preset.title}`}>
+                                <Chip
+                                  data-testid={`def-preset-chip-${preset.id}`}
+                                  label={preset.title}
+                                  size="small"
+                                  sx={{
+                                    height: 18,
+                                    fontSize: '0.62rem',
+                                    fontWeight: 600,
+                                    backgroundColor: alpha('#7C3AED', 0.08),
+                                    color: '#6D28D9',
+                                    border: '1px solid',
+                                    borderColor: alpha('#7C3AED', 0.2),
+                                    borderRadius: 1.5,
+                                    maxWidth: 120,
+                                    '& .MuiChip-label': {
+                                      px: 0.6,
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                    },
+                                  }}
+                                />
+                              </Tooltip>
+                            ))}
+                          </Box>
+                        )}
                         <IconButton
                           size="small"
                           aria-label="Edit definition"

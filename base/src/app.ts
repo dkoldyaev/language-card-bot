@@ -14,6 +14,7 @@ import definitionEditRoutes from './features/definition_edit/definition_edit.rou
 import definitionTranslateEditRoutes from './features/definition_translate_edit/definition_translate_edit.route';
 import quizRoutes from './features/quiz/quiz.route';
 import dictionariesRoutes from './features/dictionaries/dictionaries.route';
+import presetRoutes from './features/preset/preset.route';
 import './features/add_word/add_word.worker';
 import './features/add_word/add_word.listener';
 import './features/definition_add/definition_add.listener';
@@ -50,6 +51,8 @@ app.use('/api/v1/definition_add', definitionAddRoutes);
 app.use('/api/v1/definition_edit', definitionEditRoutes);
 app.use('/api/v1/definition_translate_edit', definitionTranslateEditRoutes);
 app.use('/api/v1/quiz', quizRoutes);
+app.use('/api/v1/preset', presetRoutes);
+app.use('/api/v1/presets', presetRoutes);
 app.use('/api/v1', echoRoutes);
 
 app.get('/health', (req, res) => {

@@ -9,6 +9,7 @@ import AddWordForm from '../components/AddWordForm';
 import WordList from '../components/WordList';
 import DictionarySwitcher from '../components/DictionarySwitcher';
 import CreateDictionaryDialog from '../components/CreateDictionaryDialog';
+import DictionaryPresets from '../components/DictionaryPresets';
 
 export default function DictionaryPage() {
   const [loading, setLoading] = useState(true);
@@ -259,6 +260,10 @@ export default function DictionaryPage() {
           onOpenCreateDialog={() => setCreateDialogOpen(true)}
           onDeleteDictionary={handleDeleteDictionary}
         />
+      )}
+
+      {currentDict && (
+        <DictionaryPresets dictionary={currentDict} />
       )}
 
       <AddWordForm dictionaryId={currentDictId ?? undefined} />
