@@ -15,6 +15,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
   IconButton,
   Tooltip,
   Alert,
@@ -26,10 +27,11 @@ import {
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
 import apiClient from '../../../shared/api/client';
-import useStore from '../../../store/useStore';
+import { type PresetItem } from '../types';
+
+export { type PresetItem };
 
 const COMMON_LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -44,20 +46,8 @@ const COMMON_LANGUAGES = [
   { code: 'tr', label: 'Turkish' },
 ];
 
-export interface PresetItem {
-  id: number;
-  title: string;
-  for_language: string;
-  forLanguage?: string;
-  type: string;
-  body: any;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export default function PresetsPage() {
   const theme = useTheme();
-  const dictionaries = useStore((state) => state.dictionaries);
 
   const [presets, setPresets] = useState<PresetItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,18 +61,12 @@ export default function PresetsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPreset, setEditingPreset] = useState<PresetItem | null>(null);
   const [formTitle, setFormTitle] = useState('');
+  const [formDescription, setFormDescription] = useState('');
   const [formLanguage, setFormLanguage] = useState('es');
   const [formType, setFormType] = useState('word-definition');
   const [formBody, setFormBody] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
-  // Apply modal state
-  const [applyDialogOpen, setApplyDialogOpen] = useState(false);
-  const [presetToApply, setPresetToApply] = useState<PresetItem | null>(null);
-  const [targetDictionaryId, setTargetDictionaryId] = useState<number | ''>('');
-  const [applying, setApplying] = useState(false);
-  const [applyError, setApplyError] = useState<string | null>(null);
 
   // Delete modal state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -116,6 +100,7 @@ export default function PresetsPage() {
   const handleOpenCreate = () => {
     setEditingPreset(null);
     setFormTitle('');
+    setFormDescription('');
     setFormLanguage('es');
     setFormType('word-definition');
     setFormBody('[\n  {\n    "word": "hola",\n    "definitions": ["an informal greeting"]\n  }\n]');
@@ -126,6 +111,7 @@ export default function PresetsPage() {
   const handleOpenEdit = (preset: PresetItem) => {
     setEditingPreset(preset);
     setFormTitle(preset.title);
+    setFormDescription(preset.description || '');
     setFormLanguage(preset.for_language || preset.forLanguage || 'es');
     setFormType(preset.type || 'word-definition');
     setFormBody(JSON.stringify(preset.body, null, 2));
@@ -158,6 +144,7 @@ export default function PresetsPage() {
       setSaving(true);
       const payload = {
         title: formTitle.trim(),
+        description: formDescription.trim() || undefined,
         for_language: formLanguage,
         type: formType.trim(),
         body: parsedBody,
@@ -199,40 +186,6 @@ export default function PresetsPage() {
       setError(err.response?.data?.error || 'Failed to delete preset');
     } finally {
       setDeleting(false);
-    }
-  };
-
-  const handleOpenApply = (preset: PresetItem) => {
-    setPresetToApply(preset);
-    setApplyError(null);
-    const lang = (preset.for_language || preset.forLanguage || '').toLowerCase();
-    const matchingDict = dictionaries.find((d) => d.targetLanguage.toLowerCase() === lang);
-    setTargetDictionaryId(matchingDict?.id ?? (dictionaries[0]?.id ?? ''));
-    setApplyDialogOpen(true);
-  };
-
-  const handleApply = async () => {
-    if (!presetToApply || !targetDictionaryId) {
-      setApplyError('Please select a dictionary');
-      return;
-    }
-
-    try {
-      setApplying(true);
-      setApplyError(null);
-      const res = await apiClient.post('/preset/apply_preset', {
-        presetId: presetToApply.id,
-        dictionaryId: Number(targetDictionaryId),
-      });
-
-      setSuccessMessage(
-        `Applied "${presetToApply.title}"! Added ${res.data.wordsCount ?? 0} words and ${res.data.definitionsCount ?? 0} definitions.`
-      );
-      setApplyDialogOpen(false);
-    } catch (err: any) {
-      setApplyError(err.response?.data?.error || 'Failed to apply preset');
-    } finally {
-      setApplying(false);
     }
   };
 
@@ -422,9 +375,27 @@ export default function PresetsPage() {
                       />
                     </Box>
 
-                    <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.3, mb: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.3, mb: 0.5 }}>
                       {preset.title}
                     </Typography>
+
+                    {preset.description && (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: 'text.secondary',
+                          mb: 1.25,
+                          fontSize: '0.85rem',
+                          lineHeight: 1.4,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {preset.description}
+                      </Typography>
+                    )}
 
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       Contains <strong>{wordCount}</strong> words with definitions.
@@ -437,24 +408,10 @@ export default function PresetsPage() {
                       pt: 0,
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
+                      justifyContent: 'flex-end',
                       borderTop: '1px solid #F3F4F6',
                     }}
                   >
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<PlayArrowRoundedIcon />}
-                      onClick={() => handleOpenApply(preset)}
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 700,
-                        borderRadius: 2,
-                      }}
-                    >
-                      Apply to Dict
-                    </Button>
-
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
                       <Tooltip title="Edit Preset">
                         <IconButton size="small" onClick={() => handleOpenEdit(preset)}>
@@ -498,6 +455,16 @@ export default function PresetsPage() {
                 fullWidth
               />
 
+              <TextField
+                label="Description"
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                placeholder="Brief description of this vocabulary pack (optional)"
+                fullWidth
+                multiline
+                rows={2}
+              />
+
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                 <FormControl fullWidth>
                   <InputLabel id="preset-lang-label">Target Language</InputLabel>
@@ -515,14 +482,19 @@ export default function PresetsPage() {
                   </Select>
                 </FormControl>
 
-                <TextField
-                  label="Type"
-                  value={formType}
-                  onChange={(e) => setFormType(e.target.value)}
-                  required
-                  fullWidth
-                  helperText="Current supported type: word-definition"
-                />
+                <FormControl fullWidth>
+                  <InputLabel id="preset-type-label">Type</InputLabel>
+                  <Select
+                    labelId="preset-type-label"
+                    value={formType}
+                    label="Type"
+                    readOnly
+                    inputProps={{ readOnly: true }}
+                  >
+                    <MenuItem value="word-definition">word-definition</MenuItem>
+                  </Select>
+                  <FormHelperText>Current supported type: word-definition</FormHelperText>
+                </FormControl>
               </Box>
 
               <Box>
@@ -563,59 +535,7 @@ export default function PresetsPage() {
         </form>
       </Dialog>
 
-      {/* Apply Preset Dialog */}
-      <Dialog open={applyDialogOpen} onClose={() => !applying && setApplyDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800 }}>
-          Apply Preset to Dictionary
-        </DialogTitle>
-        <DialogContent dividers>
-          {applyError && (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-              {applyError}
-            </Alert>
-          )}
 
-          {presetToApply && (
-            <Box sx={{ mb: 2.5 }}>
-              <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                {presetToApply.title}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Language: <strong>{getLangLabel(presetToApply.for_language || presetToApply.forLanguage || '')}</strong>
-              </Typography>
-            </Box>
-          )}
-
-          <FormControl fullWidth sx={{ mt: 1 }}>
-            <InputLabel id="select-dict-label">Select Target Dictionary</InputLabel>
-            <Select
-              labelId="select-dict-label"
-              value={targetDictionaryId}
-              label="Select Target Dictionary"
-              onChange={(e) => setTargetDictionaryId(Number(e.target.value))}
-            >
-              {dictionaries.map((dict) => (
-                <MenuItem key={dict.id} value={dict.id}>
-                  {dict.name} ({dict.targetLanguage.toUpperCase()} → {dict.baseLanguage.toUpperCase()})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setApplyDialogOpen(false)} disabled={applying} sx={{ textTransform: 'none' }}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleApply}
-            disabled={applying || !targetDictionaryId}
-            sx={{ textTransform: 'none', fontWeight: 700 }}
-          >
-            {applying ? <CircularProgress size={20} color="inherit" /> : 'Apply Preset'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onClose={() => !deleting && setDeleteConfirmOpen(false)}>

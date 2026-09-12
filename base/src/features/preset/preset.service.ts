@@ -6,6 +6,7 @@ export function formatPreset(preset: any): PresetDto {
   return {
     id: preset.id,
     title: preset.title,
+    description: preset.description ?? null,
     for_language: preset.forLanguage,
     forLanguage: preset.forLanguage,
     type: preset.type,
@@ -40,6 +41,7 @@ export async function createPreset(data: CreatePresetInput): Promise<PresetDto> 
   const preset = await prisma.preset.create({
     data: {
       title: data.title,
+      description: data.description ?? null,
       forLanguage,
       type,
       body: data.body as any,
@@ -56,6 +58,7 @@ export async function updatePreset(id: number, data: UpdatePresetInput): Promise
     where: { id },
     data: {
       ...(data.title && { title: data.title }),
+      ...(data.description !== undefined && { description: data.description }),
       ...(forLanguage && { forLanguage }),
       ...(data.type && { type: data.type }),
       ...(data.body !== undefined && { body: data.body as any }),

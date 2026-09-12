@@ -33,6 +33,7 @@ export type WordDefinitionPresetBody = z.infer<typeof WordDefinitionPresetBodySc
 
 export const CreatePresetSchema = z.object({
   title: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(1000).optional().nullable(),
   for_language: z.enum(AVAILABLE_LANGUAGES).optional(),
   forLanguage: z.enum(AVAILABLE_LANGUAGES).optional(),
   type: z.string().trim().min(1).default('word-definition'),
@@ -46,6 +47,7 @@ export type CreatePresetInput = z.infer<typeof CreatePresetSchema>;
 
 export const UpdatePresetSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
+  description: z.string().trim().max(1000).optional().nullable(),
   for_language: z.enum(AVAILABLE_LANGUAGES).optional(),
   forLanguage: z.enum(AVAILABLE_LANGUAGES).optional(),
   type: z.string().trim().min(1).optional(),
@@ -64,6 +66,7 @@ export type ApplyPresetInput = z.infer<typeof ApplyPresetSchema>;
 export interface PresetDto {
   id: number;
   title: string;
+  description: string | null;
   for_language: string;
   forLanguage: string;
   type: string;

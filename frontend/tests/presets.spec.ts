@@ -56,19 +56,21 @@ test.describe('Presets & Admin Flow', () => {
     const presetCard = page.locator('.MuiCard-root').filter({ hasText: presetTitle });
     await expect(presetCard).toBeVisible();
 
-    // Apply preset to user's Spanish dictionary
-    await presetCard.getByRole('button', { name: 'Apply to Dict' }).click();
-    await expect(page.getByText('Apply Preset to Dictionary')).toBeVisible();
+    // Verify "Apply to Dict" button is NOT present on Presets card
+    await expect(presetCard.getByRole('button', { name: 'Apply to Dict' })).not.toBeVisible();
 
-    // Click Apply button
-    await page.getByRole('button', { name: 'Apply Preset' }).click();
-
-    // Verify success message
-    await expect(page.locator('text=Applied').first()).toBeVisible();
-
-    // Navigate to dictionary to verify that the word from the preset is present
+    // Navigate to dictionary to verify that the preset is listed under Available Presets and can be applied
     await page.goto('/dictionary');
     await expect(page.locator('text=Vocabulary Deck')).toBeVisible();
+
+    const presetsSection = page.getByTestId('dictionary-presets-section');
+    await expect(presetsSection).toBeVisible();
+    const presetItem = presetsSection.locator('.MuiCard-root').filter({ hasText: presetTitle });
+    await expect(presetItem).toBeVisible();
+
+    // Apply preset to dictionary from the dictionary page
+    await presetItem.getByRole('button', { name: 'Add to Dictionary' }).click();
+    await expect(page.locator('text=Added "').first()).toBeVisible();
 
     // The default template contains the word "hola"
     await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'hola' })).toBeVisible();

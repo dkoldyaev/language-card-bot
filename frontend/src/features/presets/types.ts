@@ -6,6 +6,7 @@ export interface WordDefinitionPresetItem {
 export interface PresetItem {
   id: number;
   title: string;
+  description?: string | null;
   for_language: string;
   forLanguage?: string;
   type: string;

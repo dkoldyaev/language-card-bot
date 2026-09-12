@@ -113,6 +113,7 @@ model DefinitionTranslation {
 model Preset {
   id          Int      @id @default(autoincrement())
   title       String
+  description String?
   forLanguage String   @map("for_language")
   body        Json
   type        String

@@ -95,18 +95,22 @@ describe('PresetsPage', () => {
     const titleInput = screen.getByPlaceholderText('e.g. 50 Essential Spanish Verbs');
     fireEvent.change(titleInput, { target: { value: 'French 101' } });
 
+    const descInput = screen.getByPlaceholderText('Brief description of this vocabulary pack (optional)');
+    fireEvent.change(descInput, { target: { value: 'Basic French words' } });
+
     const submitBtns = screen.getAllByRole('button', { name: /Create Preset/i });
     fireEvent.click(submitBtns[submitBtns.length - 1]);
 
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledWith('/preset', expect.objectContaining({
         title: 'French 101',
+        description: 'Basic French words',
         type: 'word-definition',
       }));
     });
   });
 
-  it('opens apply dialog and calls apply preset API', async () => {
+  it('renders preset card with edit and delete actions and no apply button', async () => {
     vi.mocked(apiClient.get).mockResolvedValueOnce({
       data: {
         presets: [
@@ -123,33 +127,14 @@ describe('PresetsPage', () => {
       },
     });
 
-    vi.mocked(apiClient.post).mockResolvedValueOnce({
-      data: {
-        message: 'Preset applied successfully',
-        wordsCount: 1,
-        definitionsCount: 1,
-      },
-    });
-
     render(<PresetsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Spanish Essentials')).toBeInTheDocument();
     });
 
-    const applyButton = screen.getByRole('button', { name: /Apply to Dict/i });
-    fireEvent.click(applyButton);
-
-    expect(screen.getByText('Apply Preset to Dictionary')).toBeInTheDocument();
-
-    const confirmApplyBtn = screen.getByRole('button', { name: 'Apply Preset' });
-    fireEvent.click(confirmApplyBtn);
-
-    await waitFor(() => {
-      expect(apiClient.post).toHaveBeenCalledWith('/preset/apply_preset', {
-        presetId: 1,
-        dictionaryId: 10,
-      });
-    });
+    expect(screen.queryByRole('button', { name: /Apply to Dict/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Edit Preset/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Delete Preset/i })).toBeInTheDocument();
   });
 });

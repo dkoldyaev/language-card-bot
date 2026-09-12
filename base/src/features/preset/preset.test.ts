@@ -163,6 +163,7 @@ describe('Preset Feature API', () => {
       expect(prismaMock.preset.create).toHaveBeenCalledWith({
         data: {
           title: 'Spanish 101',
+          description: null,
           forLanguage: 'es',
           type: 'word-definition',
           body: [{ word: 'casa', definitions: ['house'] }],

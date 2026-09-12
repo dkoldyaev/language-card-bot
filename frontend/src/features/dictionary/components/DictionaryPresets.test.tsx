@@ -18,6 +18,7 @@ const mockPresets = [
   {
     id: 10,
     title: 'Spanish Essentials',
+    description: 'Essential words for daily Spanish conversation',
     for_language: 'es',
     type: 'word-definition',
     body: [
@@ -50,6 +51,7 @@ describe('DictionaryPresets', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Spanish Essentials')).toBeInTheDocument();
+      expect(screen.getByText('Essential words for daily Spanish conversation')).toBeInTheDocument();
       expect(screen.getByText('5 words')).toBeInTheDocument();
       expect(screen.getByText('hola')).toBeInTheDocument();
       expect(screen.getByText('+1 more')).toBeInTheDocument();

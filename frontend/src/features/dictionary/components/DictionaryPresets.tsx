@@ -266,6 +266,24 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                       />
                     </Box>
 
+                    {preset.description && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          fontSize: '0.8rem',
+                          mb: 1,
+                          lineHeight: 1.35,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {preset.description}
+                      </Typography>
+                    )}
+
                     {/* Word Chips Preview */}
                     <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 1 }}>
                       {previewWords.map((item, idx) => (
@@ -348,6 +366,11 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
       >
         <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>
           {previewPreset?.title}
+          {previewPreset?.description && (
+            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5, fontStyle: 'italic' }}>
+              {previewPreset.description}
+            </Typography>
+          )}
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             Language: <strong>{previewPreset?.for_language?.toUpperCase()}</strong> • Total words:{' '}
             <strong>{words(previewPreset?.body).length}</strong>
