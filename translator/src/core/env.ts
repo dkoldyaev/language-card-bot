@@ -8,6 +8,9 @@ const envSchema = z.object({
   GOOGLE_TRANSLATE_API_KEY: z.string().optional(),
   LARA_ACCESS_KEY_ID: z.string().optional(),
   LARA_ACCESS_KEY_SECRET: z.string().optional(),
+  LLM_SERVICE_URL: z.string().optional(),
+  TRANSLATOR_LLM_PROVIDER: z.enum(['mistral', 'gemini', 'mock']),
+  TRANSLATOR_LLM_MODEL: z.string(),
   MOCK_TIMEOUT: z.string().optional(),
   CACHE_URL: z.string(),
 });

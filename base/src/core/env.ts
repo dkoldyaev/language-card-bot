@@ -13,7 +13,7 @@ const envSchema = z.object({
   TRANSLATOR_API_URL: z.string(),
   DEFINER_API_URL: z.string(),
   DEFINER_APP_TYPE: z.enum(['mistral', 'gemini', 'mock', 'freedictionary']),
-  TRANSLATOR_APP_TYPE: z.enum(['googletranslate', 'mock', 'laratranslate']),
+  TRANSLATOR_APP_TYPE: z.enum(['googletranslate', 'mock', 'laratranslate', 'llm', 'mistral', 'gemini']),
   BASE_DOMAIN: z.string(),
   REDIS_URL: z.string(),
   CORS_ORIGIN: z.string(),

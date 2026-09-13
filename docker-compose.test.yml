@@ -55,8 +55,10 @@ services:
       - MOCK_TIMEOUT=0
       - TRANSLATOR_APP_TYPE=mock
       - CACHE_URL=redis://redis_test:6379/1
+      - LLM_SERVICE_URL=http://llm:3003/api/v1/generate
     depends_on:
       - redis_test
+      - llm
 
   llm:
     extends:

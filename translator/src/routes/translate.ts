@@ -9,7 +9,7 @@ const TranslateRequestSchema = z.object({
   sourceLanguage: z.string().min(1, 'Source language is required'),
   targetLanguage: z.string().min(1, 'Target language is required'),
   text: z.string().min(1, 'Text is required'),
-  translatorApp: z.enum(['googletranslate', 'mock', 'laratranslate'] as const),
+  translatorApp: z.enum(['googletranslate', 'mock', 'laratranslate', 'llm', 'mistral', 'gemini'] as const),
 });
 
 router.post('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {

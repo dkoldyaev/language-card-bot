@@ -50,6 +50,9 @@ services:
       - LARA_ACCESS_KEY_ID=${TRANSLATOR_LARA_ACCESS_KEY_ID}
       - LARA_ACCESS_KEY_SECRET=${TRANSLATOR_LARA_ACCESS_KEY_SECRET}
       - CACHE_URL=${TRANSLATOR_CACHE_URL}
+      - LLM_SERVICE_URL=${TRANSLATOR_LLM_SERVICE_URL:-http://llm:3003/api/v1/generate}
+    depends_on:
+      - llm
 
   llm:
     build:

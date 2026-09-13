@@ -79,6 +79,15 @@ export class MockProvider implements ILLMProvider {
       };
     }
 
+    // If schema specifies translatedText or translation, return translated text
+    if (formatStr.includes('translatedText') || formatStr.includes('translation')) {
+      const match = options.prompt.match(/Text:\s*\n"([^"]+)"/) || options.prompt.match(/"([^"]+)"/);
+      const text = match ? match[1] : 'text';
+      return {
+        translatedText: `[Mock LLM: ${options.model}] ${text}`,
+      };
+    }
+
     // Generic mock response
     return {
       mock: true,
