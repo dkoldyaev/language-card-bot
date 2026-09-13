@@ -11,9 +11,10 @@ import { trackEvent } from '../../../shared/lib/analytics';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 import LocaleSwitcher from '../../../shared/components/LocaleSwitcher';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
 
 export default function Auth() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -22,7 +23,7 @@ export default function Auth() {
   const isRegisterRoute = location.pathname === '/register';
 
   const [username, setUsername] = useState('');
-  const [baseLanguage, setBaseLanguage] = useState('');
+  const [baseLanguage, setBaseLanguage] = useState(getInitialBaseLanguage(locale));
   const [targetLanguage, setTargetLanguage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,6 +36,11 @@ export default function Auth() {
   const setToken = useStore((state) => state.setToken);
   const setMercureToken = useStore((state) => state.setMercureToken);
   const setProfile = useStore((state) => state.setProfile);
+
+  const handleChangeBaseLanguage = (language: string) => {
+    setBaseLanguage(language);
+    saveBaseLanguage(language);
+  };
 
   useEffect(() => {
     setError(null);
@@ -270,7 +276,7 @@ export default function Auth() {
                           targetLanguage={targetLanguage}
                           baseLanguage={baseLanguage}
                           onTargetLanguageChange={setTargetLanguage}
-                          onBaseLanguageChange={setBaseLanguage}
+                          onBaseLanguageChange={handleChangeBaseLanguage}
                           disabled={loading}
                         />
                       )}
@@ -335,7 +341,7 @@ export default function Auth() {
                         targetLanguage={targetLanguage}
                         baseLanguage={baseLanguage}
                         onTargetLanguageChange={setTargetLanguage}
-                        onBaseLanguageChange={setBaseLanguage}
+                        onBaseLanguageChange={handleChangeBaseLanguage}
                         disabled={loading}
                       />
 
