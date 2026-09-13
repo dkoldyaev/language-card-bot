@@ -10,15 +10,15 @@ services:
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-testuser}:${POSTGRES_PASSWORD:-testpass}@db_test:5432/${POSTGRES_DB:-english_card_bot_test}?schema=public
       - REDIS_URL=redis://redis_test:6379
-      - DEFINER_APP_TYPE
-      - TRANSLATOR_APP_TYPE
+      - DEFINER_APP_TYPE=${BASE_DEFINER_APP_TYPE}
+      - TRANSLATOR_APP_TYPE=${BASE_TRANSLATOR_APP_TYPE}
       - ENABLE_TEST_AUTH=true
       - PORT=${BASE_PORT:-3001}
-      - BASE_DOMAIN
+      - BASE_DOMAIN=${BASE_DOMAIN}
       - CORS_ORIGIN=${BASE_CORS_ORIGIN}
       - LLM_API_URL=http://llm:3003/api/v1/generate
-      - LLM_PROVIDER
-      - LLM_MODEL
+      - LLM_PROVIDER=${BASE_LLM_PROVIDER}
+      - LLM_MODEL=${BASE_LLM_MODEL}
     depends_on:
       - db_test
       - redis_test
@@ -116,8 +116,6 @@ services:
       - API_BASE_URL=${FRONTEND_API_BASE_URL}
       - MERCURE_PUBLIC_URL=${FRONTEND_MERCURE_PUBLIC_URL}
       - BASE_DOMAIN=${FRONTEND_BASE_DOMAIN}
-      - FRONTEND_BASE_DOMAIN
-      - FRONTEND_PORT
     depends_on:
       - app
 

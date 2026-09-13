@@ -5,7 +5,6 @@ dotenv.config();
 
 const envSchema = z.object({
   PORT: z.string(),
-  DEFINER_APP_TYPE: z.enum(['mistral', 'gemini', 'mock', 'freedictionary', 'llm']),
   LLM_SERVICE_URL: z.string(),
   MOCK_TIMEOUT: z.string().optional(),
   CACHE_URL: z.string(),

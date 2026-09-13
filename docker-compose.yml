@@ -20,12 +20,14 @@ services:
       - REDIS_URL=${BASE_REDIS_URL}
       - CORS_ORIGIN=${BASE_CORS_ORIGIN}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - ENABLE_TEST_AUTH=${BASE_ENABLE_TEST_AUTH:-true}
+      - ENABLE_TEST_AUTH=${BASE_ENABLE_TEST_AUTH}
       - LLM_API_URL=${BASE_LLM_API_URL}
-      - LLM_PROVIDER=${BASE_LLM_PROVIDER:-mock}
-      - LLM_MODEL=${BASE_LLM_MODEL:-mock}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - LLM_PROVIDER=${BASE_LLM_PROVIDER}
+      - LLM_MODEL=${BASE_LLM_MODEL}
+    depends_on:
+      - db_test
+      - redis_test
+      - llm
 
   mercure:
     image: dunglas/mercure
@@ -47,7 +49,7 @@ services:
       - MOCK_TIMEOUT=${TRANSLATOR_MOCK_TIMEOUT}
       - LARA_ACCESS_KEY_ID=${TRANSLATOR_LARA_ACCESS_KEY_ID}
       - LARA_ACCESS_KEY_SECRET=${TRANSLATOR_LARA_ACCESS_KEY_SECRET}
-      - CACHE_URL=${TRANSLATOR_CACHE_URL:-redis://redis:6379/1}
+      - CACHE_URL=${TRANSLATOR_CACHE_URL}
 
   llm:
     build:
@@ -58,7 +60,7 @@ services:
       - MISTRAL_API_KEY=${LLM_MISTRAL_API_KEY}
       - GEMINI_API_KEY=${LLM_GEMINI_API_KEY}
       - MOCK_TIMEOUT=${LLM_MOCK_TIMEOUT}
-      - CACHE_URL=${LLM_CACHE_URL:-redis://redis:6379/3}
+      - CACHE_URL=${LLM_CACHE_URL}
 
   definer:
     build:
@@ -69,14 +71,9 @@ services:
       - DEFINER_APP_TYPE=${BASE_DEFINER_APP_TYPE}
       - LLM_SERVICE_URL=${DEFINER_LLM_SERVICE_URL:-http://llm:3003/api/v1/generate}
       - MOCK_TIMEOUT=${DEFINER_MOCK_TIMEOUT}
-      - CACHE_URL=${DEFINER_CACHE_URL:-redis://redis:6379/2}
+      - CACHE_URL=${DEFINER_CACHE_URL}
     depends_on:
       - llm
-
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
 
   frontend:
     build:
@@ -88,14 +85,14 @@ services:
         - BASE_DOMAIN=${FRONTEND_BASE_DOMAIN}
         - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
         - ALLOWED_HOSTS=${FRONTEND_ALLOWED_HOSTS}
-        - AUTH_PROVIDER=${FRONTEND_AUTH_PROVIDER:-google}
+        - AUTH_PROVIDER=${FRONTEND_AUTH_PROVIDER}
     environment:
       - API_BASE_URL=${FRONTEND_API_BASE_URL}
       - MERCURE_PUBLIC_URL=${FRONTEND_MERCURE_PUBLIC_URL}
       - BASE_DOMAIN=${FRONTEND_BASE_DOMAIN}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - ALLOWED_HOSTS=${FRONTEND_ALLOWED_HOSTS}
-      - AUTH_PROVIDER=${FRONTEND_AUTH_PROVIDER:-google}
+      - AUTH_PROVIDER=${FRONTEND_AUTH_PROVIDER}
 
 volumes:
   redis_data:

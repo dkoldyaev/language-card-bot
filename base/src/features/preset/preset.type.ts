@@ -36,7 +36,7 @@ export const CreatePresetSchema = z.object({
   description: z.string().trim().max(1000).optional().nullable(),
   for_language: z.enum(AVAILABLE_LANGUAGES).optional(),
   forLanguage: z.enum(AVAILABLE_LANGUAGES).optional(),
-  type: z.string().trim().min(1).default('word-definition'),
+  type: z.string().trim().min(1),
   body: z.unknown(),
 }).refine(data => data.for_language || data.forLanguage, {
   message: 'for_language or forLanguage is required',

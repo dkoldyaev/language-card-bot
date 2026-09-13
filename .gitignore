@@ -6,3 +6,6 @@
 .env
 .env.*
 !.env.example
+
+# Local Docker compose override
+docker-compose.override.yml
