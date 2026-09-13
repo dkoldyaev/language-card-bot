@@ -18,8 +18,10 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
+import { useTranslation } from '../i18n/I18nContext';
 
 export default function DictionarySelector() {
+  const { t } = useTranslation();
   const dictionaries = useStore((state) => state.dictionaries);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
@@ -62,7 +64,7 @@ export default function DictionarySelector() {
         onClick={handleOpenMenu}
         variant="outlined"
         size="small"
-        aria-label="Select dictionary"
+        aria-label={t('dictionary.selectDictionary')}
         data-testid="dictionary-selector-button"
         endIcon={<KeyboardArrowDownRoundedIcon fontSize="small" />}
         startIcon={<MenuBookRoundedIcon fontSize="small" sx={{ color: 'primary.main' }} />}
@@ -82,7 +84,7 @@ export default function DictionarySelector() {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-          <span>{activeDict ? activeDict.name : 'Select Dictionary'}</span>
+          <span>{activeDict ? activeDict.name : t('dictionary.selectDictionary')}</span>
           {activeDict && (
             <Chip
               label={`${activeDict.targetLanguage.toUpperCase()} → ${activeDict.baseLanguage.toUpperCase()}`}
@@ -116,7 +118,7 @@ export default function DictionarySelector() {
       >
         <Box sx={{ px: 2, py: 1 }}>
           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-            YOUR DICTIONARIES
+            {t('dictionary.yourDictionaries')}
           </Typography>
         </Box>
 
@@ -135,7 +137,7 @@ export default function DictionarySelector() {
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {dict.targetLanguage.toUpperCase()} → {dict.baseLanguage.toUpperCase()}
-                  {dict.wordCount !== undefined && ` • ${dict.wordCount} words`}
+                  {dict.wordCount !== undefined && ` • ${t('dictionary.wordsCount', { count: dict.wordCount })}`}
                 </Typography>
               </Box>
               {isCurrent && (
@@ -160,7 +162,7 @@ export default function DictionarySelector() {
             <AddRoundedIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText
-            primary={<Typography variant="body2" sx={{ fontWeight: 600 }}>Create New Dictionary</Typography>}
+            primary={<Typography variant="body2" sx={{ fontWeight: 600 }}>{t('dialogs.createDeckTitle')}</Typography>}
           />
         </MenuItem>
       </Menu>

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Chip, CircularProgress } from '@mui/material';
+import { useTranslation } from '../i18n/I18nContext';
 
 export default function StatusChip({ word }: { word: string }) {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<string | undefined>();
   const [visible, setVisible] = useState(false);
 
@@ -43,17 +45,17 @@ export default function StatusChip({ word }: { word: string }) {
 
   switch (status) {
     case 'processing':
-      label = 'Fetching...';
+      label = t('common.fetching');
       icon = <CircularProgress size={14} color="inherit" />;
       color = 'primary';
       break;
     case 'definitions_received':
-      label = `Processing definitions...`;
+      label = t('common.processingDefinitions');
       icon = <CircularProgress size={14} color="inherit" />;
       color = 'info';
       break;
     case 'duplicate':
-      label = 'Duplicate';
+      label = t('common.duplicate');
       color = 'warning';
       break;
   }

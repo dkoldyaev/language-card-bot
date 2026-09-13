@@ -18,6 +18,8 @@ import {
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import apiClient from '../../../shared/api/client';
 import useStore, { type DictionaryItem } from '../../../store/useStore';
+import { useTranslation } from '../../../shared/i18n';
+import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
 
 interface CreateDictionaryDialogProps {
   open: boolean;
@@ -25,20 +27,8 @@ interface CreateDictionaryDialogProps {
   onCreated?: (dict: DictionaryItem) => void;
 }
 
-const COMMON_LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'es', label: 'Spanish' },
-  { code: 'fr', label: 'French' },
-  { code: 'de', label: 'German' },
-  { code: 'ru', label: 'Russian' },
-  { code: 'it', label: 'Italian' },
-  { code: 'pt', label: 'Portuguese' },
-  { code: 'zh', label: 'Chinese' },
-  { code: 'ja', label: 'Japanese' },
-  { code: 'tr', label: 'Turkish' },
-];
-
 export default function CreateDictionaryDialog({ open, onClose, onCreated }: CreateDictionaryDialogProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('es');
   const [baseLanguage, setBaseLanguage] = useState('en');
@@ -53,12 +43,12 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
   const handleSubmit = async (e?: FormEvent) => {
     if (e) e.preventDefault();
     if (!targetLanguage || !baseLanguage) {
-      setError('Please select both target and native languages');
+      setError(t('dialogs.selectBothLangsError'));
       return;
     }
 
     if (targetLanguage === baseLanguage) {
-      setError('Target language and native language must be different');
+      setError(t('dialogs.diffLangsError'));
       return;
     }
 
@@ -89,7 +79,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
       handleClose();
     } catch (err: any) {
       console.error('Failed to create dictionary:', err);
-      setError(err?.response?.data?.message || err?.response?.data?.error || 'Failed to create dictionary');
+      setError(err?.response?.data?.message || err?.response?.data?.error || t('dialogs.createDeckError'));
     } finally {
       setSubmitting(false);
     }
@@ -133,13 +123,13 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
           >
             <AddRoundedIcon fontSize="small" />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>Create New Dictionary</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>{t('dialogs.createDeckTitle')}</Typography>
         </Box>
       </DialogTitle>
 
       <DialogContent sx={{ pt: 2 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Set up a separate vocabulary deck. You can learn any language using any native reference language.
+          {t('dialogs.createDeckDesc')}
         </Typography>
 
         {error && (
@@ -150,43 +140,43 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
 
         <Box sx={{ display: 'grid', gap: 2.5 }}>
           <FormControl fullWidth>
-            <InputLabel id="target-language-label">Language to Learn (Target)</InputLabel>
+            <InputLabel id="target-language-label">{t('dialogs.targetLangLabel')}</InputLabel>
             <Select
               labelId="target-language-label"
               value={targetLanguage}
-              label="Language to Learn (Target)"
+              label={t('dialogs.targetLangLabel')}
               onChange={(e) => setTargetLanguage(e.target.value)}
             >
-              {COMMON_LANGUAGES.map((lang) => (
-                <MenuItem key={lang.code} value={lang.code}>
-                  {lang.label} ({lang.code.toUpperCase()})
+              {SUPPORTED_LOCALES.map((langCode) => (
+                <MenuItem key={langCode} value={langCode}>
+                  {t(`languages.${langCode}`)}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
           <FormControl fullWidth>
-            <InputLabel id="base-language-label">Explanations / Native Language</InputLabel>
+            <InputLabel id="base-language-label">{t('dialogs.nativeLangLabel')}</InputLabel>
             <Select
               labelId="base-language-label"
               value={baseLanguage}
-              label="Explanations / Native Language"
+              label={t('dialogs.nativeLangLabel')}
               onChange={(e) => setBaseLanguage(e.target.value)}
             >
-              {COMMON_LANGUAGES.map((lang) => (
-                <MenuItem key={lang.code} value={lang.code}>
-                  {lang.label} ({lang.code.toUpperCase()})
+              {SUPPORTED_LOCALES.map((langCode) => (
+                <MenuItem key={langCode} value={langCode}>
+                  {t(`languages.${langCode}`)}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
           <TextField
-            label="Dictionary Name (optional)"
-            placeholder={`${targetLanguage.toUpperCase()} (${baseLanguage.toUpperCase()})`}
+            label={t('dialogs.dictNameLabel')}
+            placeholder={t('dialogs.dictNamePlaceholder', { target: targetLanguage.toUpperCase(), base: baseLanguage.toUpperCase() })}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            helperText="e.g. Spanish for Travel, Business French, or leave blank for default"
+            helperText={t('dialogs.dictNameHelper')}
             fullWidth
           />
         </Box>
@@ -194,7 +184,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
 
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
         <Button onClick={handleClose} disabled={submitting} color="inherit">
-          Cancel
+          {t('dialogs.cancel')}
         </Button>
         <Button
           onClick={() => handleSubmit()}
@@ -203,7 +193,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
           disabled={submitting}
           startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <AddRoundedIcon />}
         >
-          {submitting ? 'Creating...' : 'Create Dictionary'}
+          {submitting ? t('dialogs.creatingDeckBtn') : t('dialogs.createDeckBtn')}
         </Button>
       </DialogActions>
     </Dialog>

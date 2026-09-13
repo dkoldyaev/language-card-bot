@@ -9,6 +9,7 @@ import {
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import { type DictionaryItem } from '../../../store/useStore';
+import { useTranslation } from '../../../shared/i18n/I18nContext';
 
 interface DictionarySwitcherProps {
   dictionaries: DictionaryItem[];
@@ -27,6 +28,7 @@ export default function DictionarySwitcher({
   onOpenCreateDialog,
   onDeleteDictionary,
 }: DictionarySwitcherProps) {
+  const { t } = useTranslation();
   return (
     <Box
       data-testid="dictionary-page-switcher"
@@ -101,9 +103,9 @@ export default function DictionarySwitcher({
                   }}
                 />
                 {isActiveDeck && (
-                  <Tooltip title="Current active language for Quiz & Study">
+                  <Tooltip title={t('dictionary.activeTooltip')}>
                     <Chip
-                      label="ACTIVE"
+                      label={t('dictionary.activeBadge')}
                       size="small"
                       sx={{
                         height: 18,
@@ -118,7 +120,7 @@ export default function DictionarySwitcher({
               </Button>
 
               {onDeleteDictionary && dictionaries.length > 1 && (
-                <Tooltip title={`Delete "${dict.name}"`}>
+                <Tooltip title={t('dictionary.deleteDictTooltip', { name: dict.name })}>
                   <IconButton
                     size="small"
                     onClick={(e) => {
@@ -134,7 +136,7 @@ export default function DictionarySwitcher({
                         backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.15)' : 'rgba(185, 67, 67, 0.08)',
                       },
                     }}
-                    aria-label={`Delete dictionary ${dict.name}`}
+                    aria-label={t('dictionary.deleteDictTooltip', { name: dict.name })}
                   >
                     <DeleteOutlineRoundedIcon sx={{ fontSize: 17 }} />
                   </IconButton>
@@ -166,7 +168,7 @@ export default function DictionarySwitcher({
           },
         }}
       >
-        New Dictionary
+        {t('dictionary.newDictionaryBtn')}
       </Button>
     </Box>
   );

@@ -6,8 +6,10 @@ import { useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { trackEvent } from '../../../shared/lib/analytics';
 import useStore from '../../../store/useStore';
+import { useTranslation } from '../../../shared/i18n';
 
 export default function QuizStartScreen() {
+  const { t } = useTranslation();
   const [starting, setStarting] = useState(false);
   const dictionary = useStore((state) => state.dictionary);
   const dictionaries = useStore((state) => state.dictionaries);
@@ -22,11 +24,17 @@ export default function QuizStartScreen() {
       await apiClient.post('/quiz/start');
     } catch (error) {
       console.error('Failed to start quiz:', error);
-      alert('Failed to start quiz.');
+      alert(t('quiz.failedStart'));
     } finally {
       setStarting(false);
     }
   };
+
+  const benefits = [
+    t('quiz.benefit1'),
+    t('quiz.benefit2'),
+    t('quiz.benefit3'),
+  ];
 
   return (
     <Box
@@ -66,28 +74,28 @@ export default function QuizStartScreen() {
             </Box>
             <Box sx={{ mt: { xs: 4, md: 0 } }}>
               <Typography variant="overline" sx={{ color: '#E8A17F' }}>
-                Recall practice
+                {t('quiz.recallPracticeOverline')}
               </Typography>
               <Typography variant="h3" sx={{ color: '#FFFFFF', mt: 0.5, maxWidth: 280 }}>
-                The answer is waiting in your memory.
+                {t('quiz.memoryTitle')}
               </Typography>
             </Box>
           </Box>
 
           <Box sx={{ p: { xs: 3, sm: 4.5 }, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <Typography variant="overline" color="secondary.main">
-              Quiz Practice {activeDict && `• ${activeDict.name} (${activeDict.targetLanguage.toUpperCase()})`}
+              {t('quiz.recallPracticeOverline')} {activeDict && `• ${activeDict.name} (${activeDict.targetLanguage.toUpperCase()})`}
             </Typography>
             <Typography variant="h2" sx={{ fontSize: { xs: '2rem', sm: '2.55rem' }, mt: 0.5, mb: 1.25 }}>
-              Ready to test your vocabulary?
+              {t('quiz.readyTitle')}
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 440, mb: 3 }}>
               {activeDict
-                ? `Practising words from "${activeDict.name}". Recall the word from its definition.`
-                : 'We show a definition. You recall the word. Hints are there when you need them.'}
+                ? t('quiz.readyActiveDesc', { name: activeDict.name })
+                : t('quiz.readyDefaultDesc')}
             </Typography>
             <Box sx={{ display: 'grid', gap: 1.25, mb: 3.25 }}>
-              {['Use definitions from your own dictionary', 'Type an answer or choose from variants', 'Move on whenever you are ready'].map((item) => (
+              {benefits.map((item) => (
                 <Box key={item} sx={{ display: 'flex', alignItems: 'center', gap: 1.1 }}>
                   <Box
                     sx={{
@@ -115,7 +123,7 @@ export default function QuizStartScreen() {
                 disabled={starting || dictionary.length === 0}
                 endIcon={starting ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
               >
-                Start Quiz
+                {t('quiz.startQuizBtn')}
               </Button>
             </Box>
           </Box>

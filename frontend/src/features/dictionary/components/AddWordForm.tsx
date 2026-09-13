@@ -4,14 +4,15 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import apiClient from '../../../shared/api/client';
 import { trackEvent } from '../../../shared/lib/analytics';
-
 import useStore from '../../../store/useStore';
+import { useTranslation } from '../../../shared/i18n/I18nContext';
 
 interface AddWordFormProps {
   dictionaryId?: number;
 }
 
 export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
+  const { t } = useTranslation();
   const [wordsText, setWordsText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -59,24 +60,24 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
           </Box>
           <Box>
             <Typography variant="subtitle1">
-              Add words{targetDict ? ` to ${targetDict.name}` : ''}
+              {targetDict ? t('dictionary.addWordsToDeck', { name: targetDict.name }) : t('dictionary.addWords')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {targetDict ? `Target language: ${targetDict.targetLanguage.toUpperCase()} • ` : ''}One word per line works best.
+              {targetDict ? t('dictionary.targetLangPrefix', { lang: targetDict.targetLanguage.toUpperCase() }) : ''}{t('dictionary.oneWordPerLine')}
             </Typography>
           </Box>
         </Box>
 
         <TextField
-          label="Words to add"
+          label={t('dictionary.wordsToAddLabel')}
           multiline
           rows={4}
           fullWidth
           value={wordsText}
           onChange={(e) => setWordsText(e.target.value)}
-          placeholder={"apple\nbanana\ncherry"}
+          placeholder={t('dictionary.placeholderWords')}
           disabled={submitting}
-          helperText="We will create a card for every line."
+          helperText={t('dictionary.helperText')}
           sx={{ mb: 2.25 }}
         />
 
@@ -86,7 +87,7 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
           onClick={handleSubmitWords}
           endIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <SendRoundedIcon />}
         >
-          {submitting ? 'Submitting...' : 'Submit Words'}
+          {submitting ? t('dictionary.submittingBtn') : t('dictionary.submitWordsBtn')}
         </Button>
       </CardContent>
     </Card>

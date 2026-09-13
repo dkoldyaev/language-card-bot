@@ -10,14 +10,10 @@ import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
 import { trackEvent } from '../../../shared/lib/analytics';
-
-const resultInfo = {
-  SUCCESS: { label: 'Success! 🎉', color: '#24756D', background: '#E6F4EE' },
-  CLOSE_MATCH: { label: 'Close Match 🤔', color: '#A96513', background: '#FFF1DA' },
-  INCORRECT: { label: 'Incorrect 😢', color: '#B94343', background: '#FCE8E7' },
-};
+import { useTranslation } from '../../../shared/i18n';
 
 export default function QuizPlayground() {
+  const { t } = useTranslation();
   const [submitting, setSubmitting] = useState(false);
   const [suggestion, setSuggestion] = useState('');
 
@@ -25,6 +21,12 @@ export default function QuizPlayground() {
   const quizEvaluation = useStore((state) => state.quizEvaluation);
   const quizTranslation = useStore((state) => state.quizTranslation);
   const quizVariants = useStore((state) => state.quizVariants);
+
+  const resultInfo = {
+    SUCCESS: { label: t('quiz.successFeedback'), color: '#24756D', background: '#E6F4EE' },
+    CLOSE_MATCH: { label: t('quiz.closeMatchFeedback'), color: '#A96513', background: '#FFF1DA' },
+    INCORRECT: { label: t('quiz.incorrectFeedback'), color: '#B94343', background: '#FCE8E7' },
+  };
 
   const handleSubmitSuggestion = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -95,8 +97,8 @@ export default function QuizPlayground() {
     <Box className="animate-fade-in" sx={{ maxWidth: 760, mx: 'auto' }}>
       <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between', gap: 2, mb: 3 }}>
         <Box>
-          <Typography variant="overline" color="secondary.main">Recall practice</Typography>
-          <Typography variant="h1" sx={{ fontSize: { xs: '2.25rem', sm: '2.85rem' }, mt: 0.35 }}>Quiz</Typography>
+          <Typography variant="overline" color="secondary.main">{t('quiz.recallPracticeOverline')}</Typography>
+          <Typography variant="h1" sx={{ fontSize: { xs: '2.25rem', sm: '2.85rem' }, mt: 0.35 }}>{t('quiz.title')}</Typography>
         </Box>
         <Button
           variant="outlined"
@@ -105,7 +107,7 @@ export default function QuizPlayground() {
           endIcon={<ArrowForwardRoundedIcon />}
           sx={{ mb: 0.35, whiteSpace: 'nowrap' }}
         >
-          Next card
+          {t('quiz.nextCardBtn')}
         </Button>
       </Box>
 
@@ -126,7 +128,7 @@ export default function QuizPlayground() {
         }}
       >
         <CardContent sx={{ p: { xs: 3, sm: 4.5 }, pl: { xs: 3.25, sm: 5 }, '&:last-child': { pb: { xs: 3, sm: 4.5 } } }}>
-          <Typography variant="overline" color="text.secondary">Definition</Typography>
+          <Typography variant="overline" color="text.secondary">{t('quiz.definitionOverline')}</Typography>
           <Typography
             variant="h3"
             sx={{
@@ -144,7 +146,7 @@ export default function QuizPlayground() {
               variant="body1"
               sx={{ mt: 2, color: 'success.dark', borderLeft: '3px solid #7AB8AF', pl: 1.5 }}
             >
-              Translation: {quizTranslation}
+              {t('quiz.translationPrefix', { text: quizTranslation })}
             </Typography>
           )}
         </CardContent>
@@ -153,8 +155,8 @@ export default function QuizPlayground() {
       <Box component="form" onSubmit={handleSubmitSuggestion} sx={{ display: 'flex', gap: 1, mb: 2 }}>
         <TextField
           fullWidth
-          label="Your answer"
-          placeholder="Type the word you remember"
+          label={t('quiz.answerLabel')}
+          placeholder={t('quiz.answerPlaceholder')}
           value={suggestion}
           onChange={(event) => setSuggestion(event.target.value)}
           disabled={submitting}
@@ -165,11 +167,11 @@ export default function QuizPlayground() {
           variant="contained"
           color="primary"
           disabled={!suggestion.trim() || submitting}
-          aria-label="Submit"
+          aria-label={t('quiz.submitBtn')}
           sx={{ minWidth: { xs: 52, sm: 116 }, px: { xs: 1.5, sm: 2 } }}
           endIcon={submitting ? undefined : <SendRoundedIcon />}
         >
-          {submitting ? <CircularProgress size={20} color="inherit" /> : <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Submit</Box>}
+          {submitting ? <CircularProgress size={20} color="inherit" /> : <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('quiz.submitBtn')}</Box>}
         </Button>
       </Box>
 
@@ -191,7 +193,7 @@ export default function QuizPlayground() {
         >
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="caption" sx={{ color: result.color, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
-              Your answer
+              {t('quiz.yourAnswerOverline')}
             </Typography>
             <Typography variant="body1" sx={{ mt: 0.1, fontWeight: 700 }}>
               {quizEvaluation.suggestion}
@@ -203,9 +205,9 @@ export default function QuizPlayground() {
 
       <Card sx={{ boxShadow: 'none', backgroundColor: '#FFFDF9' }}>
         <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
-          <Typography variant="subtitle1">Need a nudge?</Typography>
+          <Typography variant="subtitle1">{t('quiz.needNudgeTitle')}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.3, mb: 1.75 }}>
-            Reveal only the help you need, then keep moving.
+            {t('quiz.needNudgeDesc')}
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             <Button
@@ -214,14 +216,14 @@ export default function QuizPlayground() {
               disabled={Boolean(quizTranslation)}
               startIcon={<TranslateRoundedIcon />}
             >
-              Translate definition
+              {t('quiz.translateDefBtn')}
             </Button>
             <Button
               variant="outlined"
               onClick={handleNextDefinition}
               startIcon={<ShuffleRoundedIcon />}
             >
-              Another definition
+              {t('quiz.anotherDefBtn')}
             </Button>
             <Button
               variant="outlined"
@@ -229,13 +231,13 @@ export default function QuizPlayground() {
               disabled={Boolean(quizVariants)}
               startIcon={<AppsRoundedIcon />}
             >
-              Show variants
+              {t('quiz.showVariantsBtn')}
             </Button>
           </Box>
 
           {quizVariants && (
             <Box className="animate-fade-in" sx={{ mt: 2.25 }}>
-              <Typography variant="overline" color="text.secondary">Choose an answer</Typography>
+              <Typography variant="overline" color="text.secondary">{t('quiz.chooseAnswerOverline')}</Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.75 }}>
                 {quizVariants.map((variant) => (
                   <Button

@@ -30,23 +30,13 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
 import apiClient from '../../../shared/api/client';
 import { type PresetItem } from '../types';
+import { useTranslation } from '../../../shared/i18n';
+import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
 
 export { type PresetItem };
 
-const COMMON_LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'es', label: 'Spanish' },
-  { code: 'fr', label: 'French' },
-  { code: 'de', label: 'German' },
-  { code: 'ru', label: 'Russian' },
-  { code: 'it', label: 'Italian' },
-  { code: 'pt', label: 'Portuguese' },
-  { code: 'zh', label: 'Chinese' },
-  { code: 'ja', label: 'Japanese' },
-  { code: 'tr', label: 'Turkish' },
-];
-
 export default function PresetsPage() {
+  const { t } = useTranslation();
   const theme = useTheme();
 
   const [presets, setPresets] = useState<PresetItem[]>([]);
@@ -80,7 +70,7 @@ export default function PresetsPage() {
       const res = await apiClient.get('/preset');
       setPresets(res.data.presets || []);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load presets');
+      setError(err.response?.data?.error || t('presets.savePresetError'));
     } finally {
       setLoading(false);
     }
@@ -124,7 +114,7 @@ export default function PresetsPage() {
     setFormError(null);
 
     if (!formTitle.trim()) {
-      setFormError('Title is required');
+      setFormError(t('presets.titleRequiredError'));
       return;
     }
 
@@ -132,11 +122,11 @@ export default function PresetsPage() {
     try {
       parsedBody = JSON.parse(formBody);
       if (!Array.isArray(parsedBody)) {
-        setFormError('Body must be a JSON array of words');
+        setFormError(t('presets.bodyArrayError'));
         return;
       }
     } catch {
-      setFormError('Invalid JSON format in body');
+      setFormError(t('presets.bodyJsonError'));
       return;
     }
 
@@ -155,15 +145,15 @@ export default function PresetsPage() {
         setPresets((prev) =>
           prev.map((p) => (p.id === editingPreset.id ? res.data.preset : p))
         );
-        setSuccessMessage(`Preset "${formTitle}" updated successfully.`);
+        setSuccessMessage(t('presets.presetSuccessUpdated', { title: formTitle }));
       } else {
         const res = await apiClient.post('/preset', payload);
         setPresets((prev) => [res.data.preset, ...prev]);
-        setSuccessMessage(`Preset "${formTitle}" created successfully.`);
+        setSuccessMessage(t('presets.presetSuccessCreated', { title: formTitle }));
       }
       setDialogOpen(false);
     } catch (err: any) {
-      setFormError(err.response?.data?.error || 'Failed to save preset');
+      setFormError(err.response?.data?.error || t('presets.savePresetError'));
     } finally {
       setSaving(false);
     }
@@ -180,10 +170,10 @@ export default function PresetsPage() {
       setDeleting(true);
       await apiClient.delete(`/preset/${presetToDelete.id}`);
       setPresets((prev) => prev.filter((p) => p.id !== presetToDelete.id));
-      setSuccessMessage(`Preset "${presetToDelete.title}" deleted.`);
+      setSuccessMessage(t('presets.presetSuccessDeleted', { title: presetToDelete.title }));
       setDeleteConfirmOpen(false);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to delete preset');
+      setError(err.response?.data?.error || t('presets.deletePresetError'));
     } finally {
       setDeleting(false);
     }
@@ -195,8 +185,9 @@ export default function PresetsPage() {
   };
 
   const getLangLabel = (code: string) => {
-    const item = COMMON_LANGUAGES.find((l) => l.code === code.toLowerCase());
-    return item ? `${item.label} (${code.toUpperCase()})` : code.toUpperCase();
+    const key = `languages.${code.toLowerCase()}`;
+    const translated = t(key);
+    return translated !== key ? translated : code.toUpperCase();
   };
 
   return (
@@ -216,11 +207,11 @@ export default function PresetsPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 0.5 }}>
             <LayersRoundedIcon sx={{ fontSize: 32, color: 'primary.main' }} />
             <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.03em' }}>
-              Presets Catalog
+              {t('presets.catalogTitle')}
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Pre-built vocabulary packs ready to be applied directly into user dictionaries.
+            {t('presets.catalogDesc')}
           </Typography>
         </Box>
 
@@ -237,7 +228,7 @@ export default function PresetsPage() {
             boxShadow: '0 4px 14px rgba(22, 101, 52, 0.25)',
           }}
         >
-          Create Preset
+          {t('presets.createPresetBtn')}
         </Button>
       </Box>
 
@@ -267,25 +258,25 @@ export default function PresetsPage() {
         }}
       >
         <Typography variant="subtitle2" sx={{ fontWeight: 700, minWidth: 100 }}>
-          Filter by language:
+          {t('presets.filterByLang')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Chip
-            label="All Languages"
+            label={t('presets.allLanguages')}
             clickable
             color={selectedLanguage === 'all' ? 'primary' : 'default'}
             variant={selectedLanguage === 'all' ? 'filled' : 'outlined'}
             onClick={() => setSelectedLanguage('all')}
             sx={{ fontWeight: 600 }}
           />
-          {COMMON_LANGUAGES.map((lang) => (
+          {SUPPORTED_LOCALES.map((lang) => (
             <Chip
-              key={lang.code}
-              label={lang.label}
+              key={lang}
+              label={t(`languages.${lang}`)}
               clickable
-              color={selectedLanguage === lang.code ? 'primary' : 'default'}
-              variant={selectedLanguage === lang.code ? 'filled' : 'outlined'}
-              onClick={() => setSelectedLanguage(lang.code)}
+              color={selectedLanguage === lang ? 'primary' : 'default'}
+              variant={selectedLanguage === lang ? 'filled' : 'outlined'}
+              onClick={() => setSelectedLanguage(lang)}
               sx={{ fontWeight: 600 }}
             />
           ))}
@@ -310,15 +301,15 @@ export default function PresetsPage() {
         >
           <LayersRoundedIcon sx={{ fontSize: 52, color: 'text.disabled', mb: 1 }} />
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-            No presets found
+            {t('presets.noPresetsFound')}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {selectedLanguage === 'all'
-              ? 'Get started by creating your first vocabulary preset.'
-              : `No presets available for ${getLangLabel(selectedLanguage)}.`}
+              ? t('presets.noPresetsAllDesc')
+              : t('presets.noPresetsLangDesc', { lang: getLangLabel(selectedLanguage) })}
           </Typography>
           <Button variant="outlined" startIcon={<AddRoundedIcon />} onClick={handleOpenCreate}>
-            Create Preset
+            {t('presets.createPresetBtn')}
           </Button>
         </Box>
       ) : (
@@ -398,7 +389,7 @@ export default function PresetsPage() {
                     )}
 
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Contains <strong>{wordCount}</strong> words with definitions.
+                      {t('presets.containsWords', { count: wordCount })}
                     </Typography>
                   </CardContent>
 
@@ -413,12 +404,12 @@ export default function PresetsPage() {
                     }}
                   >
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      <Tooltip title="Edit Preset">
+                      <Tooltip title={t('presets.editPresetTooltip')}>
                         <IconButton size="small" onClick={() => handleOpenEdit(preset)}>
                           <EditRoundedIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Delete Preset">
+                      <Tooltip title={t('presets.deletePresetTooltip')}>
                         <IconButton size="small" color="error" onClick={() => handleOpenDelete(preset)}>
                           <DeleteOutlineRoundedIcon fontSize="small" />
                         </IconButton>
@@ -436,7 +427,7 @@ export default function PresetsPage() {
       <Dialog open={dialogOpen} onClose={() => !saving && setDialogOpen(false)} maxWidth="md" fullWidth>
         <form onSubmit={handleSavePreset}>
           <DialogTitle sx={{ fontWeight: 800 }}>
-            {editingPreset ? 'Edit Preset' : 'Create New Preset'}
+            {editingPreset ? t('presets.editPresetTitle') : t('presets.createPresetTitle')}
           </DialogTitle>
           <DialogContent dividers>
             {formError && (
@@ -447,19 +438,19 @@ export default function PresetsPage() {
 
             <Stack spacing={2.5}>
               <TextField
-                label="Title"
+                label={t('presets.titleLabel')}
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
-                placeholder="e.g. 50 Essential Spanish Verbs"
+                placeholder={t('presets.titlePlaceholder')}
                 required
                 fullWidth
               />
 
               <TextField
-                label="Description"
+                label={t('presets.descLabel')}
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                placeholder="Brief description of this vocabulary pack (optional)"
+                placeholder={t('presets.descPlaceholder')}
                 fullWidth
                 multiline
                 rows={2}
@@ -467,39 +458,39 @@ export default function PresetsPage() {
 
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                 <FormControl fullWidth>
-                  <InputLabel id="preset-lang-label">Target Language</InputLabel>
+                  <InputLabel id="preset-lang-label">{t('languages.targetLangLabel')}</InputLabel>
                   <Select
                     labelId="preset-lang-label"
                     value={formLanguage}
-                    label="Target Language"
+                    label={t('languages.targetLangLabel')}
                     onChange={(e) => setFormLanguage(e.target.value)}
                   >
-                    {COMMON_LANGUAGES.map((lang) => (
-                      <MenuItem key={lang.code} value={lang.code}>
-                        {lang.label} ({lang.code.toUpperCase()})
+                    {SUPPORTED_LOCALES.map((lang) => (
+                      <MenuItem key={lang} value={lang}>
+                        {t(`languages.${lang}`)}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <InputLabel id="preset-type-label">Type</InputLabel>
+                  <InputLabel id="preset-type-label">{t('presets.typeLabel')}</InputLabel>
                   <Select
                     labelId="preset-type-label"
                     value={formType}
-                    label="Type"
+                    label={t('presets.typeLabel')}
                     readOnly
                     inputProps={{ readOnly: true }}
                   >
                     <MenuItem value="word-definition">word-definition</MenuItem>
                   </Select>
-                  <FormHelperText>Current supported type: word-definition</FormHelperText>
+                  <FormHelperText>{t('presets.typeHelper')}</FormHelperText>
                 </FormControl>
               </Box>
 
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                  Preset Body (JSON)
+                  {t('presets.bodyLabel')}
                 </Typography>
                 <TextField
                   value={formBody}
@@ -514,14 +505,14 @@ export default function PresetsPage() {
                       backgroundColor: '#F9FAFB',
                     },
                   }}
-                  helperText='Array of objects with "word" and "definitions" (translations are fetched automatically).'
+                  helperText={t('presets.bodyHelperText')}
                 />
               </Box>
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, py: 2 }}>
             <Button onClick={() => setDialogOpen(false)} disabled={saving} sx={{ textTransform: 'none' }}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
@@ -529,25 +520,23 @@ export default function PresetsPage() {
               disabled={saving}
               sx={{ textTransform: 'none', fontWeight: 700, minWidth: 100 }}
             >
-              {saving ? <CircularProgress size={20} color="inherit" /> : editingPreset ? 'Save Changes' : 'Create Preset'}
+              {saving ? <CircularProgress size={20} color="inherit" /> : editingPreset ? t('presets.saveChangesBtn') : t('presets.createPresetSubmitBtn')}
             </Button>
           </DialogActions>
         </form>
       </Dialog>
 
-
-
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onClose={() => !deleting && setDeleteConfirmOpen(false)}>
-        <DialogTitle sx={{ fontWeight: 800 }}>Confirm Deletion</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>{t('presets.confirmDeleteTitle')}</DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            Are you sure you want to delete the preset <strong>{presetToDelete?.title}</strong>? This action cannot be undone.
+            {t('presets.confirmDeleteMessage', { title: presetToDelete?.title || '' })}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={() => setDeleteConfirmOpen(false)} disabled={deleting} sx={{ textTransform: 'none' }}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -556,7 +545,7 @@ export default function PresetsPage() {
             disabled={deleting}
             sx={{ textTransform: 'none', fontWeight: 700 }}
           >
-            {deleting ? <CircularProgress size={20} color="inherit" /> : 'Delete'}
+            {deleting ? <CircularProgress size={20} color="inherit" /> : t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

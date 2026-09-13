@@ -5,6 +5,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { useEffect, useState, useRef } from 'react';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
+import { useTranslation } from '../../../shared/i18n/I18nContext';
 import AddWordForm from '../components/AddWordForm';
 import WordList from '../components/WordList';
 import DictionarySwitcher from '../components/DictionarySwitcher';
@@ -12,6 +13,7 @@ import CreateDictionaryDialog from '../components/CreateDictionaryDialog';
 import DictionaryPresets from '../components/DictionaryPresets';
 
 export default function DictionaryPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -126,7 +128,7 @@ export default function DictionaryPage() {
   };
 
   const handleDeleteDictionary = async (dictId: number, name: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}" and all its words?`)) {
+    if (!window.confirm(t('dictionary.deleteConfirm', { name }))) {
       return;
     }
 
@@ -147,7 +149,7 @@ export default function DictionaryPage() {
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
           <Typography variant="overline" color="secondary.main">
-            Vocabulary Deck
+            {t('dictionary.overline')}
           </Typography>
           {currentDict && (
             <Chip
@@ -187,7 +189,7 @@ export default function DictionaryPage() {
               minWidth: isEditingTitle ? 120 : 'auto',
             }}
           >
-            {currentDict ? currentDict.name : 'Dictionary'}
+            {currentDict ? currentDict.name : t('dictionary.defaultTitle')}
           </Typography>
 
           {currentDict && (
@@ -197,7 +199,7 @@ export default function DictionaryPage() {
             >
               {isEditingTitle ? (
                 <>
-                  <Tooltip title="Save (Enter)">
+                  <Tooltip title={t('dictionary.saveTooltip')}>
                     <span>
                       <IconButton
                         size="small"
@@ -211,7 +213,7 @@ export default function DictionaryPage() {
                       </IconButton>
                     </span>
                   </Tooltip>
-                  <Tooltip title="Cancel (Esc)">
+                  <Tooltip title={t('dictionary.cancelTooltip')}>
                     <span>
                       <IconButton
                         size="small"
@@ -226,7 +228,7 @@ export default function DictionaryPage() {
                   </Tooltip>
                 </>
               ) : (
-                <Tooltip title="Rename dictionary">
+                <Tooltip title={t('dictionary.renameTooltip')}>
                   <IconButton
                     size="small"
                     onClick={startEditTitle}
@@ -246,8 +248,8 @@ export default function DictionaryPage() {
         </Box>
         <Typography variant="body1" sx={{ color: 'text.secondary', mt: 1, maxWidth: 620 }}>
           {currentDict
-            ? `Learning ${currentDict.targetLanguage.toUpperCase()} with definitions and translations in ${currentDict.baseLanguage.toUpperCase()}.`
-            : 'Capture new words while they are useful, then keep their meanings easy to find.'}
+            ? t('dictionary.targetLanguageDesc', { target: currentDict.targetLanguage.toUpperCase(), base: currentDict.baseLanguage.toUpperCase() })
+            : t('dictionary.defaultDesc')}
         </Typography>
       </Box>
 

@@ -14,8 +14,10 @@ import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
 import StatusChip from '../../../shared/components/StatusChip';
 import { trackEvent } from '../../../shared/lib/analytics';
+import { useTranslation } from '../../../shared/i18n';
 
 export default function WordList({ loading }: { loading: boolean }) {
+  const { t } = useTranslation();
   const [editingDefId, setEditingDefId] = useState<number | null>(null);
   const [editingTransId, setEditingTransId] = useState<number | null>(null);
   const [editDefText, setEditDefText] = useState('');
@@ -48,7 +50,7 @@ export default function WordList({ loading }: { loading: boolean }) {
 
   const handleDelete = async (e: React.MouseEvent, wordId: number, text: string) => {
     e.stopPropagation();
-    if (window.confirm(`Are you sure you want to delete "${text}"?`)) {
+    if (window.confirm(t('dictionary.deleteWordConfirm', { text }))) {
       try {
         await apiClient.delete(`/word_delete/${wordId}`);
         trackEvent('Word Deleted');
@@ -86,7 +88,7 @@ export default function WordList({ loading }: { loading: boolean }) {
 
   const handleBulkDelete = async () => {
     if (selectedWordIds.size === 0) return;
-    if (window.confirm(`Are you sure you want to delete ${selectedWordIds.size} word(s)?`)) {
+    if (window.confirm(t('dictionary.bulkDeleteConfirm', { count: selectedWordIds.size }))) {
       try {
         await apiClient.post('/word_delete/bulk', { wordIds: Array.from(selectedWordIds) });
         trackEvent('Word Deleted', { count: selectedWordIds.size });
@@ -120,7 +122,7 @@ export default function WordList({ loading }: { loading: boolean }) {
   };
 
   const handleAddDefinition = async (wordId: number) => {
-    const text = window.prompt('Enter new definition:');
+    const text = window.prompt(t('dictionary.enterNewDefinitionPrompt'));
     if (text && text.trim()) {
       try {
         const res = await apiClient.post('/definition_add', { wordId, text: text.trim() });
@@ -132,7 +134,7 @@ export default function WordList({ loading }: { loading: boolean }) {
   };
 
   const handleDeleteDefinition = async (wordId: number, defId: number) => {
-    if (window.confirm('Are you sure you want to delete this definition?')) {
+    if (window.confirm(t('dictionary.deleteDefConfirm'))) {
       try {
         await apiClient.delete(`/definition_delete/${defId}`);
         removeDictionaryDefinition(wordId, defId);
@@ -145,7 +147,7 @@ export default function WordList({ loading }: { loading: boolean }) {
   return (
     <Box sx={{ mb: 2 }}>
       <Typography variant="h5" sx={{ mb: 1.75 }}>
-        Your words
+        {t('dictionary.yourWords')}
         {dictionary.length > 0 && (
           <Chip
             label={dictionary.length}
@@ -166,7 +168,7 @@ export default function WordList({ loading }: { loading: boolean }) {
         <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <TextField
             size="small"
-            placeholder="Search words..."
+            placeholder={t('dictionary.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             slotProps={{
@@ -191,7 +193,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                   size="small"
                 />
               }
-              label={<Typography variant="body2">All</Typography>}
+              label={<Typography variant="body2">{t('dictionary.selectAll')}</Typography>}
               sx={{ mr: 0 }}
             />
             {selectedWordIds.size > 0 && (
@@ -203,7 +205,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                 onClick={handleBulkDelete}
                 sx={{ whiteSpace: 'nowrap' }}
               >
-                Delete ({selectedWordIds.size})
+                {t('dictionary.bulkDeleteBtn', { count: selectedWordIds.size })}
               </Button>
             )}
           </Box>
@@ -221,11 +223,11 @@ export default function WordList({ loading }: { loading: boolean }) {
               {dictionary.length === 0 ? '📚' : '🔍'}
             </Typography>
             <Typography color="text.secondary">
-              {dictionary.length === 0 ? 'Your dictionary is empty.' : 'No words match your search.'}
+              {dictionary.length === 0 ? t('dictionary.emptyDeckMessage') : t('dictionary.emptySearchMessage')}
             </Typography>
             {dictionary.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Add your first words above to get started!
+                {t('dictionary.emptyDeckPrompt')}
               </Typography>
             )}
           </CardContent>
@@ -287,7 +289,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                   <Box sx={{ flexGrow: 1 }} />
                   <StatusChip word={word.text} />
                   <Chip
-                    label={`${word.definitions.length} definition(s)`}
+                    label={t('dictionary.definitionCount', { count: word.definitions.length })}
                     size="small"
                     sx={{
                       mr: 1,
@@ -303,7 +305,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                     size="small"
                     color="error"
                     onClick={(e) => handleDelete(e, word.id, word.text)}
-                    aria-label={`Delete ${word.text}`}
+                    aria-label={t('dictionary.deleteWordTooltip', { word: word.text })}
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
@@ -325,13 +327,13 @@ export default function WordList({ loading }: { loading: boolean }) {
                           size="small"
                           onClick={() => handleEditDefinition(word.id, def.id)}
                         >
-                          Save
+                          {t('common.save')}
                         </Button>
                         <Button
                           size="small"
                           onClick={() => setEditingDefId(null)}
                         >
-                          Cancel
+                          {t('common.cancel')}
                         </Button>
                       </Box>
                     ) : (
@@ -370,7 +372,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                         )}
                         <IconButton
                           size="small"
-                          aria-label="Edit definition"
+                          aria-label={t('dictionary.editDefinitionTooltip')}
                           onClick={() => {
                             setEditingDefId(def.id);
                             setEditDefText(def.text);
@@ -382,7 +384,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                           size="small"
                           color="error"
                           onClick={() => handleDeleteDefinition(word.id, def.id)}
-                          aria-label="Delete definition"
+                          aria-label={t('dictionary.deleteDefinitionTooltip')}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -402,13 +404,13 @@ export default function WordList({ loading }: { loading: boolean }) {
                           size="small"
                           onClick={() => handleEditTranslation(word.id, def.id)}
                         >
-                          Save
+                          {t('common.save')}
                         </Button>
                         <Button
                           size="small"
                           onClick={() => setEditingTransId(null)}
                         >
-                          Cancel
+                          {t('common.cancel')}
                         </Button>
                       </Box>
                     ) : (
@@ -416,11 +418,11 @@ export default function WordList({ loading }: { loading: boolean }) {
                         {def.translation ? (
                           <>
                             <Typography variant="body2" color="text.secondary">
-                              Translation: {def.translation.text}
+                              {t('dictionary.translationPrefix', { text: def.translation.text })}
                             </Typography>
                             <IconButton
                               size="small"
-                              aria-label="Edit translation"
+                              aria-label={t('dictionary.editTranslationTooltip')}
                               onClick={() => {
                                 setEditingTransId(def.id);
                                 setEditTransText(def.translation?.text || '');
@@ -438,7 +440,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                               setEditTransText('');
                             }}
                           >
-                            Add Translation
+                            {t('dictionary.addTranslationBtn')}
                           </Button>
                         )}
                       </Box>
@@ -456,7 +458,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                     onClick={() => handleAddDefinition(word.id)}
                     startIcon={<AddRoundedIcon />}
                   >
-                    Add Definition
+                    {t('dictionary.addDefinitionBtn')}
                   </Button>
                 </Box>
               </AccordionDetails>

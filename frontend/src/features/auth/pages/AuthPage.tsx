@@ -9,8 +9,11 @@ import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
 import { trackEvent } from '../../../shared/lib/analytics';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
+import LocaleSwitcher from '../../../shared/components/LocaleSwitcher';
+import { useTranslation } from '../../../shared/i18n/I18nContext';
 
 export default function Auth() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -70,19 +73,19 @@ export default function Auth() {
       }
     } catch (err: any) {
       console.error('Auth error', err.response?.data);
-      setError(err.response?.data?.error || 'Authentication failed');
+      setError(err.response?.data?.error || t('auth.authFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleError = () => {
-    setError('Google Login Failed');
+    setError(t('auth.googleLoginFailed'));
   };
 
   const handleProfileCompletion = async () => {
     if (!baseLanguage || !targetLanguage) {
-      setError('Please select both languages');
+      setError(t('auth.selectBothLanguages'));
       return;
     }
 
@@ -106,7 +109,7 @@ export default function Auth() {
       navigate('/');
     } catch (err: any) {
       console.error('Profile completion error', err);
-      setError('Failed to save profile settings');
+      setError(t('auth.profileSetupFailed'));
     } finally {
       setLoading(false);
     }
@@ -118,7 +121,7 @@ export default function Auth() {
   const handleTestAuthSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!username.trim()) {
-      setError('Please enter a username');
+      setError(t('auth.enterUsername'));
       return;
     }
 
@@ -138,7 +141,7 @@ export default function Auth() {
       } else {
         // Registration
         if (!baseLanguage || !targetLanguage) {
-          setError('Please select both languages');
+          setError(t('auth.selectBothLanguages'));
           setLoading(false);
           return;
         }
@@ -158,7 +161,7 @@ export default function Auth() {
       }
     } catch (err: any) {
       console.error('Auth error', err.response?.data);
-      setError(err.response?.data?.error || 'Authentication failed');
+      setError(err.response?.data?.error || t('auth.authFailed'));
     } finally {
       setLoading(false);
     }
@@ -174,14 +177,17 @@ export default function Auth() {
       }}
     >
       <Box className="animate-scale-in" sx={{ width: '100%', maxWidth: 960 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.25, mb: 3 }}>
-          <Box component="img" src="/favicon.svg" alt="" sx={{ width: 42, height: 42 }} />
-          <Box>
-            <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
-              CardBot
-            </Typography>
-            <Typography variant="caption" color="text.secondary">Your word studio</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <Box component="img" src="/favicon.svg" alt="" sx={{ width: 42, height: 42 }} />
+            <Box>
+              <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+                CardBot
+              </Typography>
+              <Typography variant="caption" color="text.secondary">{t('auth.brandSubtitle')}</Typography>
+            </Box>
           </Box>
+          <LocaleSwitcher />
         </Box>
 
         <Card sx={{ overflow: 'hidden' }}>
@@ -197,17 +203,17 @@ export default function Auth() {
                 color: '#FFFFFF',
               }}
             >
-              <Typography variant="overline" sx={{ color: '#E8A17F' }}>A smaller, stronger deck</Typography>
+              <Typography variant="overline" sx={{ color: '#E8A17F' }}>{t('auth.heroOverline')}</Typography>
               <Box>
                 <Typography variant="h2" sx={{ color: '#FFFFFF', fontSize: '2.75rem', maxWidth: 330 }}>
-                  Learn the words that matter to you.
+                  {t('auth.heroTitle')}
                 </Typography>
                 <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 2, maxWidth: 315 }}>
-                  Save unfamiliar words as you meet them. Practise by recalling, not scrolling.
+                  {t('auth.heroDesc')}
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.52)' }}>
-                Built for calm, deliberate study.
+                {t('auth.heroFooter')}
               </Typography>
             </Box>
 
@@ -218,15 +224,15 @@ export default function Auth() {
                 // ==========================================
                 <Box>
                   <Typography variant="overline" color="secondary.main">
-                    {isRegisterRoute ? 'Create Account' : 'Welcome Back'}
+                    {isRegisterRoute ? t('auth.createAccountOverline') : t('auth.welcomeBackOverline')}
                   </Typography>
                   <Typography variant="h5" sx={{ fontSize: { xs: '1.75rem', sm: '2.1rem' }, mt: 0.45, mb: 1, fontWeight: 700 }}>
-                    {isRegisterRoute ? 'Create account' : 'Log in'}
+                    {isRegisterRoute ? t('auth.createAccountTitle') : t('auth.loginTitle')}
                   </Typography>
                   <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                     {isRegisterRoute
-                      ? 'Choose your username and language settings to get started.'
-                      : 'Sign in to collect words and turn them into focused practice.'}
+                      ? t('auth.createAccountDesc')
+                      : t('auth.loginDesc')}
                   </Typography>
 
                   {error && <Alert severity="error" sx={{ mb: 2.5 }}>{error}</Alert>}
@@ -234,7 +240,7 @@ export default function Auth() {
                   {registrationSuccess ? (
                     <Box sx={{ textAlign: 'center', py: 2 }}>
                       <Alert severity="success" sx={{ mb: 2 }}>
-                        Registration successful
+                        {t('auth.registrationSuccess')}
                       </Alert>
                       <Button
                         component={RouterLink}
@@ -243,14 +249,14 @@ export default function Auth() {
                         color="secondary"
                         sx={{ mt: 1 }}
                       >
-                        Back to login
+                        {t('auth.backToLogin')}
                       </Button>
                     </Box>
                   ) : (
                     <Box component="form" onSubmit={handleTestAuthSubmit} sx={{ display: 'grid', gap: 2 }}>
                       <TextField
                         fullWidth
-                        label="Username"
+                        label={t('auth.usernameLabel')}
                         variant="outlined"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
@@ -277,7 +283,7 @@ export default function Auth() {
                         endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
                         sx={{ mt: 1, py: 1.2 }}
                       >
-                        {isRegisterRoute ? 'Create account' : 'Log in'}
+                        {isRegisterRoute ? t('auth.submitRegister') : t('auth.submitLogin')}
                       </Button>
 
                       <Box sx={{ textAlign: 'center', mt: 1 }}>
@@ -288,7 +294,7 @@ export default function Auth() {
                             variant="text"
                             sx={{ color: 'text.secondary' }}
                           >
-                            Log in instead
+                            {t('auth.loginInstead')}
                           </Button>
                         ) : (
                           <Button
@@ -297,7 +303,7 @@ export default function Auth() {
                             variant="text"
                             sx={{ color: 'text.secondary' }}
                           >
-                            Sign up
+                            {t('auth.signUp')}
                           </Button>
                         )}
                       </Box>
@@ -310,15 +316,15 @@ export default function Auth() {
                 // ==========================================
                 <Box>
                   <Typography variant="overline" color="secondary.main">
-                    {needsProfileCompletion ? 'Step 2 of 2' : 'Welcome'}
+                    {needsProfileCompletion ? t('auth.step2Overline') : t('auth.welcomeOverline')}
                   </Typography>
                   <Typography variant="h2" sx={{ fontSize: { xs: '2rem', sm: '2.45rem' }, mt: 0.45, mb: 1 }}>
-                    {needsProfileCompletion ? 'Set up your dictionary' : 'Make every new word count.'}
+                    {needsProfileCompletion ? t('auth.googleStep2Title') : t('auth.googleWelcomeTitle')}
                   </Typography>
                   <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                     {needsProfileCompletion
-                      ? 'Choose your learning and native languages to get started.'
-                      : 'Sign in to collect words and turn them into focused practice.'}
+                      ? t('auth.googleStep2Desc')
+                      : t('auth.googleWelcomeDesc')}
                   </Typography>
 
                   {error && <Alert severity="error" sx={{ mb: 2.5 }}>{error}</Alert>}
@@ -341,7 +347,7 @@ export default function Auth() {
                         endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
                         sx={{ mt: 1 }}
                       >
-                        Continue
+                        {t('auth.continue')}
                       </Button>
                     </Box>
                   ) : (

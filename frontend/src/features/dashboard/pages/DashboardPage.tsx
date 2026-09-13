@@ -5,8 +5,10 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded';
 import useStore from '../../../store/useStore';
+import { useTranslation } from '../../../shared/i18n/I18nContext';
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const profile = useStore((state) => state.profile);
   const dictionary = useStore((state) => state.dictionary);
   const navigate = useNavigate();
@@ -28,13 +30,13 @@ export default function Dashboard() {
       >
         <Box sx={{ pt: { xs: 0, lg: 1 } }}>
           <Typography variant="overline" color="secondary.main">
-            Your learning space
+            {t('dashboard.overline')}
           </Typography>
           <Typography variant="h1" sx={{ fontSize: { xs: '2.45rem', sm: '3.35rem' }, mt: 0.7, maxWidth: 680 }}>
-            Welcome{profile && <>, {profile.username}</>}. Let&apos;s make words stick.
+            {profile ? t('dashboard.welcomeUser', { name: profile.username }) : t('dashboard.welcomeGuest')}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 560, mt: 1.6, mb: 3 }}>
-            Build a deck you recognise at a glance, then practise from a focused card—one definition at a time.
+            {t('dashboard.desc')}
           </Typography>
 
           <Card
@@ -48,15 +50,15 @@ export default function Dashboard() {
           >
             <CardContent sx={{ p: { xs: 2.5, sm: 3.25 }, '&:last-child': { pb: { xs: 2.5, sm: 3.25 } } }}>
               <Typography variant="overline" sx={{ color: '#E8A17F' }}>
-                Ready when you are
+                {t('dashboard.readyOverline')}
               </Typography>
               <Typography variant="h4" sx={{ color: '#FFFFFF', mt: 0.4, mb: 0.8 }}>
-                Recall, don&apos;t just reread.
+                {t('dashboard.readyTitle')}
               </Typography>
               <Typography variant="body2" sx={{ color: alpha('#FFFFFF', 0.7), maxWidth: 430, mb: 2.5 }}>
                 {totalWords === 0
-                  ? 'Add words to your dictionary to unlock quiz practice.'
-                  : 'Open a round based on the words you have already saved.'}
+                  ? t('dashboard.readyEmptyDesc')
+                  : t('dashboard.readyDesc')}
               </Typography>
               <Button
                 variant="contained"
@@ -65,7 +67,7 @@ export default function Dashboard() {
                 disabled={totalWords === 0}
                 endIcon={<ArrowForwardRoundedIcon />}
               >
-                Start a quiz
+                {t('dashboard.startQuizBtn')}
               </Button>
             </CardContent>
           </Card>
@@ -87,7 +89,7 @@ export default function Dashboard() {
               >
                 <MenuBookRoundedIcon fontSize="small" />
               </Box>
-              <Typography variant="subtitle1">Your deck</Typography>
+              <Typography variant="subtitle1">{t('dashboard.yourDeck')}</Typography>
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -95,13 +97,13 @@ export default function Dashboard() {
                 <Typography variant="h3" sx={{ fontSize: '2.2rem', color: 'primary.dark' }}>
                   {totalWords}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">words saved</Typography>
+                <Typography variant="body2" color="text.secondary">{t('dashboard.wordsSaved')}</Typography>
               </Box>
               <Box>
                 <Typography variant="h3" sx={{ fontSize: '2.2rem', color: 'primary.dark' }}>
                   {totalDefinitions}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">definitions</Typography>
+                <Typography variant="body2" color="text.secondary">{t('dashboard.definitions')}</Typography>
               </Box>
             </Box>
 
@@ -113,7 +115,7 @@ export default function Dashboard() {
               startIcon={<TranslateRoundedIcon />}
               sx={{ px: 0.25 }}
             >
-              Manage vocabulary
+              {t('dashboard.manageVocabulary')}
             </Button>
           </CardContent>
         </Card>
@@ -121,9 +123,9 @@ export default function Dashboard() {
 
       <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, mb: 1.75 }}>
         <Box>
-          <Typography variant="h5">Fresh in your deck</Typography>
+          <Typography variant="h5">{t('dashboard.freshOverline')}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.3 }}>
-            The last words you added, ready for the next recall round.
+            {t('dashboard.freshDesc')}
           </Typography>
         </Box>
         <Button
@@ -133,7 +135,7 @@ export default function Dashboard() {
           startIcon={<MenuBookRoundedIcon />}
           sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
         >
-          Dictionary
+          {t('dashboard.dictionaryBtn')}
         </Button>
       </Box>
 
@@ -161,9 +163,9 @@ export default function Dashboard() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.5 }}>
               <SchoolRoundedIcon sx={{ color: 'secondary.main' }} />
               <Typography variant="body2" color="text.secondary">
-                Your first saved word will appear here.
+                {t('dashboard.emptyRecentWords')}
               </Typography>
-              <Button size="small" onClick={() => navigate('/dictionary')}>Add words</Button>
+              <Button size="small" onClick={() => navigate('/dictionary')}>{t('dashboard.addWordsBtn')}</Button>
             </Box>
           )}
         </CardContent>

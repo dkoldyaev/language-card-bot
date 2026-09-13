@@ -5,10 +5,13 @@ import { useEffect } from 'react';
 import apiClient from '../api/client';
 import useStore from '../../store/useStore';
 import DictionarySelector from './DictionarySelector';
+import LocaleSwitcher from './LocaleSwitcher';
+import { useTranslation } from '../i18n/I18nContext';
 
 export default function Layout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { t } = useTranslation();
   const setDictionary = useStore((state) => state.setDictionary);
   const setSettings = useStore((state) => state.setSettings);
   const setAppState = useStore((state) => state.setAppState);
@@ -92,7 +95,10 @@ export default function Layout() {
               <Box component="img" src="/favicon.svg" alt="" sx={{ width: 28, height: 28 }} />
               <Typography sx={{ fontWeight: 800, letterSpacing: '-0.035em' }}>CardBot</Typography>
             </Box>
-            <DictionarySelector />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DictionarySelector />
+              <LocaleSwitcher />
+            </Box>
           </Box>
         ) : (
           <Box
@@ -105,15 +111,18 @@ export default function Layout() {
               pb: 0,
               display: 'flex',
               justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: 1.5,
             }}
           >
             <DictionarySelector />
+            <LocaleSwitcher />
           </Box>
         )}
 
         {isOffline && (
           <Alert severity="warning" sx={{ mx: { xs: 2, sm: 3 }, mt: 2 }}>
-            You are offline. Only the quiz and offline dictionary edits are available. Changes will be synced when you reconnect.
+            {t('common.offlineNotice')}
           </Alert>
         )}
 

@@ -17,14 +17,10 @@ import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import useStore from '../../store/useStore';
-
-const navItems = [
-  { path: '/', label: 'Dashboard', icon: <HomeRoundedIcon /> },
-  { path: '/dictionary', label: 'Dictionary', icon: <MenuBookRoundedIcon /> },
-  { path: '/quiz', label: 'Quiz', icon: <SchoolRoundedIcon /> },
-];
+import { useTranslation } from '../i18n/I18nContext';
 
 function Brand({ compact = false }: { compact?: boolean }) {
+  const { t } = useTranslation();
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
       <Box
@@ -39,7 +35,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
             CardBot
           </Typography>
           <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.58), display: 'block', mt: 0.2 }}>
-            Your word studio
+            {t('nav.brandSubtitle')}
           </Typography>
         </Box>
       )}
@@ -48,6 +44,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
 }
 
 export default function Sidebar() {
+  const { t } = useTranslation();
   const profile = useStore((state) => state.profile);
   const dictionary = useStore((state) => state.dictionary);
   const reset = useStore((state) => state.reset);
@@ -56,10 +53,16 @@ export default function Sidebar() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  const navItems = [
+    { path: '/', label: t('nav.dashboard'), icon: <HomeRoundedIcon /> },
+    { path: '/dictionary', label: t('nav.dictionary'), icon: <MenuBookRoundedIcon /> },
+    { path: '/quiz', label: t('nav.quiz'), icon: <SchoolRoundedIcon /> },
+  ];
+
   const hasWords = dictionary.length > 0;
   const isAdmin = Boolean(profile?.isAdmin || profile?.is_admin);
   const currentNavItems = isAdmin
-    ? [...navItems, { path: '/presets', label: 'Presets', icon: <AutoAwesomeRoundedIcon /> }]
+    ? [...navItems, { path: '/presets', label: t('nav.presets'), icon: <AutoAwesomeRoundedIcon /> }]
     : navItems;
 
   const handleLogout = () => {
@@ -132,7 +135,7 @@ export default function Sidebar() {
 
           if (isDisabled) {
             return (
-              <Tooltip key={item.path} title="Add words to your dictionary to unlock Quiz" placement="top">
+              <Tooltip key={item.path} title={t('nav.quizLockedTooltip')} placement="top">
                 <Box component="div" sx={{ display: 'flex', flex: 1, minWidth: 62, maxWidth: 86 }}>
                   {button}
                 </Box>
@@ -144,7 +147,7 @@ export default function Sidebar() {
         })}
         <ListItemButton
           onClick={handleLogout}
-          aria-label="Sign out"
+          aria-label={t('nav.signOut')}
           sx={{
             minWidth: 62,
             maxWidth: 76,
@@ -161,7 +164,7 @@ export default function Sidebar() {
             <LogoutRoundedIcon />
           </ListItemIcon>
           <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem' }}>
-            Sign out
+            {t('nav.signOut')}
           </Typography>
         </ListItemButton>
       </Box>
@@ -192,7 +195,7 @@ export default function Sidebar() {
 
       <Box sx={{ px: 2.5, pb: 1 }}>
         <Typography variant="overline" sx={{ color: alpha('#FFFFFF', 0.42), fontSize: '0.64rem' }}>
-          Workspace
+          {t('nav.workspace')}
         </Typography>
       </Box>
 
@@ -246,7 +249,7 @@ export default function Sidebar() {
 
           if (isDisabled) {
             return (
-              <Tooltip key={item.path} title="Add words to your dictionary to unlock Quiz" placement="right">
+              <Tooltip key={item.path} title={t('nav.quizLockedTooltip')} placement="right">
                 <Box component="div" sx={{ display: 'block' }}>
                   {button}
                 </Box>
@@ -262,7 +265,7 @@ export default function Sidebar() {
         {profile && (
           <Box sx={{ px: 1.25, pb: 1.5 }}>
             <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.5), display: 'block', mb: 0.25 }}>
-              Learning as
+              {t('nav.learningAs')}
             </Typography>
             <Typography variant="body2" sx={{ color: '#FFFFFF', fontWeight: 800 }} noWrap>
               {profile.username}
@@ -286,7 +289,7 @@ export default function Sidebar() {
             <LogoutRoundedIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText
-            primary={<Typography sx={{ fontSize: '0.875rem', fontWeight: 700 }}>Sign out</Typography>}
+            primary={<Typography sx={{ fontSize: '0.875rem', fontWeight: 700 }}>{t('nav.signOut')}</Typography>}
           />
         </ListItemButton>
       </Box>

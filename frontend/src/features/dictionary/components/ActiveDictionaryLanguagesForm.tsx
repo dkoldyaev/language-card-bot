@@ -1,5 +1,7 @@
 import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import { useTranslation } from '../../../shared/i18n';
+import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
 
 interface ActiveDictionaryLanguagesFormProps {
   targetLanguage: string;
@@ -16,6 +18,8 @@ export default function ActiveDictionaryLanguagesForm({
   onBaseLanguageChange,
   disabled = false,
 }: ActiveDictionaryLanguagesFormProps) {
+  const { t } = useTranslation();
+
   return (
     <Box sx={{ p: 2, borderRadius: 2, border: '1px solid #E5E7EB', backgroundColor: '#FAFAFA' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
@@ -34,50 +38,48 @@ export default function ActiveDictionaryLanguagesForm({
         </Box>
         <Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-            Dictionary Languages
+            {t('languages.dictionaryLanguagesTitle')}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Choose the language you want to learn and your native language.
+            {t('languages.dictionaryLanguagesDesc')}
           </Typography>
         </Box>
       </Box>
 
       <Box sx={{ display: 'grid', gap: 2 }}>
         <FormControl fullWidth>
-          <InputLabel id="target-language-label">Learned Language (Target)</InputLabel>
+          <InputLabel id="target-language-label">{t('languages.targetLangLabel')}</InputLabel>
           <Select
             labelId="target-language-label"
             value={targetLanguage}
-            label="Learned Language (Target)"
+            label={t('languages.targetLangLabel')}
             onChange={(e) => onTargetLanguageChange(e.target.value)}
             disabled={disabled}
             inputProps={{ 'data-testid': 'learned-language-select' }}
           >
-            <MenuItem value="en">English (EN)</MenuItem>
-            <MenuItem value="es">Spanish (ES)</MenuItem>
-            <MenuItem value="fr">French (FR)</MenuItem>
-            <MenuItem value="de">German (DE)</MenuItem>
-            <MenuItem value="ru">Russian (RU)</MenuItem>
-            <MenuItem value="it">Italian (IT)</MenuItem>
+            {SUPPORTED_LOCALES.map((lang) => (
+              <MenuItem key={lang} value={lang}>
+                {t(`languages.${lang}`)}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
 
         <FormControl fullWidth>
-          <InputLabel id="base-language-label">Base Language (Native)</InputLabel>
+          <InputLabel id="base-language-label">{t('languages.nativeLangLabel')}</InputLabel>
           <Select
             labelId="base-language-label"
             value={baseLanguage}
-            label="Base Language (Native)"
+            label={t('languages.nativeLangLabel')}
             onChange={(e) => onBaseLanguageChange(e.target.value)}
             disabled={disabled}
             inputProps={{ 'data-testid': 'base-language-select' }}
           >
-            <MenuItem value="ru">Russian (RU)</MenuItem>
-            <MenuItem value="en">English (EN)</MenuItem>
-            <MenuItem value="de">German (DE)</MenuItem>
-            <MenuItem value="es">Spanish (ES)</MenuItem>
-            <MenuItem value="fr">French (FR)</MenuItem>
-            <MenuItem value="it">Italian (IT)</MenuItem>
+            {SUPPORTED_LOCALES.map((lang) => (
+              <MenuItem key={lang} value={lang}>
+                {t(`languages.${lang}`)}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
       </Box>

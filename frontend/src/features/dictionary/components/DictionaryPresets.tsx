@@ -25,6 +25,7 @@ import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import apiClient from '../../../shared/api/client';
 import { type DictionaryItem } from '../../../store/useStore';
 import { type PresetItem, type WordDefinitionPresetItem } from '../../presets/types';
+import { useTranslation } from '../../../shared/i18n';
 
 interface DictionaryPresetsProps {
   dictionary?: DictionaryItem;
@@ -32,6 +33,7 @@ interface DictionaryPresetsProps {
 }
 
 export default function DictionaryPresets({ dictionary, onPresetApplied }: DictionaryPresetsProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [presets, setPresets] = useState<PresetItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,7 +63,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
       .catch((err) => {
         if (!isMounted) return;
         console.error('Failed to load presets for dictionary:', err);
-        setError('Failed to load available presets.');
+        setError(t('presets.failedApply'));
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -88,7 +90,12 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
       const wordsCount = res.data.wordsCount ?? (Array.isArray(preset.body) ? preset.body.length : 0);
       const defsCount = res.data.definitionsCount ?? 0;
       setSuccessMessage(
-        `Added "${preset.title}" to ${dictionary.name}! (${wordsCount} words, ${defsCount} definitions)`
+        t('presets.addedSuccess', {
+          title: preset.title,
+          name: dictionary.name,
+          words: wordsCount,
+          defs: defsCount,
+        })
       );
 
       if (onPresetApplied) {
@@ -96,7 +103,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
       }
     } catch (err: any) {
       console.error('Failed to apply preset:', err);
-      setError(err.response?.data?.error || 'Failed to add preset to dictionary');
+      setError(err.response?.data?.error || t('presets.failedApply'));
     } finally {
       setApplyingId(null);
     }
@@ -148,7 +155,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                  Available Presets
+                  {t('presets.availablePresetsTitle')}
                 </Typography>
                 <Chip
                   label={dictionary.targetLanguage.toUpperCase()}
@@ -163,7 +170,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                 />
                 {!loading && presets.length > 0 && (
                   <Chip
-                    label={`${presets.length} ready`}
+                    label={t('presets.readyBadge', { count: presets.length })}
                     size="small"
                     variant="outlined"
                     sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600 }}
@@ -171,7 +178,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                 )}
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Curated vocabulary packs that you can add directly to this dictionary.
+                {t('presets.curatedPacksDesc')}
               </Typography>
             </Box>
           </Box>
@@ -194,7 +201,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 2 }}>
             <CircularProgress size={20} />
             <Typography variant="body2" color="text.secondary">
-              Checking available presets for {dictionary.targetLanguage.toUpperCase()}...
+              {t('presets.checkingPresets', { lang: dictionary.targetLanguage.toUpperCase() })}
             </Typography>
           </Box>
         ) : presets.length === 0 ? (
@@ -208,7 +215,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              No presets available for {dictionary.targetLanguage.toUpperCase()} yet. You can add words manually using the form below.
+              {t('presets.noPresetsForDeck', { lang: dictionary.targetLanguage.toUpperCase() })}
             </Typography>
           </Box>
         ) : (
@@ -254,7 +261,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                         {preset.title}
                       </Typography>
                       <Chip
-                        label={`${presetWords.length} words`}
+                        label={t('dictionary.wordsCount', { count: presetWords.length })}
                         size="small"
                         sx={{
                           height: 22,
@@ -302,7 +309,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                       ))}
                       {remainingCount > 0 && (
                         <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center', ml: 0.5 }}>
-                          +{remainingCount} more
+                          {t('presets.moreWords', { count: remainingCount })}
                         </Typography>
                       )}
                     </Box>
@@ -330,7 +337,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                         '&:hover': { color: 'primary.main' },
                       }}
                     >
-                      Preview words
+                      {t('presets.previewWordsBtn')}
                     </Button>
 
                     <Button
@@ -347,7 +354,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                         px: 1.75,
                       }}
                     >
-                      {isApplying ? 'Adding...' : 'Add to Dictionary'}
+                      {isApplying ? t('presets.addingToDeckBtn') : t('presets.addToDeckBtn')}
                     </Button>
                   </Box>
                 </Card>
@@ -372,8 +379,10 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
             </Typography>
           )}
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Language: <strong>{previewPreset?.for_language?.toUpperCase()}</strong> • Total words:{' '}
-            <strong>{words(previewPreset?.body).length}</strong>
+            {t('presets.previewLangInfo', {
+              lang: previewPreset?.for_language?.toUpperCase() || '',
+              count: words(previewPreset?.body).length,
+            })}
           </Typography>
         </DialogTitle>
         <DialogContent dividers sx={{ p: 0 }}>
@@ -390,7 +399,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                       }
                       secondary={
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                          {item.definitions?.join('; ') || 'No definition'}
+                          {item.definitions?.join('; ') || t('presets.noDefinitions')}
                         </Typography>
                       }
                     />
@@ -402,7 +411,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={() => setPreviewPreset(null)} sx={{ textTransform: 'none' }}>
-            Close
+            {t('presets.closeBtn')}
           </Button>
           {previewPreset && (
             <Button
@@ -415,7 +424,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
               }}
               sx={{ textTransform: 'none', fontWeight: 700 }}
             >
-              Add this Preset
+              {t('presets.addThisPresetBtn')}
             </Button>
           )}
         </DialogActions>

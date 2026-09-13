@@ -8,6 +8,7 @@ import theme from './theme'
 
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { trackEvent } from '../shared/lib/analytics'
+import { I18nProvider } from '../shared/i18n/I18nContext'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
@@ -21,11 +22,13 @@ window.addEventListener('unhandledrejection', (event) => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || 'dummy-client-id'}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <App />
-      </ThemeProvider>
-    </GoogleOAuthProvider>
+    <I18nProvider>
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || 'dummy-client-id'}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <App />
+        </ThemeProvider>
+      </GoogleOAuthProvider>
+    </I18nProvider>
   </StrictMode>,
 )
