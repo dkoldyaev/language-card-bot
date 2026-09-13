@@ -7,11 +7,11 @@ export class DefinerFactory {
   static getDefiner(definerApp: DefinerAppType): IDefiner {
     switch (definerApp) {
       case 'mistral':
-        return new LLMAdapter({ provider: 'mistral', model: 'mistral-large-latest' });
+        return new LLMAdapter({ provider: 'mistral', model: process.env.DEFINER_LLM_MODEL || 'open-mistral-nemo' });
       case 'gemini':
-        return new LLMAdapter({ provider: 'gemini', model: 'gemini-1.5-flash' });
+        return new LLMAdapter({ provider: 'gemini', model: process.env.DEFINER_LLM_MODEL || 'gemini-1.5-flash' });
       case 'llm':
-        return new LLMAdapter();
+        return new LLMAdapter({ provider: (process.env.DEFINER_LLM_PROVIDER as any) || 'mistral', model: process.env.DEFINER_LLM_MODEL || 'open-mistral-nemo' });
       case 'freedictionary':
         return new FreeDictionaryDefiner();
       case 'mock':

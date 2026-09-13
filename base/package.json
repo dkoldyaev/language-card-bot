@@ -13,7 +13,9 @@
     "users:list": "tsx scripts/manage-users.ts list",
     "users:make-admin": "tsx scripts/manage-users.ts make-admin",
     "users:make-regular": "tsx scripts/manage-users.ts make-regular",
-    "users:revoke-admin": "tsx scripts/manage-users.ts make-regular"
+    "users:revoke-admin": "tsx scripts/manage-users.ts make-regular",
+    "presets:list": "tsx scripts/presets-list.ts",
+    "preset:create": "tsx scripts/preset-create.ts"
   },
   "keywords": [],
   "author": "",

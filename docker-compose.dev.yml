@@ -16,6 +16,9 @@ services:
       - PORT=${BASE_PORT:-3001}
       - BASE_DOMAIN=${BASE_DOMAIN:-http://localhost}
       - CORS_ORIGIN=${BASE_CORS_ORIGIN}
+      - LLM_API_URL=http://llm:3003/api/v1/generate
+      - LLM_PROVIDER=mock
+      - LLM_MODEL=mock
     ports:
       - "${BASE_PORT:-3001}:${BASE_PORT:-3001}"
     volumes:
@@ -24,6 +27,7 @@ services:
     depends_on:
       - db_test
       - redis_test
+      - llm
 
   mercure:
     extends:

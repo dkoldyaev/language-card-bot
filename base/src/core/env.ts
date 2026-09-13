@@ -19,6 +19,9 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string(),
   GOOGLE_CLIENT_ID: z.string().optional().default(''),
   ENABLE_TEST_AUTH: z.string().optional().default('true'),
+  LLM_API_URL: z.string().min(1),
+  LLM_PROVIDER: z.enum(['mistral', 'gemini', 'mock']),
+  LLM_MODEL: z.string().min(1),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

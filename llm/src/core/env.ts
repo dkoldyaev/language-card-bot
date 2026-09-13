@@ -8,7 +8,7 @@ const envSchema = z.object({
   MISTRAL_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   MOCK_TIMEOUT: z.string().optional(),
-  CACHE_URL: z.string(),
+  CACHE_URL: z.string().default(process.env.CACHE_URL || 'redis://redis_test:6379/3'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

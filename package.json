@@ -8,6 +8,10 @@
     "test:definer": "npm run --prefix definer test",
     "test:translator": "npm run --prefix translator test",
     "test:llm": "npm run --prefix llm test",
-    "test": "npm run test:frontend && npm run test:base && npm run test:definer && npm run test:translator && npm run test:llm"
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "npm run --prefix base test:unit && npm run --prefix definer test && npm run --prefix translator test && npm run --prefix llm test && npm run --prefix frontend test:unit",
+    "test:e2e": "npm run --prefix base test:e2e && npm run --prefix frontend test:e2e",
+    "preset:list": "npm run --prefix base presets:list --",
+    "preset:create": "npm run --prefix base preset:create --"
   }
 }

@@ -15,6 +15,32 @@ describe('MockProvider', () => {
     expect(result.definitions.length).toBeGreaterThan(0);
   });
 
+  it('should return mock words when jsonFormat mentions words', async () => {
+    const provider = new MockProvider();
+    const result = await provider.generate({
+      prompt: 'give me 3 words in en',
+      model: 'test-model',
+      jsonFormat: 'words format',
+    });
+
+    expect(result).toHaveProperty('words');
+    expect(Array.isArray(result.words)).toBe(true);
+    expect(result.words.length).toBe(3);
+  });
+
+  it('should return filteredDefinitions when jsonFormat mentions filteredDefinitions', async () => {
+    const provider = new MockProvider();
+    const result = await provider.generate({
+      prompt: 'filter definitions: ["def 1", "def 2"]',
+      model: 'test-model',
+      jsonFormat: 'filteredDefinitions format',
+    });
+
+    expect(result).toHaveProperty('filteredDefinitions');
+    expect(Array.isArray(result.filteredDefinitions)).toBe(true);
+    expect(result.filteredDefinitions).toEqual(['def 1', 'def 2']);
+  });
+
   it('should return generic mock response when format does not mention definitions', async () => {
     const provider = new MockProvider();
     const result = await provider.generate({

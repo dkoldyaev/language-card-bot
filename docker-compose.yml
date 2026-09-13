@@ -21,6 +21,9 @@ services:
       - CORS_ORIGIN=${BASE_CORS_ORIGIN}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - ENABLE_TEST_AUTH=${BASE_ENABLE_TEST_AUTH:-true}
+      - LLM_API_URL=${BASE_LLM_API_URL}
+      - LLM_PROVIDER=${BASE_LLM_PROVIDER:-mock}
+      - LLM_MODEL=${BASE_LLM_MODEL:-mock}
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
