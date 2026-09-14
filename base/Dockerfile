@@ -26,7 +26,7 @@ COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN DATABASE_URL="postgresql://dummy:5432/dummy" npx prisma generate
 COPY . .
-CMD sh -c "npx prisma db push && npm run dev"
+CMD sh -c "npx prisma migrate deploy && npm run dev"
 
 FROM dev AS development
 
