@@ -19,13 +19,23 @@ export class MockProvider implements ILLMProvider {
 
     // If schema specifies filteredDefinitions, return filtered definitions
     if (formatStr.includes('filteredDefinitions')) {
+      const wordMatch = options.prompt.match(/Target word:\s*"([^"]+)"/i) || options.prompt.match(/word\s+"([^"]+)"/i);
+      const targetWord = wordMatch ? wordMatch[1].trim() : '';
+
+      const maskFn = (str: string) => {
+        if (!targetWord) return str;
+        const escaped = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(?<=^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`, 'gui');
+        return str.replace(regex, '***');
+      };
+
       const match = options.prompt.match(/\[[\s\S]*?\]/);
       if (match) {
         try {
           const parsed = JSON.parse(match[0]);
           if (Array.isArray(parsed) && parsed.length > 0) {
             return {
-              filteredDefinitions: parsed,
+              filteredDefinitions: parsed.map((d: any) => maskFn(String(d))),
             };
           }
         } catch {
@@ -34,7 +44,7 @@ export class MockProvider implements ILLMProvider {
       }
       return {
         filteredDefinitions: [
-          `[Mock LLM: ${options.model}] Definition 1`,
+          maskFn(`[Mock LLM: ${options.model}] Definition 1`),
         ],
       };
     }

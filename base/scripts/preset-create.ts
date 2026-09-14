@@ -7,6 +7,7 @@ interface CliParams {
   presetId?: number;
   wordsCount: number;
   levels?: string[];
+  theme?: string;
   title?: string;
   description?: string;
 }
@@ -23,11 +24,12 @@ Optional:
   --preset-id <id>          ID of an existing preset to add/update words
   --words-count <number>    Target number of words (default: 100)
   --level <levels>          Comma-separated CEFR levels (e.g. A0, A1, B2)
+  --theme <theme>           Topic or theme for words (e.g. travel, food, IT)
   --title <title>           Preset title (default auto-generated)
   --description <desc>      Preset description
 
 Examples:
-  npm run preset:create -- --language en --level A1,A2 --words-count 50
+  npm run preset:create -- --language en --level B2 --theme travel --words-count 50
   npm run preset:create -- --language es --preset-id 1 --words-count 20
 `);
 }
@@ -38,6 +40,7 @@ function parseCliArgs(): CliParams {
   let presetId: number | undefined;
   let wordsCount = 100;
   let levels: string[] | undefined;
+  let theme: string | undefined;
   let title: string | undefined;
   let description: string | undefined;
 
@@ -67,6 +70,12 @@ function parseCliArgs(): CliParams {
       levels = arg.split('=')[1].split(',').map((s) => s.trim()).filter(Boolean);
     } else if (arg === '--level') {
       levels = args[++i]?.split(',').map((s) => s.trim()).filter(Boolean);
+    } else if (arg.startsWith('--theme=')) {
+      theme = arg.split('=')[1];
+    } else if (arg === '--theme' || arg === '--topic' || arg === '-t') {
+      theme = args[++i];
+    } else if (arg.startsWith('--topic=')) {
+      theme = arg.split('=')[1];
     } else if (arg.startsWith('--title=')) {
       title = arg.split('=')[1];
     } else if (arg === '--title') {
@@ -83,6 +92,7 @@ function parseCliArgs(): CliParams {
     presetId,
     wordsCount,
     levels,
+    theme,
     title,
     description,
   };
@@ -103,6 +113,7 @@ async function main() {
       presetId: params.presetId,
       wordsCount: params.wordsCount,
       levels: params.levels,
+      theme: params.theme,
       title: params.title,
       description: params.description,
       onProgress: (msg) => console.log(msg),

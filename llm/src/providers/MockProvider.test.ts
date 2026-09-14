@@ -41,6 +41,18 @@ describe('MockProvider', () => {
     expect(result.filteredDefinitions).toEqual(['def 1', 'def 2']);
   });
 
+  it('should mask target word with *** in filteredDefinitions', async () => {
+    const provider = new MockProvider();
+    const result = await provider.generate({
+      prompt: 'Target word: "dog"\nDefinitions: ["hot dog is delicious", "A dog barking"]',
+      model: 'test-model',
+      jsonFormat: 'filteredDefinitions format',
+    });
+
+    expect(result).toHaveProperty('filteredDefinitions');
+    expect(result.filteredDefinitions).toEqual(['hot *** is delicious', 'A *** barking']);
+  });
+
   it('should return generic mock response when format does not mention definitions', async () => {
     const provider = new MockProvider();
     const result = await provider.generate({

@@ -85,24 +85,47 @@ describe('Preset Generator Service', () => {
   });
 
   describe('filterDefinitionsWithLLM', () => {
-    it('should call LLM to filter definitions by CEFR level', async () => {
+    it('should call LLM to filter definitions strictly by CEFR level and mask target word', async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
-            filteredDefinitions: ['A sweet red or green fruit'],
+            filteredDefinitions: ['A hot *** is a sausage in a bun'],
           },
         }),
       } as any);
 
       const filtered = await filterDefinitionsWithLLM({
         language: 'en',
-        word: 'apple',
-        definitions: ['A sweet red or green fruit', 'A highly sophisticated botanical angiosperm'],
-        level: 'A1',
+        word: 'dog',
+        definitions: ['A hot dog is a sausage in a bun', 'A highly sophisticated canine mammal of high complexity'],
+        level: 'B2',
       });
 
-      expect(filtered).toEqual(['A sweet red or green fruit']);
+      expect(filtered).toEqual(['A hot *** is a sausage in a bun']);
+      const calledBody = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1] as any).body);
+      expect(calledBody.prompt).toContain('strictly "B2"');
+      expect(calledBody.prompt).toContain('Mask the target word');
+    });
+
+    it('should mask word even if LLM returned unmasked definition', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: {
+            filteredDefinitions: ['A hot dog is tasty'],
+          },
+        }),
+      } as any);
+
+      const filtered = await filterDefinitionsWithLLM({
+        language: 'en',
+        word: 'dog',
+        definitions: ['A hot dog is tasty'],
+        level: 'B2',
+      });
+
+      expect(filtered).toEqual(['A hot *** is tasty']);
     });
 
     it('should return empty array if no definitions provided', async () => {
@@ -114,6 +137,31 @@ describe('Preset Generator Service', () => {
       });
 
       expect(filtered).toEqual([]);
+    });
+  });
+
+  describe('fetchWordsFromLLM with theme', () => {
+    it('should include theme in prompt when theme is provided', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: {
+            words: ['hotel', 'flight'],
+          },
+        }),
+      } as any);
+
+      const words = await fetchWordsFromLLM({
+        language: 'en',
+        level: 'B2',
+        theme: 'travel',
+        count: 2,
+      });
+
+      expect(words).toEqual(['hotel', 'flight']);
+      const calledBody = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1] as any).body);
+      expect(calledBody.prompt).toContain('related to the theme/topic "travel"');
+      expect(calledBody.prompt).toContain('strictly for CEFR proficiency level "B2"');
     });
   });
 
@@ -359,7 +407,7 @@ describe('Preset Generator Service', () => {
           body: [
             { word: 'apple', definitions: ['definition 1'] },
             { word: 'banana', definitions: ['yellow fruit'] },
-            { word: 'orange', definitions: ['orange fruit'] },
+            { word: 'orange', definitions: ['*** fruit'] },
           ],
         },
       });
@@ -377,19 +425,49 @@ describe('Preset Generator Service', () => {
       ).rejects.toThrow('Preset with ID 999 not found');
     });
 
-    it('should throw error if presetId language does not match requested language', async () => {
-      prismaMock.preset.findUnique.mockResolvedValue({
-        id: 1,
-        forLanguage: 'es',
-        body: [],
+    it('should generate a preset with theme in title and description', async () => {
+      global.fetch = vi.fn().mockImplementation(async (url: string, init: any) => {
+        const body = JSON.parse(init.body);
+        if (body.prompt && body.prompt.includes('unique words')) {
+          return { ok: true, json: async () => ({ data: { words: ['pizza'] } }) };
+        }
+        if (body.definerApp) {
+          return { ok: true, json: async () => ({ definitions: ['A pizza is delicious Italian dish'] }) };
+        }
+        if (body.prompt && body.prompt.includes('evaluate the following definitions')) {
+          return { ok: true, json: async () => ({ data: { filteredDefinitions: ['A *** is delicious Italian dish'] } }) };
+        }
+        return { ok: true, json: async () => ({ data: {} }) };
+      });
+
+      prismaMock.preset.create.mockResolvedValue({
+        id: 20,
+        title: 'Preset EN - food (B2) - 1 words',
+        description: 'Theme: food',
+        forLanguage: 'en',
+        type: 'word-definition',
+        body: [{ word: 'pizza', definitions: ['A *** is delicious Italian dish'] }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       } as any);
 
-      await expect(
-        generatePreset({
-          language: 'en',
-          presetId: 1,
-        })
-      ).rejects.toThrow('does not match requested language');
+      const result = await generatePreset({
+        language: 'en',
+        level: 'B2' as any,
+        levels: ['B2'],
+        theme: 'food',
+        wordsCount: 1,
+      });
+
+      expect(prismaMock.preset.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          title: 'Preset EN - food (B2) - 1 words',
+          description: 'Theme: food',
+          forLanguage: 'en',
+          body: [{ word: 'pizza', definitions: ['A *** is delicious Italian dish'] }],
+        }),
+      });
+      expect(result.id).toBe(20);
     });
   });
 });

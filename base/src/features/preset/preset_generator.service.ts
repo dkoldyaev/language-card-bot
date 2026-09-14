@@ -8,22 +8,30 @@ export interface GeneratePresetOptions {
   presetId?: number;
   wordsCount?: number;
   levels?: string[];
+  theme?: string;
   title?: string;
   description?: string;
   onProgress?: (message: string) => void;
 }
 
 export async function callLlmGenerate(prompt: string, jsonFormat: any): Promise<any> {
-  const response = await fetch(env.LLM_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      prompt,
-      provider: env.LLM_PROVIDER,
-      model: env.LLM_MODEL,
-      jsonFormat,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(env.LLM_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        provider: env.LLM_PROVIDER,
+        model: env.LLM_MODEL,
+        jsonFormat,
+      }),
+    });
+  } catch (err: any) {
+    throw new Error(
+      `Failed to connect to LLM service at ${env.LLM_API_URL}: ${err.message}. Please verify that the LLM service is running and accessible.`
+    );
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -38,15 +46,22 @@ export async function callLlmGenerate(prompt: string, jsonFormat: any): Promise<
 }
 
 export async function fetchDefinitionsFromDefiner(text: string, language: string): Promise<string[]> {
-  const response = await fetch(env.DEFINER_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      language,
-      text,
-      definerApp: env.DEFINER_APP_TYPE,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(env.DEFINER_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language,
+        text,
+        definerApp: env.DEFINER_APP_TYPE,
+      }),
+    });
+  } catch (err: any) {
+    throw new Error(
+      `Failed to connect to Definer service at ${env.DEFINER_API_URL}: ${err.message}. Please verify that the Definer service is running and accessible.`
+    );
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -60,14 +75,19 @@ export async function fetchDefinitionsFromDefiner(text: string, language: string
 export async function fetchWordsFromLLM(options: {
   language: string;
   level?: string;
+  theme?: string;
   count: number;
   excludedWords?: string[];
 }): Promise<string[]> {
-  const { language, level, count, excludedWords = [] } = options;
+  const { language, level, theme, count, excludedWords = [] } = options;
 
   let prompt: string;
-  if (level) {
-    prompt = `Generate a list of exactly ${count} unique words in language "${language}" suitable for CEFR proficiency level "${level}".`;
+  if (level && theme) {
+    prompt = `Generate a list of exactly ${count} unique words in language "${language}" related to the theme/topic "${theme}" strictly for CEFR proficiency level "${level}". Only include words that specifically belong to level "${level}". Do NOT include words from lower levels or higher levels.`;
+  } else if (level) {
+    prompt = `Generate a list of exactly ${count} unique words in language "${language}" strictly for CEFR proficiency level "${level}". Only include words that specifically belong to level "${level}". Do NOT include words from lower levels (such as A1, A2, B1) or higher levels (such as C1, C2).`;
+  } else if (theme) {
+    prompt = `Generate a list of exactly ${count} common unique words in language "${language}" related to the theme/topic "${theme}".`;
   } else {
     prompt = `Generate a list of exactly ${count} common unique words in language "${language}".`;
   }
@@ -103,12 +123,25 @@ export async function filterDefinitionsWithLLM(options: {
   language: string;
   word: string;
   definitions: string[];
-  level: string;
+  level?: string;
 }): Promise<string[]> {
   const { language, word, definitions, level } = options;
   if (definitions.length === 0) return [];
 
-  const prompt = `For the word "${word}" in language "${language}", evaluate the following definitions and filter them so that only definitions appropriate for CEFR level "${level}" or below are kept (do not keep definitions that require a higher level than "${level}").\nDefinitions to filter:\n${JSON.stringify(definitions, null, 2)}`;
+  let prompt = `You are an expert language teacher and lexicographer.\n`;
+  prompt += `Target word: "${word}"\nLanguage: "${language}"\n`;
+  if (level) {
+    prompt += `Target CEFR proficiency level: strictly "${level}".\n`;
+  }
+  prompt += `evaluate the following definitions for the word "${word}":\n${JSON.stringify(definitions, null, 2)}\n\n`;
+  prompt += `Tasks:\n`;
+  if (level) {
+    prompt += `1. Filter: Keep ONLY definitions that strictly match CEFR level "${level}". Do NOT keep definitions belonging to lower levels (such as A1, A2, B1) or higher levels (such as C1, C2).\n`;
+  } else {
+    prompt += `1. Filter: Keep the valid definitions for the target word.\n`;
+  }
+  prompt += `2. Mask the target word: In the text of each kept definition, you MUST replace any occurrence of the target word "${word}" (case-insensitive, including compound expressions like "hot dog" -> "hot ***", inflections, and plurals) with three asterisks: "***". Do not reveal the target word itself in the definition text.\n\n`;
+  prompt += `Return a JSON object with the list of processed definitions under the key "filteredDefinitions".`;
 
   const jsonFormat = {
     type: 'object',
@@ -116,7 +149,7 @@ export async function filterDefinitionsWithLLM(options: {
       filteredDefinitions: {
         type: 'array',
         items: { type: 'string' },
-        description: 'List of filtered definitions matching or below the level',
+        description: 'List of definitions strictly matching the level with the target word replaced by ***',
       },
     },
     required: ['filteredDefinitions'],
@@ -127,19 +160,28 @@ export async function filterDefinitionsWithLLM(options: {
     ? data.filteredDefinitions
     : (Array.isArray(data?.definitions) ? data.definitions : []);
 
+  // Safety net: ensure any literal occurrence of `word` that LLM might have missed is replaced with ***
+  const escaped = word.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const wordRegex = new RegExp(`(?<=^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`, 'gui');
+
   return filtered
-    .map((d: any) => String(d).trim())
+    .map((d: any) => String(d).trim().replace(wordRegex, '***'))
     .filter((d: string) => d.length > 0);
 }
 
 export async function generatePreset(options: GeneratePresetOptions): Promise<PresetDto> {
   const log = options.onProgress || (() => {});
   const language = options.language.trim().toLowerCase();
+  const theme = options.theme?.trim();
 
   const wordsCount = options.wordsCount && options.wordsCount > 0 ? options.wordsCount : 100;
   const levels = options.levels && options.levels.length > 0 ? options.levels.map((l) => l.trim().toUpperCase()) : [undefined];
 
-  log(`Starting preset generation for language: "${language}", wordsCount: ${wordsCount}, levels: ${levels.filter(Boolean).join(', ') || 'none'}`);
+  log(
+    `Starting preset generation for language: "${language}", wordsCount: ${wordsCount}, levels: ${
+      levels.filter(Boolean).join(', ') || 'none'
+    }${theme ? `, theme: "${theme}"` : ''}`
+  );
 
   // If presetId is specified, verify it exists and load existing words & definitions
   let existingPreset: any = null;
@@ -186,7 +228,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
 
   for (const level of levels) {
     const levelLabel = level ? `Level ${level}` : 'General';
-    log(`\n--- Collecting ${wordsCount} words for ${levelLabel} ---`);
+    log(`\n--- Collecting ${wordsCount} words for ${levelLabel}${theme ? ` (Theme: ${theme})` : ''} ---`);
 
     const levelCollectedWords = new Map<string, string[]>();
     let emptyBatchCount = 0;
@@ -200,6 +242,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
       const wordsFromLlm = await fetchWordsFromLLM({
         language,
         level,
+        theme,
         count: batchCount,
         excludedWords: Array.from(globalExcludedWords),
       });
@@ -226,19 +269,14 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
           continue;
         }
 
-        // 3. Filter definitions with LLM for current level or below
-        let filteredDefs: string[];
-        if (level) {
-          log(`[${levelLabel}] Filtering definitions for "${word}" at or below level ${level}...`);
-          filteredDefs = await filterDefinitionsWithLLM({
-            language,
-            word,
-            definitions: rawDefinitions,
-            level,
-          });
-        } else {
-          filteredDefs = rawDefinitions;
-        }
+        // 3. Filter definitions strictly for current level and mask target word with ***
+        log(`[${levelLabel}] Filtering definitions for "${word}" strictly for level ${level || 'general'} and masking target word...`);
+        const filteredDefs = await filterDefinitionsWithLLM({
+          language,
+          word,
+          definitions: rawDefinitions,
+          level,
+        });
 
         // 4. If no definitions left after filtering, discard word
         if (!filteredDefs || filteredDefs.length === 0) {
@@ -337,9 +375,12 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
     }));
 
     const validLevels = levels.filter(Boolean);
-    const defaultTitle = `Preset ${language.toUpperCase()} ${validLevels.length > 0 ? '(' + validLevels.join(', ') + ')' : ''} - ${newBody.length} words`.trim();
+    const themePart = theme ? ` - ${theme}` : '';
+    const levelPart = validLevels.length > 0 ? ` (${validLevels.join(', ')})` : '';
+    const defaultTitle = `Preset ${language.toUpperCase()}${themePart}${levelPart} - ${newBody.length} words`.trim();
     const title = options.title?.trim() || defaultTitle;
-    const description = options.description?.trim() || null;
+    const defaultDesc = theme ? `Theme: ${theme}` : null;
+    const description = options.description?.trim() || defaultDesc;
 
     const created = await prisma.preset.create({
       data: {
