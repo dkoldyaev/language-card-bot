@@ -1,0 +1,74 @@
+any {
+  // 1. Forbid .default(...) in schemas
+  `$x.default($args)` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Strict Configuration Rule: Do not use .default(...) in schemas. All configuration must be explicitly defined in the environment.",
+      severity = "error"
+    )
+  },
+
+  // 2. Forbid || fallback on process.env (dot and bracket notation)
+  `process.env.$x || $val` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Strict Configuration Rule: Fallback values (||) are forbidden for process.env. All variables must be explicitly defined in environment.",
+      severity = "error"
+    )
+  },
+  `process.env[$x] || $val` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Strict Configuration Rule: Fallback values (||) are forbidden for process.env. All variables must be explicitly defined in environment.",
+      severity = "error"
+    )
+  },
+
+  // 3. Forbid ?? fallback on process.env (dot and bracket notation)
+  `process.env.$x ?? $val` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Strict Configuration Rule: Fallback values (??) are forbidden for process.env. All variables must be explicitly defined in environment.",
+      severity = "error"
+    )
+  },
+  `process.env[$x] ?? $val` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Strict Configuration Rule: Fallback values (??) are forbidden for process.env. All variables must be explicitly defined in environment.",
+      severity = "error"
+    )
+  },
+
+  // 4. Forbid || fallback on import.meta.env (dot and bracket notation)
+  `import.meta.env.$x || $val` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Strict Configuration Rule: Fallback values (||) are forbidden for import.meta.env. All variables must be explicitly defined in environment.",
+      severity = "error"
+    )
+  },
+  `import.meta.env[$x] || $val` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Strict Configuration Rule: Fallback values (||) are forbidden for import.meta.env. All variables must be explicitly defined in environment.",
+      severity = "error"
+    )
+  },
+
+  // 5. Forbid ?? fallback on import.meta.env (dot and bracket notation)
+  `import.meta.env.$x ?? $val` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Strict Configuration Rule: Fallback values (??) are forbidden for import.meta.env. All variables must be explicitly defined in environment.",
+      severity = "error"
+    )
+  },
+  `import.meta.env[$x] ?? $val` as $match where {
+    register_diagnostic(
+      span = $match,
+      message = "Strict Configuration Rule: Fallback values (??) are forbidden for import.meta.env. All variables must be explicitly defined in environment.",
+      severity = "error"
+    )
+  }
+}

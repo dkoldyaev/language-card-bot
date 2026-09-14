@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "npx biome check src",
     "preview": "vite preview",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run",

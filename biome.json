@@ -1,0 +1,51 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"plugins": [
+		"./rules/no-fallbacks.grit"
+	],
+	"files": {
+		"ignoreUnknown": true,
+		"includes": [
+			"frontend/src/**",
+			"base/src/**",
+			"base/scripts/**",
+			"definer/src/**",
+			"translator/src/**",
+			"llm/src/**",
+			"mercure-monitor/src/**"
+		]
+	},
+	"formatter": {
+		"enabled": false
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			"correctness": {
+				"noUnusedVariables": "error",
+				"noUnusedImports": "error",
+				"noUnusedFunctionParameters": "error",
+				"noConstAssign": "error"
+			}
+		}
+	},
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single"
+		}
+	}
+}

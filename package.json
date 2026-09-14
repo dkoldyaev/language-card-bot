@@ -20,6 +20,12 @@
     "docker:ps": "docker compose ps",
     "docker:logs:app": "docker compose logs app",
     "docker:logs:db": "docker compose logs db_test",
-    "db:profile": "npm run --prefix base db:profile"
+    "db:profile": "npm run --prefix base db:profile",
+    "lint": "biome check .",
+    "lint:check": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.13"
   }
 }
