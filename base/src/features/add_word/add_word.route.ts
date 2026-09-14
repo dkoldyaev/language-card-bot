@@ -51,7 +51,7 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordRequest>, re
       const payload: DictionaryAddDuplicateEvent = {
         version: 'v1',
         type: 'dictionary_add_duplicate',
-        word: wordText,
+        words: [wordText],
       };
 
       await publishEvent(username, payload).catch((e) => console.error('Mercure publish error:', e));
@@ -68,12 +68,16 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordRequest>, re
 
     res.json({ message: 'Word added successfully' });
 
-    appEvents.emit(Events.WORD_ADDED, {
+    appEvents.emit(Events.WORDS_LIST_ADDED, {
       userId,
       username,
-      wordId: newWord.id,
-      wordText,
       dictionaryId: targetDictionaryId,
+      words: [
+        {
+          wordId: newWord.id,
+          wordText,
+        },
+      ],
     });
   } catch (error) {
     console.error('Add word error:', error);

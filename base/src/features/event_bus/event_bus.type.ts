@@ -50,7 +50,7 @@ export interface DictionariesSyncMercureEvent extends BaseMercureEvent {
 
 export interface DictionaryAddDuplicateEvent extends BaseMercureEvent {
   type: 'dictionary_add_duplicate';
-  word: string;
+  words: string[];
 }
 
 export interface DictionaryAddProcessingEvent extends BaseMercureEvent {

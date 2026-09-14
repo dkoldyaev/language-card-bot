@@ -56,23 +56,26 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordBatchRequest
 
     const existingWordSet = new Set(existingWordsInDb.map((w) => w.text));
     const seenWords = new Set<string>();
+    const duplicateWords: string[] = [];
     const wordsToCreate: string[] = [];
-    let duplicateCount = 0;
 
     for (const wordText of cleanedWords) {
       if (existingWordSet.has(wordText) || seenWords.has(wordText)) {
-        duplicateCount++;
-        const payload: DictionaryAddDuplicateEvent = {
-          version: 'v1',
-          type: 'dictionary_add_duplicate',
-          word: wordText,
-        };
-
-        await publishEvent(username, payload).catch((e) => console.error('Mercure publish error:', e));
+        duplicateWords.push(wordText);
       } else {
         seenWords.add(wordText);
         wordsToCreate.push(wordText);
       }
+    }
+
+    if (duplicateWords.length > 0) {
+      const payload: DictionaryAddDuplicateEvent = {
+        version: 'v1',
+        type: 'dictionary_add_duplicate',
+        words: duplicateWords,
+      };
+
+      await publishEvent(username, payload).catch((e) => console.error('Mercure publish error:', e));
     }
 
     let createdWords: { id: number; text: string; dictionaryId: number }[] = [];
@@ -92,20 +95,22 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordBatchRequest
       });
     }
 
-    for (const createdWord of createdWords) {
-      appEvents.emit(Events.WORD_ADDED, {
+    if (createdWords.length > 0) {
+      appEvents.emit(Events.WORDS_LIST_ADDED, {
         userId,
         username,
-        wordId: createdWord.id,
-        wordText: createdWord.text,
         dictionaryId: targetDictionaryId,
+        words: createdWords.map((createdWord) => ({
+          wordId: createdWord.id,
+          wordText: createdWord.text,
+        })),
       });
     }
 
     return res.json({
       message: 'Words processed successfully',
       addedCount: createdWords.length,
-      duplicateCount,
+      duplicateCount: duplicateWords.length,
     });
   } catch (error) {
     console.error('Add word batch error:', error);

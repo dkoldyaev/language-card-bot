@@ -70,7 +70,7 @@ describe('POST /api/v1/add_word/batch', () => {
     expect(res.body.error).toBe('Dictionary not found');
   });
 
-  it('should successfully add new words and emit WORD_ADDED events', async () => {
+  it('should successfully add new words and emit WORDS_LIST_ADDED events', async () => {
     const emitSpy = vi.spyOn(appEvents, 'emit');
 
     prismaMock.dictionary.findFirst.mockResolvedValue({
@@ -113,20 +113,15 @@ describe('POST /api/v1/add_word/batch', () => {
       skipDuplicates: true,
     });
 
-    expect(emitSpy).toHaveBeenCalledTimes(2);
-    expect(emitSpy).toHaveBeenNthCalledWith(1, Events.WORD_ADDED, {
+    expect(emitSpy).toHaveBeenCalledTimes(1);
+    expect(emitSpy).toHaveBeenCalledWith(Events.WORDS_LIST_ADDED, {
       userId,
       username,
-      wordId: 101,
-      wordText: 'cat',
       dictionaryId: 5,
-    });
-    expect(emitSpy).toHaveBeenNthCalledWith(2, Events.WORD_ADDED, {
-      userId,
-      username,
-      wordId: 102,
-      wordText: 'dog',
-      dictionaryId: 5,
+      words: [
+        { wordId: 101, wordText: 'cat' },
+        { wordId: 102, wordText: 'dog' },
+      ],
     });
   });
 
@@ -177,21 +172,17 @@ describe('POST /api/v1/add_word/batch', () => {
     expect(eventBusService.publishEvent).toHaveBeenCalledWith(username, {
       version: 'v1',
       type: 'dictionary_add_duplicate',
-      word: 'cat',
-    });
-    expect(eventBusService.publishEvent).toHaveBeenCalledWith(username, {
-      version: 'v1',
-      type: 'dictionary_add_duplicate',
-      word: 'dog',
+      words: ['cat', 'dog'],
     });
 
     expect(emitSpy).toHaveBeenCalledTimes(1);
-    expect(emitSpy).toHaveBeenCalledWith(Events.WORD_ADDED, {
+    expect(emitSpy).toHaveBeenCalledWith(Events.WORDS_LIST_ADDED, {
       userId,
       username,
-      wordId: 102,
-      wordText: 'dog',
       dictionaryId: 5,
+      words: [
+        { wordId: 102, wordText: 'dog' },
+      ],
     });
   });
 });

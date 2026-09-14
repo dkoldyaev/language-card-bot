@@ -3,17 +3,21 @@ import { EventEmitter } from 'events';
 export const appEvents = new EventEmitter();
 
 export const Events = {
-  WORD_ADDED: 'word_added',
+  WORDS_LIST_ADDED: 'words_list_added',
   DEFINITION_ADDED: 'definition_added',
   TRANSLATION_ADDED: 'translation_added'
 } as const;
 
-export interface WordAddedPayload {
-  userId: number;
-  username: string;
+export interface AddedWordItem {
   wordId: number;
   wordText: string;
+}
+
+export interface WordsListAddedPayload {
+  userId: number;
+  username: string;
   dictionaryId?: number;
+  words: AddedWordItem[];
 }
 
 export interface DefinitionAddedPayload {

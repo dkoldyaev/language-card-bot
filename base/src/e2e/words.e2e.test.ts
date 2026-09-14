@@ -142,7 +142,7 @@ describe('Words E2E', () => {
     expect(duplicateEvents.length).toBe(1);
     expect(duplicateEvents[0]).toMatchObject({
       type: 'dictionary_add_duplicate',
-      word: 'apple',
+      words: ['apple'],
     });
 
     // 4. Delete word

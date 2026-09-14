@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { Chip, CircularProgress } from '@mui/material';
+import { useEffect, useState } from 'react';
 import { useTranslation } from '../i18n/I18nContext';
 
 export default function StatusChip({ word }: { word: string }) {
@@ -10,13 +10,18 @@ export default function StatusChip({ word }: { word: string }) {
   useEffect(() => {
     const handleEvent = (e: CustomEvent) => {
       const data = e.detail;
-      if (data.word && data.word.toLowerCase() === word.toLowerCase()) {
+      if (data.type === 'dictionary_add_duplicate') {
+        const isDuplicate = Array.isArray(data.words)
+          ? data.words.some((w: string) => w.toLowerCase() === word.toLowerCase())
+          : (typeof data.word === 'string' && data.word.toLowerCase() === word.toLowerCase());
+        if (isDuplicate) {
+          setStatus('duplicate');
+        }
+      } else if (data.word && data.word.toLowerCase() === word.toLowerCase()) {
         if (data.type === 'dictionary_add_processing') {
           setStatus('processing');
         } else if (data.type === 'dictionary_add_definitions_received') {
           setStatus('definitions_received');
-        } else if (data.type === 'dictionary_add_duplicate') {
-          setStatus('duplicate');
         }
       }
     };
@@ -40,7 +45,7 @@ export default function StatusChip({ word }: { word: string }) {
   if (!status || !visible) return null;
 
   let label = status;
-  let icon = undefined;
+  let icon: React.ReactElement | undefined;
   let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default';
 
   switch (status) {
