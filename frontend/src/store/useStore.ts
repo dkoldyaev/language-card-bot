@@ -64,6 +64,40 @@ export interface QuizEvaluationData {
   suggestion: string;
 }
 
+export interface WordMasteryStats {
+  newWords: number;
+  learningWords: number;
+  masteredWords: number;
+}
+
+export interface NeedsAttentionWord {
+  wordId: number;
+  text: string;
+  definition: string;
+  translation: string | null;
+  errorCount: number;
+  successCount: number;
+  lastResult: string;
+}
+
+export interface DayActivity {
+  date: string;
+  dayLabel: string;
+  count: number;
+}
+
+export interface DashboardStats {
+  streak: number;
+  todayCount: number;
+  totalWords: number;
+  totalDefinitions: number;
+  totalAttempts: number;
+  accuracy: number;
+  mastery: WordMasteryStats;
+  needsAttention: NeedsAttentionWord[];
+  weeklyActivity: DayActivity[];
+}
+
 export type SyncActionPayload = 
   | { type: 'EDIT_TRANSLATION'; wordId: number; definitionId: number; text: string }
   | { type: 'DELETE_WORD'; wordId: number }
@@ -88,6 +122,8 @@ interface AppState {
   quizEvaluation: QuizEvaluationData | null;
   quizTranslation: string | null;
   quizVariants: string[] | null;
+  dashboardStats: DashboardStats | null;
+  setDashboardStats: (stats: DashboardStats | null) => void;
   setIsOffline: (isOffline: boolean) => void;
   enqueueSyncAction: (action: SyncActionPayload) => void;
   clearSyncQueue: () => void;
@@ -132,6 +168,7 @@ const initialState = {
   quizEvaluation: null,
   quizTranslation: null,
   quizVariants: null,
+  dashboardStats: null,
 };
 
 const useStore = create<AppState>()(
@@ -204,6 +241,7 @@ const useStore = create<AppState>()(
       setQuizEvaluation: (evalData) => set({ quizEvaluation: evalData }),
       setQuizTranslation: (translation) => set({ quizTranslation: translation }),
       setQuizVariants: (variants) => set({ quizVariants: variants }),
+      setDashboardStats: (dashboardStats) => set({ dashboardStats }),
       addDictionaryWord: (word) => set((state) => {
         const exists = state.dictionary.some(w => w.id === word.id || w.text.toLowerCase() === word.text.toLowerCase());
         if (exists) return state;

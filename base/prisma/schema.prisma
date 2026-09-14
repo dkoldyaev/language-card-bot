@@ -26,6 +26,7 @@ model User {
   accounts     Account[]
   state        UserState?
   dictionaries Dictionary[]
+  quizAttempts QuizAttempt[]
 }
 
 model Account {
@@ -91,6 +92,7 @@ model Word {
   definitions Definition[]
   userStates  UserState[]
   presets     Preset[]
+  quizAttempts QuizAttempt[]
 
   @@unique([dictionaryId, text])
   @@index([dictionaryId, id])
@@ -133,4 +135,18 @@ model Preset {
 
   @@index([forLanguage, createdAt(sort: Desc)])
 }
+
+model QuizAttempt {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordId    Int
+  word      Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  result    String   // 'SUCCESS' | 'CLOSE_MATCH' | 'INCORRECT'
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, wordId])
+}
+
 

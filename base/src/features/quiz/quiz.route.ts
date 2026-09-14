@@ -149,6 +149,14 @@ router.post('/answer', authMiddleware, async (req: Request, res: Response) => {
 
     const result = evaluateSuggestion(suggestion, word.text);
 
+    await prisma.quizAttempt.create({
+      data: {
+        userId: user.id,
+        wordId: word.id,
+        result,
+      },
+    });
+
     const event: QuizAnswerEvaluationMercureEvent = {
       version: 'v1',
       type: 'quiz_answer_evaluation',

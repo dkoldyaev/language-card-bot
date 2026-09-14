@@ -20,6 +20,10 @@ services:
       - LLM_PROVIDER=${BASE_LLM_PROVIDER}
       - LLM_MODEL=${BASE_LLM_MODEL}
       - ENABLE_DB_LOGGING=${BASE_ENABLE_DB_LOGGING}
+      - CHOKIDAR_USEPOLLING=1
+    volumes:
+      - ./base:/app
+      - /app/node_modules
     depends_on:
       - db_test
       - redis_test
@@ -71,9 +75,13 @@ services:
       target: dev
     environment:
       - MOCK_TIMEOUT=0
-      - TRANSLATOR_APP_TYPE
+      - TRANSLATOR_APP_TYPE=${BASE_TRANSLATOR_APP_TYPE}
       - CACHE_URL=redis://redis_test:6379/1
       - LLM_SERVICE_URL=http://llm:3003/api/v1/generate
+      - CHOKIDAR_USEPOLLING=1
+    volumes:
+      - ./translator:/app
+      - /app/node_modules
     depends_on:
       - redis_test
       - llm
@@ -87,6 +95,10 @@ services:
     environment:
       - MOCK_TIMEOUT=0
       - CACHE_URL=redis://redis_test:6379/3
+      - CHOKIDAR_USEPOLLING=1
+    volumes:
+      - ./llm:/app
+      - /app/node_modules
     depends_on:
       - redis_test
 
@@ -98,8 +110,12 @@ services:
       target: dev
     environment:
       - MOCK_TIMEOUT=0
-      - DEFINER_APP_TYPE
+      - DEFINER_APP_TYPE=${BASE_DEFINER_APP_TYPE}
       - CACHE_URL=redis://redis_test:6379/2
+      - CHOKIDAR_USEPOLLING=1
+    volumes:
+      - ./definer:/app
+      - /app/node_modules
     depends_on:
       - redis_test
       - llm
@@ -110,6 +126,9 @@ services:
     environment:
       - MERCURE_URL=${BASE_MERCURE_URL:-http://mercure/.well-known/mercure}
       - MERCURE_JWT_KEY=${MERCURE_JWT_KEY}
+    volumes:
+      - ./mercure-monitor:/app
+      - /app/node_modules
     depends_on:
       - mercure
 
@@ -129,6 +148,11 @@ services:
       - API_BASE_URL=${FRONTEND_API_BASE_URL}
       - MERCURE_PUBLIC_URL=${FRONTEND_MERCURE_PUBLIC_URL}
       - BASE_DOMAIN=${FRONTEND_BASE_DOMAIN}
+      - FRONTEND_PORT=${FRONTEND_PORT}
+      - CHOKIDAR_USEPOLLING=1
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - app
 
