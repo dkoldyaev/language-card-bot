@@ -5,6 +5,7 @@ import authRoutes from './features/auth/auth.route';
 import echoRoutes from './features/echo/echo.route';
 import stateRoutes from './features/state/state.route';
 import addWordRoutes from './features/add_word/add_word.route';
+import addWordBatchRoutes from './features/add_word/add_word_batch.route';
 import settingsRoutes from './features/settings/settings.route';
 import dictionaryRoutes from './features/dictionary/dictionary.route';
 import definitionDeleteRoutes from './features/definition_delete/definition_delete.route';
@@ -42,6 +43,7 @@ app.use(express.json());
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/state', stateRoutes);
+app.use('/api/v1/add_word/batch', addWordBatchRoutes);
 app.use('/api/v1/add_word', addWordRoutes);
 app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/dictionary', dictionaryRoutes);

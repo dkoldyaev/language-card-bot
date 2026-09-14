@@ -3,9 +3,9 @@ import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import { Box, Button, Card, CardContent, CircularProgress, TextField, Typography, alpha } from '@mui/material';
 import { useState } from 'react';
 import apiClient from '../../../shared/api/client';
+import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
 import useStore from '../../../store/useStore';
-import { useTranslation } from '../../../shared/i18n/I18nContext';
 
 interface AddWordFormProps {
   dictionaryId?: number;
@@ -29,10 +29,8 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
 
     setSubmitting(true);
     try {
-      for (const word of words) {
-        await apiClient.post('/add_word', { word, dictionaryId: targetDictId });
-        trackEvent('Word Added');
-      }
+      await apiClient.post('/add_word/batch', { words, dictionaryId: targetDictId });
+      trackEvent('Word Added');
       setWordsText('');
     } catch (error) {
       console.error('Failed to add words:', error);

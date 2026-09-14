@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AddWordForm from './AddWordForm';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
+import AddWordForm from './AddWordForm';
 
 describe('AddWordForm', () => {
   beforeEach(() => {
@@ -37,8 +37,10 @@ describe('AddWordForm', () => {
     const submitBtn = screen.getByRole('button', { name: /Submit Words/i });
     await user.click(submitBtn);
 
-    expect(postSpy).toHaveBeenCalledTimes(2);
-    expect(postSpy).toHaveBeenNthCalledWith(1, '/add_word', { word: 'hola', dictionaryId: 2 });
-    expect(postSpy).toHaveBeenNthCalledWith(2, '/add_word', { word: 'adios', dictionaryId: 2 });
+    expect(postSpy).toHaveBeenCalledTimes(1);
+    expect(postSpy).toHaveBeenCalledWith('/add_word/batch', {
+      words: ['hola', 'adios'],
+      dictionaryId: 2,
+    });
   });
 });
