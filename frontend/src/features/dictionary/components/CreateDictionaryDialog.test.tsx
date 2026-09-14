@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import CreateDictionaryDialog, { NATIVE_LANGUAGE_COOKIE } from './CreateDictionaryDialog';
-import { I18nProvider } from '../../../shared/i18n';
+import CreateDictionaryDialog from './CreateDictionaryDialog';
+import { I18nProvider, NATIVE_LANGUAGE_COOKIE } from '../../../shared/i18n';
 import { getCookie, setCookie } from '../../../shared/lib/cookie';
 import apiClient from '../../../shared/api/client';
 

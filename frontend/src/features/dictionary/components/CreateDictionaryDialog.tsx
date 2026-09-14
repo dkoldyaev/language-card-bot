@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -18,9 +18,8 @@ import {
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import apiClient from '../../../shared/api/client';
 import useStore, { type DictionaryItem } from '../../../store/useStore';
-import { useTranslation, isSupportedLocale } from '../../../shared/i18n';
+import { useTranslation } from '../../../shared/i18n';
 import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
-import { getCookie, setCookie } from '../../../shared/lib/cookie';
 import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
 
 interface CreateDictionaryDialogProps {
@@ -33,7 +32,7 @@ interface CreateDictionaryDialogProps {
 export default function CreateDictionaryDialog({ open, onClose, onCreated }: CreateDictionaryDialogProps) {
   const { t, locale } = useTranslation();
   const [name, setName] = useState('');
-  const [targetLanguage, setTargetLanguage] = useState();
+  const [targetLanguage, setTargetLanguage] = useState('');
   const [baseLanguage, setBaseLanguage] = useState(() => getInitialBaseLanguage(locale));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
