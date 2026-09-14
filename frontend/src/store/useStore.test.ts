@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import useStore from './useStore';
 
 describe('useStore', () => {
@@ -36,5 +36,26 @@ describe('useStore', () => {
     expect(useStore.getState().selectedDictionaryId).toBeNull();
     expect(useStore.getState().activeDictionaryId).toBe(1);
     expect(useStore.getState().dictionaries).toHaveLength(1);
+  });
+
+  it('should toggle and set themeMode', () => {
+    useStore.setState({ themeMode: 'light' });
+    expect(useStore.getState().themeMode).toBe('light');
+
+    useStore.getState().toggleThemeMode();
+    expect(useStore.getState().themeMode).toBe('dark');
+
+    useStore.getState().toggleThemeMode();
+    expect(useStore.getState().themeMode).toBe('light');
+
+    useStore.getState().setThemeMode('dark');
+    expect(useStore.getState().themeMode).toBe('dark');
+  });
+
+  it('should preserve themeMode on reset', () => {
+    useStore.setState({ themeMode: 'dark', token: 'some-token' });
+    useStore.getState().reset();
+    expect(useStore.getState().token).toBeNull();
+    expect(useStore.getState().themeMode).toBe('dark');
   });
 });

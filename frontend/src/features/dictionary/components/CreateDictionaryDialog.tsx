@@ -1,26 +1,26 @@
-import { useState, type FormEvent } from 'react';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Alert,
+  Box,
   Button,
-  TextField,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
-  Box,
+  Select,
+  TextField,
   Typography,
-  Alert,
-  CircularProgress,
 } from '@mui/material';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import { type FormEvent, useState } from 'react';
 import apiClient from '../../../shared/api/client';
-import useStore, { type DictionaryItem } from '../../../store/useStore';
 import { useTranslation } from '../../../shared/i18n';
-import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
 import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
+import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
+import useStore, { type DictionaryItem } from '../../../store/useStore';
 
 interface CreateDictionaryDialogProps {
   open: boolean;

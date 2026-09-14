@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import Quiz from './QuizPage';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
+import Quiz from './QuizPage';
 
 describe('Quiz', () => {
   beforeEach(() => {

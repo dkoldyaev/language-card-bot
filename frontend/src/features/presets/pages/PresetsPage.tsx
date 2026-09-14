@@ -1,39 +1,39 @@
-import { useEffect, useState, useMemo } from 'react';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
 import {
+  Alert,
+  alpha,
   Box,
-  Typography,
   Button,
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
-  TextField,
+  DialogContent,
+  DialogTitle,
   FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   FormHelperText,
   IconButton,
-  Tooltip,
-  Alert,
-  CircularProgress,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
-  alpha,
+  TextField,
+  Tooltip,
+  Typography,
   useTheme,
 } from '@mui/material';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
+import { useEffect, useMemo, useState } from 'react';
 import apiClient from '../../../shared/api/client';
-import { type PresetItem } from '../types';
 import { useTranslation } from '../../../shared/i18n';
 import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
+import type { PresetItem } from '../types';
 
-export { type PresetItem };
+export type { PresetItem };
 
 export default function PresetsPage() {
   const { t } = useTranslation();
@@ -253,8 +253,9 @@ export default function PresetsPage() {
           mb: 3,
           p: 2,
           borderRadius: 3,
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E5E7EB',
+          backgroundColor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
         }}
       >
         <Typography variant="subtitle2" sx={{ fontWeight: 700, minWidth: 100 }}>
@@ -294,9 +295,10 @@ export default function PresetsPage() {
             textAlign: 'center',
             py: 8,
             px: 3,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'background.paper',
             borderRadius: 3,
-            border: '1px dashed #D1D5DB',
+            border: '1px dashed',
+            borderColor: 'divider',
           }}
         >
           <LayersRoundedIcon sx={{ fontSize: 52, color: 'text.disabled', mb: 1 }} />
@@ -502,7 +504,7 @@ export default function PresetsPage() {
                     '& .MuiInputBase-root': {
                       fontFamily: 'monospace',
                       fontSize: '0.875rem',
-                      backgroundColor: '#F9FAFB',
+                      backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.common.white, 0.04) : '#F9FAFB',
                     },
                   }}
                   helperText={t('presets.bodyHelperText')}

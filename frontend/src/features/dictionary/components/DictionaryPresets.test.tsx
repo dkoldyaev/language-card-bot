@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import DictionaryPresets from './DictionaryPresets';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
-import { type DictionaryItem } from '../../../store/useStore';
+import type { DictionaryItem } from '../../../store/useStore';
+import DictionaryPresets from './DictionaryPresets';
 
 const mockDictionary: DictionaryItem = {
   id: 1,

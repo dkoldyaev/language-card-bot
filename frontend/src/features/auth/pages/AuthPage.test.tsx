@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import Auth from './AuthPage';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
+import Auth from './AuthPage';
 
 vi.mock('@react-oauth/google', () => ({
   GoogleLogin: () => <div data-testid="google-login-button">Google Login</div>,

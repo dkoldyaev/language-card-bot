@@ -1,13 +1,13 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from '../shared/components/Layout';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import Auth from '../features/auth/pages/AuthPage';
 import Dashboard from '../features/dashboard/pages/DashboardPage';
 import Dictionary from '../features/dictionary/pages/DictionaryPage';
-import Quiz from '../features/quiz/pages/QuizPage';
-import Auth from '../features/auth/pages/AuthPage';
 import Presets from '../features/presets/pages/PresetsPage';
-import useStore from '../store/useStore';
+import Quiz from '../features/quiz/pages/QuizPage';
 import { useMercure } from '../shared/api/useMercure';
+import Layout from '../shared/components/Layout';
 import { useOfflineSync } from '../shared/hooks/useOfflineSync';
+import useStore from '../store/useStore';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useStore((state) => state.token);

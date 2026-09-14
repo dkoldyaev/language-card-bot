@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import apiClient from './client';
 import useStore from '../../store/useStore';
+import apiClient from './client';
 
 export function useSyncState() {
   const profile = useStore((state) => state.profile);

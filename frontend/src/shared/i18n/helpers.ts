@@ -1,5 +1,5 @@
-import { NATIVE_LANGUAGE_COOKIE } from ".";
 import { getCookie, setCookie } from "../lib/cookie";
+import { NATIVE_LANGUAGE_COOKIE } from ".";
 import { isSupportedLocale } from "./I18nContext";
 
 export const getInitialBaseLanguage = (currentLocale: string): string => {

@@ -251,6 +251,14 @@ const ja = {
   'quiz.emptyBenefit2': 'パーソナライズされた想起クイズをアンロック',
   'quiz.emptyBenefit3': '語彙の成長を実感',
   'quiz.goToDictionaryBtn': '辞書へ行く',
+
+  // Theme
+  'theme.toggleDark': 'ダークテーマに切り替える',
+  'theme.toggleLight': 'ライトテーマに切り替える',
+  'theme.theme': 'テーマ',
+  'theme.dark': 'ダーク',
+  'theme.light': 'ライト',
+  'theme.system': 'システム設定',
 };
 
 export default ja;

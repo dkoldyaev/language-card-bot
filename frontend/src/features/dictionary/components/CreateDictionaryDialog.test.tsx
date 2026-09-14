@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import CreateDictionaryDialog from './CreateDictionaryDialog';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import apiClient from '../../../shared/api/client';
 import { I18nProvider, NATIVE_LANGUAGE_COOKIE } from '../../../shared/i18n';
 import { getCookie, setCookie } from '../../../shared/lib/cookie';
-import apiClient from '../../../shared/api/client';
+import CreateDictionaryDialog from './CreateDictionaryDialog';
 
 function TestWrapper({ initialLocale = 'en', children }: { initialLocale?: string; children: React.ReactNode }) {
   setCookie('locale', initialLocale);

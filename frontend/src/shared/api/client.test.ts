@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import apiClient from './client';
+import { beforeEach, describe, expect, it } from 'vitest';
 import useStore from '../../store/useStore';
+import apiClient from './client';
 
 describe('apiClient interceptor', () => {
   beforeEach(() => {

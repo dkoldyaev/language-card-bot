@@ -1,10 +1,10 @@
-import { Box, Button, Card, CardContent, Chip, Typography, alpha } from '@mui/material';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { alpha, Box, Button, Card, CardContent, Chip, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { type NeedsAttentionWord } from '../../../store/useStore';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import type { NeedsAttentionWord } from '../../../store/useStore';
 
 interface NeedsAttentionWidgetProps {
   items: NeedsAttentionWord[];
@@ -16,7 +16,7 @@ export default function NeedsAttentionWidget({ items }: NeedsAttentionWidgetProp
 
   if (items.length === 0) {
     return (
-      <Card sx={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 2.5 }}>
+      <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
         <CardContent sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
             sx={{
@@ -45,7 +45,7 @@ export default function NeedsAttentionWidget({ items }: NeedsAttentionWidgetProp
   }
 
   return (
-    <Card sx={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 2.5 }}>
+    <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
       <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
@@ -67,7 +67,7 @@ export default function NeedsAttentionWidget({ items }: NeedsAttentionWidgetProp
                 {t('dashboard.needsAttentionTitle')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {t('dashboard.needsAttentionDesc')}
+                {t('dashboard.needsAttentionDesc', { count: items.length })}
               </Typography>
             </Box>
           </Box>
@@ -90,8 +90,9 @@ export default function NeedsAttentionWidget({ items }: NeedsAttentionWidgetProp
               sx={{
                 p: 1.25,
                 borderRadius: 2,
-                backgroundColor: '#F9FAFB',
-                border: '1px solid #F3F4F6',
+                backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.common.white, 0.04) : '#F9FAFB',
+                border: '1px solid',
+                borderColor: 'divider',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',

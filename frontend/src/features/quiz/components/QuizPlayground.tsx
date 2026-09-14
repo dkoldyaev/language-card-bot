@@ -1,16 +1,16 @@
-import {
-  Box, Button, Card, CardContent, Chip, CircularProgress, TextField, Typography, alpha,
-} from '@mui/material';
-import { useEffect, useState } from 'react';
 import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import ShuffleRoundedIcon from '@mui/icons-material/ShuffleRounded';
 import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded';
+import {alpha,
+  Box, Button, Card, CardContent, Chip, CircularProgress, TextField, Typography, 
+} from '@mui/material';
+import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
-import useStore from '../../../store/useStore';
-import { trackEvent } from '../../../shared/lib/analytics';
 import { useTranslation } from '../../../shared/i18n';
+import { trackEvent } from '../../../shared/lib/analytics';
+import useStore from '../../../store/useStore';
 
 export default function QuizPlayground() {
   const { t } = useTranslation();
@@ -199,11 +199,11 @@ export default function QuizPlayground() {
               {quizEvaluation.suggestion}
             </Typography>
           </Box>
-          <Chip label={result.label} sx={{ color: result.color, backgroundColor: '#FFFFFF' }} />
+          <Chip label={result.label} sx={{ color: result.color, backgroundColor: 'background.paper', fontWeight: 700 }} />
         </Box>
       )}
 
-      <Card sx={{ boxShadow: 'none', backgroundColor: '#FFFDF9' }}>
+      <Card sx={{ boxShadow: 'none', backgroundColor: 'background.paper' }}>
         <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
           <Typography variant="subtitle1">{t('quiz.needNudgeTitle')}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.3, mb: 1.75 }}>

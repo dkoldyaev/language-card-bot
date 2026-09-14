@@ -251,6 +251,14 @@ const tr = {
   'quiz.emptyBenefit2': 'Kişiselleştirilmiş hatırlama testlerini açın',
   'quiz.emptyBenefit3': 'Kelime dağarcığınız büyüdükçe gelişimi izleyin',
   'quiz.goToDictionaryBtn': 'Sözlüğe Git',
+
+  // Theme
+  'theme.toggleDark': 'Karanlık temaya geç',
+  'theme.toggleLight': 'Aydınlık temaya geç',
+  'theme.theme': 'Tema',
+  'theme.dark': 'Karanlık',
+  'theme.light': 'Aydınlık',
+  'theme.system': 'Sistem',
 };
 
 export default tr;

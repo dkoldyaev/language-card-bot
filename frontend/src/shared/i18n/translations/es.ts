@@ -251,6 +251,14 @@ const es = {
   'quiz.emptyBenefit2': 'Desbloquea cuestionarios personalizados de recuerdo',
   'quiz.emptyBenefit3': 'Sigue el progreso mientras crece tu mazo',
   'quiz.goToDictionaryBtn': 'Ir al Diccionario',
+
+  // Theme
+  'theme.toggleDark': 'Cambiar al tema oscuro',
+  'theme.toggleLight': 'Cambiar al tema claro',
+  'theme.theme': 'Tema',
+  'theme.dark': 'Oscuro',
+  'theme.light': 'Claro',
+  'theme.system': 'Sistema',
 };
 
 export default es;

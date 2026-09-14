@@ -1,12 +1,12 @@
-import { Box, Button, Card, CircularProgress, Typography, alpha } from '@mui/material';
-import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
+import { alpha, Box, Button, Card, CircularProgress, Typography } from '@mui/material';
 import { useState } from 'react';
 import apiClient from '../../../shared/api/client';
+import { useTranslation } from '../../../shared/i18n';
 import { trackEvent } from '../../../shared/lib/analytics';
 import useStore from '../../../store/useStore';
-import { useTranslation } from '../../../shared/i18n';
 
 export default function QuizStartScreen() {
   const { t } = useTranslation();

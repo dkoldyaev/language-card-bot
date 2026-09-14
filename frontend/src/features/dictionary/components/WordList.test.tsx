@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import WordList from './WordList';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import useStore from '../../../store/useStore';
+import WordList from './WordList';
 
 vi.mock('../../../shared/components/StatusChip', () => ({
   default: () => <div data-testid="status-chip" />,

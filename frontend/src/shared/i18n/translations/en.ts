@@ -284,6 +284,14 @@ const en = {
   'quiz.emptyBenefit2': 'Unlock personalized recall quizzes',
   'quiz.emptyBenefit3': 'Track progress as your deck grows',
   'quiz.goToDictionaryBtn': 'Go to Dictionary',
+
+  // Theme
+  'theme.toggleDark': 'Switch to dark theme',
+  'theme.toggleLight': 'Switch to light theme',
+  'theme.theme': 'Theme',
+  'theme.dark': 'Dark',
+  'theme.light': 'Light',
+  'theme.system': 'System',
 };
 
 export default en;

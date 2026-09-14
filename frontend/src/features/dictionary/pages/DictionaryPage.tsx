@@ -1,16 +1,16 @@
-import { Typography, Box, Chip, IconButton, Tooltip, alpha } from '@mui/material';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { useEffect, useState, useRef } from 'react';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import { alpha, Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
 import apiClient from '../../../shared/api/client';
-import useStore from '../../../store/useStore';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import useStore from '../../../store/useStore';
 import AddWordForm from '../components/AddWordForm';
-import WordList from '../components/WordList';
-import DictionarySwitcher from '../components/DictionarySwitcher';
 import CreateDictionaryDialog from '../components/CreateDictionaryDialog';
 import DictionaryPresets from '../components/DictionaryPresets';
+import DictionarySwitcher from '../components/DictionarySwitcher';
+import WordList from '../components/WordList';
 
 export default function DictionaryPage() {
   const { t } = useTranslation();

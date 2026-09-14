@@ -1,31 +1,31 @@
-import { useEffect, useState } from 'react';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import {
+  Alert,
+  alpha,
   Box,
-  Typography,
+  Button,
   Card,
   CardContent,
   Chip,
-  Button,
   CircularProgress,
-  Alert,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
   List,
   ListItem,
   ListItemText,
-  Divider,
-  alpha,
+  Typography,
   useTheme,
 } from '@mui/material';
-import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
-import { type DictionaryItem } from '../../../store/useStore';
-import { type PresetItem, type WordDefinitionPresetItem } from '../../presets/types';
 import { useTranslation } from '../../../shared/i18n';
+import type { DictionaryItem } from '../../../store/useStore';
+import type { PresetItem, WordDefinitionPresetItem } from '../../presets/types';
 
 interface DictionaryPresetsProps {
   dictionary?: DictionaryItem;
@@ -121,8 +121,9 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
       sx={{
         mb: 4,
         borderRadius: 3,
-        border: '1px solid #E5E7EB',
-        backgroundColor: '#FAFAF8',
+        border: '1px solid',
+        borderColor: 'divider',
+        backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.background.paper, 0.5) : '#FAFAF8',
         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
       }}
     >
@@ -209,8 +210,9 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
             sx={{
               p: 2.5,
               borderRadius: 2.5,
-              border: '1px dashed #D1D5DB',
-              backgroundColor: '#FFFFFF',
+              border: '1px dashed',
+              borderColor: 'divider',
+              backgroundColor: 'background.paper',
               textAlign: 'center',
             }}
           >
@@ -241,8 +243,9 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                   data-testid={`preset-card-${preset.id}`}
                   sx={{
                     borderRadius: 2.5,
-                    border: '1px solid #E5E7EB',
-                    backgroundColor: '#FFFFFF',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    backgroundColor: 'background.paper',
                     boxShadow: 'none',
                     display: 'flex',
                     flexDirection: 'column',
@@ -302,8 +305,8 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                           sx={{
                             height: 22,
                             fontSize: '0.72rem',
-                            borderColor: '#E5E7EB',
-                            backgroundColor: '#F9FAFB',
+                            borderColor: 'divider',
+                            backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.common.white, 0.04) : '#F9FAFB',
                           }}
                         />
                       ))}

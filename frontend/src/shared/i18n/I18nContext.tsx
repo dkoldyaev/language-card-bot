@@ -1,12 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import type React from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { getCookie, setCookie } from '../lib/cookie';
+import { translations } from './translations';
 import {
-  type SupportedLocale,
+  LOCALES_INFO,
   type LocaleInfo,
   SUPPORTED_LOCALES,
-  LOCALES_INFO,
+  type SupportedLocale,
 } from './types';
-import { translations } from './translations';
-import { getCookie, setCookie } from '../lib/cookie';
 
 const COOKIE_NAME = 'locale';
 

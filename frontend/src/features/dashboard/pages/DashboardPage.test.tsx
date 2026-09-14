@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import Dashboard from './DashboardPage';
-import useStore from '../../../store/useStore';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
 import { I18nProvider } from '../../../shared/i18n/I18nContext';
+import useStore from '../../../store/useStore';
+import Dashboard from './DashboardPage';
 
 vi.mock('../../../shared/api/client');
 const mockedApiClient = vi.mocked(apiClient);

@@ -1,7 +1,7 @@
 import useStore from '../../../store/useStore';
-import QuizStartScreen from '../components/QuizStartScreen';
-import QuizPlayground from '../components/QuizPlayground';
 import QuizEmptyState from '../components/QuizEmptyState';
+import QuizPlayground from '../components/QuizPlayground';
+import QuizStartScreen from '../components/QuizStartScreen';
 
 export default function QuizPage() {
   const quizCard = useStore((state) => state.quizCard);

@@ -251,6 +251,14 @@ const fr = {
   'quiz.emptyBenefit2': 'Débloquez des quiz personnalisés de rappel',
   'quiz.emptyBenefit3': 'Suivez votre progression au fil de votre apprentissage',
   'quiz.goToDictionaryBtn': 'Aller au dictionnaire',
+
+  // Theme
+  'theme.toggleDark': 'Passer au thème sombre',
+  'theme.toggleLight': 'Passer au thème clair',
+  'theme.theme': 'Thème',
+  'theme.dark': 'Sombre',
+  'theme.light': 'Clair',
+  'theme.system': 'Système',
 };
 
 export default fr;

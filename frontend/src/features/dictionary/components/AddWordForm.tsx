@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Box, TextField, Button, CircularProgress, Typography, Card, CardContent } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
+import { Box, Button, Card, CardContent, CircularProgress, TextField, Typography, alpha } from '@mui/material';
+import { useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { trackEvent } from '../../../shared/lib/analytics';
 import useStore from '../../../store/useStore';
@@ -42,7 +42,7 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
   };
 
   return (
-    <Card sx={{ mb: 4, backgroundColor: '#FFFDF9' }}>
+    <Card sx={{ mb: 4, backgroundColor: 'background.paper' }}>
       <CardContent sx={{ p: { xs: 2, sm: 3 }, '&:last-child': { pb: { xs: 2, sm: 3 } } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.75 }}>
           <Box
@@ -53,7 +53,7 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
               placeItems: 'center',
               borderRadius: 2.5,
               color: 'secondary.dark',
-              backgroundColor: '#FBE8E0',
+              backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.secondary.main, 0.15) : '#FBE8E0',
             }}
           >
             <AddRoundedIcon fontSize="small" />

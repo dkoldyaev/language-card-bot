@@ -1,14 +1,14 @@
-import en from './en';
-import ru from './ru';
-import es from './es';
+import type { SupportedLocale, TranslationDictionary } from '../types';
 import de from './de';
+import en from './en';
+import es from './es';
 import fr from './fr';
 import it from './it';
-import pt from './pt';
-import zh from './zh';
 import ja from './ja';
+import pt from './pt';
+import ru from './ru';
 import tr from './tr';
-import { type SupportedLocale, type TranslationDictionary } from '../types';
+import zh from './zh';
 
 export const translations: Record<SupportedLocale, TranslationDictionary> = {
   en,

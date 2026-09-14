@@ -1,24 +1,25 @@
-import { useState, useEffect } from 'react';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import {
   Alert, Box, Button, Card, CardContent, CircularProgress, TextField, Typography,
 } from '@mui/material';
-import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { GoogleLogin } from '@react-oauth/google';
+import { useEffect, useState } from 'react';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
-import useStore from '../../../store/useStore';
-import { trackEvent } from '../../../shared/lib/analytics';
-import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 import LocaleSwitcher from '../../../shared/components/LocaleSwitcher';
-import { useTranslation } from '../../../shared/i18n/I18nContext';
+import ThemeSwitcher from '../../../shared/components/ThemeSwitcher';
 import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
+import { useTranslation } from '../../../shared/i18n/I18nContext';
+import { trackEvent } from '../../../shared/lib/analytics';
+import useStore from '../../../store/useStore';
+import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 
 export default function Auth() {
   const { t, locale } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'google';
+  const authProvider = import.meta.env.VITE_AUTH_PROVIDER;
   const isTestAuth = authProvider === 'test-username';
   const isRegisterRoute = location.pathname === '/register';
 
@@ -193,7 +194,10 @@ export default function Auth() {
               <Typography variant="caption" color="text.secondary">{t('auth.brandSubtitle')}</Typography>
             </Box>
           </Box>
-          <LocaleSwitcher />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ThemeSwitcher />
+            <LocaleSwitcher />
+          </Box>
         </Box>
 
         <Card sx={{ overflow: 'hidden' }}>

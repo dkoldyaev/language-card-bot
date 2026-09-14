@@ -1,7 +1,7 @@
-import { Box, Card, CardContent, Typography, alpha, Tooltip } from '@mui/material';
 import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
-import { type DayActivity } from '../../../store/useStore';
+import { alpha, Box, Card, CardContent, Tooltip, Typography } from '@mui/material';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import type { DayActivity } from '../../../store/useStore';
 
 interface WeeklyActivityChartProps {
   activity: DayActivity[];
@@ -12,7 +12,7 @@ export default function WeeklyActivityChart({ activity }: WeeklyActivityChartPro
   const maxCount = Math.max(...activity.map((d) => d.count), 5);
 
   return (
-    <Card sx={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 2.5 }}>
+    <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
       <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
           <Box
@@ -50,11 +50,11 @@ export default function WeeklyActivityChart({ activity }: WeeklyActivityChartPro
           }}
         >
           {activity.map((day, idx) => {
-            const heightPercent = Math.max(8, Math.round((day.count / maxCount) * 100));
+            const heightPercent = maxCount > 0 ? Math.max((day.count / maxCount) * 100, 8) : 8;
             const isToday = idx === activity.length - 1;
 
             return (
-              <Tooltip key={day.date} title={`${day.date}: ${day.count} cards`} arrow>
+              <Tooltip key={day.date} title={`${day.dayLabel}: ${day.count} ${t('dashboard.weeklyCards')}`} arrow>
                 <Box
                   sx={{
                     flex: 1,
@@ -84,7 +84,12 @@ export default function WeeklyActivityChart({ activity }: WeeklyActivityChartPro
                       maxWidth: 28,
                       height: `${heightPercent}%`,
                       borderRadius: '6px 6px 2px 2px',
-                      backgroundColor: isToday ? '#2453A6' : day.count > 0 ? alpha('#2453A6', 0.6) : '#E5E7EB',
+                      backgroundColor: (th) =>
+                        isToday
+                          ? th.palette.primary.main
+                          : day.count > 0
+                          ? alpha(th.palette.primary.main, 0.6)
+                          : (th.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : '#E5E7EB'),
                       transition: 'all 0.2s ease',
                       '&:hover': {
                         backgroundColor: '#E8A17F',

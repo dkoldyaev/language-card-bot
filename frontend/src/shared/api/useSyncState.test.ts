@@ -1,8 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, type MockInstance } from 'vitest';
-import { useSyncState } from './useSyncState';
+import { beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import useStore from '../../store/useStore';
 import apiClient from './client';
+import { useSyncState } from './useSyncState';
 
 describe('useSyncState', () => {
   let postMock: MockInstance;

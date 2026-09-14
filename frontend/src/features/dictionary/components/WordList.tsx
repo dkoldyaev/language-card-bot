@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react';
-import {
-  Typography, Box, TextField, Button, CircularProgress,
-  Accordion, AccordionSummary, AccordionDetails,
-  IconButton, Checkbox, FormControlLabel, Card, CardContent,
-  Chip, InputAdornment, Divider, Tooltip, alpha,
-} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import {
+  Accordion, AccordionDetails,AccordionSummary, alpha,Box, Button, Card, CardContent,Checkbox, 
+  Chip, CircularProgress,Divider, FormControlLabel, 
+  IconButton, InputAdornment, TextField, Tooltip, 
+  Typography, 
+} from '@mui/material';
+import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
-import useStore from '../../../store/useStore';
 import StatusChip from '../../../shared/components/StatusChip';
-import { trackEvent } from '../../../shared/lib/analytics';
 import { useTranslation } from '../../../shared/i18n';
+import { trackEvent } from '../../../shared/lib/analytics';
+import useStore from '../../../store/useStore';
 
 export default function WordList({ loading }: { loading: boolean }) {
   const { t } = useTranslation();
@@ -154,8 +154,8 @@ export default function WordList({ loading }: { loading: boolean }) {
             size="small"
             sx={{
               ml: 1.5,
-              backgroundColor: '#E7EEF9',
-              color: 'primary.dark',
+              backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.2) : '#E7EEF9',
+              color: (th) => th.palette.mode === 'dark' ? th.palette.primary.light : 'primary.dark',
               fontWeight: 700,
               fontSize: '0.75rem',
             }}
@@ -269,7 +269,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                               fontSize: '0.68rem',
                               fontWeight: 700,
                               backgroundColor: alpha('#7C3AED', 0.1),
-                              color: '#6D28D9',
+                              color: (th) => th.palette.mode === 'dark' ? '#C4B5FD' : '#6D28D9',
                               border: '1px solid',
                               borderColor: alpha('#7C3AED', 0.25),
                               borderRadius: 1.5,
@@ -294,8 +294,8 @@ export default function WordList({ loading }: { loading: boolean }) {
                     sx={{
                       mr: 1,
                       display: { xs: 'none', sm: 'inline-flex' },
-                      backgroundColor: '#E8F3F1',
-                      color: '#15554F',
+                      backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.success.main, 0.15) : '#E8F3F1',
+                      color: (th) => th.palette.mode === 'dark' ? th.palette.success.main : '#15554F',
                       fontWeight: 600,
                       fontSize: '0.7rem',
                     }}
@@ -354,7 +354,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                                     fontSize: '0.62rem',
                                     fontWeight: 600,
                                     backgroundColor: alpha('#7C3AED', 0.08),
-                                    color: '#6D28D9',
+                                    color: (th) => th.palette.mode === 'dark' ? '#C4B5FD' : '#6D28D9',
                                     border: '1px solid',
                                     borderColor: alpha('#7C3AED', 0.2),
                                     borderRadius: 1.5,

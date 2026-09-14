@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import App from './App';
-import useStore from '../store/useStore';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../shared/api/client';
+import useStore from '../store/useStore';
+import App from './App';
 
 describe('App Routing', () => {
   beforeEach(() => {

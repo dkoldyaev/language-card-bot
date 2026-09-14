@@ -1,21 +1,21 @@
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import {
+  alpha,
   Box,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Typography,
   Tooltip,
-  alpha,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
-import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
-import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import useStore from '../../store/useStore';
 import { useTranslation } from '../i18n/I18nContext';
 
@@ -86,8 +86,9 @@ export default function Sidebar() {
           justifyContent: 'space-around',
           px: 0.5,
           zIndex: 1200,
-          backgroundColor: alpha('#FFFFFF', 0.97),
-          borderTop: '1px solid #DDDCD5',
+          backgroundColor: (th) => alpha(th.palette.background.paper, 0.97),
+          borderTop: '1px solid',
+          borderColor: 'divider',
           backdropFilter: 'blur(16px)',
         }}
       >
@@ -186,7 +187,9 @@ export default function Sidebar() {
         zIndex: 1100,
         overflowY: 'auto',
         color: '#FFFFFF',
-        backgroundColor: '#172033',
+        backgroundColor: (th) => th.palette.mode === 'dark' ? '#111622' : '#172033',
+        borderRight: '1px solid',
+        borderRightColor: (th) => th.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
       }}
     >
       <Box sx={{ px: 3, pt: 3.25, pb: 4 }}>

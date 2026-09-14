@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { I18nProvider, useTranslation, detectBrowserLanguage } from './I18nContext';
-import { SUPPORTED_LOCALES } from './types';
-import translations from './translations';
-import { getCookie, setCookie } from '../lib/cookie';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LocaleSwitcher from '../components/LocaleSwitcher';
+import { getCookie, setCookie } from '../lib/cookie';
+import { detectBrowserLanguage, I18nProvider, useTranslation } from './I18nContext';
+import translations from './translations';
+import { SUPPORTED_LOCALES } from './types';
 
 function TestConsumer() {
   const { locale, setLocale, t } = useTranslation();

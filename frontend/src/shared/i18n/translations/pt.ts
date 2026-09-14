@@ -251,6 +251,14 @@ const pt = {
   'quiz.emptyBenefit2': 'Desbloqueie testes de recordação personalizados',
   'quiz.emptyBenefit3': 'Acompanhe seu progresso conforme o baralho cresce',
   'quiz.goToDictionaryBtn': 'Ir para o dicionário',
+
+  // Theme
+  'theme.toggleDark': 'Mudar para o tema escuro',
+  'theme.toggleLight': 'Mudar para o tema claro',
+  'theme.theme': 'Tema',
+  'theme.dark': 'Escuro',
+  'theme.light': 'Claro',
+  'theme.system': 'Sistema',
 };
 
 export default pt;

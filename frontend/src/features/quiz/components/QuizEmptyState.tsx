@@ -1,8 +1,8 @@
-import { Box, Button, Card, Typography, alpha } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import { alpha, Box, Button, Card, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../../shared/i18n';
 

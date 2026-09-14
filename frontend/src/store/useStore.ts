@@ -124,6 +124,9 @@ interface AppState {
   quizVariants: string[] | null;
   dashboardStats: DashboardStats | null;
   setDashboardStats: (stats: DashboardStats | null) => void;
+  themeMode: 'light' | 'dark' | 'system';
+  setThemeMode: (themeMode: 'light' | 'dark' | 'system') => void;
+  toggleThemeMode: () => void;
   setIsOffline: (isOffline: boolean) => void;
   enqueueSyncAction: (action: SyncActionPayload) => void;
   clearSyncQueue: () => void;
@@ -169,12 +172,22 @@ const initialState = {
   quizTranslation: null,
   quizVariants: null,
   dashboardStats: null,
+  themeMode: 'light' as 'light' | 'dark' | 'system',
 };
 
 const useStore = create<AppState>()(
   persist(
     (set) => ({
       ...initialState,
+      setThemeMode: (themeMode) => set({ themeMode }),
+      toggleThemeMode: () => set((state) => {
+        let currentMode = state.themeMode;
+        if (currentMode === 'system') {
+          const isDarkSystem = typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+          currentMode = isDarkSystem ? 'dark' : 'light';
+        }
+        return { themeMode: currentMode === 'dark' ? 'light' : 'dark' };
+      }),
       setIsOffline: (isOffline) => set({ isOffline }),
       enqueueSyncAction: (action) => set((state) => ({ 
         syncQueue: [...state.syncQueue, { ...action, timestamp: Date.now() } as SyncAction] 
@@ -336,7 +349,7 @@ const useStore = create<AppState>()(
           )
         };
       }),
-      reset: () => set({ ...initialState, isOffline: !navigator.onLine }),
+      reset: () => set((state) => ({ ...initialState, themeMode: state.themeMode, isOffline: !navigator.onLine })),
     }),
     {
       name: 'english-card-bot-storage',

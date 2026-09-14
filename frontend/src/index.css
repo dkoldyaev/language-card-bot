@@ -5,14 +5,12 @@
 }
 
 :root {
-  color: #172033;
-  background: #F7F5EF;
+  color-scheme: light dark;
   font-synthesis: none;
 }
 
 html {
   min-width: 320px;
-  background: #F7F5EF;
 }
 
 body {

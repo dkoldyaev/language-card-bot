@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { DictionaryItem } from '../../../store/useStore';
 import DictionarySwitcher from './DictionarySwitcher';
-import { type DictionaryItem } from '../../../store/useStore';
 
 const mockDictionaries: DictionaryItem[] = [
   { id: 1, name: 'English', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 5, isActive: true },

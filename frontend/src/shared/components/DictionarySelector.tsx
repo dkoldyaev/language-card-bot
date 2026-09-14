@@ -1,23 +1,23 @@
-import { useState } from 'react';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import {
+  alpha,
   Box,
   Button,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Typography,
   Chip,
   Divider,
-  alpha,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Typography,
 } from '@mui/material';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import { useState } from 'react';
+import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
-import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
 import { useTranslation } from '../i18n/I18nContext';
 
 export default function DictionarySelector() {
@@ -70,16 +70,17 @@ export default function DictionarySelector() {
         startIcon={<MenuBookRoundedIcon fontSize="small" sx={{ color: 'primary.main' }} />}
         sx={{
           textTransform: 'none',
-          borderColor: '#DDDCD5',
+          border: '1px solid',
+          borderColor: 'divider',
           color: 'text.primary',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'background.paper',
           borderRadius: 2,
           px: 1.5,
           py: 0.6,
           fontWeight: 600,
           '&:hover': {
-            backgroundColor: '#F7F5EF',
-            borderColor: '#C8C7C0',
+            backgroundColor: 'action.hover',
+            borderColor: 'primary.main',
           },
         }}
       >

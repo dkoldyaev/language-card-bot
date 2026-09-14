@@ -1,17 +1,17 @@
-import { useState } from 'react';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import {
   Box,
   Button,
-  Menu,
-  MenuItem,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
   Typography,
 } from '@mui/material';
-import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import { useState } from 'react';
 import { useTranslation } from '../i18n';
-import { type SupportedLocale, type LocaleInfo } from '../i18n/types';
+import type { LocaleInfo, SupportedLocale } from '../i18n/types';
 
 interface LocaleSwitcherProps {
   variant?: 'outlined' | 'text';
@@ -51,17 +51,18 @@ export default function LocaleSwitcher({
         endIcon={<KeyboardArrowDownRoundedIcon fontSize="small" />}
         sx={{
           textTransform: 'none',
-          borderColor: '#DDDCD5',
+          border: '1px solid',
+          borderColor: 'divider',
           color: 'text.primary',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'background.paper',
           borderRadius: 2,
           px: 1.25,
           py: 0.6,
           fontWeight: 600,
           minWidth: 'auto',
           '&:hover': {
-            backgroundColor: '#F7F5EF',
-            borderColor: '#C8C7C0',
+            backgroundColor: 'action.hover',
+            borderColor: 'primary.main',
           },
         }}
       >

@@ -251,6 +251,14 @@ const zh = {
   'quiz.emptyBenefit2': '解锁个性化记忆测验',
   'quiz.emptyBenefit3': '见证卡组规模不断壮大',
   'quiz.goToDictionaryBtn': '前往词典',
+
+  // Theme
+  'theme.toggleDark': '切换到深色主题',
+  'theme.toggleLight': '切换到浅色主题',
+  'theme.theme': '主题',
+  'theme.dark': '深色',
+  'theme.light': '浅色',
+  'theme.system': '跟随系统',
 };
 
 export default zh;

@@ -284,6 +284,14 @@ const ru = {
   'quiz.emptyBenefit2': 'Открывайте персональные раунды квиза',
   'quiz.emptyBenefit3': 'Следите за ростом словарного запаса',
   'quiz.goToDictionaryBtn': 'Перейти в Словарь',
+
+  // Theme
+  'theme.toggleDark': 'Переключить на темную тему',
+  'theme.toggleLight': 'Переключить на светлую тему',
+  'theme.theme': 'Тема',
+  'theme.dark': 'Темная',
+  'theme.light': 'Светлая',
+  'theme.system': 'Системная',
 };
 
 export default ru;

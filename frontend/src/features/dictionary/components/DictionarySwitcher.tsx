@@ -1,15 +1,15 @@
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import {
+  alpha,
   Box,
   Button,
   Chip,
   IconButton,
   Tooltip,
-  alpha,
 } from '@mui/material';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import { type DictionaryItem } from '../../../store/useStore';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import type { DictionaryItem } from '../../../store/useStore';
 
 interface DictionarySwitcherProps {
   dictionaries: DictionaryItem[];
@@ -61,12 +61,12 @@ export default function DictionarySwitcher({
                 alignItems: 'center',
                 borderRadius: 2.5,
                 border: '1px solid',
-                borderColor: isSelected ? 'primary.main' : '#DDDCD5',
-                backgroundColor: isSelected ? 'primary.main' : '#FFFFFF',
+                borderColor: isSelected ? 'primary.main' : 'divider',
+                backgroundColor: isSelected ? 'primary.main' : 'background.paper',
                 overflow: 'hidden',
                 transition: 'all 0.15s ease-in-out',
                 '&:hover': {
-                  borderColor: isSelected ? 'primary.dark' : '#B8B7B0',
+                  borderColor: isSelected ? 'primary.dark' : 'text.secondary',
                 },
               }}
             >
@@ -86,7 +86,7 @@ export default function DictionarySwitcher({
                   gap: 1,
                   borderRadius: 0,
                   '&:hover': {
-                    backgroundColor: isSelected ? 'rgba(0, 0, 0, 0.08)' : '#F7F5EF',
+                    backgroundColor: isSelected ? 'rgba(0, 0, 0, 0.08)' : 'action.hover',
                   },
                 }}
               >
@@ -156,9 +156,9 @@ export default function DictionarySwitcher({
           borderRadius: 2,
           textTransform: 'none',
           fontWeight: 600,
-          borderColor: '#DDDCD5',
+          borderColor: 'divider',
           color: 'text.primary',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'background.paper',
           px: 1.5,
           py: 0.7,
           '&:hover': {

@@ -251,6 +251,14 @@ const it = {
   'quiz.emptyBenefit2': 'Sblocca quiz personalizzati di memoria attiva',
   'quiz.emptyBenefit3': 'Segui i tuoi progressi man mano che il mazzo cresce',
   'quiz.goToDictionaryBtn': 'Vai al dizionario',
+
+  // Theme
+  'theme.toggleDark': 'Passa al tema scuro',
+  'theme.toggleLight': 'Passa al tema chiaro',
+  'theme.theme': 'Tema',
+  'theme.dark': 'Scuro',
+  'theme.light': 'Chiaro',
+  'theme.system': 'Sistema',
 };
 
 export default it;

@@ -1,12 +1,13 @@
-import { Outlet } from 'react-router-dom';
-import { Alert, Box, Typography, useMediaQuery, useTheme } from '@mui/material';
-import Sidebar from './Sidebar';
+import { Alert, Box, Typography, alpha, useMediaQuery, useTheme } from '@mui/material';
 import { useEffect } from 'react';
-import apiClient from '../api/client';
+import { Outlet } from 'react-router-dom';
 import useStore from '../../store/useStore';
+import apiClient from '../api/client';
+import { useTranslation } from '../i18n/I18nContext';
 import DictionarySelector from './DictionarySelector';
 import LocaleSwitcher from './LocaleSwitcher';
-import { useTranslation } from '../i18n/I18nContext';
+import Sidebar from './Sidebar';
+import ThemeSwitcher from './ThemeSwitcher';
 
 export default function Layout() {
   const theme = useTheme();
@@ -86,8 +87,9 @@ export default function Layout() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: 'rgba(247, 245, 239, 0.92)',
-              borderBottom: '1px solid #DDDCD5',
+              backgroundColor: (th) => alpha(th.palette.background.default, 0.92),
+              borderBottom: '1px solid',
+              borderColor: 'divider',
               backdropFilter: 'blur(14px)',
             }}
           >
@@ -96,6 +98,7 @@ export default function Layout() {
               <Typography sx={{ fontWeight: 800, letterSpacing: '-0.035em' }}>CardBot</Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ThemeSwitcher />
               <DictionarySelector />
               <LocaleSwitcher />
             </Box>
@@ -115,6 +118,7 @@ export default function Layout() {
               gap: 1.5,
             }}
           >
+            <ThemeSwitcher />
             <DictionarySelector />
             <LocaleSwitcher />
           </Box>

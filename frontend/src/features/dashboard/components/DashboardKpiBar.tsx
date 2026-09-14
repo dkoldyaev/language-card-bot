@@ -1,10 +1,10 @@
-import { Box, Card, CardContent, LinearProgress, Typography, alpha } from '@mui/material';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
-import TrackChangesRoundedIcon from '@mui/icons-material/TrackChangesRounded';
-import PsychologyRoundedIcon from '@mui/icons-material/PsychologyRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import { type DashboardStats } from '../../../store/useStore';
+import PsychologyRoundedIcon from '@mui/icons-material/PsychologyRounded';
+import TrackChangesRoundedIcon from '@mui/icons-material/TrackChangesRounded';
+import { alpha, Box, Card, CardContent, LinearProgress, Typography } from '@mui/material';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import type { DashboardStats } from '../../../store/useStore';
 
 interface DashboardKpiBarProps {
   stats: DashboardStats;
@@ -60,8 +60,9 @@ export default function DashboardKpiBar({ stats }: DashboardKpiBarProps) {
         <Card
           key={index}
           sx={{
-            backgroundColor: '#FFFFFF',
-            border: '1px solid #E5E7EB',
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
             borderRadius: 2.5,
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
             transition: 'transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out',

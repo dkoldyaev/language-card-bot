@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { Box, Card, CardContent, TextField, Button, CircularProgress, Alert, Typography, alpha } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
+import { Alert, alpha, Box, Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
+import { useState } from 'react';
 import apiClient from '../../../shared/api/client';
-import useStore from '../../../store/useStore';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
+import useStore from '../../../store/useStore';
 
 interface QuickAddWordCardProps {
   onWordAdded?: (word: string) => void;
@@ -47,7 +47,7 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
   };
 
   return (
-    <Card sx={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 2.5 }}>
+    <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
       <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
           <Box

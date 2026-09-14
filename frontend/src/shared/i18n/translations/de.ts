@@ -251,6 +251,14 @@ const de = {
   'quiz.emptyBenefit2': 'Schalte persönliche Quizrunden frei',
   'quiz.emptyBenefit3': 'Verfolge deinen wachsenden Wortschatz',
   'quiz.goToDictionaryBtn': 'Zum Wörterbuch',
+
+  // Theme
+  'theme.toggleDark': 'Zum dunklen Design wechseln',
+  'theme.toggleLight': 'Zum hellen Design wechseln',
+  'theme.theme': 'Design',
+  'theme.dark': 'Dunkel',
+  'theme.light': 'Hell',
+  'theme.system': 'System',
 };
 
 export default de;

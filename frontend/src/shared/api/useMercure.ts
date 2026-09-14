@@ -1,6 +1,6 @@
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useEffect, useRef } from 'react';
 import useStore from '../../store/useStore';
-import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 export function useMercure() {
   const profile = useStore((state) => state.profile);

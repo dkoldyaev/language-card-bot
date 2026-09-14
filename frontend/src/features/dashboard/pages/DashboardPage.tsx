@@ -1,26 +1,26 @@
-import { useEffect } from 'react';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded';
 import {
+  alpha,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
   Typography,
-  alpha,
 } from '@mui/material';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
-import useStore from '../../../store/useStore';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import useStore from '../../../store/useStore';
+import DictionaryPresets from '../../dictionary/components/DictionaryPresets';
 import { fetchDashboardStats } from '../api/dashboard.api';
 import DashboardKpiBar from '../components/DashboardKpiBar';
-import QuickAddWordCard from '../components/QuickAddWordCard';
 import NeedsAttentionWidget from '../components/NeedsAttentionWidget';
+import QuickAddWordCard from '../components/QuickAddWordCard';
 import WeeklyActivityChart from '../components/WeeklyActivityChart';
-import DictionaryPresets from '../../dictionary/components/DictionaryPresets';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -123,7 +123,7 @@ export default function Dashboard() {
           </Box>
 
           {/* 3 Step Guidance Card */}
-          <Card sx={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 3 }}>
+          <Card sx={{ backgroundColor: (th) => th.palette.mode === 'dark' ? 'background.paper' : '#F8FAFC', border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2 }}>
                 {t('dashboard.onboardingTitle')}
@@ -240,7 +240,7 @@ export default function Dashboard() {
           </Box>
 
           {/* Word Preview Chips */}
-          <Card sx={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 2.5 }}>
+          <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
             <CardContent sx={{ p: 2.5 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
                 {t('dashboard.freshOverline')}
@@ -257,10 +257,10 @@ export default function Dashboard() {
                     sx={{
                       px: 0.75,
                       py: 0.5,
-                      borderColor: '#D4D8E0',
-                      backgroundColor: '#FBFCFE',
+                      borderColor: 'divider',
+                      backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.1) : '#FBFCFE',
                       fontWeight: 600,
-                      '&:hover': { borderColor: 'primary.main', backgroundColor: alpha('#2453A6', 0.04) },
+                      '&:hover': { borderColor: 'primary.main', backgroundColor: (th) => alpha(th.palette.primary.main, th.palette.mode === 'dark' ? 0.2 : 0.04) },
                     }}
                   />
                 ))}
@@ -333,7 +333,7 @@ export default function Dashboard() {
             {/* Left Column */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               {/* Mastery Progress Bar */}
-              <Card sx={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 2.5 }}>
+              <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
@@ -345,7 +345,7 @@ export default function Dashboard() {
                   </Box>
 
                   {/* Visual stacked bar */}
-                  <Box sx={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden', mb: 2, backgroundColor: '#F3F4F6' }}>
+                  <Box sx={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden', mb: 2, backgroundColor: (th) => th.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : '#F3F4F6' }}>
                     <Box
                       sx={{
                         width: `${totalWords > 0 ? (dashboardStats.mastery.masteredWords / totalWords) * 100 : 0}%`,
@@ -361,7 +361,7 @@ export default function Dashboard() {
                     <Box
                       sx={{
                         width: `${totalWords > 0 ? (dashboardStats.mastery.newWords / totalWords) * 100 : 0}%`,
-                        backgroundColor: '#E5E7EB',
+                        backgroundColor: (th) => th.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : '#E5E7EB',
                       }}
                     />
                   </Box>
@@ -393,7 +393,7 @@ export default function Dashboard() {
               <NeedsAttentionWidget items={dashboardStats.needsAttention} />
 
               {/* Fresh in Deck */}
-              <Card sx={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 2.5 }}>
+              <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
@@ -411,8 +411,8 @@ export default function Dashboard() {
                         variant="outlined"
                         sx={{
                           px: 0.5,
-                          borderColor: '#E5E7EB',
-                          backgroundColor: '#F9FAFB',
+                          borderColor: 'divider',
+                          backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.1) : '#FBFCFE',
                           fontWeight: 600,
                         }}
                       />
