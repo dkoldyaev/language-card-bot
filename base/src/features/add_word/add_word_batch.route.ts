@@ -44,20 +44,23 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordBatchRequest
       targetDictionaryId = activeDict.id;
     }
 
-    let addedCount = 0;
+    const existingWordsInDb = await prisma.word.findMany({
+      where: {
+        dictionaryId: targetDictionaryId,
+        text: { in: cleanedWords },
+      },
+      select: {
+        text: true,
+      },
+    });
+
+    const existingWordSet = new Set(existingWordsInDb.map((w) => w.text));
+    const seenWords = new Set<string>();
+    const wordsToCreate: string[] = [];
     let duplicateCount = 0;
 
     for (const wordText of cleanedWords) {
-      const existingWord = await prisma.word.findUnique({
-        where: {
-          dictionaryId_text: {
-            dictionaryId: targetDictionaryId,
-            text: wordText,
-          },
-        },
-      });
-
-      if (existingWord) {
+      if (existingWordSet.has(wordText) || seenWords.has(wordText)) {
         duplicateCount++;
         const payload: DictionaryAddDuplicateEvent = {
           version: 'v1',
@@ -66,30 +69,42 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordBatchRequest
         };
 
         await publishEvent(username, payload).catch((e) => console.error('Mercure publish error:', e));
-        continue;
+      } else {
+        seenWords.add(wordText);
+        wordsToCreate.push(wordText);
       }
+    }
 
-      const newWord = await prisma.word.create({
-        data: {
+    let createdWords: { id: number; text: string; dictionaryId: number }[] = [];
+
+    if (wordsToCreate.length > 0) {
+      createdWords = await prisma.word.createManyAndReturn({
+        data: wordsToCreate.map((text) => ({
           dictionaryId: targetDictionaryId,
-          text: wordText,
+          text,
+        })),
+        select: {
+          id: true,
+          text: true,
+          dictionaryId: true,
         },
+        skipDuplicates: true,
       });
+    }
 
-      addedCount++;
-
+    for (const createdWord of createdWords) {
       appEvents.emit(Events.WORD_ADDED, {
         userId,
         username,
-        wordId: newWord.id,
-        wordText,
+        wordId: createdWord.id,
+        wordText: createdWord.text,
         dictionaryId: targetDictionaryId,
       });
     }
 
     return res.json({
       message: 'Words processed successfully',
-      addedCount,
+      addedCount: createdWords.length,
       duplicateCount,
     });
   } catch (error) {

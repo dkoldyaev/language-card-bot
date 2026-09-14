@@ -82,10 +82,11 @@ describe('POST /api/v1/add_word/batch', () => {
       createdAt: new Date(),
     } as any);
 
-    prismaMock.word.findUnique.mockResolvedValue(null);
-    prismaMock.word.create
-      .mockResolvedValueOnce({ id: 101, dictionaryId: 5, text: 'cat', createdAt: new Date() } as any)
-      .mockResolvedValueOnce({ id: 102, dictionaryId: 5, text: 'dog', createdAt: new Date() } as any);
+    prismaMock.word.findMany.mockResolvedValue([]);
+    prismaMock.word.createManyAndReturn.mockResolvedValue([
+      { id: 101, dictionaryId: 5, text: 'cat' } as any,
+      { id: 102, dictionaryId: 5, text: 'dog' } as any,
+    ]);
 
     const res = await request(app)
       .post('/api/v1/add_word/batch')
@@ -97,6 +98,19 @@ describe('POST /api/v1/add_word/batch', () => {
       message: 'Words processed successfully',
       addedCount: 2,
       duplicateCount: 0,
+    });
+
+    expect(prismaMock.word.createManyAndReturn).toHaveBeenCalledWith({
+      data: [
+        { dictionaryId: 5, text: 'cat' },
+        { dictionaryId: 5, text: 'dog' },
+      ],
+      select: {
+        id: true,
+        text: true,
+        dictionaryId: true,
+      },
+      skipDuplicates: true,
     });
 
     expect(emitSpy).toHaveBeenCalledTimes(2);
@@ -116,7 +130,7 @@ describe('POST /api/v1/add_word/batch', () => {
     });
   });
 
-  it('should handle duplicate words by publishing Mercure duplicate event', async () => {
+  it('should handle duplicate words in DB and within the same batch by publishing Mercure duplicate event', async () => {
     const emitSpy = vi.spyOn(appEvents, 'emit');
 
     prismaMock.dictionary.findFirst.mockResolvedValue({
@@ -128,34 +142,47 @@ describe('POST /api/v1/add_word/batch', () => {
       createdAt: new Date(),
     } as any);
 
-    // First word is duplicate, second is new
-    prismaMock.word.findUnique
-      .mockResolvedValueOnce({ id: 101, dictionaryId: 5, text: 'cat' } as any)
-      .mockResolvedValueOnce(null);
+    // 'cat' exists in DB
+    prismaMock.word.findMany.mockResolvedValue([
+      { id: 101, text: 'cat' } as any,
+    ]);
 
-    prismaMock.word.create.mockResolvedValueOnce({
-      id: 102,
-      dictionaryId: 5,
-      text: 'dog',
-      createdAt: new Date(),
-    } as any);
+    prismaMock.word.createManyAndReturn.mockResolvedValue([
+      { id: 102, dictionaryId: 5, text: 'dog' } as any,
+    ]);
 
+    // Batch contains 'cat' (in DB), 'dog' (new), and 'dog' again (duplicate within input batch)
     const res = await request(app)
       .post('/api/v1/add_word/batch')
       .set('Authorization', `Bearer ${token}`)
-      .send({ words: ['cat', 'dog'], dictionaryId: 5 });
+      .send({ words: ['cat', 'dog', 'Dog'], dictionaryId: 5 });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       message: 'Words processed successfully',
       addedCount: 1,
-      duplicateCount: 1,
+      duplicateCount: 2,
+    });
+
+    expect(prismaMock.word.createManyAndReturn).toHaveBeenCalledWith({
+      data: [{ dictionaryId: 5, text: 'dog' }],
+      select: {
+        id: true,
+        text: true,
+        dictionaryId: true,
+      },
+      skipDuplicates: true,
     });
 
     expect(eventBusService.publishEvent).toHaveBeenCalledWith(username, {
       version: 'v1',
       type: 'dictionary_add_duplicate',
       word: 'cat',
+    });
+    expect(eventBusService.publishEvent).toHaveBeenCalledWith(username, {
+      version: 'v1',
+      type: 'dictionary_add_duplicate',
+      word: 'dog',
     });
 
     expect(emitSpy).toHaveBeenCalledTimes(1);
