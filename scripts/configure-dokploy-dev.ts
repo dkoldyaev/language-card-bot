@@ -23,9 +23,14 @@ function loadEnv() {
 
 loadEnv();
 
-const DOKPLOY_URL = (process.env.DOKPLOY_URL || 'https://dokploy.dkoldyaev.com').replace(/\/$/, '');
-const DOKPLOY_API_KEY = process.env.DOKPLOY_API_KEY;
+const DOKPLOY_URL_RAW = process.env.DOKPLOY_URL;
+if (!DOKPLOY_URL_RAW) {
+  console.error('❌ DOKPLOY_URL is not set in .env or environment variables.');
+  process.exit(1);
+}
+const DOKPLOY_URL = DOKPLOY_URL_RAW.replace(/\/$/, '');
 
+const DOKPLOY_API_KEY = process.env.DOKPLOY_API_KEY;
 if (!DOKPLOY_API_KEY) {
   console.error('❌ DOKPLOY_API_KEY is not set in .env or environment variables.');
   process.exit(1);
@@ -117,6 +122,24 @@ async function main() {
 
   // 2. Fetch current compose details
   const composeDetails = await trpcCall('compose.one', 'GET', { composeId });
+  console.log('composeDetails:', {
+    composeId: composeDetails.composeId,
+    composePath: composeDetails.composePath,
+    composeType: composeDetails.composeType,
+    sourceType: composeDetails.sourceType,
+    branch: composeDetails.branch,
+    repository: composeDetails.repository,
+  });
+  // 2. Ensure composePath is ./docker-compose.test.yml
+  if (composeDetails.composePath !== './docker-compose.test.yml') {
+    console.log('Updating composePath to ./docker-compose.test.yml...');
+    await trpcCall('compose.update', 'POST', {
+      composeId,
+      composePath: './docker-compose.test.yml',
+    });
+    console.log('✓ composePath set to ./docker-compose.test.yml');
+  }
+
   const currentEnv = composeDetails.env || '';
 
   // 3. Update environment variables in Dokploy
@@ -126,6 +149,8 @@ async function main() {
     FRONTEND_API_BASE_URL: `https://${DEV_DOMAIN}/api/v1`,
     FRONTEND_MERCURE_PUBLIC_URL: `https://${DEV_DOMAIN}/.well-known/mercure`,
     FRONTEND_BASE_DOMAIN: `https://${DEV_DOMAIN}`,
+    MERCURE_CORS_ALLOWED_ORIGINS: `https://${DEV_DOMAIN}`,
+    BASE_MERCURE_URL: 'http://mercure/.well-known/mercure',
   };
 
   console.log('\nUpdating dev compose environment variables...');
@@ -211,6 +236,76 @@ async function main() {
       composeId,
     });
     console.log(`✓ Deployment triggered: ${deployment?.deploymentId || 'OK'}`);
+  }
+
+  // 6. Verify dev environment
+  if (process.argv.includes('--check') || !process.argv.includes('--deploy')) {
+    console.log('\n--- VERIFYING DEV ENVIRONMENT ---');
+    // A. Check Frontend
+    try {
+      const feRes = await fetch(`https://${DEV_DOMAIN}/`);
+      console.log(`Frontend (https://${DEV_DOMAIN}/): ${feRes.status} ${feRes.statusText}`);
+    } catch (err: any) {
+      console.error(`❌ Frontend check failed: ${err.message}`);
+    }
+
+    // B. Check Mercure CORS preflight
+    try {
+      const corsRes = await fetch(`https://${DEV_DOMAIN}/.well-known/mercure`, {
+        method: 'OPTIONS',
+        headers: {
+          Origin: `https://${DEV_DOMAIN}`,
+          'Access-Control-Request-Method': 'GET',
+          'Access-Control-Request-Headers': 'authorization',
+        },
+      });
+      const acao = corsRes.headers.get('access-control-allow-origin');
+      const acac = corsRes.headers.get('access-control-allow-credentials');
+      console.log(`Mercure OPTIONS preflight: ${corsRes.status}, ACAO: ${acao}, ACAC: ${acac}`);
+    } catch (err: any) {
+      console.error(`❌ Mercure CORS preflight check failed: ${err.message}`);
+    }
+
+    // C. Test Backend Auth & State Sync (Mercure publish)
+    try {
+      const crypto = await import('node:crypto');
+      const testUsername = `dev_verify_${Date.now()}`;
+      // Register test user
+      const regRes = await fetch(`https://${DEV_DOMAIN}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: testUsername }),
+      });
+      const regData = await regRes.json();
+      if (!regRes.ok || !regData.token) {
+        throw new Error(`Register failed (${regRes.status}): ${JSON.stringify(regData)}`);
+      }
+      console.log(`✓ Test user registered: ${testUsername} (ID: ${regData.user.id})`);
+
+      // Sync state (which triggers Mercure publish)
+      const syncRes = await fetch(`https://${DEV_DOMAIN}/api/v1/state/sync`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${regData.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const syncData = await syncRes.json();
+      if (!syncRes.ok) {
+        throw new Error(`State sync failed (${syncRes.status}): ${JSON.stringify(syncData)}`);
+      }
+      console.log(`✓ State sync succeeded: ${syncData.message}`);
+      console.log('✓ Backend API and Mercure publishEvent verified successfully!');
+    } catch (err: any) {
+      console.error(`❌ Backend / Mercure publish check failed: ${err.message}`);
+      const containers = await trpcCall('docker.getContainersByAppNameMatch', 'GET', { appName: composeDetails.appName });
+      const appC = containers.find((c: any) => c.name.endsWith('-app-1') || c.name.includes('-app-1'));
+      if (appC) {
+        const appLogs = await trpcCall('compose.readLogs', 'GET', { composeId, containerId: appC.containerId });
+        console.log(`\n--- ACTUAL APP CONTAINER LOGS (${appC.name}) ---`);
+        console.log(appLogs.split('\n').slice(-30).join('\n'));
+      }
+    }
   }
 
   console.log('\n🎉 Dokploy dev environment configuration completed successfully!');
