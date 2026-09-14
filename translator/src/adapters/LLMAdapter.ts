@@ -13,8 +13,8 @@ export class LLMAdapter implements ITranslator {
   private llmServiceUrl: string;
 
   constructor(options: LLMAdapterOptions = {}) {
-    this.provider = options.provider || (process.env.TRANSLATOR_LLM_PROVIDER as any) || 'mistral';
-    this.model = options.model || process.env.TRANSLATOR_LLM_MODEL || (this.provider === 'mistral' ? 'mistral-large-latest' : 'gemini-1.5-flash');
+    this.provider = options.provider || env.LLM_PROVIDER;
+    this.model = options.model || env.LLM_MODEL;
     this.llmServiceUrl = options.llmServiceUrl || env.LLM_SERVICE_URL || 'http://llm:3003/api/v1/generate';
   }
 

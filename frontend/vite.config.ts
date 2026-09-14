@@ -4,9 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
-const allowedHost = process.env.FRONTEND_BASE_DOMAIN
-  ? new URL(process.env.FRONTEND_BASE_DOMAIN).hostname
-  : undefined
+const allowedHosts = (process.env.ALLOWED_HOSTS || process.env.BASE_DOMAIN)?.split(',')
 
 export default defineConfig({
     plugins: [
@@ -63,14 +61,14 @@ export default defineConfig({
     server: {
       host: true,
       port: Number(process.env.FRONTEND_PORT),
-      allowedHosts: allowedHost ? [allowedHost] : undefined,
+      allowedHosts: allowedHosts ? [...allowedHosts] : undefined,
       watch: {
         usePolling: true,
       },
     },
     preview: {
       port: Number(process.env.FRONTEND_PORT),
-      allowedHosts: allowedHost ? [allowedHost] : undefined,
+      allowedHosts: allowedHosts ? [...allowedHosts] : undefined,
     },
     define: {
       'import.meta.env.FRONTEND_BASE_DOMAIN': JSON.stringify(process.env.FRONTEND_BASE_DOMAIN || ''),

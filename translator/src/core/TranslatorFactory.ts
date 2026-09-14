@@ -15,13 +15,13 @@ export class TranslatorFactory {
       case 'laratranslate':
         return new LaratranslateTranslator();
       case 'mistral':
-        return new LLMAdapter({ provider: 'mistral', model: env.TRANSLATOR_LLM_MODEL });
+        return new LLMAdapter({ provider: 'mistral', model: env.LLM_MODEL });
       case 'gemini':
-        return new LLMAdapter({ provider: 'gemini', model: env.TRANSLATOR_LLM_MODEL });
+        return new LLMAdapter({ provider: 'gemini', model: env.LLM_MODEL });
       case 'llm':
         return new LLMAdapter({
-          provider: env.TRANSLATOR_LLM_PROVIDER,
-          model: env.TRANSLATOR_LLM_MODEL,
+          provider: env.LLM_PROVIDER,
+          model: env.LLM_MODEL,
         });
       default:
         // Default to mock if unknown at runtime
