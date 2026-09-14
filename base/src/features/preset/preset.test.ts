@@ -369,6 +369,9 @@ describe('Preset Feature API', () => {
         } as any,
       ]);
 
+      // Batch word prefetch: neither 'hola' nor 'gracias' exists yet
+      prismaMock.word.findMany.mockResolvedValue([]);
+
       // Word 1: 'hola' does not exist yet
       prismaMock.word.findUnique
         .mockResolvedValueOnce(null) // 'hola' not found

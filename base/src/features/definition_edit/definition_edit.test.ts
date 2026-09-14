@@ -99,6 +99,8 @@ describe('PUT /api/v1/definition_edit/:id', () => {
       dictionary: {
         id: 1,
         userId: 1,
+        targetLanguage: 'en',
+        baseLanguage: 'ru',
       }
     };
 
@@ -140,7 +142,9 @@ describe('PUT /api/v1/definition_edit/:id', () => {
       'testuser',
       10,
       'word',
-      2 // total definitions
+      2, // total definitions
+      'en',
+      'ru'
     );
   });
 });

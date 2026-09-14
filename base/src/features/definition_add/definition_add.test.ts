@@ -106,7 +106,9 @@ describe('POST /api/v1/definition_add', () => {
       'testuser',
       1,
       'test',
-      2
+      2,
+      'en',
+      'ru'
     );
   });
 });

@@ -19,6 +19,7 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   ENABLE_TEST_AUTH: z.string().optional(),
+  ENABLE_DB_LOGGING: z.enum(['true', 'false']),
   LLM_API_URL: z.string().min(1),
   LLM_PROVIDER: z.enum(['mistral', 'gemini', 'mock']),
   LLM_MODEL: z.string().min(1),

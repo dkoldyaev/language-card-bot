@@ -60,9 +60,11 @@ describe('State Endpoint', () => {
     expect(res.body.message).toBe('State synced to Mercure');
     expect(res.body.state.currentWordId).toBe(null);
 
-    expect(prismaMock.userState.findUnique).toHaveBeenCalledWith({
-      where: { userId }
-    });
+    expect(prismaMock.userState.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId }
+      })
+    );
 
     // Verify event bus push
     expect(publishEvent).toHaveBeenCalledTimes(1);

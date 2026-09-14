@@ -37,6 +37,7 @@ model Account {
   user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Dictionary {
@@ -74,6 +75,10 @@ model UserState {
 
   currentDefinitionId Int?
   currentDefinition   Definition? @relation(fields: [currentDefinitionId], references: [id], onDelete: SetNull)
+
+  @@index([activeDictionaryId])
+  @@index([currentWordId])
+  @@index([currentDefinitionId])
 }
 
 model Word {
@@ -88,6 +93,7 @@ model Word {
   presets     Preset[]
 
   @@unique([dictionaryId, text])
+  @@index([dictionaryId, id])
 }
 
 model Definition {
@@ -100,6 +106,8 @@ model Definition {
   translation DefinitionTranslation?
   userStates  UserState[]
   presets     Preset[]
+
+  @@index([wordId])
 }
 
 model DefinitionTranslation {
@@ -123,6 +131,6 @@ model Preset {
   words       Word[]
   definitions Definition[]
 
-  @@index([forLanguage])
+  @@index([forLanguage, createdAt(sort: Desc)])
 }
 

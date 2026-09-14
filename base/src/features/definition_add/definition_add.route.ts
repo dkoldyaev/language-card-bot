@@ -51,7 +51,9 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       wordId: word.id,
       wordText: word.text,
       totalDefinitions,
-      dictionaryId: word.dictionaryId
+      dictionaryId: word.dictionaryId,
+      sourceLanguage: word.dictionary.targetLanguage,
+      targetLanguage: word.dictionary.baseLanguage
     });
 
     res.json({ message: 'Definition added successfully', definitionId: newDefinition.id });

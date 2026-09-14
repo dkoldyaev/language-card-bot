@@ -33,7 +33,9 @@ appEvents.on(Events.DEFINITION_ADDED, async (payload: DefinitionAddedPayload) =>
       username,
       wordId,
       wordText,
-      totalDefinitions
+      totalDefinitions,
+      payload.sourceLanguage,
+      payload.targetLanguage
     );
   } catch (error) {
     console.error('Error in DEFINITION_ADDED listener (BullMQ):', error);

@@ -13,6 +13,13 @@
     "test:e2e": "npm run --prefix base test:e2e && npm run --prefix frontend test:e2e",
     "preset:list": "npm run --prefix base presets:list --",
     "preset:create": "npm run --prefix base preset:create --",
-    "dokploy:configure-dev": "npx --prefix base tsx scripts/configure-dokploy-dev.ts"
+    "dokploy:configure-dev": "npx --prefix base tsx scripts/configure-dokploy-dev.ts",
+    "docker:up": "docker compose up --build",
+    "docker:up:d": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:ps": "docker compose ps",
+    "docker:logs:app": "docker compose logs app",
+    "docker:logs:db": "docker compose logs db_test",
+    "db:profile": "npm run --prefix base db:profile"
   }
 }

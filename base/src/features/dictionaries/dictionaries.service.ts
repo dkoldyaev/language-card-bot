@@ -4,21 +4,18 @@ import { CreateDictionaryRequest, UpdateDictionaryRequest, DictionaryItemDto } f
 export async function ensureActiveDictionary(userId: number) {
   let userState = await prisma.userState.findUnique({
     where: { userId },
+    include: { activeDictionary: true },
   });
 
   if (!userState) {
     userState = await prisma.userState.create({
       data: { userId },
+      include: { activeDictionary: true },
     });
   }
 
-  if (userState.activeDictionaryId) {
-    const existing = await prisma.dictionary.findFirst({
-      where: { id: userState.activeDictionaryId, userId },
-    });
-    if (existing) {
-      return existing;
-    }
+  if (userState.activeDictionary && userState.activeDictionary.userId === userId) {
+    return userState.activeDictionary;
   }
 
   // Look for any existing dictionary for user

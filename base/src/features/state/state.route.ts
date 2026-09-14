@@ -13,15 +13,22 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
   const { id: userId, username } = getAuthUser(req);
 
   try {
-    const userState = await getUserState(userId);
+    const userState = await prisma.userState.findUnique({
+      where: { userId },
+      include: {
+        activeDictionary: true,
+        currentWord: true,
+        currentDefinition: {
+          include: { translation: true },
+        },
+      },
+    });
 
     if (!userState) {
       return res.status(404).json({ error: 'User state not found' });
     }
 
-    const dict = userState.activeDictionaryId
-      ? await prisma.dictionary.findUnique({ where: { id: userState.activeDictionaryId } })
-      : null;
+    const dict = userState.activeDictionary;
 
     const payload: StateSyncMercureEvent = {
       version: 'v1',
@@ -34,30 +41,16 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
         baseLanguage: dict.baseLanguage,
       } : null,
       currentWordId: userState.currentWordId,
+      currentWord: userState.currentWord ? { id: userState.currentWord.id, text: userState.currentWord.text } : undefined,
       showVariants: userState.showVariants,
       showDefinitionTranslation: userState.showDefinitionTranslation,
-      currentDefinitionId: userState.currentDefinitionId
+      currentDefinitionId: userState.currentDefinitionId,
+      currentDefinition: userState.currentDefinition ? {
+        id: userState.currentDefinition.id,
+        text: userState.currentDefinition.text,
+        translation: userState.currentDefinition.translation?.text || null,
+      } : undefined,
     };
-
-    if (userState.currentWordId) {
-      const word = await prisma.word.findUnique({ where: { id: userState.currentWordId } });
-      if (word) {
-        payload.currentWord = { id: word.id, text: word.text };
-      }
-    }
-    if (userState.currentDefinitionId) {
-      const definition = await prisma.definition.findUnique({
-        where: { id: userState.currentDefinitionId },
-        include: { translation: true }
-      });
-      if (definition) {
-        payload.currentDefinition = {
-          id: definition.id,
-          text: definition.text,
-          translation: definition.translation?.text || null
-        };
-      }
-    }
 
     try {
       await publishEvent(username, payload);

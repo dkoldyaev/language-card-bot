@@ -56,7 +56,9 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
       username,
       definition.word.id,
       definition.word.text,
-      totalDefinitions
+      totalDefinitions,
+      definition.word.dictionary.targetLanguage,
+      definition.word.dictionary.baseLanguage
     );
 
     res.json({ message: 'Definition edited successfully' });

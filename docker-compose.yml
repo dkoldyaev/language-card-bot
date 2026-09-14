@@ -24,6 +24,7 @@ services:
       - LLM_API_URL=${BASE_LLM_API_URL}
       - LLM_PROVIDER=${BASE_LLM_PROVIDER}
       - LLM_MODEL=${BASE_LLM_MODEL}
+      - ENABLE_DB_LOGGING=${BASE_ENABLE_DB_LOGGING}
     depends_on:
       - db_test
       - redis_test

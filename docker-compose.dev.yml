@@ -19,6 +19,7 @@ services:
       - LLM_API_URL=http://llm:3003/api/v1/generate
       - LLM_PROVIDER=${BASE_LLM_PROVIDER}
       - LLM_MODEL=${BASE_LLM_MODEL}
+      - ENABLE_DB_LOGGING=${BASE_ENABLE_DB_LOGGING}
     depends_on:
       - db_test
       - redis_test
@@ -35,10 +36,20 @@ services:
 
   db_test:
     image: postgres:15-alpine
+    command:
+      - sh
+      - -c
+      - |
+        if [ "$$ENABLE_DB_LOGGING" = "true" ]; then
+          exec docker-entrypoint.sh postgres -c log_min_duration_statement=0 -c "log_line_prefix=%m [%p] "
+        else
+          exec docker-entrypoint.sh postgres
+        fi
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-testuser}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-testpass}
       POSTGRES_DB: ${POSTGRES_DB:-english_card_bot_test}
+      ENABLE_DB_LOGGING: ${BASE_ENABLE_DB_LOGGING}
     volumes:
       - db_test_data:/var/lib/postgresql/data
     healthcheck:

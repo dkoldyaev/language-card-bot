@@ -15,7 +15,11 @@
     "users:make-regular": "tsx scripts/manage-users.ts make-regular",
     "users:revoke-admin": "tsx scripts/manage-users.ts make-regular",
     "presets:list": "tsx scripts/presets-list.ts",
-    "preset:create": "tsx scripts/preset-create.ts"
+    "preset:create": "tsx scripts/preset-create.ts",
+    "db:profile": "tsx scripts/profile-queries.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:migrate": "prisma migrate dev"
   },
   "keywords": [],
   "author": "",

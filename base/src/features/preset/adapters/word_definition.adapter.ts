@@ -21,26 +21,31 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
     let wordsCount = 0;
     let definitionsCount = 0;
 
+    const wordsTexts = items.map((item) => item.word.trim().toLowerCase());
+    const existingWordsList = await prisma.word.findMany({
+      where: {
+        dictionaryId,
+        text: { in: wordsTexts },
+      },
+      include: {
+        definitions: {
+          include: {
+            presets: { select: { id: true } },
+          },
+        },
+        presets: { select: { id: true } },
+      },
+    });
+    const existingWordsMap = new Map<string, (typeof existingWordsList)[0]>();
+    for (const w of existingWordsList) {
+      existingWordsMap.set(w.text, w);
+    }
+
     for (const item of items) {
       const wordText = item.word.trim().toLowerCase();
 
       // Find or create word in this dictionary
-      let word = await prisma.word.findUnique({
-        where: {
-          dictionaryId_text: {
-            dictionaryId,
-            text: wordText,
-          },
-        },
-        include: {
-          definitions: {
-            include: {
-              presets: { select: { id: true } },
-            },
-          },
-          presets: { select: { id: true } },
-        },
-      });
+      let word = existingWordsMap.get(wordText);
 
       let isNewWord = false;
       if (!word) {
@@ -61,6 +66,7 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
             presets: { select: { id: true } },
           },
         });
+        existingWordsMap.set(wordText, word);
         isNewWord = true;
         wordsCount++;
 
