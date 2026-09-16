@@ -3,6 +3,7 @@ import request from 'supertest';
 import app from '../index';
 import { TranslatorFactory } from '../core/TranslatorFactory';
 import { ITranslator } from '../core/ITranslator';
+import { redisClient } from '../core/cache';
 
 // Mock the TranslatorFactory
 vi.mock('../core/TranslatorFactory', () => ({
@@ -30,7 +31,7 @@ describe('POST /api/v1/translate', () => {
       .send({
         sourceLanguage: 'en',
         // targetLanguage missing
-        text: 'Hello world',
+        texts: ['Hello world'],
         translatorApp: 'mock',
       });
 
@@ -39,9 +40,23 @@ describe('POST /api/v1/translate', () => {
     expect(response.body.details).toBeDefined();
   });
 
-  it('should successfully translate text using mock translator directly via API', async () => {
+  it('should return 400 when texts is empty array', async () => {
+    const response = await request(app)
+      .post('/api/v1/translate')
+      .send({
+        sourceLanguage: 'en',
+        targetLanguage: 'ru',
+        texts: [],
+        translatorApp: 'mock',
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Invalid request data');
+  });
+
+  it('should successfully translate texts array using mock translator', async () => {
     const mockTranslator: ITranslator = {
-      translate: vi.fn().mockResolvedValue('[MOCK: en -> ru] Hello world'),
+      translate: vi.fn().mockResolvedValue(['[MOCK: en -> ru] Cat', '[MOCK: en -> ru] Dog']),
     };
     vi.mocked(TranslatorFactory.getTranslator).mockReturnValue(mockTranslator);
 
@@ -50,22 +65,30 @@ describe('POST /api/v1/translate', () => {
       .send({
         sourceLanguage: 'en',
         targetLanguage: 'ru',
-        text: 'Hello world',
+        texts: ['Cat', 'Dog'],
         translatorApp: 'mock',
       });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      translatedText: '[MOCK: en -> ru] Hello world',
+      translations: ['[MOCK: en -> ru] Cat', '[MOCK: en -> ru] Dog'],
     });
 
     expect(TranslatorFactory.getTranslator).toHaveBeenCalledWith('mock');
-    expect(mockTranslator.translate).toHaveBeenCalledWith('Hello world', 'en', 'ru');
+    expect(mockTranslator.translate).toHaveBeenCalledWith(['Cat', 'Dog'], 'en', 'ru');
+    expect(redisClient.set).toHaveBeenCalledTimes(2);
   });
 
-  it('should call google adapter when specified and return mocked results', async () => {
+  it('should use cached translations and only translate uncached texts', async () => {
+    vi.mocked(redisClient.get).mockImplementation(async (key: string) => {
+      if (key.includes('Cat')) {
+        return 'Кот';
+      }
+      return null;
+    });
+
     const googleMock: ITranslator = {
-      translate: vi.fn().mockResolvedValue('Привет мир'),
+      translate: vi.fn().mockResolvedValue(['Собака']),
     };
     vi.mocked(TranslatorFactory.getTranslator).mockReturnValue(googleMock);
 
@@ -74,16 +97,17 @@ describe('POST /api/v1/translate', () => {
       .send({
         sourceLanguage: 'en',
         targetLanguage: 'ru',
-        text: 'Hello world',
+        texts: ['Cat', 'Dog'],
         translatorApp: 'googletranslate',
       });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      translatedText: 'Привет мир',
+      translations: ['Кот', 'Собака'],
     });
 
     expect(TranslatorFactory.getTranslator).toHaveBeenCalledWith('googletranslate');
-    expect(googleMock.translate).toHaveBeenCalledWith('Hello world', 'en', 'ru');
+    expect(googleMock.translate).toHaveBeenCalledWith(['Dog'], 'en', 'ru');
+    expect(redisClient.set).toHaveBeenCalledTimes(1);
   });
 });

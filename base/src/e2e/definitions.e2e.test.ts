@@ -52,7 +52,7 @@ describe('Definitions E2E', () => {
     const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (url, options) => {
       const urlStr = url.toString();
       if (urlStr.includes('translate')) {
-        return new Response(JSON.stringify({ translatedText: 'mocked_translation' }), {
+        return new Response(JSON.stringify({ translations: ['mocked_translation'] }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
@@ -93,6 +93,20 @@ describe('Definitions E2E', () => {
 
     definition = await prisma.definition.findUnique({ where: { id: defId } });
     expect(definition?.text).toBe('A round fruit');
+
+    const waitForCondition = async (condition: () => boolean, timeout = 5000) => {
+      const start = Date.now();
+      while (!condition()) {
+        if (Date.now() - start > timeout) {
+          throw new Error('Timeout waiting for condition');
+        }
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    };
+
+    await waitForCondition(() =>
+      messages.some(m => m.type === 'definition_translate_loaded')
+    );
 
     // 3. Edit Translation
     const transEditRes = await request(app)

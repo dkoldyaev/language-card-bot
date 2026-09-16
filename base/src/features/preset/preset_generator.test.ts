@@ -7,6 +7,7 @@ import {
   fetchWordsFromLLM,
   fetchDefinitionsFromDefiner,
   filterDefinitionsWithLLM,
+  filterDefinitionsBatchWithLLM,
 } from './preset_generator.service';
 
 vi.mock('../../prisma');
@@ -108,25 +109,6 @@ describe('Preset Generator Service', () => {
       expect(calledBody.prompt).toContain('Mask the target word');
     });
 
-    it('should mask word even if LLM returned unmasked definition', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          data: {
-            filteredDefinitions: ['A hot dog is tasty'],
-          },
-        }),
-      } as any);
-
-      const filtered = await filterDefinitionsWithLLM({
-        language: 'en',
-        word: 'dog',
-        definitions: ['A hot dog is tasty'],
-        level: 'B2',
-      });
-
-      expect(filtered).toEqual(['A hot *** is tasty']);
-    });
 
     it('should return empty array if no definitions provided', async () => {
       const filtered = await filterDefinitionsWithLLM({
@@ -137,6 +119,49 @@ describe('Preset Generator Service', () => {
       });
 
       expect(filtered).toEqual([]);
+    });
+  });
+
+  describe('filterDefinitionsBatchWithLLM', () => {
+    it('should call LLM to batch filter definitions for multiple words and mask target words', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: {
+            results: [
+              { word: 'dog', filteredDefinitions: ['A hot *** is a sausage in a bun'] },
+              { word: 'apple', filteredDefinitions: ['A red edible fruit'] },
+            ],
+          },
+        }),
+      } as any);
+
+      const results = await filterDefinitionsBatchWithLLM({
+        language: 'en',
+        level: 'B2',
+        items: [
+          { word: 'dog', definitions: ['A hot dog is a sausage in a bun'] },
+          { word: 'apple', definitions: ['A red edible fruit', 'A tech company'] },
+        ],
+      });
+
+      expect(results).toEqual([
+        { word: 'dog', filteredDefinitions: ['A hot *** is a sausage in a bun'] },
+        { word: 'apple', filteredDefinitions: ['A red edible fruit'] },
+      ]);
+      const calledBody = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1] as any).body);
+      expect(calledBody.prompt).toContain('strictly "B2"');
+      expect(calledBody.prompt).toContain('Mask the target word');
+    });
+
+
+    it('should return empty array if no valid items provided', async () => {
+      const results = await filterDefinitionsBatchWithLLM({
+        language: 'en',
+        items: [{ word: 'apple', definitions: [] }],
+      });
+
+      expect(results).toEqual([]);
     });
   });
 
@@ -204,7 +229,12 @@ describe('Preset Generator Service', () => {
           return {
             ok: true,
             json: async () => ({
-              data: { filteredDefinitions: ['Filtered definition'] },
+              data: {
+                results: [
+                  { word: 'water', filteredDefinitions: ['Filtered definition'] },
+                  { word: 'apple', filteredDefinitions: ['Filtered definition'] },
+                ],
+              },
             }),
           };
         }
@@ -285,12 +315,20 @@ describe('Preset Generator Service', () => {
           if (body.prompt.includes('difficult_word')) {
             return {
               ok: true,
-              json: async () => ({ data: { filteredDefinitions: [] } }),
+              json: async () => ({
+                data: {
+                  results: [{ word: 'difficult_word', filteredDefinitions: [] }],
+                },
+              }),
             };
           }
           return {
             ok: true,
-            json: async () => ({ data: { filteredDefinitions: ['Simple definition'] } }),
+            json: async () => ({
+              data: {
+                results: [{ word: 'simple_word', filteredDefinitions: ['Simple definition'] }],
+              },
+            }),
           };
         }
 
@@ -366,15 +404,22 @@ describe('Preset Generator Service', () => {
         }
 
         if (body.prompt && body.prompt.includes('evaluate the following definitions')) {
-          if (body.prompt.includes('apple')) {
-            return { ok: true, json: async () => ({ data: { filteredDefinitions: ['definition 1'] } }) };
-          }
+          const results: any[] = [];
           if (body.prompt.includes('banana')) {
-            return { ok: true, json: async () => ({ data: { filteredDefinitions: ['yellow fruit'] } }) };
+            results.push({ word: 'banana', filteredDefinitions: ['yellow fruit'] });
           }
           if (body.prompt.includes('orange')) {
-            return { ok: true, json: async () => ({ data: { filteredDefinitions: ['orange fruit'] } }) };
+            results.push({ word: 'orange', filteredDefinitions: ['orange fruit'] });
           }
+          if (body.prompt.includes('apple')) {
+            results.push({ word: 'apple', filteredDefinitions: ['definition 1'] });
+          }
+          return {
+            ok: true,
+            json: async () => ({
+              data: { results },
+            }),
+          };
         }
 
         return { ok: true, json: async () => ({ data: {} }) };
@@ -407,7 +452,7 @@ describe('Preset Generator Service', () => {
           body: [
             { word: 'apple', definitions: ['definition 1'] },
             { word: 'banana', definitions: ['yellow fruit'] },
-            { word: 'orange', definitions: ['*** fruit'] },
+            { word: 'orange', definitions: ['orange fruit'] },
           ],
         },
       });
@@ -435,7 +480,14 @@ describe('Preset Generator Service', () => {
           return { ok: true, json: async () => ({ definitions: ['A pizza is delicious Italian dish'] }) };
         }
         if (body.prompt && body.prompt.includes('evaluate the following definitions')) {
-          return { ok: true, json: async () => ({ data: { filteredDefinitions: ['A *** is delicious Italian dish'] } }) };
+          return {
+            ok: true,
+            json: async () => ({
+              data: {
+                results: [{ word: 'pizza', filteredDefinitions: ['A *** is delicious Italian dish'] }],
+              },
+            }),
+          };
         }
         return { ok: true, json: async () => ({ data: {} }) };
       });

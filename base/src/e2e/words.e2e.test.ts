@@ -48,7 +48,7 @@ describe('Words E2E', () => {
         });
       }
       if (urlStr.includes('translate')) {
-        return new Response(JSON.stringify({ translatedText: 'mocked_translation' }), {
+        return new Response(JSON.stringify({ translations: ['mocked_translation'] }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });

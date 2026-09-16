@@ -119,6 +119,104 @@ export async function fetchWordsFromLLM(options: {
     .filter((w: string) => w.length > 0);
 }
 
+export interface WordDefinitionsItem {
+  word: string;
+  definitions: string[];
+}
+
+export interface FilterDefinitionsBatchOptions {
+  language: string;
+  items: WordDefinitionsItem[];
+  level?: string;
+}
+
+export interface FilteredWordResult {
+  word: string;
+  filteredDefinitions: string[];
+}
+
+export async function filterDefinitionsBatchWithLLM(
+  options: FilterDefinitionsBatchOptions
+): Promise<FilteredWordResult[]> {
+  const { language, items, level } = options;
+  const validItems = items.filter(
+    (item) => item.definitions.length > 0 && item.word.trim().length > 0
+  );
+  if (validItems.length === 0) return [];
+
+  let prompt = `You are an expert language teacher and lexicographer.\n`;
+  prompt += `Language: "${language}"\n`;
+  if (level) {
+    prompt += `Target CEFR proficiency level: strictly "${level}".\n`;
+  }
+  prompt += `evaluate the following definitions for the words:\n${JSON.stringify(validItems, null, 2)}\n\n`;
+  prompt += `Tasks:\n`;
+  if (level) {
+    prompt += `1. Filter: For each word, keep ONLY definitions that strictly match CEFR level "${level}". Do NOT keep definitions belonging to lower levels (such as A1, A2, B1) or higher levels (such as C1, C2).\n`;
+  } else {
+    prompt += `1. Filter: For each word, keep the valid definitions for the target word.\n`;
+  }
+  prompt += `2. Mask the target word: In the text of each kept definition, you MUST replace any occurrence of that specific target word (case-insensitive, including compound expressions like "hot dog" -> "hot ***", inflections, and plurals) with three asterisks: "***". Do not reveal the target word itself in the definition text.\n\n`;
+  prompt += `Return a JSON object with a "results" array where each object has "word" and "filteredDefinitions". If no definitions match for a word, return an empty array for that word.`;
+
+  const jsonFormat = {
+    type: 'object',
+    properties: {
+      results: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            word: { type: 'string' },
+            filteredDefinitions: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'List of definitions strictly matching the level with the target word replaced by ***',
+            },
+          },
+          required: ['word', 'filteredDefinitions'],
+        },
+      },
+    },
+    required: ['results'],
+  };
+
+  const data = await callLlmGenerate(prompt, jsonFormat);
+
+  let rawResults: any[] = [];
+  if (Array.isArray(data?.results)) {
+    rawResults = data.results;
+  } else if (Array.isArray(data?.filteredDefinitions) && validItems.length === 1) {
+    rawResults = [{ word: validItems[0].word, filteredDefinitions: data.filteredDefinitions }];
+  } else if (Array.isArray(data?.definitions) && validItems.length === 1) {
+    rawResults = [{ word: validItems[0].word, filteredDefinitions: data.definitions }];
+  }
+
+  const resultMap = new Map<string, string[]>();
+  for (const res of rawResults) {
+    if (res && typeof res.word === 'string') {
+      const defs = Array.isArray(res.filteredDefinitions)
+        ? res.filteredDefinitions
+        : Array.isArray(res.definitions)
+        ? res.definitions
+        : [];
+      resultMap.set(res.word.trim().toLowerCase(), defs);
+    }
+  }
+
+  return validItems.map((item) => {
+    const rawDefs = resultMap.get(item.word.trim().toLowerCase()) ?? [];
+
+    const filteredDefinitions = rawDefs
+      .filter((d: string) => d.length > 0);
+
+    return {
+      word: item.word,
+      filteredDefinitions,
+    };
+  });
+}
+
 export async function filterDefinitionsWithLLM(options: {
   language: string;
   word: string;
@@ -128,45 +226,13 @@ export async function filterDefinitionsWithLLM(options: {
   const { language, word, definitions, level } = options;
   if (definitions.length === 0) return [];
 
-  let prompt = `You are an expert language teacher and lexicographer.\n`;
-  prompt += `Target word: "${word}"\nLanguage: "${language}"\n`;
-  if (level) {
-    prompt += `Target CEFR proficiency level: strictly "${level}".\n`;
-  }
-  prompt += `evaluate the following definitions for the word "${word}":\n${JSON.stringify(definitions, null, 2)}\n\n`;
-  prompt += `Tasks:\n`;
-  if (level) {
-    prompt += `1. Filter: Keep ONLY definitions that strictly match CEFR level "${level}". Do NOT keep definitions belonging to lower levels (such as A1, A2, B1) or higher levels (such as C1, C2).\n`;
-  } else {
-    prompt += `1. Filter: Keep the valid definitions for the target word.\n`;
-  }
-  prompt += `2. Mask the target word: In the text of each kept definition, you MUST replace any occurrence of the target word "${word}" (case-insensitive, including compound expressions like "hot dog" -> "hot ***", inflections, and plurals) with three asterisks: "***". Do not reveal the target word itself in the definition text.\n\n`;
-  prompt += `Return a JSON object with the list of processed definitions under the key "filteredDefinitions".`;
+  const results = await filterDefinitionsBatchWithLLM({
+    language,
+    level,
+    items: [{ word, definitions }],
+  });
 
-  const jsonFormat = {
-    type: 'object',
-    properties: {
-      filteredDefinitions: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'List of definitions strictly matching the level with the target word replaced by ***',
-      },
-    },
-    required: ['filteredDefinitions'],
-  };
-
-  const data = await callLlmGenerate(prompt, jsonFormat);
-  const filtered = Array.isArray(data?.filteredDefinitions)
-    ? data.filteredDefinitions
-    : (Array.isArray(data?.definitions) ? data.definitions : []);
-
-  // Safety net: ensure any literal occurrence of `word` that LLM might have missed is replaced with ***
-  const escaped = word.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const wordRegex = new RegExp(`(?<=^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`, 'gui');
-
-  return filtered
-    .map((d: any) => String(d).trim().replace(wordRegex, '***'))
-    .filter((d: string) => d.length > 0);
+  return results[0]?.filteredDefinitions ?? [];
 }
 
 export async function generatePreset(options: GeneratePresetOptions): Promise<PresetDto> {
@@ -260,7 +326,10 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
 
       for (const word of wordsFromLlm) {
         globalExcludedWords.add(word);
+      }
 
+      const candidateBatch: WordDefinitionsItem[] = [];
+      for (const word of wordsFromLlm) {
         log(`[${levelLabel}] Fetching definitions for word "${word}"...`);
         const rawDefinitions = await fetchDefinitionsFromDefiner(word, language);
 
@@ -269,42 +338,50 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
           continue;
         }
 
-        // 3. Filter definitions strictly for current level and mask target word with ***
-        log(`[${levelLabel}] Filtering definitions for "${word}" strictly for level ${level || 'general'} and masking target word...`);
-        const filteredDefs = await filterDefinitionsWithLLM({
+        candidateBatch.push({ word, definitions: rawDefinitions });
+      }
+
+      if (candidateBatch.length > 0) {
+        log(
+          `[${levelLabel}] Batch filtering definitions for ${candidateBatch.length} word(s) strictly for level ${
+            level ?? 'general'
+          } and masking target words...`
+        );
+        const batchResults = await filterDefinitionsBatchWithLLM({
           language,
-          word,
-          definitions: rawDefinitions,
           level,
+          items: candidateBatch,
         });
 
-        // 4. If no definitions left after filtering, discard word
-        if (!filteredDefs || filteredDefs.length === 0) {
-          log(`[${levelLabel}] No definitions remaining after filtering for "${word}". Discarding.`);
-          continue;
-        }
-
-        // 5 & 6. If presetId was given and word already in preset, check for new definitions
-        if (options.presetId && existingWordMap.has(word)) {
-          const existingDefsSet = existingWordMap.get(word)!;
-          const newDefs = filteredDefs.filter((d) => !existingDefsSet.has(d.trim().toLowerCase()));
-
-          if (newDefs.length === 0) {
-            log(`[${levelLabel}] Word "${word}" already in preset #${options.presetId} with no new definitions. Discarding.`);
+        for (const { word, filteredDefinitions: filteredDefs } of batchResults) {
+          // 4. If no definitions left after filtering, discard word
+          if (!filteredDefs || filteredDefs.length === 0) {
+            log(`[${levelLabel}] No definitions remaining after filtering for "${word}". Discarding.`);
             continue;
           }
 
-          log(`[${levelLabel}] Word "${word}" has ${newDefs.length} new definition(s). Keeping.`);
-          levelCollectedWords.set(word, newDefs);
-        } else {
-          log(`[${levelLabel}] Word "${word}" accepted with ${filteredDefs.length} definition(s).`);
-          levelCollectedWords.set(word, filteredDefs);
-        }
+          // 5 & 6. If presetId was given and word already in preset, check for new definitions
+          if (options.presetId && existingWordMap.has(word)) {
+            const existingDefsSet = existingWordMap.get(word)!;
+            const newDefs = filteredDefs.filter((d) => !existingDefsSet.has(d.trim().toLowerCase()));
 
-        log(`[${levelLabel}] Progress: ${levelCollectedWords.size}/${wordsCount} words collected.`);
+            if (newDefs.length === 0) {
+              log(`[${levelLabel}] Word "${word}" already in preset #${options.presetId} with no new definitions. Discarding.`);
+              continue;
+            }
 
-        if (levelCollectedWords.size >= wordsCount) {
-          break;
+            log(`[${levelLabel}] Word "${word}" has ${newDefs.length} new definition(s). Keeping.`);
+            levelCollectedWords.set(word, newDefs);
+          } else {
+            log(`[${levelLabel}] Word "${word}" accepted with ${filteredDefs.length} definition(s).`);
+            levelCollectedWords.set(word, filteredDefs);
+          }
+
+          log(`[${levelLabel}] Progress: ${levelCollectedWords.size}/${wordsCount} words collected.`);
+
+          if (levelCollectedWords.size >= wordsCount) {
+            break;
+          }
         }
       }
     }

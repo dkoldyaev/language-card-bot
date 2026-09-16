@@ -30,6 +30,9 @@ export async function setupAdminUser(username: string): Promise<{ token: string,
 export async function setupTestUser(username: string): Promise<{ token: string, user: any, dictionary: any }> {
   await request(app).post('/api/v1/auth/register').send({ username });
   const loginRes = await request(app).post('/api/v1/auth/login').send({ username });
+  if (!loginRes.body?.token) {
+    throw new Error(`Failed to login test user ${username}: status=${loginRes.status}, body=${JSON.stringify(loginRes.body)}`);
+  }
   
   const email = username.includes('@') ? username : `${username}@test.local`;
   const userInDb = await prisma.user.findFirst({

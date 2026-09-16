@@ -15,21 +15,32 @@ export class LLMAdapter implements ITranslator {
   constructor(options: LLMAdapterOptions = {}) {
     this.provider = options.provider || env.LLM_PROVIDER;
     this.model = options.model || env.LLM_MODEL;
-    this.llmServiceUrl = options.llmServiceUrl || env.LLM_SERVICE_URL || 'http://llm:3003/api/v1/generate';
+    const url = options.llmServiceUrl || env.LLM_SERVICE_URL;
+    if (!url) {
+      throw new Error('LLM_SERVICE_URL is required for LLMAdapter');
+    }
+    this.llmServiceUrl = url;
   }
 
-  async translate(text: string, sourceLang: string, targetLang: string): Promise<string> {
-    const prompt = `Please translate the following text from "${sourceLang}" into "${targetLang}". Return only the translation without explanations.\n\nText:\n"${text}"`;
+  async translate(texts: string[], sourceLang: string, targetLang: string): Promise<string[]> {
+    if (texts.length === 0) {
+      return [];
+    }
+
+    const prompt = `Please translate the following array of texts from "${sourceLang}" into "${targetLang}". Return only the translations in the exact same order as the input array, without explanations.\n\nTexts:\n${JSON.stringify(texts, null, 2)}`;
 
     const jsonFormat = {
       type: 'object',
       properties: {
-        translatedText: {
-          type: 'string',
-          description: 'The translated text in the target language',
+        translations: {
+          type: 'array',
+          items: {
+            type: 'string',
+          },
+          description: 'The translated texts in the target language in the exact same order',
         },
       },
-      required: ['translatedText'],
+      required: ['translations'],
     };
 
     const response = await fetch(this.llmServiceUrl, {
@@ -52,18 +63,18 @@ export class LLMAdapter implements ITranslator {
 
     const data = (await response.json()) as {
       data?: {
-        translatedText?: string;
-        translation?: string;
+        translations?: string[];
+        translatedTexts?: string[];
       };
     };
 
-    const result = data?.data?.translatedText ?? data?.data?.translation;
+    const result = data?.data?.translations ?? data?.data?.translatedTexts;
 
-    if (typeof result !== 'string') {
-      throw new Error('Unexpected response format from LLM service');
+    if (!Array.isArray(result)) {
+      throw new Error('Unexpected response format from LLM service: missing translations array');
     }
 
-    return result.trim();
+    return result.map((t) => String(t).trim());
   }
 }
 

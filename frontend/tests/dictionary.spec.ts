@@ -119,6 +119,8 @@ test.describe('Dictionary Operations', () => {
     await page.click('button:has-text("New Dictionary")');
     await expect(page.locator('h2:has-text("Create New Dictionary")')).toBeVisible();
 
+    await page.getByLabel(/Language to Learn|Target/i).click();
+    await page.locator('li[data-value="es"]').click();
     await page.fill('input[name="name"], input[placeholder*="Spanish"], input[type="text"]:visible >> nth=0', 'Spanish Vocab');
     await page.click('button:has-text("Create Dictionary")');
 

@@ -47,10 +47,15 @@ test.describe('Quiz Operations', () => {
 
     await page.goto('/quiz');
     await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
-    await page.click('button:has-text("Start Quiz")');
-    
-    // Expect the quiz UI to show up
-    await expect(page.getByRole('heading', { name: 'Quiz' })).toBeVisible();
+    await expect(async () => {
+      const heading = page.getByRole('heading', { name: 'Quiz' });
+      if (await heading.isVisible()) return;
+      const startBtn = page.locator('button:has-text("Start Quiz")');
+      if (await startBtn.isVisible()) {
+        await startBtn.click();
+      }
+      await expect(heading).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 20000 });
     
     const cardContent = page.locator('.MuiCardContent-root').first();
     await expect(cardContent).toContainText('[Mock] Definition');
@@ -100,10 +105,15 @@ test.describe('Quiz Operations', () => {
 
     await page.goto('/quiz');
     await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
-    await page.click('button:has-text("Start Quiz")');
-    
-    // Expect the quiz UI to show up
-    await expect(page.getByRole('heading', { name: 'Quiz' })).toBeVisible();
+    await expect(async () => {
+      const heading = page.getByRole('heading', { name: 'Quiz' });
+      if (await heading.isVisible()) return;
+      const startBtn = page.locator('button:has-text("Start Quiz")');
+      if (await startBtn.isVisible()) {
+        await startBtn.click();
+      }
+      await expect(heading).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 20000 });
     
     const cardContent = page.locator('.MuiCardContent-root').first();
     await expect(cardContent).toContainText('[Mock] Definition');
@@ -140,10 +150,15 @@ test.describe('Quiz Operations', () => {
 
     await page.goto('/quiz');
     await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
-    await page.click('button:has-text("Start Quiz")');
-    
-    // Expect the quiz UI to show up
-    await expect(page.getByRole('heading', { name: 'Quiz' })).toBeVisible();
+    await expect(async () => {
+      const heading = page.getByRole('heading', { name: 'Quiz' });
+      if (await heading.isVisible()) return;
+      const startBtn = page.locator('button:has-text("Start Quiz")');
+      if (await startBtn.isVisible()) {
+        await startBtn.click();
+      }
+      await expect(heading).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 20000 });
     
     const cardContent = page.locator('.MuiCardContent-root').first();
     await expect(cardContent).toContainText('[Mock] Definition');

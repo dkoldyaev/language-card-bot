@@ -89,6 +89,26 @@ export class MockProvider implements ILLMProvider {
       };
     }
 
+    // If schema specifies translations array, return translations array
+    if (formatStr.includes('translations')) {
+      const match = options.prompt.match(/Texts:\s*\n(\[[\s\S]*?\])/i) || options.prompt.match(/(\[[\s\S]*?\])/);
+      if (match) {
+        try {
+          const parsed = JSON.parse(match[1]);
+          if (Array.isArray(parsed)) {
+            return {
+              translations: parsed.map((t: any) => `[Mock LLM: ${options.model}] ${String(t)}`),
+            };
+          }
+        } catch {
+          // fallback
+        }
+      }
+      return {
+        translations: [`[Mock LLM: ${options.model}] Translation`],
+      };
+    }
+
     // If schema specifies translatedText or translation, return translated text
     if (formatStr.includes('translatedText') || formatStr.includes('translation')) {
       const match = options.prompt.match(/Text:\s*\n"([^"]+)"/) || options.prompt.match(/"([^"]+)"/);

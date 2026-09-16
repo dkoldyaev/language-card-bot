@@ -1,5 +1,4 @@
 import { ITranslator } from '../core/ITranslator';
-
 import { env } from '../core/env';
 
 export class GoogleTranslator implements ITranslator {
@@ -9,7 +8,11 @@ export class GoogleTranslator implements ITranslator {
     this.apiKey = env.GOOGLE_TRANSLATE_API_KEY || '';
   }
 
-  async translate(text: string, sourceLang: string, targetLang: string): Promise<string> {
+  async translate(texts: string[], sourceLang: string, targetLang: string): Promise<string[]> {
+    if (texts.length === 0) {
+      return [];
+    }
+
     const url = `https://translation.googleapis.com/language/translate/v2?key=${this.apiKey}`;
     
     try {
@@ -19,7 +22,7 @@ export class GoogleTranslator implements ITranslator {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          q: text,
+          q: texts,
           source: sourceLang,
           target: targetLang,
           format: 'text'
@@ -32,7 +35,7 @@ export class GoogleTranslator implements ITranslator {
       }
 
       const data = await response.json();
-      return data.data.translations[0].translatedText;
+      return data.data.translations.map((item: any) => item.translatedText);
     } catch (error) {
       console.error('Error translating with Google API:', error);
       throw error;

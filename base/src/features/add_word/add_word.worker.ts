@@ -120,7 +120,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       body: JSON.stringify({
         sourceLanguage: srcLang,
         targetLanguage: tgtLang,
-        text: definitionText,
+        texts: [definitionText],
         translatorApp: env.TRANSLATOR_APP_TYPE
       })
     });
@@ -129,8 +129,8 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       throw new Error(`Translator API error for definition ${definitionId}: ${await translatorRes.text()}`);
     }
 
-    const translatorData = (await translatorRes.json()) as { translatedText: string };
-    const translatedText = translatorData.translatedText;
+    const translatorData = (await translatorRes.json()) as { translations: string[] };
+    const translatedText = translatorData.translations[0];
 
     // Save or update translation
     await prisma.definitionTranslation.upsert({

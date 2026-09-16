@@ -8,7 +8,7 @@ const router = Router();
 const TranslateRequestSchema = z.object({
   sourceLanguage: z.string().min(1, 'Source language is required'),
   targetLanguage: z.string().min(1, 'Target language is required'),
-  text: z.string().min(1, 'Text is required'),
+  texts: z.array(z.string().min(1)).min(1, 'Texts array must not be empty'),
   translatorApp: z.enum(['googletranslate', 'mock', 'laratranslate', 'llm', 'mistral', 'gemini'] as const),
 });
 
@@ -24,24 +24,47 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
       return;
     }
 
-    const { sourceLanguage, targetLanguage, text, translatorApp } = parseResult.data;
+    const { sourceLanguage, targetLanguage, texts, translatorApp } = parseResult.data;
 
-    const cacheKey = `translator:${translatorApp}:${sourceLanguage}:${targetLanguage}:${text}`;
-    const cachedResult = await redisClient.get(cacheKey);
+    // Check cache for each text
+    const cachedTranslations: Array<string | null> = await Promise.all(
+      texts.map((text) => {
+        const cacheKey = `translator:${translatorApp}:${sourceLanguage}:${targetLanguage}:${text}`;
+        return redisClient.get(cacheKey);
+      })
+    );
 
-    if (cachedResult) {
-      res.json({ translatedText: cachedResult });
-      return;
+    // Identify which texts need translation
+    const uncachedIndices: number[] = [];
+    const uncachedTexts: string[] = [];
+
+    cachedTranslations.forEach((cached, index) => {
+      if (cached === null) {
+        uncachedIndices.push(index);
+        uncachedTexts.push(texts[index]);
+      }
+    });
+
+    const finalTranslations: string[] = [...(cachedTranslations as string[])];
+
+    if (uncachedTexts.length > 0) {
+      const translator = TranslatorFactory.getTranslator(translatorApp);
+      const translatedBatch = await translator.translate(uncachedTexts, sourceLanguage, targetLanguage);
+
+      // Save to cache and place into finalTranslations
+      await Promise.all(
+        translatedBatch.map(async (translated, i) => {
+          const originalIndex = uncachedIndices[i];
+          finalTranslations[originalIndex] = translated;
+          const originalText = uncachedTexts[i];
+          const cacheKey = `translator:${translatorApp}:${sourceLanguage}:${targetLanguage}:${originalText}`;
+          await redisClient.set(cacheKey, translated, 'EX', 365 * 24 * 60 * 60);
+        })
+      );
     }
 
-    const translator = TranslatorFactory.getTranslator(translatorApp);
-    const result = await translator.translate(text, sourceLanguage, targetLanguage);
-
-    // Cache for 1 year
-    await redisClient.set(cacheKey, result, 'EX', 365 * 24 * 60 * 60);
-
     res.json({
-      translatedText: result,
+      translations: finalTranslations,
     });
   } catch (error) {
     next(error);
