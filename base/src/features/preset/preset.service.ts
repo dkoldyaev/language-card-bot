@@ -1,6 +1,14 @@
 import { prisma } from '../../prisma';
 import { CreatePresetInput, UpdatePresetInput, PresetDto } from './preset.type';
 import { getPresetAdapter } from './adapters';
+import { redisClient, invalidateKeysByPattern } from '../../core/cache';
+import { invalidateDashboardCache } from '../dashboard/dashboard.service';
+
+const PRESETS_CACHE_TTL_SECONDS = 3600;
+
+export async function invalidatePresetsCache(): Promise<void> {
+  await invalidateKeysByPattern('presets:*');
+}
 
 export function formatPreset(preset: any): PresetDto {
   return {
@@ -17,21 +25,48 @@ export function formatPreset(preset: any): PresetDto {
 }
 
 export async function listPresets(filters?: { forLanguage?: string }): Promise<PresetDto[]> {
+  const langKey = filters?.forLanguage ? filters.forLanguage.toLowerCase() : 'all';
+  const cacheKey = `presets:list:${langKey}`;
+  const cached = await redisClient.get(cacheKey);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch {
+      // ignore parse error
+    }
+  }
+
   const where = filters?.forLanguage ? { forLanguage: filters.forLanguage.toLowerCase() } : undefined;
   const presets = await prisma.preset.findMany({
     where,
     orderBy: { createdAt: 'desc' },
   });
 
-  return presets.map(formatPreset);
+  const result = presets.map(formatPreset);
+  await redisClient.set(cacheKey, JSON.stringify(result), 'EX', PRESETS_CACHE_TTL_SECONDS);
+  return result;
 }
 
 export async function getPresetById(id: number): Promise<PresetDto | null> {
+  const cacheKey = `presets:id:${id}`;
+  const cached = await redisClient.get(cacheKey);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch {
+      // ignore parse error
+    }
+  }
+
   const preset = await prisma.preset.findUnique({
     where: { id },
   });
 
-  return preset ? formatPreset(preset) : null;
+  const result = preset ? formatPreset(preset) : null;
+  if (result) {
+    await redisClient.set(cacheKey, JSON.stringify(result), 'EX', PRESETS_CACHE_TTL_SECONDS);
+  }
+  return result;
 }
 
 export async function createPreset(data: CreatePresetInput): Promise<PresetDto> {
@@ -47,6 +82,8 @@ export async function createPreset(data: CreatePresetInput): Promise<PresetDto> 
       body: data.body as any,
     },
   });
+
+  await invalidatePresetsCache();
 
   return formatPreset(preset);
 }
@@ -65,6 +102,8 @@ export async function updatePreset(id: number, data: UpdatePresetInput): Promise
     },
   });
 
+  await invalidatePresetsCache();
+
   return formatPreset(preset);
 }
 
@@ -72,6 +111,8 @@ export async function deletePreset(id: number): Promise<void> {
   await prisma.preset.delete({
     where: { id },
   });
+
+  await invalidatePresetsCache();
 }
 
 export async function applyPreset(userId: number, username: string, dictionaryId: number, presetId: number) {
@@ -110,6 +151,8 @@ export async function applyPreset(userId: number, username: string, dictionaryId
     dictionaryId,
     preset,
   });
+
+  await invalidateDashboardCache(userId, dictionaryId);
 
   return result;
 }

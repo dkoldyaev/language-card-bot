@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
+import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 
 const router = Router();
 
@@ -34,6 +35,8 @@ router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
     await prisma.definition.delete({
       where: { id: definitionId }
     });
+
+    await invalidateDashboardCache(userId, definition.word.dictionaryId);
 
     res.json({ message: 'Definition deleted successfully' });
   } catch (error) {

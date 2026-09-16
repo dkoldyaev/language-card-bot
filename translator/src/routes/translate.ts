@@ -26,13 +26,11 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
 
     const { sourceLanguage, targetLanguage, texts, translatorApp } = parseResult.data;
 
-    // Check cache for each text
-    const cachedTranslations: Array<string | null> = await Promise.all(
-      texts.map((text) => {
-        const cacheKey = `translator:${translatorApp}:${sourceLanguage}:${targetLanguage}:${text}`;
-        return redisClient.get(cacheKey);
-      })
+    // Check cache for all texts in batch using mget
+    const cacheKeys = texts.map(
+      (text) => `translator:${translatorApp}:${sourceLanguage}:${targetLanguage}:${text}`
     );
+    const cachedTranslations: Array<string | null> = await redisClient.mget(cacheKeys);
 
     // Identify which texts need translation
     const uncachedIndices: number[] = [];
@@ -51,16 +49,16 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
       const translator = TranslatorFactory.getTranslator(translatorApp);
       const translatedBatch = await translator.translate(uncachedTexts, sourceLanguage, targetLanguage);
 
-      // Save to cache and place into finalTranslations
-      await Promise.all(
-        translatedBatch.map(async (translated, i) => {
-          const originalIndex = uncachedIndices[i];
-          finalTranslations[originalIndex] = translated;
-          const originalText = uncachedTexts[i];
-          const cacheKey = `translator:${translatorApp}:${sourceLanguage}:${targetLanguage}:${originalText}`;
-          await redisClient.set(cacheKey, translated, 'EX', 365 * 24 * 60 * 60);
-        })
-      );
+      // Save to cache via Redis pipeline and place into finalTranslations
+      const pipeline = redisClient.pipeline();
+      translatedBatch.forEach((translated, i) => {
+        const originalIndex = uncachedIndices[i];
+        finalTranslations[originalIndex] = translated;
+        const originalText = uncachedTexts[i];
+        const cacheKey = `translator:${translatorApp}:${sourceLanguage}:${targetLanguage}:${originalText}`;
+        pipeline.set(cacheKey, translated, 'EX', 365 * 24 * 60 * 60);
+      });
+      await pipeline.exec();
     }
 
     res.json({

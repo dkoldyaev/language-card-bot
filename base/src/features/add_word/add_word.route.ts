@@ -7,6 +7,7 @@ import { publishEvent } from '../event_bus/event_bus.service';
 import { appEvents, Events } from '../../core/events';
 import { getAuthUser } from '../auth/auth.service';
 import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
+import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 
 const router = Router();
 
@@ -65,6 +66,8 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordRequest>, re
         text: wordText,
       },
     });
+
+    await invalidateDashboardCache(userId, targetDictionaryId);
 
     res.json({ message: 'Word added successfully' });
 

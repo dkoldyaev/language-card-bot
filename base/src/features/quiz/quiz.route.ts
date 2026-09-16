@@ -7,6 +7,7 @@ import { QuizCardMercureEvent, QuizVariantsMercureEvent, QuizDefinitionTranslati
 import { generateQuizCard, getQuizVariants, getNextDefinition } from './quiz.service';
 import { evaluateSuggestion } from './evaluation.service';
 import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
+import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 
 const router = Router();
 
@@ -156,6 +157,8 @@ router.post('/answer', authMiddleware, async (req: Request, res: Response) => {
         result,
       },
     });
+
+    await invalidateDashboardCache(user.id, word.dictionaryId);
 
     const event: QuizAnswerEvaluationMercureEvent = {
       version: 'v1',

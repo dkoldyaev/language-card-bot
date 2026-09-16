@@ -7,6 +7,7 @@ import { publishEvent } from '../event_bus/event_bus.service';
 import { appEvents, Events } from '../../core/events';
 import { getAuthUser } from '../auth/auth.service';
 import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
+import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 
 const router = Router();
 
@@ -96,6 +97,8 @@ router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordBatchRequest
     }
 
     if (createdWords.length > 0) {
+      await invalidateDashboardCache(userId, targetDictionaryId);
+
       appEvents.emit(Events.WORDS_LIST_ADDED, {
         userId,
         username,

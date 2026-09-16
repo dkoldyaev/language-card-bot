@@ -12,11 +12,18 @@ vi.mock('../core/TranslatorFactory', () => ({
   },
 }));
 
+const { mockPipeline } = vi.hoisted(() => ({
+  mockPipeline: {
+    set: vi.fn().mockReturnThis(),
+    exec: vi.fn().mockResolvedValue([]),
+  },
+}));
+
 // Mock Redis cache client
 vi.mock('../core/cache', () => ({
   redisClient: {
-    get: vi.fn().mockResolvedValue(null),
-    set: vi.fn().mockResolvedValue('OK'),
+    mget: vi.fn().mockImplementation(async (keys: string[]) => keys.map(() => null)),
+    pipeline: vi.fn().mockReturnValue(mockPipeline),
   },
 }));
 
@@ -76,15 +83,14 @@ describe('POST /api/v1/translate', () => {
 
     expect(TranslatorFactory.getTranslator).toHaveBeenCalledWith('mock');
     expect(mockTranslator.translate).toHaveBeenCalledWith(['Cat', 'Dog'], 'en', 'ru');
-    expect(redisClient.set).toHaveBeenCalledTimes(2);
+    expect(redisClient.mget).toHaveBeenCalledTimes(1);
+    expect(mockPipeline.set).toHaveBeenCalledTimes(2);
+    expect(mockPipeline.exec).toHaveBeenCalledTimes(1);
   });
 
   it('should use cached translations and only translate uncached texts', async () => {
-    vi.mocked(redisClient.get).mockImplementation(async (key: string) => {
-      if (key.includes('Cat')) {
-        return 'Кот';
-      }
-      return null;
+    vi.mocked(redisClient.mget).mockImplementation(async (keys: string[]) => {
+      return keys.map((key) => (key.includes('Cat') ? 'Кот' : null));
     });
 
     const googleMock: ITranslator = {
@@ -108,6 +114,8 @@ describe('POST /api/v1/translate', () => {
 
     expect(TranslatorFactory.getTranslator).toHaveBeenCalledWith('googletranslate');
     expect(googleMock.translate).toHaveBeenCalledWith(['Dog'], 'en', 'ru');
-    expect(redisClient.set).toHaveBeenCalledTimes(1);
+    expect(redisClient.mget).toHaveBeenCalledTimes(1);
+    expect(mockPipeline.set).toHaveBeenCalledTimes(1);
+    expect(mockPipeline.exec).toHaveBeenCalledTimes(1);
   });
 });

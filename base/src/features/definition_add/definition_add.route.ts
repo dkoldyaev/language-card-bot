@@ -4,6 +4,7 @@ import { prisma } from '../../prisma';
 import { DefinitionAddRequestSchema } from './definition_add.type';
 import { getAuthUser } from '../auth/auth.service';
 import { appEvents, Events } from '../../core/events';
+import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 
 const router = Router();
 
@@ -40,6 +41,8 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         text: text
       }
     });
+
+    await invalidateDashboardCache(userId, word.dictionaryId);
 
     const totalDefinitions = word.definitions.length + 1;
 

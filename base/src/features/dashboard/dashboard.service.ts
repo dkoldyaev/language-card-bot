@@ -1,5 +1,16 @@
 import { prisma } from '../../prisma';
 import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
+import { redisClient, invalidateKeysByPattern } from '../../core/cache';
+
+const DASHBOARD_CACHE_TTL_SECONDS = 300;
+
+export async function invalidateDashboardCache(userId: number, dictionaryId?: number): Promise<void> {
+  if (dictionaryId) {
+    await redisClient.del(`dashboard:stats:${userId}:${dictionaryId}`);
+  } else {
+    await invalidateKeysByPattern(`dashboard:stats:${userId}:*`);
+  }
+}
 
 export interface WordMasteryStats {
   newWords: number;
@@ -83,6 +94,16 @@ export async function getDashboardStats(userId: number, targetDictionaryId?: num
     ? (await prisma.dictionary.findFirst({ where: { id: targetDictionaryId, userId } })) ||
       (await ensureActiveDictionary(userId))
     : await ensureActiveDictionary(userId);
+
+  const cacheKey = `dashboard:stats:${userId}:${dict.id}`;
+  const cached = await redisClient.get(cacheKey);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch {
+      // fallback to database fetch on corrupted cache
+    }
+  }
 
   // Fetch words with definitions and translations
   const words = await prisma.word.findMany({
@@ -211,7 +232,7 @@ export async function getDashboardStats(userId: number, targetDictionaryId?: num
     });
   }
 
-  return {
+  const result: DashboardStats = {
     streak,
     todayCount,
     totalWords,
@@ -226,4 +247,8 @@ export async function getDashboardStats(userId: number, targetDictionaryId?: num
     needsAttention,
     weeklyActivity,
   };
+
+  await redisClient.set(cacheKey, JSON.stringify(result), 'EX', DASHBOARD_CACHE_TTL_SECONDS);
+
+  return result;
 }

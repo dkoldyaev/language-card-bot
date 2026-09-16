@@ -8,6 +8,20 @@ import { PrismaClient } from '@prisma/client';
 import { publishEvent } from '../event_bus/event_bus.service';
 import { appEvents, Events } from '../../core/events';
 
+const { mockRedisClient, mockInvalidateKeysByPattern } = vi.hoisted(() => ({
+  mockRedisClient: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+  },
+  mockInvalidateKeysByPattern: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../../core/cache', () => ({
+  redisClient: mockRedisClient,
+  invalidateKeysByPattern: mockInvalidateKeysByPattern,
+}));
+
 vi.mock('../../prisma');
 vi.mock('../event_bus/event_bus.service', () => ({
   publishEvent: vi.fn().mockResolvedValue(undefined),
@@ -74,6 +88,31 @@ describe('Preset Feature API', () => {
         where: { forLanguage: 'de' },
         orderBy: { createdAt: 'desc' },
       });
+    });
+
+    it('should return presets from cache when cache is warm', async () => {
+      const cachedPresets = [
+        {
+          id: 99,
+          title: 'Cached Preset',
+          forLanguage: 'en',
+          for_language: 'en',
+          type: 'word-definition',
+          body: [],
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+      mockRedisClient.get.mockResolvedValueOnce(JSON.stringify(cachedPresets));
+
+      const res = await request(app)
+        .get('/api/v1/preset')
+        .set('Authorization', `Bearer ${regularToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.presets).toEqual(cachedPresets);
+      expect(mockRedisClient.get).toHaveBeenCalledWith('presets:list:all');
+      expect(prismaMock.preset.findMany).not.toHaveBeenCalled();
     });
   });
 
@@ -169,6 +208,7 @@ describe('Preset Feature API', () => {
           body: [{ word: 'casa', definitions: ['house'] }],
         },
       });
+      expect(mockInvalidateKeysByPattern).toHaveBeenCalledWith('presets:*');
     });
   });
 

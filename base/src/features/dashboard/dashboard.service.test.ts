@@ -1,8 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { calculateStreak, getDashboardStats } from './dashboard.service';
+import { calculateStreak, getDashboardStats, invalidateDashboardCache } from './dashboard.service';
 import { prisma } from '../../prisma';
 import { mockDeep, mockReset } from 'vitest-mock-extended';
 import { PrismaClient } from '@prisma/client';
+
+const { mockRedisClient, mockInvalidateKeysByPattern } = vi.hoisted(() => ({
+  mockRedisClient: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+  },
+  mockInvalidateKeysByPattern: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../../core/cache', () => ({
+  redisClient: mockRedisClient,
+  invalidateKeysByPattern: mockInvalidateKeysByPattern,
+}));
 
 vi.mock('../../prisma');
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
@@ -141,5 +155,70 @@ describe('getDashboardStats', () => {
     expect(stats.needsAttention).toHaveLength(1);
     expect(stats.needsAttention[0].text).toBe('banana');
     expect(stats.needsAttention[0].translation).toBe('банан');
+  });
+
+  it('returns cached stats directly from Redis when cache is warm without querying prisma', async () => {
+    const cachedData = {
+      streak: 5,
+      todayCount: 12,
+      totalWords: 50,
+      totalDefinitions: 100,
+      totalAttempts: 25,
+      accuracy: 95,
+      mastery: { newWords: 10, learningWords: 20, masteredWords: 20 },
+      needsAttention: [],
+      weeklyActivity: [],
+    };
+
+    mockRedisClient.get.mockResolvedValueOnce(JSON.stringify(cachedData));
+
+    prismaMock.dictionary.findFirst.mockResolvedValue({
+      id: 1,
+      name: 'English',
+      targetLanguage: 'en',
+      baseLanguage: 'ru',
+      userId: 1,
+      createdAt: new Date(),
+    });
+
+    const stats = await getDashboardStats(1, 1);
+
+    expect(stats).toEqual(cachedData);
+    expect(mockRedisClient.get).toHaveBeenCalledWith('dashboard:stats:1:1');
+    expect(prismaMock.word.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.quizAttempt.findMany).not.toHaveBeenCalled();
+  });
+
+  it('stores stats in Redis when cache was empty', async () => {
+    mockRedisClient.get.mockResolvedValueOnce(null);
+
+    prismaMock.dictionary.findFirst.mockResolvedValue({
+      id: 2,
+      name: 'Spanish',
+      targetLanguage: 'es',
+      baseLanguage: 'ru',
+      userId: 1,
+      createdAt: new Date(),
+    });
+    prismaMock.word.findMany.mockResolvedValue([]);
+    prismaMock.quizAttempt.findMany.mockResolvedValue([]);
+
+    await getDashboardStats(1, 2);
+
+    expect(mockRedisClient.get).toHaveBeenCalledWith('dashboard:stats:1:2');
+    expect(mockRedisClient.set).toHaveBeenCalledWith(
+      'dashboard:stats:1:2',
+      expect.any(String),
+      'EX',
+      300
+    );
+  });
+
+  it('invalidates cache by dictionaryId or by pattern for user', async () => {
+    await invalidateDashboardCache(1, 42);
+    expect(mockRedisClient.del).toHaveBeenCalledWith('dashboard:stats:1:42');
+
+    await invalidateDashboardCache(1);
+    expect(mockInvalidateKeysByPattern).toHaveBeenCalledWith('dashboard:stats:1:*');
   });
 });

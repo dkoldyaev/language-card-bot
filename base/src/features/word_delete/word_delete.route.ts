@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
+import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 
 const router = Router();
 
@@ -24,6 +25,8 @@ router.post('/bulk', authMiddleware, async (req: Request<{}, {}, { wordIds: numb
         }
       }
     });
+
+    await invalidateDashboardCache(userId);
 
     res.json({ message: 'Words deleted successfully' });
   } catch (error) {
@@ -63,6 +66,8 @@ router.delete('/:wordId', authMiddleware, async (req: Request<{ wordId: string }
         id: wordId
       }
     });
+
+    await invalidateDashboardCache(userId, existingWord.dictionaryId);
 
     res.json({ message: 'Word deleted successfully' });
   } catch (error) {
