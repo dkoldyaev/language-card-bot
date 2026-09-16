@@ -377,15 +377,18 @@ describe('Preset Feature API', () => {
         .mockResolvedValueOnce(null) // 'hola' not found
         .mockResolvedValueOnce(null); // 'gracias' not found
 
-      prismaMock.word.create
-        .mockResolvedValueOnce({ id: 101, text: 'hola', dictionaryId: 10, definitions: [] } as any)
-        .mockResolvedValueOnce({ id: 102, text: 'gracias', dictionaryId: 10, definitions: [] } as any);
+      prismaMock.word.createManyAndReturn.mockResolvedValue([
+        { id: 101, text: 'hola' },
+        { id: 102, text: 'gracias' },
+      ] as any);
 
-      // Definitions creation
-      prismaMock.definition.create
-        .mockResolvedValueOnce({ id: 201, wordId: 101, text: 'An informal greeting' } as any)
-        .mockResolvedValueOnce({ id: 202, wordId: 101, text: 'Used when meeting someone' } as any)
-        .mockResolvedValueOnce({ id: 203, wordId: 102, text: 'Used to express gratitude' } as any);
+      prismaMock.preset.update.mockResolvedValue({} as any);
+
+      prismaMock.definition.createManyAndReturn.mockResolvedValue([
+        { id: 201, wordId: 101, text: 'An informal greeting' },
+        { id: 202, wordId: 101, text: 'Used when meeting someone' },
+        { id: 203, wordId: 102, text: 'Used to express gratitude' },
+      ] as any);
 
       const res = await request(app)
         .post('/api/v1/preset/apply_preset')

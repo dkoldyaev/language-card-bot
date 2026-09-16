@@ -54,16 +54,16 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
     }
 
     // Save definitions
-    const createdDefinitions = await Promise.all(
-      definitions.map((defText: string) => 
-        prisma.definition.create({
-          data: {
-            text: defText,
-            wordId: wordId
-          }
-        })
-      )
-    );
+    const createdDefinitions = await prisma.definition.createManyAndReturn({
+      data: definitions.map((defText: string) => ({
+        text: defText,
+        wordId: wordId,
+      })),
+      select: {
+        id: true,
+        text: true,
+      },
+    });
 
     // 3. Send "definitions received" event
     await publishEvent(username, {
@@ -140,30 +140,25 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       throw new Error(`Translator API returned mismatched translations count: expected ${defsToTranslate.length}, got ${translatedTexts?.length}`);
     }
 
-    // Save translations
-    const savedTranslations: { id: number; translation: string }[] = [];
-    for (let i = 0; i < defsToTranslate.length; i++) {
-      const def = defsToTranslate[i];
-      const translatedText = translatedTexts[i];
-
-      if (typeof translatedText !== 'string') {
-        throw new Error(`Invalid translation received for definition ${def.id}`);
-      }
-
-      await prisma.definitionTranslation.upsert({
-        where: { definitionId: def.id },
-        update: { text: translatedText },
-        create: {
-          text: translatedText,
-          definitionId: def.id
+    // Save translations (batch upsert via transaction)
+    await prisma.$transaction(
+      defsToTranslate.map((def, i) => {
+        const translatedText = translatedTexts[i];
+        if (typeof translatedText !== 'string') {
+          throw new Error(`Invalid translation received for definition ${def.id}`);
         }
-      });
+        return prisma.definitionTranslation.upsert({
+          where: { definitionId: def.id },
+          update: { text: translatedText },
+          create: { definitionId: def.id, text: translatedText },
+        });
+      })
+    );
 
-      savedTranslations.push({
-        id: def.id,
-        translation: translatedText
-      });
-    }
+    const savedTranslations: { id: number; translation: string }[] = defsToTranslate.map((def, i) => ({
+      id: def.id,
+      translation: translatedTexts[i],
+    }));
 
     appEvents.emit(Events.TRANSLATION_ADDED, {
       username,

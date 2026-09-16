@@ -7,6 +7,24 @@ export const queueConnection = new IORedis(redisUrl, { maxRetriesPerRequest: nul
 
 export const dictionaryQueue = new Queue('dictionaryQueue', { connection: queueConnection });
 
+export interface FetchDefinitionsItem {
+  userId: number;
+  username: string;
+  wordId: number;
+  wordText: string;
+  dictionaryId?: number;
+}
+
+export async function enqueueFetchDefinitionsBatch(items: FetchDefinitionsItem[]) {
+  if (items.length === 0) return;
+  await dictionaryQueue.addBulk(
+    items.map((item) => ({
+      name: 'fetchDefinitions',
+      data: item,
+    }))
+  );
+}
+
 export async function enqueueFetchDefinitions(
   userId: number,
   username: string,

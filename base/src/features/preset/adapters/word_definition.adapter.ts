@@ -22,7 +22,7 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
     let definitionsCount = 0;
     const newWordsAdded: DictionaryAddProcessingItem[] = [];
 
-    const wordsTexts = items.map((item) => item.word.trim().toLowerCase());
+    const wordsTexts = Array.from(new Set(items.map((item) => item.word.trim().toLowerCase())));
     const existingWordsList = await prisma.word.findMany({
       where: {
         dictionaryId,
@@ -42,62 +42,64 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
       existingWordsMap.set(w.text, w);
     }
 
-    for (const item of items) {
-      const wordText = item.word.trim().toLowerCase();
+    // Pass 1: Batch create missing words and link existing words
+    const missingWordTexts = wordsTexts.filter((wText) => !existingWordsMap.has(wText));
 
-      // Find or create word in this dictionary
-      let word = existingWordsMap.get(wordText);
+    if (missingWordTexts.length > 0) {
+      const createdWords = await prisma.word.createManyAndReturn({
+        data: missingWordTexts.map((text) => ({
+          dictionaryId,
+          text,
+        })),
+        select: {
+          id: true,
+          text: true,
+        },
+      });
 
-      let isNewWord = false;
-      if (!word) {
-        word = await prisma.word.create({
-          data: {
-            dictionaryId,
-            text: wordText,
-            presets: {
-              connect: { id: preset.id },
-            },
+      wordsCount += createdWords.length;
+
+      // Link newly created words to preset
+      await prisma.preset.update({
+        where: { id: preset.id },
+        data: {
+          words: {
+            connect: createdWords.map((w) => ({ id: w.id })),
           },
-          include: {
-            definitions: {
-              include: {
-                presets: { select: { id: true } },
-              },
-            },
-            presets: { select: { id: true } },
-          },
-        });
-        existingWordsMap.set(wordText, word);
-        isNewWord = true;
-        wordsCount++;
+        },
+      });
+
+      for (const cw of createdWords) {
+        existingWordsMap.set(cw.text, {
+          id: cw.id,
+          text: cw.text,
+          definitions: [],
+          presets: [{ id: preset.id }],
+        } as any);
 
         newWordsAdded.push({
-          wordId: word.id,
-          word: word.text,
+          wordId: cw.id,
+          word: cw.text,
           presets: [{ id: preset.id, title: preset.title }],
         });
-      } else {
-        // If word already existed in dictionary, link it to preset if not already linked
-        const isWordLinked = word.presets.some((p) => p.id === preset.id);
-        if (!isWordLinked) {
-          word = await prisma.word.update({
-            where: { id: word.id },
-            data: {
-              presets: {
-                connect: { id: preset.id },
-              },
-            },
-            include: {
-              definitions: {
-                include: {
-                  presets: { select: { id: true } },
-                },
-              },
-              presets: { select: { id: true } },
-            },
-          });
-          existingWordsMap.set(wordText, word);
-        }
+      }
+    }
+
+    // Link already existing words to preset if not already linked
+    const existingWordsToLink = existingWordsList.filter(
+      (w) => !w.presets.some((p) => p.id === preset.id)
+    );
+    if (existingWordsToLink.length > 0) {
+      await prisma.preset.update({
+        where: { id: preset.id },
+        data: {
+          words: {
+            connect: existingWordsToLink.map((w) => ({ id: w.id })),
+          },
+        },
+      });
+      for (const w of existingWordsToLink) {
+        w.presets.push({ id: preset.id });
       }
     }
 
@@ -113,7 +115,10 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
       );
     }
 
-    // Pass 2: Add definitions for each word
+    // Pass 2: Batch add definitions for each word
+    const defsToCreate: { wordId: number; text: string }[] = [];
+    const defIdsToLink: number[] = [];
+
     for (const item of items) {
       const wordText = item.word.trim().toLowerCase();
       const word = existingWordsMap.get(wordText)!;
@@ -125,49 +130,71 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
         );
 
         if (!existingDef) {
-          const newDef = await prisma.definition.create({
-            data: {
-              wordId: word.id,
-              text: defText,
-              presets: {
-                connect: { id: preset.id },
-              },
-            },
-            include: {
-              presets: { select: { id: true } },
-            },
-          });
-
-          word.definitions.push(newDef);
-          definitionsCount++;
-
-          // Emit event to trigger Mercure dictionary_add_definitions_received & async translation loading
-          appEvents.emit(Events.DEFINITION_ADDED, {
-            definitionId: newDef.id,
-            definitionText: newDef.text,
-            userId,
-            username,
-            wordId: word.id,
-            wordText: word.text,
-            totalDefinitions: word.definitions.length,
-            dictionaryId,
-            presets: [{ id: preset.id, title: preset.title }],
-          });
+          defsToCreate.push({ wordId: word.id, text: defText });
         } else {
-          // If definition already existed in dictionary, link it to preset if not already linked
           const isDefLinked = existingDef.presets?.some((p) => p.id === preset.id);
           if (!isDefLinked) {
-            await prisma.definition.update({
-              where: { id: existingDef.id },
-              data: {
-                presets: {
-                  connect: { id: preset.id },
-                },
-              },
-            });
+            defIdsToLink.push(existingDef.id);
+            existingDef.presets = existingDef.presets || [];
+            existingDef.presets.push({ id: preset.id });
           }
         }
       }
+    }
+
+    if (defsToCreate.length > 0) {
+      const createdDefs = await prisma.definition.createManyAndReturn({
+        data: defsToCreate,
+        select: {
+          id: true,
+          text: true,
+          wordId: true,
+        },
+      });
+
+      definitionsCount += createdDefs.length;
+
+      // Link newly created definitions to preset
+      await prisma.preset.update({
+        where: { id: preset.id },
+        data: {
+          definitions: {
+            connect: createdDefs.map((d) => ({ id: d.id })),
+          },
+        },
+      });
+
+      for (const newDef of createdDefs) {
+        const word = Array.from(existingWordsMap.values()).find((w) => w.id === newDef.wordId)!;
+        word.definitions.push({
+          id: newDef.id,
+          text: newDef.text,
+          presets: [{ id: preset.id }],
+        } as any);
+
+        appEvents.emit(Events.DEFINITION_ADDED, {
+          definitionId: newDef.id,
+          definitionText: newDef.text,
+          userId,
+          username,
+          wordId: word.id,
+          wordText: word.text,
+          totalDefinitions: word.definitions.length,
+          dictionaryId,
+          presets: [{ id: preset.id, title: preset.title }],
+        });
+      }
+    }
+
+    if (defIdsToLink.length > 0) {
+      await prisma.preset.update({
+        where: { id: preset.id },
+        data: {
+          definitions: {
+            connect: defIdsToLink.map((id) => ({ id })),
+          },
+        },
+      });
     }
 
     // Publish dictionaries_sync to update word counter in UI
