@@ -52,8 +52,10 @@ export function useMercure() {
                       }))
                     );
                   }
-                } else if (data.type === 'dictionary_add_definitions_received' && data.wordId && data.definitions) {
-                  useStore.getState().setDictionaryDefinitions(data.wordId, data.definitions, data.word);
+                } else if (data.type === 'dictionary_add_definitions_received') {
+                  if (Array.isArray(data.words)) {
+                    useStore.getState().setDictionaryDefinitionsBatch(data.words);
+                  }
                 }
                 window.dispatchEvent(new CustomEvent('mercure-word-status', { detail: data }));
               } else if (data.type === 'definition_translate_loaded') {

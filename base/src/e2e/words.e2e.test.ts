@@ -129,9 +129,14 @@ describe('Words E2E', () => {
     expect(defsReceivedEvents.length).toBe(1);
     expect(defsReceivedEvents[0]).toMatchObject({
       type: 'dictionary_add_definitions_received',
-      definitions: expect.any(Array),
+      words: expect.arrayContaining([
+        expect.objectContaining({
+          word: 'apple',
+          definitions: expect.any(Array),
+        })
+      ]),
     });
-    expect(defsReceivedEvents[0].definitions.length).toBe(2);
+    expect(defsReceivedEvents[0].words[0].definitions.length).toBe(2);
 
     const defProcessedEvents = messages.filter(m => m.type === 'definition_translate_loaded');
     expect(defProcessedEvents.length).toBe(2);

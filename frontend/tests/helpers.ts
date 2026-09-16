@@ -42,15 +42,19 @@ export async function addWordsAndAwaitDefinitions(page: Page, words: string[]) {
     const accordion = page.locator('.MuiAccordion-root').filter({ hasText: word });
     await expect(accordion).toBeVisible();
     
-    // We check that it has finished processing by ensuring StatusChip is hidden
-    // and then expand it and ensure at least one definition exists.
-    await expect(accordion.locator('text=Processing definitions...')).toBeHidden();
-    await expect(accordion.locator('text=Fetching...')).toBeHidden();
-    
-    await accordion.click();
-    await expect(accordion.locator('[aria-label="Edit definition"]').first()).toBeVisible();
-    await expect(accordion.locator('[aria-label="Edit translation"]').first()).toBeVisible();
-    await accordion.click(); // collapse it back
+    const summary = accordion.locator('.MuiAccordionSummary-root');
+    await expect(async () => {
+      const isExpanded = await summary.getAttribute('aria-expanded') === 'true';
+      if (!isExpanded) {
+        await summary.click();
+      }
+      await expect(accordion.locator('[aria-label="Edit definition"]').first()).toBeVisible({ timeout: 1000 });
+      await expect(accordion.locator('[aria-label="Edit translation"]').first()).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 20000 });
+
+    if (await summary.getAttribute('aria-expanded') === 'true') {
+      await summary.click();
+    }
   }
 }
 

@@ -24,8 +24,11 @@ export default function StatusChip({ word }: { word: string }) {
         if (isProcessing) {
           setStatus('processing');
         }
-      } else if (data.word && data.word.toLowerCase() === word.toLowerCase()) {
-        if (data.type === 'dictionary_add_definitions_received') {
+      } else if (data.type === 'dictionary_add_definitions_received') {
+        const isReceived = Array.isArray(data.words)
+          ? data.words.some((w: any) => (typeof w === 'string' ? w : w.word)?.toLowerCase() === word.toLowerCase())
+          : false;
+        if (isReceived) {
           setStatus('definitions_received');
         }
       }

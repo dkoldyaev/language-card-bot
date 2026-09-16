@@ -145,6 +145,7 @@ interface AppState {
   addDictionaryWords: (words: DictionaryWord[]) => void;
   removeDictionaryWord: (wordId: number) => void;
   setDictionaryDefinitions: (wordId: number, definitions: { id: number; text: string }[], wordText?: string) => void;
+  setDictionaryDefinitionsBatch: (items: { wordId: number; word: string; definitions: { id: number; text: string; presets?: PresetBadge[] }[] }[]) => void;
   updateDictionaryDefinition: (wordId: number, definitionId: number, text: string) => void;
   updateDictionaryTranslation: (wordId: number, definitionId: number, text: string) => void;
   addDictionaryDefinition: (wordId: number, definition: DictionaryDefinition) => void;
@@ -324,6 +325,59 @@ const useStore = create<AppState>()(
             }
             return word;
           }),
+        };
+      }),
+      setDictionaryDefinitionsBatch: (items) => set((state) => {
+        const itemsMap = new Map(items.map((item) => [item.wordId, item]));
+        const existingWordIds = new Set(state.dictionary.map((w) => w.id));
+
+        const missingWords: DictionaryWord[] = items
+          .filter((item) => !existingWordIds.has(item.wordId))
+          .map((item) => ({
+            id: item.wordId,
+            text: item.word,
+            definitions: item.definitions.map((d) => ({
+              id: d.id,
+              text: d.text,
+              translation: (d as any).translation ?? null,
+              presets: (d as any).presets ?? [],
+            })),
+            presets: [],
+          }));
+
+        const updatedDictionary = state.dictionary.map((word) => {
+          const item = itemsMap.get(word.id);
+          if (!item) return word;
+
+          const existingDefs = word.definitions || [];
+          const mergedDefs = [...existingDefs];
+          const mappedNewDefs = item.definitions.map((d) => ({
+            id: d.id,
+            text: d.text,
+            translation: (d as any).translation ?? null,
+            presets: (d as any).presets ?? [],
+          }));
+
+          for (const nd of mappedNewDefs) {
+            const existingIdx = mergedDefs.findIndex((ed) => ed.id === nd.id);
+            if (existingIdx === -1) {
+              mergedDefs.push(nd);
+            } else if (nd.presets && nd.presets.length > 0) {
+              mergedDefs[existingIdx] = {
+                ...mergedDefs[existingIdx],
+                presets: nd.presets,
+              };
+            }
+          }
+
+          return {
+            ...word,
+            definitions: mergedDefs,
+          };
+        });
+
+        return {
+          dictionary: [...missingWords, ...updatedDictionary],
         };
       }),
       updateDictionaryDefinition: (wordId, definitionId, text) => set((state) => ({

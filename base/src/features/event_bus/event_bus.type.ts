@@ -64,11 +64,21 @@ export interface DictionaryAddProcessingEvent extends BaseMercureEvent {
   words: DictionaryAddProcessingItem[];
 }
 
-export interface DictionaryAddDefinitionsReceivedEvent extends BaseMercureEvent {
-  type: 'dictionary_add_definitions_received';
+export interface DictionaryAddDefinitionItem {
+  id: number;
+  text: string;
+  presets?: { id: number; title: string }[];
+}
+
+export interface DictionaryAddDefinitionsWordItem {
   wordId: number;
   word: string;
-  definitions: { id: number; text: string; presets?: { id: number; title: string }[] }[];
+  definitions: DictionaryAddDefinitionItem[];
+}
+
+export interface DictionaryAddDefinitionsReceivedEvent extends BaseMercureEvent {
+  type: 'dictionary_add_definitions_received';
+  words: DictionaryAddDefinitionsWordItem[];
 }
 
 export interface DefinitionTranslateLoadedEvent extends BaseMercureEvent {
