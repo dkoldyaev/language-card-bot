@@ -189,7 +189,8 @@ describe('Presets E2E', () => {
 
     // Verify Mercure events received on SSE topic
     const processingEvents = messages.filter((m) => m.type === 'dictionary_add_processing');
-    expect(processingEvents.length).toBeGreaterThanOrEqual(2);
+    expect(processingEvents.length).toBe(1);
+    expect(processingEvents[0].words.length).toBeGreaterThanOrEqual(2);
 
     const definitionsEvents = messages.filter((m) => m.type === 'dictionary_add_definitions_received');
     expect(definitionsEvents.length).toBeGreaterThanOrEqual(3);

@@ -402,8 +402,12 @@ describe('Preset Feature API', () => {
         'regular_user',
         expect.objectContaining({
           type: 'dictionary_add_processing',
-          wordId: 101,
-          word: 'hola',
+          words: expect.arrayContaining([
+            expect.objectContaining({
+              wordId: 101,
+              word: 'hola',
+            }),
+          ]),
         })
       );
 

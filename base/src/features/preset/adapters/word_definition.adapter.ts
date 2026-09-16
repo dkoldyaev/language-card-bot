@@ -4,7 +4,7 @@ import { prisma } from '../../../prisma';
 import { publishEvent } from '../../event_bus/event_bus.service';
 import { appEvents, Events } from '../../../core/events';
 import { getUserDictionaries } from '../../dictionaries/dictionaries.service';
-import { DictionariesSyncMercureEvent, DictionaryAddProcessingEvent } from '../../event_bus/event_bus.type';
+import { DictionariesSyncMercureEvent, DictionaryAddProcessingEvent, DictionaryAddProcessingItem } from '../../event_bus/event_bus.type';
 
 export class WordDefinitionPresetAdapter implements IPresetAdapter {
   readonly type = 'word-definition';
@@ -20,6 +20,7 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
     const items = parseResult.data;
     let wordsCount = 0;
     let definitionsCount = 0;
+    const newWordsAdded: DictionaryAddProcessingItem[] = [];
 
     const wordsTexts = items.map((item) => item.word.trim().toLowerCase());
     const existingWordsList = await prisma.word.findMany({
@@ -70,17 +71,11 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
         isNewWord = true;
         wordsCount++;
 
-        // Notify via Mercure that word was added to dictionary
-        const processingEvent: DictionaryAddProcessingEvent = {
-          version: 'v1',
-          type: 'dictionary_add_processing',
+        newWordsAdded.push({
           wordId: word.id,
           word: word.text,
           presets: [{ id: preset.id, title: preset.title }],
-        };
-        await publishEvent(username, processingEvent).catch((err) =>
-          console.error('Failed to publish dictionary_add_processing event:', err)
-        );
+        });
       } else {
         // If word already existed in dictionary, link it to preset if not already linked
         const isWordLinked = word.presets.some((p) => p.id === preset.id);
@@ -101,10 +96,28 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
               presets: { select: { id: true } },
             },
           });
+          existingWordsMap.set(wordText, word);
         }
       }
+    }
 
-      // Add definitions
+    // Publish batch dictionary_add_processing so client knows about words before definitions arrive
+    if (newWordsAdded.length > 0) {
+      const processingEvent: DictionaryAddProcessingEvent = {
+        version: 'v1',
+        type: 'dictionary_add_processing',
+        words: newWordsAdded,
+      };
+      await publishEvent(username, processingEvent).catch((err) =>
+        console.error('Failed to publish dictionary_add_processing event:', err)
+      );
+    }
+
+    // Pass 2: Add definitions for each word
+    for (const item of items) {
+      const wordText = item.word.trim().toLowerCase();
+      const word = existingWordsMap.get(wordText)!;
+
       for (const def of item.definitions) {
         const defText = typeof def === 'string' ? def.trim() : def.text.trim();
         const existingDef = word.definitions.find(

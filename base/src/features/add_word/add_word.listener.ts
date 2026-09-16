@@ -6,19 +6,20 @@ import { DictionaryAddProcessingEvent } from '../event_bus/event_bus.type';
 // 1. Trigger: Send Mercure event that words appeared in the dictionary
 appEvents.on(Events.WORDS_LIST_ADDED, async (payload: WordsListAddedPayload) => {
   const { username, words } = payload;
-  
-  for (const item of words) {
-    try {
-      const processingEvent: DictionaryAddProcessingEvent = {
-        version: 'v1',
-        type: 'dictionary_add_processing',
+  if (!words || words.length === 0) return;
+
+  try {
+    const processingEvent: DictionaryAddProcessingEvent = {
+      version: 'v1',
+      type: 'dictionary_add_processing',
+      words: words.map((item) => ({
         wordId: item.wordId,
         word: item.wordText,
-      };
-      await publishEvent(username, processingEvent);
-    } catch (error) {
-      console.error('Error in WORDS_LIST_ADDED listener (Mercure):', error);
-    }
+      })),
+    };
+    await publishEvent(username, processingEvent);
+  } catch (error) {
+    console.error('Error in WORDS_LIST_ADDED listener (Mercure):', error);
   }
 });
 

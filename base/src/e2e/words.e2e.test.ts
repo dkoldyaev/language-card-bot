@@ -120,7 +120,9 @@ describe('Words E2E', () => {
     expect(processingEvents.length).toBe(1);
     expect(processingEvents[0]).toMatchObject({
       type: 'dictionary_add_processing',
-      word: 'apple'
+      words: expect.arrayContaining([
+        expect.objectContaining({ word: 'apple' })
+      ])
     });
 
     const defsReceivedEvents = messages.filter(m => m.type === 'dictionary_add_definitions_received');

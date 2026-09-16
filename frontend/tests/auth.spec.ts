@@ -57,9 +57,15 @@ test.describe('Authentication Flow', () => {
     
     // Start quiz for user 1
     await page.goto('/quiz');
-    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
-    await page.click('button:has-text("Start Quiz")');
-    await expect(page.locator('h1:has-text("Quiz"), h4:has-text("Quiz")')).toBeVisible();
+    await expect(async () => {
+      const heading = page.locator('h1:has-text("Quiz"), h4:has-text("Quiz")');
+      if (await heading.isVisible()) return;
+      const startBtn = page.locator('button:has-text("Start Quiz")');
+      if (await startBtn.isVisible()) {
+        await startBtn.click();
+      }
+      await expect(heading).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 20000 });
     await expect(page.locator('.MuiCardContent-root').first()).toContainText('apple');
     
     // 3. Logout

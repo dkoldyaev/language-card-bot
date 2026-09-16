@@ -41,15 +41,19 @@ export function useMercure() {
               if (data.type === 'dictionary_add_duplicate' || 
                   data.type === 'dictionary_add_processing' || 
                   data.type === 'dictionary_add_definitions_received') {
-                if (data.type === 'dictionary_add_processing' && data.wordId && data.word) {
-                  useStore.getState().addDictionaryWord({
-                    id: data.wordId,
-                    text: data.word,
-                    definitions: [],
-                    presets: data.presets || []
-                  });
+                if (data.type === 'dictionary_add_processing') {
+                  if (Array.isArray(data.words)) {
+                    useStore.getState().addDictionaryWords(
+                      data.words.map((item: any) => ({
+                        id: item.wordId,
+                        text: item.word,
+                        definitions: [],
+                        presets: item.presets || [],
+                      }))
+                    );
+                  }
                 } else if (data.type === 'dictionary_add_definitions_received' && data.wordId && data.definitions) {
-                  useStore.getState().setDictionaryDefinitions(data.wordId, data.definitions);
+                  useStore.getState().setDictionaryDefinitions(data.wordId, data.definitions, data.word);
                 }
                 window.dispatchEvent(new CustomEvent('mercure-word-status', { detail: data }));
               } else if (data.type === 'definition_translate_loaded') {

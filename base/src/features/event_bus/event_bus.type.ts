@@ -53,11 +53,15 @@ export interface DictionaryAddDuplicateEvent extends BaseMercureEvent {
   words: string[];
 }
 
-export interface DictionaryAddProcessingEvent extends BaseMercureEvent {
-  type: 'dictionary_add_processing';
+export interface DictionaryAddProcessingItem {
   wordId: number;
   word: string;
   presets?: { id: number; title: string }[];
+}
+
+export interface DictionaryAddProcessingEvent extends BaseMercureEvent {
+  type: 'dictionary_add_processing';
+  words: DictionaryAddProcessingItem[];
 }
 
 export interface DictionaryAddDefinitionsReceivedEvent extends BaseMercureEvent {

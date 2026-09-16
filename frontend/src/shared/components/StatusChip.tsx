@@ -17,10 +17,15 @@ export default function StatusChip({ word }: { word: string }) {
         if (isDuplicate) {
           setStatus('duplicate');
         }
-      } else if (data.word && data.word.toLowerCase() === word.toLowerCase()) {
-        if (data.type === 'dictionary_add_processing') {
+      } else if (data.type === 'dictionary_add_processing') {
+        const isProcessing = Array.isArray(data.words)
+          ? data.words.some((w: any) => (typeof w === 'string' ? w : w.word)?.toLowerCase() === word.toLowerCase())
+          : false;
+        if (isProcessing) {
           setStatus('processing');
-        } else if (data.type === 'dictionary_add_definitions_received') {
+        }
+      } else if (data.word && data.word.toLowerCase() === word.toLowerCase()) {
+        if (data.type === 'dictionary_add_definitions_received') {
           setStatus('definitions_received');
         }
       }
