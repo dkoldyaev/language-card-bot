@@ -17,6 +17,7 @@
     "preset:list": "tsx scripts/preset-list.ts",
     "preset:create": "tsx scripts/preset-create.ts",
     "db:profile": "tsx scripts/profile-queries.ts",
+    "stats:clear": "tsx scripts/clear-stats.ts",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev"
