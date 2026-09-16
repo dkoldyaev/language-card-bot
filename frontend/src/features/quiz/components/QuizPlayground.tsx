@@ -185,7 +185,6 @@ export default function QuizPlayground() {
             gap: 1.25,
             p: 2,
             mb: 2,
-            borderRadius: 3,
             backgroundColor: result.background,
             border: '1px solid',
             borderColor: alpha(result.color, 0.22),

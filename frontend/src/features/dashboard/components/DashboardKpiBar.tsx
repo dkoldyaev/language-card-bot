@@ -101,11 +101,9 @@ export default function DashboardKpiBar({ stats }: DashboardKpiBarProps) {
                   value={item.progress}
                   sx={{
                     height: 6,
-                    borderRadius: 3,
                     backgroundColor: alpha('#2A9D8F', 0.15),
                     '& .MuiLinearProgress-bar': {
                       backgroundColor: '#2A9D8F',
-                      borderRadius: 3,
                     },
                   }}
                 />

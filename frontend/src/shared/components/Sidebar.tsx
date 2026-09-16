@@ -224,17 +224,7 @@ export default function Sidebar() {
                 '&:hover': {
                   color: isDisabled ? alpha('#FFFFFF', 0.28) : '#FFFFFF',
                   backgroundColor: isDisabled ? 'transparent' : alpha('#FFFFFF', isActive ? 0.15 : 0.075),
-                },
-                '&::before': isActive ? {
-                  content: '""',
-                  position: 'absolute',
-                  left: 0,
-                  top: 14,
-                  width: 3,
-                  height: 24,
-                  borderRadius: 2,
-                  backgroundColor: '#E8A17F',
-                } : undefined,
+                }
               }}
             >
               <ListItemIcon sx={{ minWidth: 39, color: 'inherit' }}>

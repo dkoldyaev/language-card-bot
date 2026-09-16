@@ -91,7 +91,6 @@ export default function Dashboard() {
                 color: '#FFFFFF',
                 backgroundColor: '#172033',
                 border: 'none',
-                borderRadius: 3,
                 boxShadow: '0 18px 38px rgba(23, 32, 51, 0.16)',
               }}
             >
@@ -123,7 +122,7 @@ export default function Dashboard() {
           </Box>
 
           {/* 3 Step Guidance Card */}
-          <Card sx={{ backgroundColor: (th) => th.palette.mode === 'dark' ? 'background.paper' : '#F8FAFC', border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
+          <Card sx={{ backgroundColor: (th) => th.palette.mode === 'dark' ? 'background.paper' : '#F8FAFC', border: '1px solid', borderColor: 'divider' }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2 }}>
                 {t('dashboard.onboardingTitle')}
@@ -179,7 +178,6 @@ export default function Dashboard() {
                 color: '#FFFFFF',
                 backgroundColor: '#172033',
                 border: 'none',
-                borderRadius: 3,
                 boxShadow: '0 18px 38px rgba(23, 32, 51, 0.16)',
               }}
             >
@@ -210,7 +208,13 @@ export default function Dashboard() {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <QuickAddWordCard onWordAdded={loadStats} />
 
-              <Card sx={{ backgroundColor: '#FFFDF9', border: '1px solid #F0ECE1' }}>
+              <Card
+                sx={{
+                  backgroundColor: (th) => (th.palette.mode === 'dark' ? 'background.paper' : '#FFFDF9'),
+                  border: '1px solid',
+                  borderColor: (th) => (th.palette.mode === 'dark' ? 'divider' : '#F0ECE1'),
+                }}
+              >
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
@@ -222,13 +226,25 @@ export default function Dashboard() {
                   </Box>
                   <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                     <Box>
-                      <Typography variant="h4" sx={{ color: 'primary.dark', fontWeight: 800 }}>
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          color: (th) => (th.palette.mode === 'dark' ? th.palette.primary.light : 'primary.dark'),
+                          fontWeight: 800,
+                        }}
+                      >
                         {totalWords}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">{t('dashboard.wordsSaved')}</Typography>
                     </Box>
                     <Box>
-                      <Typography variant="h4" sx={{ color: 'primary.dark', fontWeight: 800 }}>
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          color: (th) => (th.palette.mode === 'dark' ? th.palette.primary.light : 'primary.dark'),
+                          fontWeight: 800,
+                        }}
+                      >
                         {totalDefinitions}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">{t('dashboard.definitions')}</Typography>
@@ -278,7 +294,6 @@ export default function Dashboard() {
             sx={{
               backgroundColor: '#172033',
               color: '#FFFFFF',
-              borderRadius: 3,
               boxShadow: '0 12px 30px rgba(23, 32, 51, 0.12)',
             }}
           >

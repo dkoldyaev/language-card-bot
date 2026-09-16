@@ -65,7 +65,6 @@ export default function QuizStartScreen() {
                 height: 58,
                 display: 'grid',
                 placeItems: 'center',
-                borderRadius: 3,
                 color: '#172033',
                 backgroundColor: '#E8A17F',
               }}

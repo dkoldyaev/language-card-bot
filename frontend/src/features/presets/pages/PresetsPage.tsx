@@ -220,7 +220,6 @@ export default function PresetsPage() {
           startIcon={<AddRoundedIcon />}
           onClick={handleOpenCreate}
           sx={{
-            borderRadius: 3,
             px: 2.5,
             py: 1.1,
             fontWeight: 700,
