@@ -136,6 +136,7 @@ describe('DictionaryPresets', () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue({
       data: { presets: mockPresets },
     });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(apiClient, 'post').mockRejectedValue({
       response: { data: { error: 'Failed to apply preset' } },
     });

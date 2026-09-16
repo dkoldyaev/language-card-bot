@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
@@ -70,9 +70,32 @@ describe('DashboardPage', () => {
 
     // Onboarding step indicator
     expect(screen.getByText(/Get started in 3 simple steps/i)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/preset', expect.anything());
+    });
   });
 
   it('renders State 2 (Words added, no quizzes) with enabled quiz button and words preview', async () => {
+    const stats = {
+      streak: 0,
+      todayCount: 0,
+      totalWords: 1,
+      totalDefinitions: 1,
+      totalAttempts: 0,
+      accuracy: 0,
+      mastery: { newWords: 1, learningWords: 0, masteredWords: 0 },
+      needsAttention: [],
+      weeklyActivity: [],
+    };
+
+    mockedApiClient.get.mockImplementation((url) => {
+      if (url === '/dashboard/stats') {
+        return Promise.resolve({ data: { stats } });
+      }
+      return Promise.resolve({ data: {} });
+    });
+
     useStore.setState({
       dictionary: [
         {
@@ -83,17 +106,7 @@ describe('DashboardPage', () => {
       ],
       dictionaries: [{ id: 1, name: 'English', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true }],
       activeDictionaryId: 1,
-      dashboardStats: {
-        streak: 0,
-        todayCount: 0,
-        totalWords: 1,
-        totalDefinitions: 1,
-        totalAttempts: 0,
-        accuracy: 0,
-        mastery: { newWords: 1, learningWords: 0, masteredWords: 0 },
-        needsAttention: [],
-        weeklyActivity: [],
-      },
+      dashboardStats: stats,
     });
 
     renderDashboard();
@@ -102,9 +115,45 @@ describe('DashboardPage', () => {
     expect(quizBtn).not.toBeDisabled();
 
     expect(screen.getByText('serendipity')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/dashboard/stats', expect.anything());
+    });
   });
 
   it('renders State 3 (Active quizzing user) with KPI bar, mastery, and needs attention', async () => {
+    const stats = {
+      streak: 5,
+      todayCount: 12,
+      totalWords: 1,
+      totalDefinitions: 1,
+      totalAttempts: 25,
+      accuracy: 88,
+      mastery: { newWords: 0, learningWords: 0, masteredWords: 1 },
+      needsAttention: [
+        {
+          wordId: 1,
+          text: 'ephemeral',
+          definition: 'Lasting for a very short time',
+          translation: 'эфемерный',
+          errorCount: 3,
+          successCount: 2,
+          lastResult: 'INCORRECT' as const,
+        },
+      ],
+      weeklyActivity: [
+        { date: '2026-09-14', dayLabel: 'Пн', count: 12 },
+        { date: '2026-09-13', dayLabel: 'Вс', count: 8 },
+      ],
+    };
+
+    mockedApiClient.get.mockImplementation((url) => {
+      if (url === '/dashboard/stats') {
+        return Promise.resolve({ data: { stats } });
+      }
+      return Promise.resolve({ data: {} });
+    });
+
     useStore.setState({
       dictionary: [
         {
@@ -115,30 +164,7 @@ describe('DashboardPage', () => {
       ],
       dictionaries: [{ id: 1, name: 'English', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true }],
       activeDictionaryId: 1,
-      dashboardStats: {
-        streak: 5,
-        todayCount: 12,
-        totalWords: 1,
-        totalDefinitions: 1,
-        totalAttempts: 25,
-        accuracy: 88,
-        mastery: { newWords: 0, learningWords: 0, masteredWords: 1 },
-        needsAttention: [
-          {
-            wordId: 1,
-            text: 'ephemeral',
-            definition: 'Lasting for a very short time',
-            translation: 'эфемерный',
-            errorCount: 3,
-            successCount: 2,
-            lastResult: 'INCORRECT',
-          },
-        ],
-        weeklyActivity: [
-          { date: '2026-09-14', dayLabel: 'Пн', count: 12 },
-          { date: '2026-09-13', dayLabel: 'Вс', count: 8 },
-        ],
-      },
+      dashboardStats: stats,
     });
 
     renderDashboard();
@@ -153,5 +179,9 @@ describe('DashboardPage', () => {
 
     // Weekly activity chart
     expect(screen.getByText(/Weekly Rhythm/i)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/dashboard/stats', expect.anything());
+    });
   });
 });

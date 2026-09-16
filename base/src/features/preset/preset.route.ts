@@ -50,8 +50,10 @@ router.post('/apply_preset', authMiddleware, validateRequest(ApplyPresetSchema),
       ...result,
     });
   } catch (error: any) {
-    console.error('Apply preset error:', error);
-    const statusCode = error.statusCode || 500;
+    const statusCode = typeof error.statusCode === 'number' ? error.statusCode : 500;
+    if (statusCode >= 500) {
+      console.error('Apply preset error:', error);
+    }
     res.status(statusCode).json({ error: error.message || 'Failed to apply preset' });
   }
 });
@@ -73,8 +75,10 @@ router.post('/:id/apply', authMiddleware, async (req: Request, res: Response) =>
       ...result,
     });
   } catch (error: any) {
-    console.error('Apply preset error:', error);
-    const statusCode = error.statusCode || 500;
+    const statusCode = typeof error.statusCode === 'number' ? error.statusCode : 500;
+    if (statusCode >= 500) {
+      console.error('Apply preset error:', error);
+    }
     res.status(statusCode).json({ error: error.message || 'Failed to apply preset' });
   }
 });

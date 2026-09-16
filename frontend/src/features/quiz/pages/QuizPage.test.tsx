@@ -122,7 +122,7 @@ describe('Quiz', () => {
       quizTranslation: 'Фрукт'
     });
 
-    render(<Quiz />);
+    const { unmount } = render(<Quiz />);
     
     expect(screen.getByText('Translation: Фрукт')).toBeInTheDocument();
     
@@ -130,11 +130,11 @@ describe('Quiz', () => {
     expect(translateBtn).toBeDisabled();
 
     // Now test without translation
+    unmount();
     useStore.setState({ quizTranslation: null });
     render(<Quiz />);
 
-    // Get the second instance of the button (from the second render)
-    const activeTranslateBtn = screen.getAllByRole('button', { name: /Translate definition/i })[1];
+    const activeTranslateBtn = screen.getByRole('button', { name: /Translate definition/i });
     expect(activeTranslateBtn).not.toBeDisabled();
     await user.click(activeTranslateBtn);
     expect(apiClient.post).toHaveBeenCalledWith('/quiz/translate_definition');

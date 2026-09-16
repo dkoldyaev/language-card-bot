@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../shared/api/client';
 import useStore from '../store/useStore';
@@ -11,8 +11,11 @@ describe('App Routing', () => {
     useStore.setState({ token: 'dummy_token', profile: { id: 1, username: 'testuser' } });
   });
 
-  it('renders Dashboard page on default route', () => {
+  it('renders Dashboard page on default route', async () => {
     render(<App />);
-    expect(screen.getByText(/Welcome/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Welcome/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(apiClient.get).toHaveBeenCalled();
+    });
   });
 });
