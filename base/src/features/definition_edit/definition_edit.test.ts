@@ -5,11 +5,11 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../prisma';
 import { mockDeep, mockReset } from 'vitest-mock-extended';
 import { PrismaClient } from '@prisma/client';
-import { enqueueFetchTranslation } from '../add_word/add_word.queue';
+import { enqueueFetchTranslations } from '../add_word/add_word.queue';
 
 vi.mock('../../prisma');
 vi.mock('../add_word/add_word.queue', () => ({
-  enqueueFetchTranslation: vi.fn().mockResolvedValue(undefined)
+  enqueueFetchTranslations: vi.fn().mockResolvedValue(undefined)
 }));
 
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
@@ -135,14 +135,12 @@ describe('PUT /api/v1/definition_edit/:id', () => {
       data: { text: 'new text' }
     });
 
-    expect(enqueueFetchTranslation).toHaveBeenCalledWith(
-      1,
-      'new text',
+    expect(enqueueFetchTranslations).toHaveBeenCalledWith(
+      [{ id: 1, text: 'new text' }],
       1,
       'testuser',
       10,
       'word',
-      2, // total definitions
       'en',
       'ru'
     );

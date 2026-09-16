@@ -81,11 +81,19 @@ export interface DictionaryAddDefinitionsReceivedEvent extends BaseMercureEvent 
   words: DictionaryAddDefinitionsWordItem[];
 }
 
+export interface DefinitionTranslationItem {
+  id: number;
+  translation: string;
+}
+
+export interface DefinitionTranslateLoadedWordItem {
+  wordId: number;
+  definitions: DefinitionTranslationItem[];
+}
+
 export interface DefinitionTranslateLoadedEvent extends BaseMercureEvent {
   type: 'definition_translate_loaded';
-  wordId: number;
-  definitionId: number;
-  translation: string;
+  words: DefinitionTranslateLoadedWordItem[];
 }
 
 export interface QuizCardMercureEvent extends BaseMercureEvent {

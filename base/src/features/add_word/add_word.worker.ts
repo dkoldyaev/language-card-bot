@@ -1,7 +1,7 @@
 import { Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { prisma } from '../../prisma';
-import { enqueueFetchTranslation } from './add_word.queue';
+import { enqueueFetchTranslations } from './add_word.queue';
 import { 
   DictionaryAddDefinitionsReceivedEvent
 } from '../event_bus/event_bus.type';
@@ -78,44 +78,44 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       ]
     } as DictionaryAddDefinitionsReceivedEvent);
 
-    // 4. Enqueue translation jobs
-    for (const definition of createdDefinitions) {
-      await enqueueFetchTranslation(
-        definition.id,
-        definition.text,
-        userId,
-        username,
-        wordId,
-        wordText,
-        definitions.length,
-        targetLanguage,
-        baseLanguage
-      );
+    // 4. Enqueue translation job for all definitions of this word
+    await enqueueFetchTranslations(
+      createdDefinitions.map(d => ({ id: d.id, text: d.text })),
+      userId,
+      username,
+      wordId,
+      wordText,
+      targetLanguage,
+      baseLanguage
+    );
+  } else if (job.name === 'fetchTranslations' || job.name === 'fetchTranslation') {
+    const { definitions, definitionId, definitionText, username, wordId, sourceLanguage, targetLanguage } = job.data;
+
+    const defsToTranslate: { id: number; text: string }[] = Array.isArray(definitions)
+      ? definitions
+      : (definitionId && definitionText ? [{ id: definitionId, text: definitionText }] : []);
+
+    if (defsToTranslate.length === 0) {
+      return;
     }
-  } else if (job.name === 'fetchTranslation') {
-    const { definitionId, definitionText, userId, username, wordId, wordText, totalDefinitions, sourceLanguage, targetLanguage } = job.data;
 
     let srcLang = sourceLanguage;
     let tgtLang = targetLanguage;
 
     if (!srcLang || !tgtLang) {
-      const definition = await prisma.definition.findUnique({
-        where: { id: definitionId },
-        include: {
-          word: {
-            include: { dictionary: true }
-          }
-        }
+      const word = await prisma.word.findUnique({
+        where: { id: wordId },
+        include: { dictionary: true }
       });
 
-      if (definition?.word?.dictionary) {
-        srcLang = definition.word.dictionary.targetLanguage;
-        tgtLang = definition.word.dictionary.baseLanguage;
+      if (word && word.dictionary) {
+        srcLang = word.dictionary.targetLanguage;
+        tgtLang = word.dictionary.baseLanguage;
       }
     }
 
     if (!srcLang || !tgtLang) {
-      throw new Error(`Dictionary languages not found for definition ${definitionId}`);
+      throw new Error(`Dictionary languages not found for word ${wordId}`);
     }
 
     const translatorRes = await fetch(TRANSLATOR_API_URL, {
@@ -124,33 +124,43 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       body: JSON.stringify({
         sourceLanguage: srcLang,
         targetLanguage: tgtLang,
-        texts: [definitionText],
+        texts: defsToTranslate.map(d => d.text),
         translatorApp: env.TRANSLATOR_APP_TYPE
       })
     });
 
     if (!translatorRes.ok) {
-      throw new Error(`Translator API error for definition ${definitionId}: ${await translatorRes.text()}`);
+      throw new Error(`Translator API error for word ${wordId}: ${await translatorRes.text()}`);
     }
 
     const translatorData = (await translatorRes.json()) as { translations: string[] };
-    const translatedText = translatorData.translations[0];
+    const translatedTexts = translatorData.translations;
 
-    // Save or update translation
-    await prisma.definitionTranslation.upsert({
-      where: { definitionId: definitionId },
-      update: { text: translatedText },
-      create: {
-        text: translatedText,
-        definitionId: definitionId
-      }
-    });
+    // Save translations
+    const savedTranslations: { id: number; translation: string }[] = [];
+    for (let i = 0; i < defsToTranslate.length; i++) {
+      const def = defsToTranslate[i];
+      const translatedText = translatedTexts[i];
+
+      await prisma.definitionTranslation.upsert({
+        where: { definitionId: def.id },
+        update: { text: translatedText },
+        create: {
+          text: translatedText,
+          definitionId: def.id
+        }
+      });
+
+      savedTranslations.push({
+        id: def.id,
+        translation: translatedText
+      });
+    }
 
     appEvents.emit(Events.TRANSLATION_ADDED, {
       username,
       wordId,
-      definitionId,
-      translation: translatedText
+      definitions: savedTranslations
     });
   }
 }, { connection: workerConnection });

@@ -23,25 +23,26 @@ export async function enqueueFetchDefinitions(
   });
 }
 
-export async function enqueueFetchTranslation(
-  definitionId: number,
-  definitionText: string,
+export interface FetchTranslationDefinitionItem {
+  id: number;
+  text: string;
+}
+
+export async function enqueueFetchTranslations(
+  definitions: FetchTranslationDefinitionItem[],
   userId: number,
   username: string,
   wordId: number,
   wordText: string,
-  totalDefinitions: number,
   sourceLanguage?: string,
   targetLanguage?: string
 ) {
-  await dictionaryQueue.add('fetchTranslation', {
-    definitionId,
-    definitionText,
+  await dictionaryQueue.add('fetchTranslations', {
+    definitions,
     userId,
     username,
     wordId,
     wordText,
-    totalDefinitions,
     sourceLanguage,
     targetLanguage,
   });

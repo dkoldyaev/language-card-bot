@@ -3,7 +3,7 @@ import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { DefinitionEditRequestSchema } from './definition_edit.type';
 import { getAuthUser } from '../auth/auth.service';
-import { enqueueFetchTranslation } from '../add_word/add_word.queue';
+import { enqueueFetchTranslations } from '../add_word/add_word.queue';
 
 const router = Router();
 
@@ -47,16 +47,12 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
       data: { text }
     });
 
-    const totalDefinitions = definition.word.definitions.length;
-
-    await enqueueFetchTranslation(
-      updatedDefinition.id,
-      updatedDefinition.text,
+    await enqueueFetchTranslations(
+      [{ id: updatedDefinition.id, text: updatedDefinition.text }],
       userId,
       username,
       definition.word.id,
       definition.word.text,
-      totalDefinitions,
       definition.word.dictionary.targetLanguage,
       definition.word.dictionary.baseLanguage
     );

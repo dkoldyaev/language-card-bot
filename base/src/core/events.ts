@@ -34,9 +34,13 @@ export interface DefinitionAddedPayload {
   targetLanguage?: string;
 }
 
+export interface TranslationAddedDefinitionItem {
+  id: number;
+  translation: string;
+}
+
 export interface TranslationAddedPayload {
   username: string;
   wordId: number;
-  definitionId: number;
-  translation: string;
+  definitions: TranslationAddedDefinitionItem[];
 }

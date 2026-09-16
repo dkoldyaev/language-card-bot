@@ -148,6 +148,7 @@ interface AppState {
   setDictionaryDefinitionsBatch: (items: { wordId: number; word: string; definitions: { id: number; text: string; presets?: PresetBadge[] }[] }[]) => void;
   updateDictionaryDefinition: (wordId: number, definitionId: number, text: string) => void;
   updateDictionaryTranslation: (wordId: number, definitionId: number, text: string) => void;
+  updateDictionaryTranslationsBatch: (words: { wordId: number; definitions: { id: number; translation: string }[] }[]) => void;
   addDictionaryDefinition: (wordId: number, definition: DictionaryDefinition) => void;
   removeDictionaryDefinition: (wordId: number, definitionId: number) => void;
   setQuizCard: (card: QuizCardData | null) => void;
