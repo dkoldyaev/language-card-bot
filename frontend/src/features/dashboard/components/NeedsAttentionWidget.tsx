@@ -103,11 +103,11 @@ export default function NeedsAttentionWidget({ items }: NeedsAttentionWidgetProp
                   {item.text}
                 </Typography>
                 {item.translation ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.82rem' }} noWrap>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.82rem' }}>
                     {item.translation}
                   </Typography>
                 ) : item.definition ? (
-                  <Typography variant="caption" color="text.secondary" noWrap>
+                  <Typography variant="caption" color="text.secondary">
                     {item.definition}
                   </Typography>
                 ) : null}
