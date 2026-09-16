@@ -136,11 +136,19 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
     const translatorData = (await translatorRes.json()) as { translations: string[] };
     const translatedTexts = translatorData.translations;
 
+    if (!Array.isArray(translatedTexts) || translatedTexts.length !== defsToTranslate.length) {
+      throw new Error(`Translator API returned mismatched translations count: expected ${defsToTranslate.length}, got ${translatedTexts?.length}`);
+    }
+
     // Save translations
     const savedTranslations: { id: number; translation: string }[] = [];
     for (let i = 0; i < defsToTranslate.length; i++) {
       const def = defsToTranslate[i];
       const translatedText = translatedTexts[i];
+
+      if (typeof translatedText !== 'string') {
+        throw new Error(`Invalid translation received for definition ${def.id}`);
+      }
 
       await prisma.definitionTranslation.upsert({
         where: { definitionId: def.id },

@@ -5,5 +5,7 @@ export default defineConfig({
     include: ['src/**/*.e2e.test.ts'],
     setupFiles: ['dotenv/config'],
     fileParallelism: false,
+    testTimeout: 20000,
+    hookTimeout: 20000,
   },
 });

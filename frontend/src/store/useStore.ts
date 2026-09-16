@@ -409,6 +409,35 @@ const useStore = create<AppState>()(
           )
         };
       }),
+      updateDictionaryTranslationsBatch: (words) => set((state) => {
+        const wordsMap = new Map(words.map((w) => [
+          w.wordId,
+          new Map(w.definitions.map((d) => [d.id, d.translation]))
+        ]));
+
+        return {
+          dictionary: state.dictionary.map((word) => {
+            const defsMap = wordsMap.get(word.id);
+            if (!defsMap) return word;
+
+            return {
+              ...word,
+              definitions: word.definitions.map((def) => {
+                const translationText = defsMap.get(def.id);
+                if (translationText !== undefined) {
+                  return {
+                    ...def,
+                    translation: def.translation
+                      ? { ...def.translation, text: translationText }
+                      : { id: Date.now(), text: translationText }
+                  };
+                }
+                return def;
+              }),
+            };
+          }),
+        };
+      }),
       addDictionaryDefinition: (wordId, definition) => set((state) => ({
         dictionary: state.dictionary.map(word => 
           word.id === wordId ? {

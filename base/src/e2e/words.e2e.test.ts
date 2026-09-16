@@ -48,7 +48,16 @@ describe('Words E2E', () => {
         });
       }
       if (urlStr.includes('translate')) {
-        return new Response(JSON.stringify({ translations: ['mocked_translation'] }), {
+        let textsCount = 1;
+        if (options && typeof options.body === 'string') {
+          try {
+            const parsed = JSON.parse(options.body);
+            if (Array.isArray(parsed.texts)) {
+              textsCount = parsed.texts.length;
+            }
+          } catch {}
+        }
+        return new Response(JSON.stringify({ translations: Array.from({ length: textsCount }, () => 'mocked_translation') }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
@@ -78,7 +87,7 @@ describe('Words E2E', () => {
     };
 
     await waitForCondition(() => 
-      messages.filter(m => m.type === 'definition_translate_loaded').length >= 2
+      messages.some(m => m.type === 'definition_translate_loaded')
     );
 
     const createdWord = await prisma.word.findUnique({
@@ -139,11 +148,18 @@ describe('Words E2E', () => {
     expect(defsReceivedEvents[0].words[0].definitions.length).toBe(2);
 
     const defProcessedEvents = messages.filter(m => m.type === 'definition_translate_loaded');
-    expect(defProcessedEvents.length).toBe(2);
+    expect(defProcessedEvents.length).toBe(1);
     expect(defProcessedEvents[0]).toMatchObject({
       type: 'definition_translate_loaded',
-      translation: 'mocked_translation'
+      words: expect.arrayContaining([
+        expect.objectContaining({
+          definitions: expect.arrayContaining([
+            expect.objectContaining({ translation: 'mocked_translation' })
+          ])
+        })
+      ])
     });
+    expect(defProcessedEvents[0].words[0].definitions.length).toBe(2);
 
     const duplicateEvents = messages.filter(m => m.type === 'dictionary_add_duplicate');
     expect(duplicateEvents.length).toBe(1);

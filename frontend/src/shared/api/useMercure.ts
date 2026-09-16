@@ -59,7 +59,9 @@ export function useMercure() {
                 }
                 window.dispatchEvent(new CustomEvent('mercure-word-status', { detail: data }));
               } else if (data.type === 'definition_translate_loaded') {
-                useStore.getState().updateDictionaryTranslation(data.wordId, data.definitionId, data.translation);
+                if (Array.isArray(data.words)) {
+                  useStore.getState().updateDictionaryTranslationsBatch(data.words);
+                }
               } else if (data.type === 'state_sync') {
                 useStore.getState().setAppState(data);
               } else if (data.type === 'dictionaries_sync' && data.dictionaries) {
