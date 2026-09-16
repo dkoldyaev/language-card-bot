@@ -12,7 +12,7 @@ export default function WeeklyActivityChart({ activity }: WeeklyActivityChartPro
   const maxCount = Math.max(...activity.map((d) => d.count), 5);
 
   return (
-    <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
+    <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
       <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
           <Box

@@ -51,7 +51,7 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
               height: 38,
               display: 'grid',
               placeItems: 'center',
-              borderRadius: 2.5,
+              borderRadius: 2,
               color: 'secondary.dark',
               backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.secondary.main, 0.15) : '#FBE8E0',
             }}

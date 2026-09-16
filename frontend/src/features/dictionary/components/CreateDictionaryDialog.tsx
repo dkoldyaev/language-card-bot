@@ -107,7 +107,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
       slotProps={{
         paper: {
           sx: {
-            borderRadius: 3.5,
+            borderRadius: 2,
             p: 1,
           },
         },

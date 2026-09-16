@@ -16,13 +16,13 @@ export default function NeedsAttentionWidget({ items }: NeedsAttentionWidgetProp
 
   if (items.length === 0) {
     return (
-      <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
+      <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
         <CardContent sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
             sx={{
               width: 42,
               height: 42,
-              borderRadius: 2.5,
+              borderRadius: 2,
               display: 'grid',
               placeItems: 'center',
               backgroundColor: alpha('#2A9D8F', 0.12),
@@ -45,7 +45,7 @@ export default function NeedsAttentionWidget({ items }: NeedsAttentionWidgetProp
   }
 
   return (
-    <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
+    <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
       <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>

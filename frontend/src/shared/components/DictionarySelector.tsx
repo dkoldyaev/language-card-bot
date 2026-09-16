@@ -110,7 +110,7 @@ export default function DictionarySelector() {
           paper: {
             sx: {
               minWidth: 260,
-              borderRadius: 2.5,
+              borderRadius: 2,
               boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
               mt: 0.75,
             },

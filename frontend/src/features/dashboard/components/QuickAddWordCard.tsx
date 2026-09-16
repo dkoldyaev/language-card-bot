@@ -47,7 +47,7 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
   };
 
   return (
-    <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
+    <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
       <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
           <Box

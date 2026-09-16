@@ -210,7 +210,7 @@ export default function Dashboard() {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <QuickAddWordCard onWordAdded={loadStats} />
 
-              <Card sx={{ backgroundColor: '#FFFDF9', border: '1px solid #F0ECE1', borderRadius: 2.5 }}>
+              <Card sx={{ backgroundColor: '#FFFDF9', border: '1px solid #F0ECE1' }}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
@@ -240,7 +240,7 @@ export default function Dashboard() {
           </Box>
 
           {/* Word Preview Chips */}
-          <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
+          <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
             <CardContent sx={{ p: 2.5 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
                 {t('dashboard.freshOverline')}
@@ -333,7 +333,7 @@ export default function Dashboard() {
             {/* Left Column */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               {/* Mastery Progress Bar */}
-              <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
+              <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
@@ -393,7 +393,7 @@ export default function Dashboard() {
               <NeedsAttentionWidget items={dashboardStats.needsAttention} />
 
               {/* Fresh in Deck */}
-              <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
+              <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>

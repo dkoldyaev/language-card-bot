@@ -120,7 +120,6 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
       data-testid="dictionary-presets-section"
       sx={{
         mb: 4,
-        borderRadius: 3,
         border: '1px solid',
         borderColor: 'divider',
         backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.background.paper, 0.5) : '#FAFAF8',
@@ -146,7 +145,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                 height: 38,
                 display: 'grid',
                 placeItems: 'center',
-                borderRadius: 2.5,
+                borderRadius: 2,
                 color: 'primary.dark',
                 backgroundColor: alpha(theme.palette.primary.main, 0.12),
               }}
@@ -209,7 +208,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
           <Box
             sx={{
               p: 2.5,
-              borderRadius: 2.5,
+              borderRadius: 2,
               border: '1px dashed',
               borderColor: 'divider',
               backgroundColor: 'background.paper',
@@ -242,7 +241,6 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                   key={preset.id}
                   data-testid={`preset-card-${preset.id}`}
                   sx={{
-                    borderRadius: 2.5,
                     border: '1px solid',
                     borderColor: 'divider',
                     backgroundColor: 'background.paper',

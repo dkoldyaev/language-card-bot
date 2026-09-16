@@ -59,7 +59,7 @@ export default function DictionarySwitcher({
               sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                borderRadius: 2.5,
+                borderRadius: 2,
                 border: '1px solid',
                 borderColor: isSelected ? 'primary.main' : 'divider',
                 backgroundColor: isSelected ? 'primary.main' : 'background.paper',

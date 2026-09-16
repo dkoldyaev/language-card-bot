@@ -63,7 +63,6 @@ export default function DashboardKpiBar({ stats }: DashboardKpiBarProps) {
             backgroundColor: 'background.paper',
             border: '1px solid',
             borderColor: 'divider',
-            borderRadius: 2.5,
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
             transition: 'transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
             '&:hover': {
