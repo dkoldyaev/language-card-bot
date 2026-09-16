@@ -66,7 +66,7 @@ export default function NeedsAttentionWidget({ items }: NeedsAttentionWidgetProp
               <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
                 {t('dashboard.needsAttentionTitle')}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'inline-block', lineHeight: 1 }}>
                 {t('dashboard.needsAttentionDesc', { count: items.length })}
               </Typography>
             </Box>
