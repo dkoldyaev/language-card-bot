@@ -79,6 +79,11 @@ const pt = {
   'dashboard.dictionaryBtn': 'Dicionário',
   'dashboard.emptyRecentWords': 'Sua primeira palavra salva aparecerá aqui.',
   'dashboard.addWordsBtn': 'Adicionar palavras',
+  'dashboard.quickAddTitle': 'Adição rápida',
+  'dashboard.quickAddPlaceholder': 'Digite uma nova palavra...',
+  'dashboard.quickAddBtn': 'Adicionar palavra',
+  'dashboard.quickAddAuthNotice': 'Entre para adicionar suas próprias palavras',
+  'dashboard.quickAddSuccess': 'Palavra "{{word}}" adicionada à fila!',
 
   // Dictionary Page
   'dictionary.overline': 'Baralho de vocabulário',
@@ -260,6 +265,25 @@ const pt = {
   'theme.dark': 'Escuro',
   'theme.light': 'Claro',
   'theme.system': 'Sistema',
+
+  // Guest Mode
+  'guest.onboardingTitle': 'Bem-vindo ao CardBot',
+  'guest.onboardingSubtitle': 'Configure seu primeiro dicionário para começar a praticar imediatamente',
+  'guest.stepLanguages': '1. Selecionar idiomas',
+  'guest.stepPresets': '2. Escolher um baralho inicial',
+  'guest.selectPresetDesc': 'Escolha um baralho inicial para começar a aprender com vocabulário selecionado',
+  'guest.startEmpty': 'Começar com dicionário vazio',
+  'guest.emptyNotAllowed': 'Registro necessário para adicionar palavras personalizadas sem um preset',
+  'guest.startLearning': 'Começar a aprender',
+  'guest.bannerText': 'Você está no modo convidado. Os dados são salvos apenas neste navegador.',
+  'guest.bannerAction': 'Entrar / Salvar progresso',
+  'guest.badge': 'Modo convidado',
+  'guest.mergeTitle': 'Salvar seu progresso',
+  'guest.mergeDesc': 'Sua conta já possui dados. Deseja mesclar seu vocabulário e progresso de convidado com sua conta?',
+  'guest.mergeConfirm': 'Mesclar na conta',
+  'guest.mergeDiscard': 'Manter apenas os dados da conta',
+  'guest.continueWithoutAuth': 'Continuar como convidado',
+  'guest.noPresetsFound': 'Nenhum preset encontrado para o idioma selecionado',
 };
 
 export default pt;

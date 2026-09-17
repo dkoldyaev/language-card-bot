@@ -79,6 +79,11 @@ const es = {
   'dashboard.dictionaryBtn': 'Diccionario',
   'dashboard.emptyRecentWords': 'Tu primera palabra guardada aparecerá aquí.',
   'dashboard.addWordsBtn': 'Añadir palabras',
+  'dashboard.quickAddTitle': 'Añadido rápido',
+  'dashboard.quickAddPlaceholder': 'Escribe una nueva palabra...',
+  'dashboard.quickAddBtn': 'Añadir palabra',
+  'dashboard.quickAddAuthNotice': 'Inicia sesión para añadir tus propias palabras',
+  'dashboard.quickAddSuccess': '¡Palabra "{{word}}" en cola para definición!',
 
   // Dictionary Page
   'dictionary.overline': 'Mazo de vocabulario',
@@ -260,6 +265,25 @@ const es = {
   'theme.dark': 'Oscuro',
   'theme.light': 'Claro',
   'theme.system': 'Sistema',
+
+  // Guest Mode
+  'guest.onboardingTitle': 'Bienvenido a CardBot',
+  'guest.onboardingSubtitle': 'Configura tu primer diccionario para comenzar a practicar de inmediato',
+  'guest.stepLanguages': '1. Seleccionar idiomas',
+  'guest.stepPresets': '2. Elegir un mazo inicial',
+  'guest.selectPresetDesc': 'Elige un mazo inicial para comenzar a aprender con vocabulario seleccionado',
+  'guest.startEmpty': 'Empezar con diccionario vacío',
+  'guest.emptyNotAllowed': 'Se requiere registro para añadir palabras personalizadas sin un preset',
+  'guest.startLearning': 'Empezar a aprender',
+  'guest.bannerText': 'Estás practicando en modo invitado. Los datos solo se guardan en este navegador.',
+  'guest.bannerAction': 'Iniciar sesión / Guardar progreso',
+  'guest.badge': 'Modo invitado',
+  'guest.mergeTitle': 'Guardar tu progreso',
+  'guest.mergeDesc': 'Tu cuenta ya contiene datos. ¿Deseas combinar tu vocabulario y progreso de invitado con tu cuenta?',
+  'guest.mergeConfirm': 'Combinar con la cuenta',
+  'guest.mergeDiscard': 'Conservar solo los datos de la cuenta',
+  'guest.continueWithoutAuth': 'Continuar como invitado',
+  'guest.noPresetsFound': 'No se encontraron presets para el idioma seleccionado',
 };
 
 export default es;

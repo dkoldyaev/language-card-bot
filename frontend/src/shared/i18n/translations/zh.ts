@@ -79,6 +79,11 @@ const zh = {
   'dashboard.dictionaryBtn': '词典',
   'dashboard.emptyRecentWords': '您保存的第一个单词将显示在这里。',
   'dashboard.addWordsBtn': '添加单词',
+  'dashboard.quickAddTitle': '快速添加',
+  'dashboard.quickAddPlaceholder': '输入新单词...',
+  'dashboard.quickAddBtn': '添加单词',
+  'dashboard.quickAddAuthNotice': '登录以添加自定义单词',
+  'dashboard.quickAddSuccess': '单词 "{{word}}" 已加入队列！',
 
   // Dictionary Page
   'dictionary.overline': '词汇卡组',
@@ -260,6 +265,25 @@ const zh = {
   'theme.dark': '深色',
   'theme.light': '浅色',
   'theme.system': '跟随系统',
+
+  // Guest Mode
+  'guest.onboardingTitle': '欢迎来到 CardBot',
+  'guest.onboardingSubtitle': '设置你的第一个词典，立即开始练习',
+  'guest.stepLanguages': '1. 选择语言',
+  'guest.stepPresets': '2. 选择入门卡组',
+  'guest.selectPresetDesc': '选择精选入门卡组，快速开始词汇学习',
+  'guest.startEmpty': '从空词典开始',
+  'guest.emptyNotAllowed': '未选择预设时添加自定义单词需要先注册',
+  'guest.startLearning': '开始学习',
+  'guest.bannerText': '你当前处于访客模式。数据仅保存在此浏览器中。',
+  'guest.bannerAction': '登录 / 保存进度',
+  'guest.badge': '访客模式',
+  'guest.mergeTitle': '保存你的进度',
+  'guest.mergeDesc': '你的账户中已有数据。是否将访客模式下的词汇和测验进度合并到账户中？',
+  'guest.mergeConfirm': '合并到账户',
+  'guest.mergeDiscard': '仅保留账户数据',
+  'guest.continueWithoutAuth': '以访客身份继续',
+  'guest.noPresetsFound': '未找到所选语言的预设卡组',
 };
 
 export default zh;

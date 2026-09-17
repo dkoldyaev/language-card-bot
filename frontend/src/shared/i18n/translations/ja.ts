@@ -79,6 +79,11 @@ const ja = {
   'dashboard.dictionaryBtn': '辞書',
   'dashboard.emptyRecentWords': '保存した最初の単語がここに表示されます。',
   'dashboard.addWordsBtn': '単語を追加',
+  'dashboard.quickAddTitle': 'クイック追加',
+  'dashboard.quickAddPlaceholder': '新しい単語を入力...',
+  'dashboard.quickAddBtn': '単語を追加',
+  'dashboard.quickAddAuthNotice': '単語を追加するにはログインしてください',
+  'dashboard.quickAddSuccess': '単語「{{word}}」が追加キューに入りました！',
 
   // Dictionary Page
   'dictionary.overline': '単語デッキ',
@@ -260,6 +265,25 @@ const ja = {
   'theme.dark': 'ダーク',
   'theme.light': 'ライト',
   'theme.system': 'システム設定',
+
+  // Guest Mode
+  'guest.onboardingTitle': 'CardBot へようこそ',
+  'guest.onboardingSubtitle': '最初の辞書を設定して、すぐに練習を始めましょう',
+  'guest.stepLanguages': '1. 言語の選択',
+  'guest.stepPresets': '2. スターターデッキの選択',
+  'guest.selectPresetDesc': '厳選された単語セットを選んで学習を開始します',
+  'guest.startEmpty': '空の辞書で始める',
+  'guest.emptyNotAllowed': 'プリセットなしで独自の単語を追加するには登録が必要です',
+  'guest.startLearning': '学習を開始',
+  'guest.bannerText': '現在ゲストモードで利用中です。データはこのブラウザにのみ保存されます。',
+  'guest.bannerAction': 'ログイン / 進捗を保存',
+  'guest.badge': 'ゲストモード',
+  'guest.mergeTitle': '進捗を保存',
+  'guest.mergeDesc': 'アカウントには既にデータがあります。ゲスト期間の単語とクイズの進捗をアカウントに統合しますか？',
+  'guest.mergeConfirm': 'アカウントに統合する',
+  'guest.mergeDiscard': 'アカウントのデータのみ保持',
+  'guest.continueWithoutAuth': 'ゲストとして続ける',
+  'guest.noPresetsFound': '選択した言語のプリセットが見つかりません',
 };
 
 export default ja;

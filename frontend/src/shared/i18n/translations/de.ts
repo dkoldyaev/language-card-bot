@@ -79,6 +79,11 @@ const de = {
   'dashboard.dictionaryBtn': 'Wörterbuch',
   'dashboard.emptyRecentWords': 'Deine ersten gespeicherten Wörter erscheinen hier.',
   'dashboard.addWordsBtn': 'Wörter hinzufügen',
+  'dashboard.quickAddTitle': 'Schnelles Hinzufügen',
+  'dashboard.quickAddPlaceholder': 'Neues Wort eingeben...',
+  'dashboard.quickAddBtn': 'Wort hinzufügen',
+  'dashboard.quickAddAuthNotice': 'Melde dich an, um eigene Wörter hinzuzufügen',
+  'dashboard.quickAddSuccess': 'Wort "{{word}}" zur Definition vorgemerkt!',
 
   // Dictionary Page
   'dictionary.overline': 'Vokabeldeck',
@@ -260,6 +265,25 @@ const de = {
   'theme.dark': 'Dunkel',
   'theme.light': 'Hell',
   'theme.system': 'System',
+
+  // Guest Mode
+  'guest.onboardingTitle': 'Willkommen bei CardBot',
+  'guest.onboardingSubtitle': 'Richte dein erstes Wörterbuch ein, um direkt mit dem Üben zu beginnen',
+  'guest.stepLanguages': '1. Sprachen auswählen',
+  'guest.stepPresets': '2. Start-Deck wählen',
+  'guest.selectPresetDesc': 'Wähle ein Start-Deck, um sofort mit kuratiertem Wortschatz zu lernen',
+  'guest.startEmpty': 'Mit leerem Wörterbuch beginnen',
+  'guest.emptyNotAllowed': 'Registrierung erforderlich, um eigene Wörter ohne Preset hinzuzufügen',
+  'guest.startLearning': 'Lernen starten',
+  'guest.bannerText': 'Du lernst derzeit im Gastmodus. Daten werden nur in diesem Browser gespeichert.',
+  'guest.bannerAction': 'Anmelden / Fortschritt speichern',
+  'guest.badge': 'Gastmodus',
+  'guest.mergeTitle': 'Fortschritt speichern',
+  'guest.mergeDesc': 'Dein Konto enthält bereits Daten. Möchtest du deinen Gast-Wortschatz und Quiz-Fortschritt mit deinem Konto zusammenführen?',
+  'guest.mergeConfirm': 'In Konto zusammenführen',
+  'guest.mergeDiscard': 'Nur Kontodaten behalten',
+  'guest.continueWithoutAuth': 'Als Gast fortfahren',
+  'guest.noPresetsFound': 'Keine Presets für die ausgewählte Sprache gefunden',
 };
 
 export default de;

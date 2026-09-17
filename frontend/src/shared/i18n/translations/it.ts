@@ -79,6 +79,11 @@ const it = {
   'dashboard.dictionaryBtn': 'Dizionario',
   'dashboard.emptyRecentWords': 'La tua prima parola salvata apparirà qui.',
   'dashboard.addWordsBtn': 'Aggiungi parole',
+  'dashboard.quickAddTitle': 'Aggiunta rapida',
+  'dashboard.quickAddPlaceholder': 'Digita una nuova parola...',
+  'dashboard.quickAddBtn': 'Aggiungi parola',
+  'dashboard.quickAddAuthNotice': 'Accedi per aggiungere le tue parole',
+  'dashboard.quickAddSuccess': 'Parola "{{word}}" messa in coda!',
 
   // Dictionary Page
   'dictionary.overline': 'Mazzo di vocaboli',
@@ -260,6 +265,25 @@ const it = {
   'theme.dark': 'Scuro',
   'theme.light': 'Chiaro',
   'theme.system': 'Sistema',
+
+  // Guest Mode
+  'guest.onboardingTitle': 'Benvenuto su CardBot',
+  'guest.onboardingSubtitle': 'Configura il tuo primo dizionario per iniziare subito ad esercitarti',
+  'guest.stepLanguages': '1. Seleziona le lingue',
+  'guest.stepPresets': '2. Scegli un mazzo iniziale',
+  'guest.selectPresetDesc': 'Scegli un mazzo iniziale per iniziare ad imparare con vocaboli selezionati',
+  'guest.startEmpty': 'Inizia con un dizionario vuoto',
+  'guest.emptyNotAllowed': 'Registrazione richiesta per aggiungere parole senza un mazzo predefinito',
+  'guest.startLearning': 'Inizia ad imparare',
+  'guest.bannerText': 'Sei attualmente in modalità ospite. I dati sono salvati solo in questo browser.',
+  'guest.bannerAction': 'Accedi / Salva progressi',
+  'guest.badge': 'Modalità ospite',
+  'guest.mergeTitle': 'Salva i tuoi progressi',
+  'guest.mergeDesc': 'Il tuo account ha già dei dati. Vuoi unire i tuoi vocaboli e progressi da ospite con il tuo account?',
+  'guest.mergeConfirm': 'Unisci all\'account',
+  'guest.mergeDiscard': 'Mantieni solo i dati dell\'account',
+  'guest.continueWithoutAuth': 'Continua come ospite',
+  'guest.noPresetsFound': 'Nessun mazzo trovato per la lingua selezionata',
 };
 
 export default it;

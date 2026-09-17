@@ -79,6 +79,11 @@ const tr = {
   'dashboard.dictionaryBtn': 'Sözlük',
   'dashboard.emptyRecentWords': 'Kaydettiğiniz ilk kelime burada görünecektir.',
   'dashboard.addWordsBtn': 'Kelime ekle',
+  'dashboard.quickAddTitle': 'Hızlı Ekle',
+  'dashboard.quickAddPlaceholder': 'Yeni bir kelime yazın...',
+  'dashboard.quickAddBtn': 'Kelime Ekle',
+  'dashboard.quickAddAuthNotice': 'Kendi kelimelerinizi eklemek için giriş yapın',
+  'dashboard.quickAddSuccess': '"{{word}}" kelimesi kuyruğa eklendi!',
 
   // Dictionary Page
   'dictionary.overline': 'Kelime Destesi',
@@ -260,6 +265,25 @@ const tr = {
   'theme.dark': 'Karanlık',
   'theme.light': 'Aydınlık',
   'theme.system': 'Sistem',
+
+  // Guest Mode
+  'guest.onboardingTitle': 'CardBot\'a Hoş Geldiniz',
+  'guest.onboardingSubtitle': 'Hemen pratik yapmaya başlamak için ilk sözlüğünüzü oluşturun',
+  'guest.stepLanguages': '1. Dilleri seçin',
+  'guest.stepPresets': '2. Başlangıç destesi seçin',
+  'guest.selectPresetDesc': 'Hazırlanmış kelimelerle öğrenmeye başlamak için bir başlangıç destesi seçin',
+  'guest.startEmpty': 'Boş sözlükle başla',
+  'guest.emptyNotAllowed': 'Ön ayar olmadan özel kelimeler eklemek için kayıt gereklidir',
+  'guest.startLearning': 'Öğrenmeye Başla',
+  'guest.bannerText': 'Şu anda misafir modundasınız. Veriler yalnızca bu tarayıcıda saklanır.',
+  'guest.bannerAction': 'Giriş Yap / İlerlemeyi Kaydet',
+  'guest.badge': 'Misafir Modu',
+  'guest.mergeTitle': 'İlerlemenizi Kaydedin',
+  'guest.mergeDesc': 'Hesabınızda zaten veri var. Misafir kelimelerinizi ve test ilerlemenizi hesabınızla birleştirmek ister misiniz?',
+  'guest.mergeConfirm': 'Hesapla birleştir',
+  'guest.mergeDiscard': 'Yalnızca hesap verilerini koru',
+  'guest.continueWithoutAuth': 'Misafir olarak devam et',
+  'guest.noPresetsFound': 'Seçilen dil için ön ayar bulunamadı',
 };
 
 export default tr;
