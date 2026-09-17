@@ -130,14 +130,14 @@ async function main() {
     branch: composeDetails.branch,
     repository: composeDetails.repository,
   });
-  // 2. Ensure composePath is ./docker-compose.test.yml
-  if (composeDetails.composePath !== './docker-compose.test.yml') {
-    console.log('Updating composePath to ./docker-compose.test.yml...');
+  // 2. Ensure composePath is ./docker-compose.yml
+  if (composeDetails.composePath !== './docker-compose.yml') {
+    console.log('Updating composePath to ./docker-compose.yml...');
     await trpcCall('compose.update', 'POST', {
       composeId,
-      composePath: './docker-compose.test.yml',
+      composePath: './docker-compose.yml',
     });
-    console.log('✓ composePath set to ./docker-compose.test.yml');
+    console.log('✓ composePath set to ./docker-compose.yml');
   }
 
   const currentEnv = composeDetails.env || '';

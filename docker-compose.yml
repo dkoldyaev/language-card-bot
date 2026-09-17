@@ -26,8 +26,6 @@ services:
       - LLM_MODEL=${BASE_LLM_MODEL}
       - ENABLE_DB_LOGGING=${BASE_ENABLE_DB_LOGGING}
     depends_on:
-      - db_test
-      - redis_test
       - llm
 
   mercure:
@@ -51,7 +49,9 @@ services:
       - LARA_ACCESS_KEY_ID=${TRANSLATOR_LARA_ACCESS_KEY_ID}
       - LARA_ACCESS_KEY_SECRET=${TRANSLATOR_LARA_ACCESS_KEY_SECRET}
       - CACHE_URL=${TRANSLATOR_CACHE_URL}
-      - LLM_SERVICE_URL=${TRANSLATOR_LLM_SERVICE_URL:-http://llm:3003/api/v1/generate}
+      - LLM_SERVICE_URL=${TRANSLATOR_LLM_SERVICE_URL}
+      - LLM_PROVIDER=${TRANSLATOR_LLM_PROVIDER}
+      - LLM_MODEL=${TRANSLATOR_LLM_MODEL}
     depends_on:
       - llm
 
@@ -73,7 +73,7 @@ services:
     environment:
       - PORT=${DEFINER_PORT}
       - DEFINER_APP_TYPE=${BASE_DEFINER_APP_TYPE}
-      - LLM_SERVICE_URL=${DEFINER_LLM_SERVICE_URL:-http://llm:3003/api/v1/generate}
+      - LLM_SERVICE_URL=${DEFINER_LLM_SERVICE_URL}
       - MOCK_TIMEOUT=${DEFINER_MOCK_TIMEOUT}
       - CACHE_URL=${DEFINER_CACHE_URL}
     depends_on:
@@ -84,6 +84,7 @@ services:
       context: ./frontend
       target: ${FRONTEND_TARGET}
       args:
+        - PORT=${FRONTEND_PORT}
         - API_BASE_URL=${FRONTEND_API_BASE_URL}
         - MERCURE_PUBLIC_URL=${FRONTEND_MERCURE_PUBLIC_URL}
         - BASE_DOMAIN=${FRONTEND_BASE_DOMAIN}
@@ -91,6 +92,7 @@ services:
         - ALLOWED_HOSTS=${FRONTEND_ALLOWED_HOSTS}
         - AUTH_PROVIDER=${FRONTEND_AUTH_PROVIDER}
     environment:
+      - FRONTEND_PORT=${FRONTEND_PORT}
       - API_BASE_URL=${FRONTEND_API_BASE_URL}
       - MERCURE_PUBLIC_URL=${FRONTEND_MERCURE_PUBLIC_URL}
       - BASE_DOMAIN=${FRONTEND_BASE_DOMAIN}
