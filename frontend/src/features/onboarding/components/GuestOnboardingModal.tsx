@@ -255,7 +255,7 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
                           </Typography>
                         )}
                         <Typography variant="caption" sx={{ display: 'block', mt: 1, fontWeight: 600, color: 'text.secondary' }}>
-                          {wordCount} {t('dictionary.wordsCountSuffix')}
+                          {t('dictionary.wordsCount', { count: wordCount })}
                         </Typography>
                       </CardContent>
                     </Card>
