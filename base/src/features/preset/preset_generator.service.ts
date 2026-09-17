@@ -1,6 +1,6 @@
 import { env } from '../../core/env';
 import { prisma } from '../../prisma';
-import { formatPreset } from './preset.service';
+import { formatPreset, invalidatePresetsCache } from './preset.service';
 import { PresetDto, AVAILABLE_LANGUAGES, AvailableLanguage } from './preset.type';
 
 export interface GeneratePresetOptions {
@@ -11,6 +11,7 @@ export interface GeneratePresetOptions {
   theme?: string;
   title?: string;
   description?: string;
+  excludedWords?: string[] | Set<string>;
   onProgress?: (message: string) => void;
 }
 
@@ -292,6 +293,13 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
   const runCollectedWords = new Map<string, string[]>();
   const globalExcludedWords = new Set<string>();
 
+  if (options.excludedWords) {
+    for (const w of options.excludedWords) {
+      const normalized = w.trim().toLowerCase();
+      if (normalized) globalExcludedWords.add(normalized);
+    }
+  }
+
   for (const level of levels) {
     const levelLabel = level ? `Level ${level}` : 'General';
     log(`\n--- Collecting ${wordsCount} words for ${levelLabel}${theme ? ` (Theme: ${theme})` : ''} ---`);
@@ -313,7 +321,16 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
         excludedWords: Array.from(globalExcludedWords),
       });
 
-      const newWords = wordsFromLlm.filter((w) => !globalExcludedWords.has(w));
+      const newWords = wordsFromLlm.filter((w) => {
+        const normalized = w.trim().toLowerCase();
+        if (!normalized) return false;
+        if (options.presetId && existingWordMap.has(normalized)) return true;
+        if (globalExcludedWords.has(normalized)) return false;
+        if (levelCollectedWords.has(normalized)) return false;
+        if (runCollectedWords.has(normalized)) return false;
+        return true;
+      });
+
       if (newWords.length === 0) {
         emptyBatchCount++;
         if (emptyBatchCount >= 5) {
@@ -329,7 +346,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
       }
 
       const candidateBatch: WordDefinitionsItem[] = [];
-      for (const word of wordsFromLlm) {
+      for (const word of newWords) {
         log(`[${levelLabel}] Fetching definitions for word "${word}"...`);
         const rawDefinitions = await fetchDefinitionsFromDefiner(word, language);
 
@@ -354,6 +371,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
         });
 
         for (const { word, filteredDefinitions: filteredDefs } of batchResults) {
+          const normalizedWord = word.trim().toLowerCase();
           // 4. If no definitions left after filtering, discard word
           if (!filteredDefs || filteredDefs.length === 0) {
             log(`[${levelLabel}] No definitions remaining after filtering for "${word}". Discarding.`);
@@ -361,8 +379,8 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
           }
 
           // 5 & 6. If presetId was given and word already in preset, check for new definitions
-          if (options.presetId && existingWordMap.has(word)) {
-            const existingDefsSet = existingWordMap.get(word)!;
+          if (options.presetId && existingWordMap.has(normalizedWord)) {
+            const existingDefsSet = existingWordMap.get(normalizedWord)!;
             const newDefs = filteredDefs.filter((d) => !existingDefsSet.has(d.trim().toLowerCase()));
 
             if (newDefs.length === 0) {
@@ -371,10 +389,24 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
             }
 
             log(`[${levelLabel}] Word "${word}" has ${newDefs.length} new definition(s). Keeping.`);
-            levelCollectedWords.set(word, newDefs);
+            levelCollectedWords.set(normalizedWord, newDefs);
           } else {
+            if (options.excludedWords) {
+              const isExcluded = options.excludedWords instanceof Set
+                ? options.excludedWords.has(normalizedWord)
+                : options.excludedWords.includes(normalizedWord);
+              if (isExcluded) {
+                log(`[${levelLabel}] Word "${word}" is in excluded words list. Discarding.`);
+                continue;
+              }
+            }
+            if (runCollectedWords.has(normalizedWord)) {
+              log(`[${levelLabel}] Word "${word}" already collected. Discarding.`);
+              continue;
+            }
+
             log(`[${levelLabel}] Word "${word}" accepted with ${filteredDefs.length} definition(s).`);
-            levelCollectedWords.set(word, filteredDefs);
+            levelCollectedWords.set(normalizedWord, filteredDefs);
           }
 
           log(`[${levelLabel}] Progress: ${levelCollectedWords.size}/${wordsCount} words collected.`);
@@ -441,6 +473,8 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
       },
     });
 
+    await invalidatePresetsCache();
+
     log(`Preset #${options.presetId} successfully updated with ${existingBodyList.length} total words.`);
     return formatPreset(updated);
   } else {
@@ -468,6 +502,8 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
         body: newBody,
       },
     });
+
+    await invalidatePresetsCache();
 
     log(`Preset #${created.id} ("${created.title}") successfully created with ${newBody.length} words.`);
     return formatPreset(created);

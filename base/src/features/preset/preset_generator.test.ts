@@ -521,5 +521,79 @@ describe('Preset Generator Service', () => {
       });
       expect(result.id).toBe(20);
     });
+
+    it('should exclude words provided in options.excludedWords and not include them in the preset', async () => {
+      global.fetch = vi.fn().mockImplementation(async (url: string, init: any) => {
+        const body = JSON.parse(init.body);
+
+        if (body.prompt && body.prompt.includes('unique words')) {
+          // Verify that excluded words were included in prompt
+          expect(body.prompt).toContain('water');
+          return {
+            ok: true,
+            json: async () => ({
+              data: { words: ['water', 'bread'] },
+            }),
+          };
+        }
+
+        if (body.definerApp) {
+          if (body.text === 'bread') {
+            return {
+              ok: true,
+              json: async () => ({ definitions: ['A food made of flour and water baked'] }),
+            };
+          }
+          if (body.text === 'water') {
+            return {
+              ok: true,
+              json: async () => ({ definitions: ['Clear liquid'] }),
+            };
+          }
+        }
+
+        if (body.prompt && body.prompt.includes('evaluate the following definitions')) {
+          return {
+            ok: true,
+            json: async () => ({
+              data: {
+                results: [
+                  { word: 'bread', filteredDefinitions: ['A food made of flour and *** baked'] },
+                ],
+              },
+            }),
+          };
+        }
+
+        return { ok: true, json: async () => ({ data: {} }) };
+      });
+
+      prismaMock.preset.create.mockResolvedValue({
+        id: 25,
+        title: 'Preset EN (A1) - 1 words',
+        description: null,
+        forLanguage: 'en',
+        type: 'word-definition',
+        body: [{ word: 'bread', definitions: ['A food made of flour and *** baked'] }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      const result = await generatePreset({
+        language: 'en',
+        levels: ['A1'],
+        wordsCount: 1,
+        excludedWords: ['water'],
+      });
+
+      expect(prismaMock.preset.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          body: [{ word: 'bread', definitions: ['A food made of flour and *** baked'] }],
+        }),
+      });
+      expect(result.body).toEqual([
+        { word: 'bread', definitions: ['A food made of flour and *** baked'] },
+      ]);
+    });
   });
 });

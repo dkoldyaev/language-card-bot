@@ -1,13 +1,14 @@
 import 'dotenv/config';
 import { generatePreset } from '../features/preset/preset_generator.service';
+import { PresetDto } from '../features/preset/preset.type';
 import { prisma } from '../prisma';
 
 interface CliParams {
-  language?: string;
+  languages: string[];
   presetId?: number;
-  wordsCount: number;
-  levels?: string[];
-  theme?: string;
+  wordCounts: number[];
+  levels: string[];
+  themes: string[];
   title?: string;
   description?: string;
 }
@@ -18,31 +19,70 @@ Usage:
   npm run preset:create -- --language <codeOrName> [options]
 
 Required:
-  --language <lang>         Language code (e.g. en, es, fr, de, ru)
+  --language, -l <lang>     Language code(s) (e.g. en, es, fr, de, ru).
+                            Can be specified multiple times (--language en --language fr)
+                            or comma-separated (--language en,fr).
 
 Optional:
-  --preset-id <id>          ID of an existing preset to add/update words
-  --words-count <number>    Target number of words (default: 100)
-  --level <levels>          Comma-separated CEFR levels (e.g. A0, A1, B2)
-  --theme <theme>           Topic or theme for words (e.g. travel, food, IT)
-  --title <title>           Preset title (default auto-generated)
-  --description <desc>      Preset description
+  --level <levels>          CEFR level(s) (e.g. A0, A1, A2, B1, B2, C1, C2).
+                            Can be specified multiple times (--level B1 --level B2)
+                            or comma-separated (--level B1,B2).
+  --theme, --topic, -t      Theme(s) for words (e.g. travel, food, IT).
+                            Can be specified multiple times (--theme travel --theme IT)
+                            or comma-separated (--theme travel,IT).
+  --word-count,             Target number of words per preset (default: 100).
+  --words-count, -w         Pass comma-separated values (e.g. 10,10,10) to create
+                            multiple presets without repeating words.
+  --preset-id <id>          ID of an existing preset to add/update words (single preset only).
+  --title <title>           Preset title (default auto-generated).
+  --description <desc>      Preset description.
 
 Examples:
-  npm run preset:create -- --language en --level B2 --theme travel --words-count 50
+  npm run preset:create -- --language en --level B1 --level B2 --theme travel --word-count 10,10,10
+  npm run preset:create -- --language en --language fr --level B2 --word-count 50
   npm run preset:create -- --language es --preset-id 1 --words-count 20
 `);
 }
 
 function parseCliArgs(): CliParams {
   const args = process.argv.slice(2);
-  let language: string | undefined;
+  const rawLanguages: string[] = [];
   let presetId: number | undefined;
-  let wordsCount = 100;
-  let levels: string[] | undefined;
-  let theme: string | undefined;
+  const rawWordCounts: number[] = [];
+  const rawLevels: string[] = [];
+  const rawThemes: string[] = [];
   let title: string | undefined;
   let description: string | undefined;
+
+  const addLanguages = (val: string) => {
+    val.split(',').forEach((s) => {
+      const trimmed = s.trim().toLowerCase();
+      if (trimmed) rawLanguages.push(trimmed);
+    });
+  };
+
+  const addLevels = (val: string) => {
+    val.split(',').forEach((s) => {
+      const trimmed = s.trim().toUpperCase();
+      if (trimmed) rawLevels.push(trimmed);
+    });
+  };
+
+  const addThemes = (val: string) => {
+    val.split(',').forEach((s) => {
+      const trimmed = s.trim();
+      if (trimmed) rawThemes.push(trimmed);
+    });
+  };
+
+  const addWordCounts = (val: string) => {
+    val.split(',').forEach((s) => {
+      const parsed = parseInt(s.trim(), 10);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        rawWordCounts.push(parsed);
+      }
+    });
+  };
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -51,31 +91,39 @@ function parseCliArgs(): CliParams {
       printUsage();
       process.exit(0);
     } else if (arg.startsWith('--language=')) {
-      language = arg.split('=')[1];
+      addLanguages(arg.split('=')[1]);
+    } else if (arg.startsWith('-l=')) {
+      addLanguages(arg.split('=')[1]);
     } else if (arg === '--language' || arg === '-l') {
-      language = args[++i];
+      const val = args[++i];
+      if (val) addLanguages(val);
     } else if (arg.startsWith('--preset-id=')) {
       const val = parseInt(arg.split('=')[1], 10);
       if (!Number.isNaN(val)) presetId = val;
     } else if (arg === '--preset-id') {
       const val = parseInt(args[++i], 10);
       if (!Number.isNaN(val)) presetId = val;
+    } else if (arg.startsWith('--word-count=')) {
+      addWordCounts(arg.split('=')[1]);
     } else if (arg.startsWith('--words-count=')) {
-      const val = parseInt(arg.split('=')[1], 10);
-      if (!Number.isNaN(val) && val > 0) wordsCount = val;
-    } else if (arg === '--words-count' || arg === '-w') {
-      const val = parseInt(args[++i], 10);
-      if (!Number.isNaN(val) && val > 0) wordsCount = val;
+      addWordCounts(arg.split('=')[1]);
+    } else if (arg.startsWith('-w=')) {
+      addWordCounts(arg.split('=')[1]);
+    } else if (arg === '--word-count' || arg === '--words-count' || arg === '-w') {
+      const val = args[++i];
+      if (val) addWordCounts(val);
     } else if (arg.startsWith('--level=')) {
-      levels = arg.split('=')[1].split(',').map((s) => s.trim()).filter(Boolean);
+      addLevels(arg.split('=')[1]);
     } else if (arg === '--level') {
-      levels = args[++i]?.split(',').map((s) => s.trim()).filter(Boolean);
-    } else if (arg.startsWith('--theme=')) {
-      theme = arg.split('=')[1];
+      const val = args[++i];
+      if (val) addLevels(val);
+    } else if (arg.startsWith('--theme=') || arg.startsWith('--topic=')) {
+      addThemes(arg.split('=')[1]);
+    } else if (arg.startsWith('-t=')) {
+      addThemes(arg.split('=')[1]);
     } else if (arg === '--theme' || arg === '--topic' || arg === '-t') {
-      theme = args[++i];
-    } else if (arg.startsWith('--topic=')) {
-      theme = arg.split('=')[1];
+      const val = args[++i];
+      if (val) addThemes(val);
     } else if (arg.startsWith('--title=')) {
       title = arg.split('=')[1];
     } else if (arg === '--title') {
@@ -87,51 +135,167 @@ function parseCliArgs(): CliParams {
     }
   }
 
+  const languages = Array.from(new Set(rawLanguages));
+  const levels = Array.from(new Set(rawLevels));
+  const themes = Array.from(new Set(rawThemes));
+  const wordCounts = rawWordCounts.length > 0 ? rawWordCounts : [100];
+
   return {
-    language,
+    languages,
     presetId,
-    wordsCount,
+    wordCounts,
     levels,
-    theme,
+    themes,
     title,
     description,
   };
 }
 
+interface Combination {
+  language: string;
+  level?: string;
+  theme?: string;
+}
+
 async function main() {
   const params = parseCliArgs();
 
-  if (!params.language) {
+  if (params.languages.length === 0) {
     console.error('Error: --language is required.');
     printUsage();
     process.exit(1);
   }
 
-  try {
-    const result = await generatePreset({
-      language: params.language,
-      presetId: params.presetId,
-      wordsCount: params.wordsCount,
-      levels: params.levels,
-      theme: params.theme,
-      title: params.title,
-      description: params.description,
-      onProgress: (msg) => console.log(msg),
-    });
-
-    console.log('\nPreset operation completed successfully!');
-    console.log('-------------------------------------------');
-    console.log(`ID:          ${result.id}`);
-    console.log(`Title:       ${result.title}`);
-    console.log(`Language:    ${result.forLanguage}`);
-    console.log(`Total Words: ${Array.isArray(result.body) ? result.body.length : 0}`);
-    console.log(`Type:        ${result.type}`);
-    if (result.description) {
-      console.log(`Description: ${result.description}`);
+  if (params.presetId !== undefined) {
+    if (params.languages.length > 1) {
+      console.error('Error: --preset-id cannot be used with multiple languages.');
+      process.exit(1);
     }
+    if (params.wordCounts.length > 1) {
+      console.error('Error: --preset-id cannot be used with multiple word counts.');
+      process.exit(1);
+    }
+  }
+
+  // Generate Cartesian product: languages x levels x themes
+  const effectiveLevels: (string | undefined)[] = params.levels.length > 0 ? params.levels : [undefined];
+  const effectiveThemes: (string | undefined)[] = params.themes.length > 0 ? params.themes : [undefined];
+
+  const combinations: Combination[] = [];
+  for (const language of params.languages) {
+    for (const level of effectiveLevels) {
+      for (const theme of effectiveThemes) {
+        combinations.push({ language, level, theme });
+      }
+    }
+  }
+
+  const totalRuns = combinations.length * params.wordCounts.length;
+  console.log(`\n============================================================`);
+  console.log(`Preset Creation Plan:`);
+  console.log(`- Languages:    ${params.languages.join(', ')}`);
+  console.log(`- Levels:       ${params.levels.length > 0 ? params.levels.join(', ') : 'any'}`);
+  console.log(`- Themes:       ${params.themes.length > 0 ? params.themes.join(', ') : 'none'}`);
+  console.log(`- Word counts:  ${params.wordCounts.join(', ')} (${params.wordCounts.length} preset(s) per combination)`);
+  console.log(`- Combinations: ${combinations.length}`);
+  console.log(`- Total tasks:  ${totalRuns}`);
+  console.log(`============================================================\n`);
+
+  const usedWordsByLanguage = new Map<string, Set<string>>();
+  const createdPresets: PresetDto[] = [];
+
+  try {
+    let runNumber = 0;
+
+    for (let comboIdx = 0; comboIdx < combinations.length; comboIdx++) {
+      const combo = combinations[comboIdx];
+      const { language, level, theme } = combo;
+
+      if (!usedWordsByLanguage.has(language)) {
+        usedWordsByLanguage.set(language, new Set<string>());
+      }
+      const usedWords = usedWordsByLanguage.get(language)!;
+
+      for (let partIdx = 0; partIdx < params.wordCounts.length; partIdx++) {
+        runNumber++;
+        const wordsCount = params.wordCounts[partIdx];
+        const partNumber = partIdx + 1;
+        const totalParts = params.wordCounts.length;
+
+        let presetTitle: string | undefined;
+        if (params.title) {
+          if (totalParts > 1 && combinations.length > 1) {
+            presetTitle = `${params.title} (${language.toUpperCase()}${level ? ` ${level}` : ''}) #${partNumber}`;
+          } else if (totalParts > 1) {
+            presetTitle = `${params.title} #${partNumber}`;
+          } else if (combinations.length > 1) {
+            presetTitle = `${params.title} (${language.toUpperCase()}${level ? ` ${level}` : ''})`;
+          } else {
+            presetTitle = params.title;
+          }
+        } else if (totalParts > 1) {
+          const themePart = theme ? ` - ${theme}` : '';
+          const levelPart = level ? ` (${level})` : '';
+          presetTitle = `Preset ${language.toUpperCase()}${themePart}${levelPart} #${partNumber} - ${wordsCount} words`;
+        }
+
+        console.log(`\n------------------------------------------------------------`);
+        console.log(
+          `[Task ${runNumber}/${totalRuns}] Generating preset for language: "${language}"` +
+            `${level ? `, level: "${level}"` : ''}` +
+            `${theme ? `, theme: "${theme}"` : ''}` +
+            ` (target: ${wordsCount} words${totalParts > 1 ? `, part ${partNumber}/${totalParts}` : ''})...`
+        );
+        if (usedWords.size > 0) {
+          console.log(`[Task ${runNumber}/${totalRuns}] Excluding ${usedWords.size} previously used words for "${language}".`);
+        }
+        console.log(`------------------------------------------------------------`);
+
+        const result = await generatePreset({
+          language,
+          presetId: params.presetId,
+          wordsCount,
+          levels: level ? [level] : undefined,
+          theme,
+          title: presetTitle,
+          description: params.description,
+          excludedWords: usedWords,
+          onProgress: (msg) => console.log(msg),
+        });
+
+        // Track collected words so subsequent presets never repeat them
+        if (Array.isArray(result.body)) {
+          for (const item of result.body) {
+            if (item && typeof item === 'object' && typeof item.word === 'string') {
+              usedWords.add(item.word.trim().toLowerCase());
+            }
+          }
+        }
+
+        createdPresets.push(result);
+        console.log(`[Task ${runNumber}/${totalRuns}] Completed successfully: Preset #${result.id} ("${result.title}").`);
+      }
+    }
+
+    console.log(`\n============================================================`);
+    console.log(`All operations completed successfully! (${createdPresets.length} preset(s) processed)`);
+    console.log(`============================================================`);
+    console.table(
+      createdPresets.map((p) => {
+        const words = Array.isArray(p.body) ? p.body.length : 0;
+        return {
+          ID: p.id,
+          Title: p.title,
+          Language: p.forLanguage,
+          Words: words,
+          Type: p.type,
+          Description: p.description || '-',
+        };
+      })
+    );
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.error('\nPreset creation failed:', msg);
+    console.error('\nPreset operation failed:', msg);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

@@ -16,10 +16,13 @@ const srcPath = path.resolve(__dirname, 'src/scripts', `${scriptName}.ts`);
 let cmd;
 let args;
 
-if (fs.existsSync(distPath)) {
+const hasDist = fs.existsSync(distPath);
+const hasSrc = fs.existsSync(srcPath);
+
+if (hasDist && (!hasSrc || fs.statSync(distPath).mtimeMs >= fs.statSync(srcPath).mtimeMs)) {
   cmd = process.execPath;
   args = [distPath, ...scriptArgs];
-} else if (fs.existsSync(srcPath)) {
+} else if (hasSrc) {
   cmd = 'npx';
   args = ['tsx', srcPath, ...scriptArgs];
 } else {
