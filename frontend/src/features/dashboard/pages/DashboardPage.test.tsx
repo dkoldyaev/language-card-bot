@@ -23,6 +23,7 @@ describe('DashboardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useStore.getState().reset();
+    useStore.setState({ token: 'mock-token' });
     mockedApiClient.get.mockImplementation((url) => {
       if (url === '/dashboard/stats') {
         return Promise.resolve({
@@ -183,5 +184,20 @@ describe('DashboardPage', () => {
     await waitFor(() => {
       expect(mockedApiClient.get).toHaveBeenCalledWith('/dashboard/stats', expect.anything());
     });
+  });
+
+  it('computes guest dashboard stats locally without API call when guest', async () => {
+    useStore.setState({
+      token: null,
+      dictionary: [{ id: 1, text: 'guest-word', definitions: [{ id: 1, text: 'def', translation: null }] }],
+      dictionaries: [{ id: 1, name: 'Guest Deck', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true }],
+      activeDictionaryId: 1,
+      guestQuizAttempts: [{ wordText: 'guest-word', result: 'SUCCESS', createdAt: new Date().toISOString() }],
+    });
+
+    renderDashboard();
+
+    expect(screen.getByText('guest-word')).toBeInTheDocument();
+    expect(mockedApiClient.get).not.toHaveBeenCalledWith('/dashboard/stats', expect.anything());
   });
 });

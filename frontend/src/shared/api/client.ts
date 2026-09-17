@@ -17,7 +17,7 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    if (state.isOffline && config.url?.startsWith('/quiz/')) {
+    if ((state.isOffline || !state.token) && config.url?.startsWith('/quiz/')) {
       return Promise.reject({ isOfflineMock: true, url: config.url, data: config.data });
     }
 
@@ -54,7 +54,11 @@ apiClient.interceptors.response.use(
         if (card) {
           const word = dictionary.find(w => w.id === card.wordId);
           const isCorrect = data?.suggestion?.toLowerCase().trim() === word?.text.toLowerCase().trim();
-          store.setQuizEvaluation({ result: isCorrect ? 'SUCCESS' : 'INCORRECT', suggestion: data?.suggestion });
+          const result = isCorrect ? 'SUCCESS' : 'INCORRECT';
+          if (!store.token && word) {
+            store.recordGuestQuizAttempt(word.text, result);
+          }
+          store.setQuizEvaluation({ result, suggestion: data?.suggestion });
         }
       } else if (url === '/quiz/translate_definition') {
         const card = store.quizCard;
@@ -93,7 +97,9 @@ apiClient.interceptors.response.use(
     }
 
     if (error.response && error.response.status === 401) {
-      useStore.getState().reset();
+      if (useStore.getState().token) {
+        useStore.getState().reset();
+      }
     }
     
     // Ignore aborted requests or offline mocks for error tracking

@@ -5,6 +5,7 @@ const pt = {
   'common.delete': 'Excluir',
   'common.edit': 'Editar',
   'common.back': 'Voltar',
+  'common.next': 'Avançar',
   'common.submit': 'Enviar',
   'common.submitting': 'Enviando...',
   'common.creating': 'Criando...',

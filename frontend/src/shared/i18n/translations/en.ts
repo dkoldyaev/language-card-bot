@@ -5,6 +5,7 @@ const en = {
   'common.delete': 'Delete',
   'common.edit': 'Edit',
   'common.back': 'Back',
+  'common.next': 'Next',
   'common.submit': 'Submit',
   'common.submitting': 'Submitting...',
   'common.creating': 'Creating...',
@@ -292,6 +293,25 @@ const en = {
   'theme.dark': 'Dark',
   'theme.light': 'Light',
   'theme.system': 'System',
+
+  // Guest Mode
+  'guest.onboardingTitle': 'Welcome to CardBot',
+  'guest.onboardingSubtitle': 'Set up your first dictionary to start practicing right away',
+  'guest.stepLanguages': '1. Select languages',
+  'guest.stepPresets': '2. Choose a starter deck',
+  'guest.selectPresetDesc': 'Pick a starter deck to start learning with curated vocabulary',
+  'guest.startEmpty': 'Start with empty dictionary',
+  'guest.emptyNotAllowed': 'Registration required to add custom words without a preset',
+  'guest.startLearning': 'Start Learning',
+  'guest.bannerText': 'You are currently in guest mode. Data is stored only in this browser.',
+  'guest.bannerAction': 'Sign In / Save Progress',
+  'guest.badge': 'Guest Mode',
+  'guest.mergeTitle': 'Save Your Progress',
+  'guest.mergeDesc': 'Your account already has data. Would you like to merge your guest vocabulary and quiz progress into your account?',
+  'guest.mergeConfirm': 'Merge into account',
+  'guest.mergeDiscard': 'Keep account data only',
+  'guest.continueWithoutAuth': 'Continue as guest',
+  'guest.noPresetsFound': 'No presets found for selected language',
 };
 
 export default en;

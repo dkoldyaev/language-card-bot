@@ -5,6 +5,7 @@ const es = {
   'common.delete': 'Eliminar',
   'common.edit': 'Editar',
   'common.back': 'Volver',
+  'common.next': 'Siguiente',
   'common.submit': 'Enviar',
   'common.submitting': 'Enviando...',
   'common.creating': 'Creando...',

@@ -1,6 +1,6 @@
-import { Alert, Box, Typography, alpha, useMediaQuery, useTheme } from '@mui/material';
+import { Alert, Box, Button, Typography, alpha, useMediaQuery, useTheme } from '@mui/material';
 import { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Link as RouterLink, Outlet } from 'react-router-dom';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import { useTranslation } from '../i18n/I18nContext';
@@ -8,11 +8,14 @@ import DictionarySelector from './DictionarySelector';
 import LocaleSwitcher from './LocaleSwitcher';
 import Sidebar from './Sidebar';
 import ThemeSwitcher from './ThemeSwitcher';
+import GuestOnboardingModal from '../../features/onboarding/components/GuestOnboardingModal';
 
 export default function Layout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { t } = useTranslation();
+  const token = useStore((state) => state.token);
+  const dictionaries = useStore((state) => state.dictionaries);
   const setDictionary = useStore((state) => state.setDictionary);
   const setSettings = useStore((state) => state.setSettings);
   const setAppState = useStore((state) => state.setAppState);
@@ -22,6 +25,7 @@ export default function Layout() {
   const isOffline = useStore((state) => state.isOffline);
 
   useEffect(() => {
+    if (!token) return;
     apiClient.get('/auth/me')
       .then((res) => {
         if (res.data.user) {
@@ -63,7 +67,7 @@ export default function Layout() {
         }
       })
       .catch((error) => console.error('Failed to sync state:', error));
-  }, [setDictionary, setSettings, setAppState, setDictionaries, setActiveDictionaryId]);
+  }, [token, setDictionary, setSettings, setAppState, setDictionaries, setActiveDictionaryId]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
@@ -140,9 +144,39 @@ export default function Layout() {
             flexGrow: 1,
           }}
         >
+          {!token && (
+            <Alert
+              severity="info"
+              data-testid="guest-banner"
+              action={
+                <Button
+                  component={RouterLink}
+                  to="/login"
+                  color="inherit"
+                  size="small"
+                  variant="outlined"
+                  data-testid="guest-banner-auth-btn"
+                  sx={{ fontWeight: 700, textTransform: 'none', whiteSpace: 'nowrap' }}
+                >
+                  {t('guest.bannerAction')}
+                </Button>
+              }
+              sx={{
+                borderRadius: 3,
+                mb: 3,
+                alignItems: 'center',
+                backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.info.main, 0.15) : '#EBF5FF',
+              }}
+            >
+              {t('guest.bannerText')}
+            </Alert>
+          )}
+
           <Outlet />
         </Box>
       </Box>
+
+      <GuestOnboardingModal open={!token && dictionaries.length === 0} />
     </Box>
   );
 }

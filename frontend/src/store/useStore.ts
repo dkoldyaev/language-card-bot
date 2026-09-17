@@ -103,6 +103,12 @@ export type SyncActionPayload =
   | { type: 'DELETE_WORD'; wordId: number }
   | { type: 'DELETE_DEFINITION'; wordId: number; definitionId: number };
 
+export interface GuestQuizAttempt {
+  wordText: string;
+  result: 'SUCCESS' | 'CLOSE_MATCH' | 'INCORRECT';
+  createdAt: string;
+}
+
 export type SyncAction = SyncActionPayload & { timestamp: number };
 
 interface AppState {
@@ -118,6 +124,9 @@ interface AppState {
   setSelectedDictionaryId: (selectedDictionaryId: number | null) => void;
   appState: any | null;
   dictionary: DictionaryWord[];
+  guestQuizAttempts: GuestQuizAttempt[];
+  recordGuestQuizAttempt: (wordText: string, result: 'SUCCESS' | 'CLOSE_MATCH' | 'INCORRECT') => void;
+  clearGuestData: () => void;
   quizCard: QuizCardData | null;
   quizEvaluation: QuizEvaluationData | null;
   quizTranslation: string | null;
@@ -169,7 +178,8 @@ const initialState = {
   activeDictionaryId: null as number | null,
   selectedDictionaryId: null as number | null,
   appState: null,
-  dictionary: [],
+  dictionary: [] as DictionaryWord[],
+  guestQuizAttempts: [] as GuestQuizAttempt[],
   quizCard: null,
   quizEvaluation: null,
   quizTranslation: null,
@@ -458,6 +468,24 @@ const useStore = create<AppState>()(
             } : word
           )
         };
+      }),
+      recordGuestQuizAttempt: (wordText, result) => set((state) => ({
+        guestQuizAttempts: [
+          ...state.guestQuizAttempts,
+          { wordText, result, createdAt: new Date().toISOString() },
+        ],
+      })),
+      clearGuestData: () => set({
+        guestQuizAttempts: [],
+        dictionary: [],
+        dictionaries: [],
+        activeDictionaryId: null,
+        selectedDictionaryId: null,
+        dashboardStats: null,
+        quizCard: null,
+        quizEvaluation: null,
+        quizTranslation: null,
+        quizVariants: null,
       }),
       reset: () => set((state) => ({ ...initialState, themeMode: state.themeMode, isOffline: !navigator.onLine })),
     }),

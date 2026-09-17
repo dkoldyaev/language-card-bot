@@ -5,6 +5,7 @@ const fr = {
   'common.delete': 'Supprimer',
   'common.edit': 'Modifier',
   'common.back': 'Retour',
+  'common.next': 'Suivant',
   'common.submit': 'Envoyer',
   'common.submitting': 'Envoi...',
   'common.creating': 'Création...',

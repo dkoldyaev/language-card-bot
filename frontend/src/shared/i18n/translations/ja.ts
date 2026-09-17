@@ -5,6 +5,7 @@ const ja = {
   'common.delete': '削除',
   'common.edit': '編集',
   'common.back': '戻る',
+  'common.next': '次へ',
   'common.submit': '送信',
   'common.submitting': '送信中...',
   'common.creating': '作成中...',

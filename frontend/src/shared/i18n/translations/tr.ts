@@ -5,6 +5,7 @@ const tr = {
   'common.delete': 'Sil',
   'common.edit': 'Düzenle',
   'common.back': 'Geri',
+  'common.next': 'İleri',
   'common.submit': 'Gönder',
   'common.submitting': 'Gönderiliyor...',
   'common.creating': 'Oluşturuluyor...',

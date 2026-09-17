@@ -5,6 +5,7 @@ const zh = {
   'common.delete': '删除',
   'common.edit': '编辑',
   'common.back': '返回',
+  'common.next': '下一步',
   'common.submit': '提交',
   'common.submitting': '正在提交...',
   'common.creating': '正在创建...',

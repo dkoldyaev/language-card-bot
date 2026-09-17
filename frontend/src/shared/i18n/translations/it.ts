@@ -5,6 +5,7 @@ const it = {
   'common.delete': 'Elimina',
   'common.edit': 'Modifica',
   'common.back': 'Indietro',
+  'common.next': 'Avanti',
   'common.submit': 'Invia',
   'common.submitting': 'Invio...',
   'common.creating': 'Creazione...',

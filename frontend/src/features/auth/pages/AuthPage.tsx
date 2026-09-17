@@ -13,6 +13,8 @@ import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
 import useStore from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
+import { performGuestMigration } from '../api/migrate';
+import MergeGuestDataDialog from '../components/MergeGuestDataDialog';
 
 export default function Auth() {
   const { t, locale } = useTranslation();
@@ -34,9 +36,58 @@ export default function Auth() {
   const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
   const [tempToken, setTempToken] = useState<string | null>(null);
 
+  // Guest merge dialog states
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
+  const [pendingAuthData, setPendingAuthData] = useState<{ token: string; mercureToken?: string; user: any } | null>(null);
+  const [merging, setMerging] = useState(false);
+
+  const token = useStore((state) => state.token);
   const setToken = useStore((state) => state.setToken);
   const setMercureToken = useStore((state) => state.setMercureToken);
   const setProfile = useStore((state) => state.setProfile);
+  const clearGuestData = useStore((state) => state.clearGuestData);
+
+  useEffect(() => {
+    if (token) {
+      navigate('/', { replace: true });
+    }
+  }, [token, navigate]);
+
+  const completeLogin = (authData: { token: string; mercureToken?: string; user: any }) => {
+    trackEvent('Sign In');
+    setToken(authData.token);
+    if (authData.mercureToken) setMercureToken(authData.mercureToken);
+    setProfile({
+      id: authData.user.id,
+      username: authData.user.username || authData.user.name || authData.user.email,
+      email: authData.user.email,
+      name: authData.user.name,
+      picture: authData.user.picture,
+    });
+    navigate('/');
+  };
+
+  const handleConfirmMerge = async () => {
+    if (!pendingAuthData) return;
+    setMerging(true);
+    try {
+      await performGuestMigration(pendingAuthData.token, 'merge');
+      completeLogin(pendingAuthData);
+    } catch (err) {
+      console.error('Failed to merge guest data:', err);
+      completeLogin(pendingAuthData);
+    } finally {
+      setMerging(false);
+      setMergeDialogOpen(false);
+    }
+  };
+
+  const handleDiscardGuestData = () => {
+    if (!pendingAuthData) return;
+    clearGuestData();
+    completeLogin(pendingAuthData);
+    setMergeDialogOpen(false);
+  };
 
   const handleChangeBaseLanguage = (language: string) => {
     setBaseLanguage(language);
@@ -66,17 +117,13 @@ export default function Auth() {
         setTempToken(token);
         setNeedsProfileCompletion(true);
       } else {
-        trackEvent('Sign In');
-        setToken(token);
-        if (mercureToken) setMercureToken(mercureToken);
-        setProfile({
-          id: user.id,
-          username: user.username || user.name || user.email,
-          email: user.email,
-          name: user.name,
-          picture: user.picture,
-        });
-        navigate('/');
+        const hasGuestData = useStore.getState().dictionary.length > 0 || useStore.getState().guestQuizAttempts.length > 0;
+        if (hasGuestData) {
+          setPendingAuthData({ token, mercureToken, user });
+          setMergeDialogOpen(true);
+        } else {
+          completeLogin({ token, mercureToken, user });
+        }
       }
     } catch (err: any) {
       console.error('Auth error', err.response?.data);
@@ -106,6 +153,16 @@ export default function Auth() {
       }, {
         headers: { Authorization: `Bearer ${tempToken}` },
       });
+
+      // Migrate any guest data to the newly created user
+      const hasGuestData = useStore.getState().dictionary.length > 0 || useStore.getState().guestQuizAttempts.length > 0;
+      if (hasGuestData) {
+        try {
+          await performGuestMigration(tempToken, 'merge');
+        } catch (e) {
+          console.error('Failed to migrate guest data on Google sign up:', e);
+        }
+      }
 
       setToken(tempToken);
       const meResponse = await apiClient.get('/auth/me', {
@@ -140,11 +197,13 @@ export default function Auth() {
         // Login
         const response = await apiClient.post('/auth/login', { username: username.trim() });
         const { token, mercureToken, user } = response.data;
-        trackEvent('Sign In');
-        setToken(token);
-        if (mercureToken) setMercureToken(mercureToken);
-        setProfile(user);
-        navigate('/');
+        const hasGuestData = useStore.getState().dictionary.length > 0 || useStore.getState().guestQuizAttempts.length > 0;
+        if (hasGuestData) {
+          setPendingAuthData({ token, mercureToken, user });
+          setMergeDialogOpen(true);
+        } else {
+          completeLogin({ token, mercureToken, user });
+        }
       } else {
         // Registration
         if (!baseLanguage || !targetLanguage) {
@@ -162,6 +221,16 @@ export default function Auth() {
         }, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        // Migrate any guest data to the newly created user
+        const hasGuestData = useStore.getState().dictionary.length > 0 || useStore.getState().guestQuizAttempts.length > 0;
+        if (hasGuestData) {
+          try {
+            await performGuestMigration(token, 'merge');
+          } catch (e) {
+            console.error('Failed to migrate guest data on register:', e);
+          }
+        }
 
         trackEvent('Sign Up');
         setRegistrationSuccess(true);
@@ -379,10 +448,30 @@ export default function Auth() {
                   )}
                 </Box>
               )}
+
+              <Box sx={{ textAlign: 'center', mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                <Button
+                  component={RouterLink}
+                  to="/"
+                  variant="text"
+                  size="small"
+                  data-testid="continue-as-guest-btn"
+                  sx={{ color: 'text.secondary', textTransform: 'none', fontWeight: 600 }}
+                >
+                  {t('guest.continueWithoutAuth')}
+                </Button>
+              </Box>
             </CardContent>
           </Box>
         </Card>
       </Box>
+
+      <MergeGuestDataDialog
+        open={mergeDialogOpen}
+        onConfirmMerge={handleConfirmMerge}
+        onDiscard={handleDiscardGuestData}
+        loading={merging}
+      />
     </Box>
   );
 }

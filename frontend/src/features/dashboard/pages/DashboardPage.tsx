@@ -22,10 +22,14 @@ import NeedsAttentionWidget from '../components/NeedsAttentionWidget';
 import QuickAddWordCard from '../components/QuickAddWordCard';
 import WeeklyActivityChart from '../components/WeeklyActivityChart';
 
+import { computeGuestDashboardStats } from '../lib/guestStats';
+
 export default function Dashboard() {
   const { t } = useTranslation();
+  const token = useStore((state) => state.token);
   const profile = useStore((state) => state.profile);
   const dictionary = useStore((state) => state.dictionary);
+  const guestAttempts = useStore((state) => state.guestQuizAttempts);
   const dictionaries = useStore((state) => state.dictionaries);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const dashboardStats = useStore((state) => state.dashboardStats);
@@ -40,6 +44,11 @@ export default function Dashboard() {
   const activeDict = dictionaries.find((d) => d.id === targetDictId);
 
   const loadStats = () => {
+    if (!token) {
+      const stats = computeGuestDashboardStats(dictionary, guestAttempts);
+      setDashboardStats(stats);
+      return;
+    }
     fetchDashboardStats(targetDictId)
       .then((stats) => {
         setDashboardStats(stats);
@@ -51,7 +60,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadStats();
-  }, [activeDictionaryId, totalWords]);
+  }, [token, activeDictionaryId, totalWords, guestAttempts]);
 
   const hasQuizzes = (dashboardStats?.totalAttempts ?? 0) > 0;
   const isDeckEmpty = totalWords === 0;

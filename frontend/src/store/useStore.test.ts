@@ -58,4 +58,22 @@ describe('useStore', () => {
     expect(useStore.getState().token).toBeNull();
     expect(useStore.getState().themeMode).toBe('dark');
   });
+
+  it('should record guest quiz attempts', () => {
+    useStore.setState({ guestQuizAttempts: [] });
+    useStore.getState().recordGuestQuizAttempt('apple', 'SUCCESS');
+    expect(useStore.getState().guestQuizAttempts).toHaveLength(1);
+    expect(useStore.getState().guestQuizAttempts[0].wordText).toBe('apple');
+    expect(useStore.getState().guestQuizAttempts[0].result).toBe('SUCCESS');
+  });
+
+  it('should clear guest data', () => {
+    useStore.setState({
+      guestQuizAttempts: [{ wordText: 'apple', result: 'SUCCESS', createdAt: new Date().toISOString() }],
+      dictionaries: [{ id: 1, name: 'EN', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true }],
+    });
+    useStore.getState().clearGuestData();
+    expect(useStore.getState().guestQuizAttempts).toHaveLength(0);
+    expect(useStore.getState().dictionaries).toHaveLength(0);
+  });
 });

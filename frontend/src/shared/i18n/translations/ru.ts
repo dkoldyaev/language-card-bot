@@ -5,6 +5,7 @@ const ru = {
   'common.delete': 'Удалить',
   'common.edit': 'Редактировать',
   'common.back': 'Назад',
+  'common.next': 'Далее',
   'common.submit': 'Отправить',
   'common.submitting': 'Отправка...',
   'common.creating': 'Создание...',
@@ -292,6 +293,25 @@ const ru = {
   'theme.dark': 'Темная',
   'theme.light': 'Светлая',
   'theme.system': 'Системная',
+
+  // Guest Mode
+  'guest.onboardingTitle': 'Добро пожаловать в CardBot',
+  'guest.onboardingSubtitle': 'Настройте свой первый словарь, чтобы сразу приступить к практике',
+  'guest.stepLanguages': '1. Выбор языков',
+  'guest.stepPresets': '2. Выбор пресета',
+  'guest.selectPresetDesc': 'Выберите готовый тематический набор слов для быстрого старта',
+  'guest.startEmpty': 'Начать с пустым словарем',
+  'guest.emptyNotAllowed': 'Для добавления своих слов без пресета требуется регистрация',
+  'guest.startLearning': 'Начать обучение',
+  'guest.bannerText': 'Вы занимаетесь в гостевом режиме. Данные сохраняются только в этом браузере.',
+  'guest.bannerAction': 'Войти / Сохранить прогресс',
+  'guest.badge': 'Гостевой режим',
+  'guest.mergeTitle': 'Сохранение гостевого прогресса',
+  'guest.mergeDesc': 'В вашем аккаунте уже есть данные. Добавить к ним слова и прогресс, накопленные в гостевом режиме?',
+  'guest.mergeConfirm': 'Добавить в аккаунт',
+  'guest.mergeDiscard': 'Оставить только данные аккаунта',
+  'guest.continueWithoutAuth': 'Продолжить без регистрации',
+  'guest.noPresetsFound': 'Пресеты для выбранного языка не найдены',
 };
 
 export default ru;

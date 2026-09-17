@@ -5,6 +5,15 @@ import useStore from '../../store/useStore';
 import Layout from './Layout';
 
 describe('Layout', () => {
+  beforeEach(() => {
+    useStore.setState({
+      token: 'fake-token',
+      dictionaries: [{ id: 1, name: 'Default', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 0, isActive: true }],
+      dictionary: [],
+      profile: { id: 1, username: 'test_user', isAdmin: false, is_admin: false },
+    });
+  });
+
   it('renders sidebar navigation links', () => {
     render(
       <MemoryRouter>
@@ -16,6 +25,20 @@ describe('Layout', () => {
     expect(screen.getByText('Dictionary')).toBeInTheDocument();
     expect(screen.getByText('Quiz')).toBeInTheDocument();
     expect(screen.queryByText('Settings')).not.toBeInTheDocument();
+  });
+
+  it('renders guest onboarding modal when unauthenticated with no dictionaries', () => {
+    useStore.setState({
+      token: null,
+      dictionaries: [],
+      dictionary: [],
+    });
+    render(
+      <MemoryRouter>
+        <Layout />
+      </MemoryRouter>
+    );
+    expect(screen.getByText(/Welcome to CardBot/i)).toBeInTheDocument();
   });
 
   it('disables Quiz navigation when dictionary is empty', () => {
