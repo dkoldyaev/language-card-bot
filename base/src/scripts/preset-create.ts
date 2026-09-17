@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { prisma } from '../src/prisma';
-import { generatePreset } from '../src/features/preset/preset_generator.service';
+import { generatePreset } from '../features/preset/preset_generator.service';
+import { prisma } from '../prisma';
 
 interface CliParams {
   language?: string;
@@ -129,8 +129,9 @@ async function main() {
     if (result.description) {
       console.log(`Description: ${result.description}`);
     }
-  } catch (error: any) {
-    console.error('\nPreset creation failed:', error.message || error);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('\nPreset creation failed:', msg);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

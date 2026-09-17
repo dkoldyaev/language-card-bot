@@ -1,13 +1,18 @@
 import 'dotenv/config';
+import type { PoolClient } from 'pg';
 import { Pool } from 'pg';
 
-const dbUrl = process.env.PROFILE_DATABASE_URL || 'postgresql://testuser:testpass@localhost:5434/english_card_bot_test?schema=public';
+const rawDbUrl = process.env.PROFILE_DATABASE_URL;
+if (!rawDbUrl) {
+  throw new Error('PROFILE_DATABASE_URL is required in environment');
+}
+const dbUrl: string = rawDbUrl;
 
 const pool = new Pool({
   connectionString: dbUrl,
 });
 
-async function runExplain(client: any, queryName: string, sql: string, params: any[] = []) {
+async function runExplain(client: PoolClient, queryName: string, sql: string, params: unknown[] = []) {
   console.log(`\n================================================================================`);
   console.log(`PROFILING QUERY: ${queryName}`);
   console.log(`SQL: ${sql}`);
@@ -15,17 +20,18 @@ async function runExplain(client: any, queryName: string, sql: string, params: a
   console.log(`--------------------------------------------------------------------------------`);
   try {
     const explainSql = `EXPLAIN (ANALYZE, BUFFERS, COSTS, VERBOSE, FORMAT TEXT) ${sql}`;
-    const res = await client.query(explainSql, params);
-    const plan = res.rows.map((r: any) => r['QUERY PLAN']).join('\n');
+    const res = await client.query<{ 'QUERY PLAN': string }>(explainSql, params);
+    const plan = res.rows.map((r) => r['QUERY PLAN']).join('\n');
     console.log(plan);
     return plan;
-  } catch (err: any) {
-    console.error(`Failed to explain query: ${err.message}`);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`Failed to explain query: ${msg}`);
     return null;
   }
 }
 
-async function checkCatalog(client: any) {
+async function checkCatalog(client: PoolClient) {
   console.log(`\n================================================================================`);
   console.log(`DATABASE CATALOG: TABLE SIZES & SCAN STATS`);
   console.log(`================================================================================`);
@@ -85,7 +91,7 @@ async function checkCatalog(client: any) {
   }
 }
 
-async function profileRepresentativeQueries(client: any) {
+async function profileRepresentativeQueries(client: PoolClient) {
   // Let's find sample IDs from DB
   const userRow = (await client.query(`SELECT id FROM "User" LIMIT 1`)).rows[0];
   const userId = userRow?.id ?? 1;

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { prisma } from '../src/prisma';
+import { prisma } from '../prisma';
 
 async function findUser(identifier: string) {
   const numericId = Number(identifier);

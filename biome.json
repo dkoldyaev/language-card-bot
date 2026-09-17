@@ -13,7 +13,6 @@
 		"includes": [
 			"frontend/src/**",
 			"base/src/**",
-			"base/scripts/**",
 			"definer/src/**",
 			"translator/src/**",
 			"llm/src/**",

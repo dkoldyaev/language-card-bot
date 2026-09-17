@@ -5,9 +5,9 @@ const MERCURE_SECRET = 'supersecret_mercure_key';
 const payload = {
   mercure: {
     publish: ['*'],
-    subscribe: ['*']
-  }
+    subscribe: ['*'],
+  },
 };
 
 const token = jwt.sign(payload, MERCURE_SECRET, { noTimestamp: true });
-console.log('MERCURE_JWT=' + token);
+console.log(`MERCURE_JWT=${token}`);

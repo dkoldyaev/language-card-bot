@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { prisma } from '../src/prisma';
-import { listPresets } from '../src/features/preset/preset.service';
+import { listPresets } from '../features/preset/preset.service';
+import { prisma } from '../prisma';
 
 function parseArgs() {
   const args = process.argv.slice(2);

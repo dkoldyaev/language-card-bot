@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { prisma } from '../src/prisma';
-import { redisClient, invalidateKeysByPattern } from '../src/core/cache';
+import { invalidateKeysByPattern, redisClient } from '../core/cache';
+import { prisma } from '../prisma';
 
 async function clearStats() {
   try {
