@@ -10,10 +10,7 @@ import { useOfflineSync } from '../shared/hooks/useOfflineSync';
 import useStore from '../store/useStore';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = useStore((state) => state.token);
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
+  // Allow anonymous guest access to explore the app and play quiz
   return <>{children}</>;
 }
 
@@ -23,7 +20,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   const isAdmin = Boolean(profile?.isAdmin || profile?.is_admin);
 
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
   if (!isAdmin) {
     return <Navigate to="/" replace />;

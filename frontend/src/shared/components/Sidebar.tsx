@@ -1,11 +1,13 @@
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
+import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import {
   alpha,
   Box,
+  Chip,
   List,
   ListItemButton,
   ListItemIcon,
@@ -45,6 +47,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
 
 export default function Sidebar() {
   const { t } = useTranslation();
+  const token = useStore((state) => state.token);
   const profile = useStore((state) => state.profile);
   const dictionary = useStore((state) => state.dictionary);
   const reset = useStore((state) => state.reset);
@@ -67,7 +70,7 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     reset();
-    navigate('/login');
+    navigate('/');
   };
 
   if (isMobile) {
@@ -146,28 +149,55 @@ export default function Sidebar() {
 
           return button;
         })}
-        <ListItemButton
-          onClick={handleLogout}
-          aria-label={t('nav.signOut')}
-          sx={{
-            minWidth: 62,
-            maxWidth: 76,
-            flex: 1,
-            px: 0.5,
-            py: 0.8,
-            borderRadius: 0,
-            flexDirection: 'column',
-            justifyContent: 'center',
-            color: 'text.secondary',
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: 0, mb: 0.25, color: 'inherit' }}>
-            <LogoutRoundedIcon />
-          </ListItemIcon>
-          <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem' }}>
-            {t('nav.signOut')}
-          </Typography>
-        </ListItemButton>
+        {token ? (
+          <ListItemButton
+            onClick={handleLogout}
+            aria-label={t('nav.signOut')}
+            sx={{
+              minWidth: 62,
+              maxWidth: 76,
+              flex: 1,
+              px: 0.5,
+              py: 0.8,
+              borderRadius: 0,
+              flexDirection: 'column',
+              justifyContent: 'center',
+              color: 'text.secondary',
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 0, mb: 0.25, color: 'inherit' }}>
+              <LogoutRoundedIcon />
+            </ListItemIcon>
+            <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem' }}>
+              {t('nav.signOut')}
+            </Typography>
+          </ListItemButton>
+        ) : (
+          <ListItemButton
+            component={NavLink}
+            to="/login"
+            data-testid="mobile-login-btn"
+            aria-label={t('auth.submitLogin')}
+            sx={{
+              minWidth: 62,
+              maxWidth: 76,
+              flex: 1,
+              px: 0.5,
+              py: 0.8,
+              borderRadius: 0,
+              flexDirection: 'column',
+              justifyContent: 'center',
+              color: 'primary.main',
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 0, mb: 0.25, color: 'inherit' }}>
+              <LoginRoundedIcon />
+            </ListItemIcon>
+            <Typography variant="caption" sx={{ fontWeight: 800, fontSize: '0.62rem' }}>
+              {t('auth.submitLogin')}
+            </Typography>
+          </ListItemButton>
+        )}
       </Box>
     );
   }
@@ -255,36 +285,78 @@ export default function Sidebar() {
       </List>
 
       <Box sx={{ p: 2.25, borderTop: '1px solid rgba(255, 255, 255, 0.12)' }}>
-        {profile && (
-          <Box sx={{ px: 1.25, pb: 1.5 }}>
-            <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.5), display: 'block', mb: 0.25 }}>
-              {t('nav.learningAs')}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#FFFFFF', fontWeight: 800 }} noWrap>
-              {profile.username}
-            </Typography>
-          </Box>
+        {token ? (
+          <>
+            {profile && (
+              <Box sx={{ px: 1.25, pb: 1.5 }}>
+                <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.5), display: 'block', mb: 0.25 }}>
+                  {t('nav.learningAs')}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#FFFFFF', fontWeight: 800 }} noWrap>
+                  {profile.username}
+                </Typography>
+              </Box>
+            )}
+            <ListItemButton
+              onClick={handleLogout}
+              sx={{
+                minHeight: 48,
+                borderRadius: 3,
+                px: 1.5,
+                color: alpha('#FFFFFF', 0.7),
+                '&:hover': {
+                  color: '#FFFFFF',
+                  backgroundColor: alpha('#FFFFFF', 0.075),
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 39, color: 'inherit' }}>
+                <LogoutRoundedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary={<Typography sx={{ fontSize: '0.875rem', fontWeight: 700 }}>{t('nav.signOut')}</Typography>}
+              />
+            </ListItemButton>
+          </>
+        ) : (
+          <>
+            <Box sx={{ px: 1.25, pb: 1.5 }}>
+              <Chip
+                size="small"
+                label={t('guest.badge')}
+                sx={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                }}
+              />
+            </Box>
+            <ListItemButton
+              component={NavLink}
+              to="/login"
+              data-testid="sidebar-login-btn"
+              sx={{
+                minHeight: 48,
+                borderRadius: 3,
+                px: 1.5,
+                color: '#FFFFFF',
+                backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                '&:hover': {
+                  color: '#FFFFFF',
+                  backgroundColor: 'rgba(255, 255, 255, 0.22)',
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 39, color: 'inherit' }}>
+                <LoginRoundedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary={<Typography sx={{ fontSize: '0.875rem', fontWeight: 800 }}>{t('auth.submitLogin')}</Typography>}
+              />
+            </ListItemButton>
+          </>
         )}
-        <ListItemButton
-          onClick={handleLogout}
-          sx={{
-            minHeight: 48,
-            borderRadius: 3,
-            px: 1.5,
-            color: alpha('#FFFFFF', 0.7),
-            '&:hover': {
-              color: '#FFFFFF',
-              backgroundColor: alpha('#FFFFFF', 0.075),
-            },
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: 39, color: 'inherit' }}>
-            <LogoutRoundedIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText
-            primary={<Typography sx={{ fontSize: '0.875rem', fontWeight: 700 }}>{t('nav.signOut')}</Typography>}
-          />
-        </ListItemButton>
       </Box>
     </Box>
   );

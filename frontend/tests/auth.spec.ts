@@ -3,8 +3,8 @@ import { register, login, addWordsAndAwaitDefinitions } from './helpers';
 
 test.describe('Authentication Flow', () => {
   test('navigation between login and register', async ({ page }) => {
-    // 1. Initial redirect to login
-    await page.goto('/');
+    // 1. Initial navigation to login
+    await page.goto('/login');
     await expect(page).toHaveURL(/.*\/login/);
     await expect(page.locator('h5:has-text("Log in")').first()).toBeVisible();
 
@@ -37,7 +37,7 @@ test.describe('Authentication Flow', () => {
 
     // 5. Logout
     await page.locator('button, [role="button"]').filter({ hasText: /Sign out|Logout/i }).first().click();
-    await expect(page).toHaveURL(/.*\/login/);
+    await expect(page).toHaveURL('/');
     
     // 6. Log in again
     await login(page, validUser);
@@ -70,7 +70,7 @@ test.describe('Authentication Flow', () => {
     
     // 3. Logout
     await page.locator('button, [role="button"]').filter({ hasText: /Sign out|Logout/i }).first().click();
-    await expect(page).toHaveURL(/.*\/login/);
+    await expect(page).toHaveURL('/');
 
     // 4. Register and login user 2
     await register(page, user2);
