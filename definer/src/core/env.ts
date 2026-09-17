@@ -8,6 +8,8 @@ const envSchema = z.object({
   LLM_SERVICE_URL: z.string(),
   MOCK_TIMEOUT: z.string().optional(),
   CACHE_URL: z.string(),
+  TRANSLATOR_API_URL: z.string(),
+  TRANSLATOR_APP_TYPE: z.enum(['googletranslate', 'mock', 'laratranslate', 'llm', 'mistral', 'gemini']),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

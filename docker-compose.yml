@@ -78,8 +78,11 @@ services:
       - LLM_SERVICE_URL=${DEFINER_LLM_SERVICE_URL}
       - MOCK_TIMEOUT=${DEFINER_MOCK_TIMEOUT}
       - CACHE_URL=${DEFINER_CACHE_URL}
+      - TRANSLATOR_API_URL=${BASE_TRANSLATOR_API_URL}
+      - TRANSLATOR_APP_TYPE=${BASE_TRANSLATOR_APP_TYPE}
     depends_on:
       - llm
+      - translator
 
   frontend:
     build:
