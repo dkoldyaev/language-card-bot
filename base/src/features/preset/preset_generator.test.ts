@@ -229,8 +229,31 @@ describe('Preset Generator Service', () => {
       const calledBody = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1] as any).body);
       expect(calledBody.prompt).toContain('strictly "B2"');
       expect(calledBody.prompt).toContain('Mask the target word');
+      expect(calledBody.prompt).toContain('Fix tautological or word-as-definition entries');
     });
 
+    it('should filter out definitions that consist solely of asterisks or trivial placeholders', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: {
+            results: [
+              { word: 'cat', filteredDefinitions: ['***', 'A ***', 'A small furry animal that meows'] },
+            ],
+          },
+        }),
+      } as any);
+
+      const results = await filterDefinitionsBatchWithLLM({
+        language: 'en',
+        level: 'A0',
+        items: [{ word: 'cat', definitions: ['cat'] }],
+      });
+
+      expect(results).toEqual([
+        { word: 'cat', filteredDefinitions: ['A small furry animal that meows'] },
+      ]);
+    });
 
     it('should return empty array if no valid items provided', async () => {
       const results = await filterDefinitionsBatchWithLLM({

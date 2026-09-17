@@ -195,11 +195,12 @@ export async function filterDefinitionsBatchWithLLM(
   prompt += `evaluate the following definitions for the words:\n${JSON.stringify(validItems, null, 2)}\n\n`;
   prompt += `Tasks:\n`;
   if (level) {
-    prompt += `1. Filter: For each word, keep ONLY definitions that strictly match CEFR level "${level}". Do NOT keep definitions belonging to lower levels (such as A1, A2, B1) or higher levels (such as C1, C2).\n`;
+    prompt += `1. Filter and verify suitability: For each word, keep definitions that strictly match CEFR level "${level}". Do NOT keep definitions belonging to lower levels (such as A1, A2, B1) or higher levels (such as C1, C2).\n`;
   } else {
-    prompt += `1. Filter: For each word, keep the valid definitions for the target word.\n`;
+    prompt += `1. Filter and verify suitability: For each word, keep valid, meaningful definitions for the target word.\n`;
   }
-  prompt += `2. Mask the target word: In the text of each kept definition, you MUST replace any occurrence of that specific target word (case-insensitive, including compound expressions like "hot dog" -> "hot ***", inflections, and plurals) with three asterisks: "***". Do not reveal the target word itself in the definition text.\n\n`;
+  prompt += `2. Fix tautological or word-as-definition entries: Especially for beginner levels (such as A0 or A1), raw definitions from dictionaries often consist merely of the word itself (e.g. word "dog" -> definition "dog", word "yes" -> definition "yes"), a circular tautology, or a trivial phrase where masking the target word leaves only "***" (e.g. "***", "a ***", "to ***"). You MUST detect such unhelpful definitions and FIX them by rewriting them into simple, clear, informative explanations suitable for learners at level ${level ? `"${level}"` : 'of this course'}. Describe what the object, action, or concept is (e.g. for "dog", explain it is a common domestic animal that barks; for "cat", a small pet that meows; for "water", a clear liquid that people drink) using simple language.\n`;
+  prompt += `3. Mask the target word: In the text of each kept or rewritten definition, you MUST replace any occurrence of that specific target word (case-insensitive, including compound expressions like "hot dog" -> "hot ***", inflections, and plurals) with three asterisks: "***". Do not reveal the target word itself in the definition text. A definition must NEVER be just "***" or contain only placeholder asterisks without an informative explanation.\n\n`;
   prompt += `Return a JSON object with a "results" array where each object has "word" and "filteredDefinitions". If no definitions match for a word, return an empty array for that word.`;
 
   const jsonFormat = {
@@ -214,7 +215,7 @@ export async function filterDefinitionsBatchWithLLM(
             filteredDefinitions: {
               type: 'array',
               items: { type: 'string' },
-              description: 'List of definitions strictly matching the level with the target word replaced by ***',
+              description: 'List of informative definitions strictly matching the level with the target word replaced by *** (must never be just "***")',
             },
           },
           required: ['word', 'filteredDefinitions'],
@@ -251,7 +252,17 @@ export async function filterDefinitionsBatchWithLLM(
     const rawDefs = resultMap.get(item.word.trim().toLowerCase()) ?? [];
 
     const filteredDefinitions = rawDefs
-      .filter((d: string) => d.length > 0);
+      .map((d: any) => String(d ?? '').trim())
+      .filter((d: string) => {
+        if (d.length === 0) return false;
+        // Ensure the definition is not just "***" or "***." or "A ***" with no descriptive content
+        const stripped = d
+          .replace(/\*\*\*/g, '')
+          .replace(/^(a|an|the|to)\s+/i, '')
+          .replace(/[.,!?;:"'()\s]/g, '')
+          .trim();
+        return stripped.length > 0;
+      });
 
     return {
       word: item.word,
