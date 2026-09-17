@@ -70,8 +70,9 @@ export async function fetchDefinitionsFromDefiner(text: string, language: string
     throw new Error(`Definer API error (${response.status}): ${errorText}`);
   }
 
-  const json = (await response.json()) as { definitions?: string[]; error?: string };
-  return json.definitions || [];
+  const json = (await response.json()) as { definitions?: Array<string | { text: string }>; error?: string };
+  const rawDefs = json.definitions || [];
+  return rawDefs.map((d) => (typeof d === 'string' ? d : d.text));
 }
 
 export async function fetchTranslationsFromTranslator(options: {

@@ -46,7 +46,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       throw new Error(`Definer API error: ${await definerRes.text()}`);
     }
 
-    const definerData = (await definerRes.json()) as { definitions: string[] };
+    const definerData = (await definerRes.json()) as { definitions: Array<string | { text: string }> };
     const definitions = definerData.definitions;
 
     if (!definitions || definitions.length === 0) {
@@ -55,8 +55,8 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
 
     // Save definitions
     const createdDefinitions = await prisma.definition.createManyAndReturn({
-      data: definitions.map((defText: string) => ({
-        text: defText,
+      data: definitions.map((def: string | { text: string }) => ({
+        text: typeof def === 'string' ? def : def.text,
         wordId: wordId,
       })),
       select: {

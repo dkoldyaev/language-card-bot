@@ -17,7 +17,20 @@ describe('LLMAdapter', () => {
       ok: true,
       json: async () => ({
         data: {
-          definitions: ['Definition 1', 'Definition 2'],
+          definitions: [
+            {
+              text: 'A round fruit with firm white flesh',
+              partOfSpeech: 'noun',
+              tags: ['botany', 'food'],
+              levels: ['A1', 'A2'],
+            },
+            {
+              text: 'Something regarded as pleasant or desirable',
+              partOfSpeech: 'noun',
+              tags: ['figurative'],
+              levels: ['B2'],
+            },
+          ],
         },
       }),
     });
@@ -40,12 +53,25 @@ describe('LLMAdapter', () => {
     expect(parsedBody.provider).toBe('mistral');
     expect(parsedBody.prompt).toContain('apple');
     expect(parsedBody.prompt).toContain('en');
-    expect(parsedBody.prompt).toContain('A0');
-    expect(parsedBody.prompt).toContain('C2');
+    expect(parsedBody.prompt).toContain('partOfSpeech');
+    expect(parsedBody.prompt).toContain('levels');
     expect(parsedBody.prompt).toContain('Under NO circumstances should the target word or phrase');
     expect(parsedBody.jsonFormat).toBeDefined();
 
-    expect(result).toEqual(['Definition 1', 'Definition 2']);
+    expect(result).toEqual([
+      {
+        text: 'A round fruit with firm white flesh',
+        partOfSpeech: 'noun',
+        tags: ['botany', 'food'],
+        levels: ['A1', 'A2'],
+      },
+      {
+        text: 'Something regarded as pleasant or desirable',
+        partOfSpeech: 'noun',
+        tags: ['figurative'],
+        levels: ['B2'],
+      },
+    ]);
   });
 
   it('should throw error when LLM service returns non-ok status', async () => {

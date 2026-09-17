@@ -1,4 +1,4 @@
-import { IDefiner } from '../core/IDefiner';
+import { IDefiner, DefinitionItem } from '../core/IDefiner';
 import { env } from '../core/env';
 
 export interface LLMAdapterOptions {
@@ -13,23 +13,51 @@ export class LLMAdapter implements IDefiner {
   private llmServiceUrl: string;
 
   constructor(options: LLMAdapterOptions = {}) {
-    this.provider = options.provider || 'mistral';
-    this.model = options.model || (this.provider === 'mistral' ? 'mistral-large-latest' : 'gemini-1.5-flash');
-    this.llmServiceUrl = options.llmServiceUrl || env.LLM_SERVICE_URL;
+    this.provider = options.provider !== undefined ? options.provider : env.LLM_PROVIDER;
+    this.model = options.model !== undefined ? options.model : env.LLM_MODEL;
+    this.llmServiceUrl = options.llmServiceUrl !== undefined ? options.llmServiceUrl : env.LLM_SERVICE_URL;
   }
 
-  async define(text: string, language: string): Promise<string[]> {
+  async define(text: string, language: string): Promise<DefinitionItem[]> {
     const prompt = `Please provide a comprehensive and extensive list with the maximum possible number of distinct definitions and senses for the word or phrase "${text}" in the language "${language}".
-Cover all CEFR proficiency levels from beginner (A0, A1, A2) to intermediate (B1, B2) and advanced/mastery (C1, C2 and above), ranging from simple, accessible explanations to nuanced, figurative, formal, and specialized meanings.
-CRITICAL REQUIREMENT: Under NO circumstances should the target word or phrase "${text}" (including its inflections, plurals, or variations, case-insensitive) appear anywhere in the text of the definitions. Never provide circular definitions or the word itself; explain the meaning purely through description, context, and function. Only provide the definitions.`;
+For each definition sense, you must provide:
+1. "text": The explanation of the meaning purely through description, context, and function.
+2. "partOfSpeech": The part of speech for this sense (e.g. noun, verb, adjective, adverb, preposition, conjunction, idiom, etc.).
+3. "tags": An array of relevant usage, domain, or stylistic tags (e.g. "formal", "informal", "slang", "technical", "archaic", "literary", "idiomatic", etc.). If no special tags apply, return an empty array.
+4. "levels": An array of applicable CEFR proficiency levels (A1, A2, B1, B2, C1, C2) where this definition sense is typically learned or used. A definition may span multiple levels (e.g. ["A1", "A2"] or ["B1"]).
+Cover all proficiency levels from beginner (A1, A2) to intermediate (B1, B2) and advanced/mastery (C1, C2), ranging from simple, accessible explanations to nuanced, figurative, formal, and specialized meanings.
+CRITICAL REQUIREMENT: Under NO circumstances should the target word or phrase "${text}" (including its inflections, plurals, or variations, case-insensitive) appear anywhere in the text of the definitions. Never provide circular definitions or the word itself; explain the meaning purely through description, context, and function.`;
 
     const jsonFormat = {
       type: 'object',
       properties: {
         definitions: {
           type: 'array',
-          items: { type: 'string' },
-          description: 'Comprehensive list of definitions across all levels from A0 to C2+ without containing the target word itself',
+          items: {
+            type: 'object',
+            properties: {
+              text: {
+                type: 'string',
+                description: 'Definition text without containing the target word itself',
+              },
+              partOfSpeech: {
+                type: 'string',
+                description: 'Part of speech for this sense (e.g. noun, verb, adjective)',
+              },
+              tags: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Usage or domain tags (e.g. formal, slang, technical)',
+              },
+              levels: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Applicable CEFR proficiency levels (e.g. A1, A2, B1, B2, C1, C2)',
+              },
+            },
+            required: ['text', 'partOfSpeech', 'tags', 'levels'],
+          },
+          description: 'Comprehensive list of definitions across all levels with tags, part of speech, and CEFR levels',
         },
       },
       required: ['definitions'],
@@ -53,14 +81,33 @@ CRITICAL REQUIREMENT: Under NO circumstances should the target word or phrase "$
       throw new Error(`LLM service error (${response.status}): ${errorText}`);
     }
 
-    const data = (await response.json()) as { data?: { definitions?: string[] } };
+    const data = (await response.json()) as { data?: { definitions?: any[] } };
 
     if (!data?.data || !Array.isArray(data.data.definitions)) {
       throw new Error('Unexpected response format from LLM service');
     }
 
     return data.data.definitions
-      .map((line: any) => String(line).trim())
-      .filter((line: string) => line.length > 0);
+      .map((item: any): DefinitionItem => {
+        const textVal = typeof item === 'string' ? item : (item?.text ?? item?.definition ?? '');
+        const posVal = typeof item?.partOfSpeech === 'string' && item.partOfSpeech.trim().length > 0
+          ? item.partOfSpeech.trim()
+          : null;
+        const tagsVal = Array.isArray(item?.tags)
+          ? item.tags.map((t: any) => String(t).trim()).filter((t: string) => t.length > 0)
+          : [];
+        const levelsVal = Array.isArray(item?.levels)
+          ? item.levels.map((l: any) => String(l).trim().toUpperCase()).filter((l: string) => l.length > 0)
+          : [];
+
+        return {
+          text: String(textVal).trim(),
+          partOfSpeech: posVal,
+          tags: tagsVal,
+          levels: levelsVal,
+        };
+      })
+      .filter((item) => item.text.length > 0);
   }
 }
+

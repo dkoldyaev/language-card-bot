@@ -1,8 +1,8 @@
-import { IDefiner } from '../core/IDefiner';
+import { IDefiner, DefinitionItem } from '../core/IDefiner';
 import { env } from '../core/env';
 
 export class MockDefiner implements IDefiner {
-  async define(text: string, language: string): Promise<string[]> {
+  async define(text: string, language: string): Promise<DefinitionItem[]> {
     let delay = Math.floor(Math.random() * 1300) + 200; // Random delay between 200ms and 1500ms
     if (env.MOCK_TIMEOUT !== undefined) {
       delay = parseInt(env.MOCK_TIMEOUT, 10);
@@ -10,8 +10,18 @@ export class MockDefiner implements IDefiner {
     }
     await new Promise((resolve) => setTimeout(resolve, delay));
     return [
-      `[Mock] Definition 1 for ${text} in ${language}`,
-      `[Mock] Definition 2 for ${text} in ${language}`,
+      {
+        text: `[Mock] Definition 1 for ${text} in ${language}`,
+        tags: ['general', 'common'],
+        partOfSpeech: 'noun',
+        levels: ['A1', 'A2'],
+      },
+      {
+        text: `[Mock] Definition 2 for ${text} in ${language}`,
+        tags: ['informal'],
+        partOfSpeech: 'verb',
+        levels: ['B1'],
+      },
     ];
   }
 }

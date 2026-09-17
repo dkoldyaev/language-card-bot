@@ -234,6 +234,8 @@ function generateComposeEnv({ domainHost, pgAppName, pgUser, pgPassword, pgDbNam
     'DEFINER_TARGET=production',
     `DEFINER_PORT=${getEnvVar('DEFINER_PORT')}`,
     'DEFINER_LLM_SERVICE_URL=http://llm:3003/api/v1/generate',
+    `DEFINER_LLM_PROVIDER=${getEnvVar('DEFINER_LLM_PROVIDER')}`,
+    `DEFINER_LLM_MODEL=${getEnvVar('DEFINER_LLM_MODEL')}`,
     `DEFINER_CACHE_URL=${redisUrl}/2`,
     `DEFINER_MOCK_TIMEOUT=${getEnvVar('DEFINER_MOCK_TIMEOUT')}`,
     `DEFINER_APP_TYPE=${getEnvVar('BASE_DEFINER_APP_TYPE')}`,

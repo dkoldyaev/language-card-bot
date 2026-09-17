@@ -6,6 +6,8 @@ dotenv.config();
 const envSchema = z.object({
   PORT: z.string(),
   LLM_SERVICE_URL: z.string(),
+  LLM_PROVIDER: z.enum(['mistral', 'gemini', 'mock']),
+  LLM_MODEL: z.string(),
   MOCK_TIMEOUT: z.string().optional(),
   CACHE_URL: z.string(),
   TRANSLATOR_API_URL: z.string(),

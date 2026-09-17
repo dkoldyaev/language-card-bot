@@ -56,11 +56,18 @@ router.post('/define-guest', validateRequest(DefineGuestSchema), async (req: Req
       return res.status(502).json({ error: 'Failed to fetch definitions from definer' });
     }
 
-    const definerData = (await definerRes.json()) as { definitions?: string[] };
+    const definerData = (await definerRes.json()) as {
+      definitions?: Array<string | { text: string; tags?: string[]; partOfSpeech?: string | null; levels?: string[] }>;
+    };
     const definitions = definerData.definitions || [];
 
     const definitionsWithTranslations = await Promise.all(
-      definitions.slice(0, 3).map(async (defText: string) => {
+      definitions.slice(0, 3).map(async (def) => {
+        const defText = typeof def === 'string' ? def : def.text;
+        const tags = typeof def === 'string' ? [] : (def.tags || []);
+        const partOfSpeech = typeof def === 'string' ? null : (def.partOfSpeech || null);
+        const levels = typeof def === 'string' ? [] : (def.levels || []);
+
         let translationText: string | null = null;
         try {
           const transRes = await fetch(env.TRANSLATOR_API_URL, {
@@ -84,6 +91,9 @@ router.post('/define-guest', validateRequest(DefineGuestSchema), async (req: Req
         return {
           id: Date.now() + Math.floor(Math.random() * 10000),
           text: defText,
+          tags,
+          partOfSpeech,
+          levels,
           translation: translationText ? { id: Date.now() + Math.floor(Math.random() * 10000), text: translationText } : null,
         };
       })

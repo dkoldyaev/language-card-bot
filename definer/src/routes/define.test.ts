@@ -40,7 +40,20 @@ describe('POST /api/v1/define', () => {
 
   it('should return definitions when using mock provider directly via API', async () => {
     const mockDefiner: IDefiner = {
-      define: vi.fn().mockResolvedValue(['[Mock] Definition 1', '[Mock] Definition 2']),
+      define: vi.fn().mockResolvedValue([
+        {
+          text: '[Mock] Definition 1',
+          partOfSpeech: 'noun',
+          tags: ['common'],
+          levels: ['A1'],
+        },
+        {
+          text: '[Mock] Definition 2',
+          partOfSpeech: 'verb',
+          tags: ['slang'],
+          levels: ['B1'],
+        },
+      ]),
     };
     vi.mocked(DefinerFactory.getDefiner).mockReturnValue(mockDefiner);
 
@@ -55,7 +68,20 @@ describe('POST /api/v1/define', () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('definitions');
     expect(Array.isArray(res.body.definitions)).toBe(true);
-    expect(res.body.definitions).toEqual(['[Mock] Definition 1', '[Mock] Definition 2']);
+    expect(res.body.definitions).toEqual([
+      {
+        text: '[Mock] Definition 1',
+        partOfSpeech: 'noun',
+        tags: ['common'],
+        levels: ['A1'],
+      },
+      {
+        text: '[Mock] Definition 2',
+        partOfSpeech: 'verb',
+        tags: ['slang'],
+        levels: ['B1'],
+      },
+    ]);
     
     expect(DefinerFactory.getDefiner).toHaveBeenCalledWith('mock');
     expect(mockDefiner.define).toHaveBeenCalledWith('hello', 'en');
@@ -63,7 +89,14 @@ describe('POST /api/v1/define', () => {
 
   it('should call mistral adapter when specified and return mocked results', async () => {
     const mistralMock: IDefiner = {
-      define: vi.fn().mockResolvedValue(['Mistral Definition 1']),
+      define: vi.fn().mockResolvedValue([
+        {
+          text: 'Mistral Definition 1',
+          partOfSpeech: 'noun',
+          tags: ['formal'],
+          levels: ['C1'],
+        },
+      ]),
     };
     vi.mocked(DefinerFactory.getDefiner).mockReturnValue(mistralMock);
 
@@ -77,7 +110,8 @@ describe('POST /api/v1/define', () => {
       
     expect(res.status).toBe(200);
     expect(res.body.definitions).toHaveLength(1);
-    expect(res.body.definitions[0]).toBe('Mistral Definition 1');
+    expect(res.body.definitions[0].text).toBe('Mistral Definition 1');
+    expect(res.body.definitions[0].levels).toEqual(['C1']);
 
     expect(DefinerFactory.getDefiner).toHaveBeenCalledWith('mistral');
     expect(mistralMock.define).toHaveBeenCalledWith('bonjour', 'fr');
@@ -85,7 +119,14 @@ describe('POST /api/v1/define', () => {
 
   it('should call gemini adapter when specified and return mocked results', async () => {
     const geminiMock: IDefiner = {
-      define: vi.fn().mockResolvedValue(['Gemini Definition 1']),
+      define: vi.fn().mockResolvedValue([
+        {
+          text: 'Gemini Definition 1',
+          partOfSpeech: 'adjective',
+          tags: [],
+          levels: ['B2'],
+        },
+      ]),
     };
     vi.mocked(DefinerFactory.getDefiner).mockReturnValue(geminiMock);
 
@@ -99,7 +140,8 @@ describe('POST /api/v1/define', () => {
       
     expect(res.status).toBe(200);
     expect(res.body.definitions).toHaveLength(1);
-    expect(res.body.definitions[0]).toBe('Gemini Definition 1');
+    expect(res.body.definitions[0].text).toBe('Gemini Definition 1');
+    expect(res.body.definitions[0].partOfSpeech).toBe('adjective');
 
     expect(DefinerFactory.getDefiner).toHaveBeenCalledWith('gemini');
     expect(geminiMock.define).toHaveBeenCalledWith('hola', 'es');
@@ -107,7 +149,14 @@ describe('POST /api/v1/define', () => {
 
   it('should call llm adapter when specified and return mocked results', async () => {
     const llmMock: IDefiner = {
-      define: vi.fn().mockResolvedValue(['LLM Definition 1']),
+      define: vi.fn().mockResolvedValue([
+        {
+          text: 'LLM Definition 1',
+          partOfSpeech: 'interjection',
+          tags: ['informal'],
+          levels: ['A1'],
+        },
+      ]),
     };
     vi.mocked(DefinerFactory.getDefiner).mockReturnValue(llmMock);
 
@@ -121,7 +170,8 @@ describe('POST /api/v1/define', () => {
       
     expect(res.status).toBe(200);
     expect(res.body.definitions).toHaveLength(1);
-    expect(res.body.definitions[0]).toBe('LLM Definition 1');
+    expect(res.body.definitions[0].text).toBe('LLM Definition 1');
+    expect(res.body.definitions[0].levels).toEqual(['A1']);
 
     expect(DefinerFactory.getDefiner).toHaveBeenCalledWith('llm');
     expect(llmMock.define).toHaveBeenCalledWith('ciao', 'it');

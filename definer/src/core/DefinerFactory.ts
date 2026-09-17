@@ -2,22 +2,22 @@ import { IDefiner, DefinerAppType } from './IDefiner';
 import { MockDefiner } from '../adapters/MockDefiner';
 import { LLMAdapter } from '../adapters/LLMAdapter';
 import { FreeDictionaryDefiner } from '../adapters/FreeDictionaryDefiner';
+import { env } from './env';
 
 export class DefinerFactory {
   static getDefiner(definerApp: DefinerAppType): IDefiner {
     switch (definerApp) {
       case 'mistral':
-        return new LLMAdapter({ provider: 'mistral', model: process.env.DEFINER_LLM_MODEL || 'open-mistral-nemo' });
+        return new LLMAdapter({ provider: 'mistral', model: env.LLM_MODEL });
       case 'gemini':
-        return new LLMAdapter({ provider: 'gemini', model: process.env.DEFINER_LLM_MODEL || 'gemini-1.5-flash' });
+        return new LLMAdapter({ provider: 'gemini', model: env.LLM_MODEL });
       case 'llm':
-        return new LLMAdapter({ provider: (process.env.DEFINER_LLM_PROVIDER as any) || 'mistral', model: process.env.DEFINER_LLM_MODEL || 'open-mistral-nemo' });
+        return new LLMAdapter({ provider: env.LLM_PROVIDER, model: env.LLM_MODEL });
       case 'freedictionary':
         return new FreeDictionaryDefiner();
       case 'mock':
         return new MockDefiner();
       default:
-        // Default to mock if unknown at runtime
         return new MockDefiner();
     }
   }

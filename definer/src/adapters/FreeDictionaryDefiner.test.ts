@@ -12,61 +12,116 @@ describe('FreeDictionaryDefiner', () => {
     global.fetch = originalFetch;
   });
 
-  it('should fetch English definitions and return them without calling translator when language is "en"', async () => {
+  it('should fetch English definitions, determine levels via LLM, and return DefinitionItem[] without translator', async () => {
     const mockFreeDictResponse = {
       entries: [
         {
+          partOfSpeech: 'noun',
           senses: [
-            { definition: 'A domesticated carnivorous mammal' },
-            { definition: 'A male dog' },
+            { definition: 'A domesticated carnivorous mammal', tags: ['zoology'] },
+            { definition: 'A male dog', tags: ['informal'] },
           ],
         },
       ],
     };
 
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => mockFreeDictResponse,
-    });
-    global.fetch = mockFetch;
-
-    const definer = new FreeDictionaryDefiner({
-      translatorApiUrl: 'http://translator:3001/api/v1/translate',
-      translatorAppType: 'mock',
-    });
-
-    const result = await definer.define('dog', 'en');
-
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    const [url] = mockFetch.mock.calls[0];
-    expect(url).toContain('https://freedictionaryapi.com/api/v1/entries/en/dog');
-    expect(result).toEqual([
-      'A domesticated carnivorous mammal',
-      'A male dog',
-    ]);
-  });
-
-  it('should fetch definitions and translate them via translator service when language is not "en"', async () => {
-    const mockFreeDictResponse = {
-      entries: [
-        {
-          senses: [
-            { definition: 'A domesticated carnivorous mammal' },
-            { definition: 'A loyal pet' },
-          ],
-        },
-      ],
+    const mockLLMResponse = {
+      data: {
+        levelsByIndex: [
+          { index: 1, levels: ['A1', 'A2'] },
+          { index: 2, levels: ['B1'] },
+        ],
+      },
     };
 
     const mockFetch = vi.fn()
-      // First call: FreeDictionary API
+      // Call 1: FreeDictionary API
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => mockFreeDictResponse,
       })
-      // Second call: Translator service
+      // Call 2: LLM service for levels
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockLLMResponse,
+      });
+
+    global.fetch = mockFetch;
+
+    const definer = new FreeDictionaryDefiner({
+      translatorApiUrl: 'http://translator:3001/api/v1/translate',
+      translatorAppType: 'mock',
+      llmServiceUrl: 'http://llm:3003/api/v1/generate',
+      llmProvider: 'mistral',
+      llmModel: 'open-mistral-nemo',
+    });
+
+    const result = await definer.define('dog', 'en');
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    // Verify FreeDictionary call
+    const [freeDictUrl] = mockFetch.mock.calls[0];
+    expect(freeDictUrl).toContain('https://freedictionaryapi.com/api/v1/entries/en/dog');
+
+    // Verify LLM call
+    const [llmUrl, llmOptions] = mockFetch.mock.calls[1];
+    expect(llmUrl).toBe('http://llm:3003/api/v1/generate');
+    const parsedLLMBody = JSON.parse(llmOptions.body);
+    expect(parsedLLMBody.provider).toBe('mistral');
+    expect(parsedLLMBody.model).toBe('open-mistral-nemo');
+    expect(parsedLLMBody.prompt).toContain('dog');
+    expect(parsedLLMBody.prompt).toContain('A domesticated carnivorous mammal');
+    expect(parsedLLMBody.jsonFormat).toBeDefined();
+
+    expect(result).toEqual([
+      {
+        text: 'A domesticated carnivorous mammal',
+        partOfSpeech: 'noun',
+        tags: ['zoology'],
+        levels: ['A1', 'A2'],
+      },
+      {
+        text: 'A male dog',
+        partOfSpeech: 'noun',
+        tags: ['informal'],
+        levels: ['B1'],
+      },
+    ]);
+  });
+
+  it('should fetch definitions, translate them via translator service, determine levels via LLM when language is not "en"', async () => {
+    const mockFreeDictResponse = {
+      entries: [
+        {
+          partOfSpeech: 'noun',
+          senses: [
+            { definition: 'A domesticated carnivorous mammal', tags: ['zoology'] },
+            { definition: 'A loyal pet', tags: ['common'] },
+          ],
+        },
+      ],
+    };
+
+    const mockLLMResponse = {
+      data: {
+        levelsByIndex: [
+          { index: 1, levels: ['A1'] },
+          { index: 2, levels: ['A2'] },
+        ],
+      },
+    };
+
+    const mockFetch = vi.fn()
+      // Call 1: FreeDictionary API
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockFreeDictResponse,
+      })
+      // Call 2: Translator service
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -76,6 +131,12 @@ describe('FreeDictionaryDefiner', () => {
             'Преданный питомец',
           ],
         }),
+      })
+      // Call 3: LLM service for levels
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockLLMResponse,
       });
 
     global.fetch = mockFetch;
@@ -83,11 +144,14 @@ describe('FreeDictionaryDefiner', () => {
     const definer = new FreeDictionaryDefiner({
       translatorApiUrl: 'http://translator:3001/api/v1/translate',
       translatorAppType: 'mock',
+      llmServiceUrl: 'http://llm:3003/api/v1/generate',
+      llmProvider: 'mistral',
+      llmModel: 'open-mistral-nemo',
     });
 
     const result = await definer.define('собака', 'ru');
 
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenCalledTimes(3);
 
     // Check FreeDictionary API call
     const [freeDictUrl] = mockFetch.mock.calls[0];
@@ -106,9 +170,25 @@ describe('FreeDictionaryDefiner', () => {
     ]);
     expect(parsedBody.translatorApp).toBe('mock');
 
+    // Check LLM levels call
+    const [llmUrl, llmOptions] = mockFetch.mock.calls[2];
+    expect(llmUrl).toBe('http://llm:3003/api/v1/generate');
+    const parsedLLMBody = JSON.parse(llmOptions.body);
+    expect(parsedLLMBody.prompt).toContain('Одомашненное хищное млекопитающее');
+
     expect(result).toEqual([
-      'Одомашненное хищное млекопитающее',
-      'Преданный питомец',
+      {
+        text: 'Одомашненное хищное млекопитающее',
+        partOfSpeech: 'noun',
+        tags: ['zoology'],
+        levels: ['A1'],
+      },
+      {
+        text: 'Преданный питомец',
+        partOfSpeech: 'noun',
+        tags: ['common'],
+        levels: ['A2'],
+      },
     ]);
   });
 
@@ -138,7 +218,7 @@ describe('FreeDictionaryDefiner', () => {
     const definer = new FreeDictionaryDefiner();
     const result = await definer.define('empty', 'ru');
 
-    // Should not call translator because definitions array is empty
+    // Should not call translator or LLM because definitions array is empty
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(result).toEqual([]);
   });
