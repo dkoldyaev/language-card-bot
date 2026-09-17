@@ -156,7 +156,7 @@ export default function Layout() {
                   size="small"
                   variant="outlined"
                   data-testid="guest-banner-auth-btn"
-                  sx={{ fontWeight: 700, textTransform: 'none', whiteSpace: 'nowrap' }}
+                  sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none', whiteSpace: 'nowrap' }}
                 >
                   {t('guest.bannerAction')}
                 </Button>
