@@ -21,6 +21,15 @@ apiClient.interceptors.request.use(
       return Promise.reject({ isOfflineMock: true, url: config.url, data: config.data });
     }
 
+    if (!state.token) {
+      if (config.url === '/dictionary' || config.url?.startsWith('/dictionary?') || config.url?.startsWith('/dictionary/')) {
+        return Promise.reject({ isGuestDictionaryMock: true, url: config.url, params: config.params, method: config.method });
+      }
+      if (config.url === '/dictionaries' || config.url?.startsWith('/dictionaries?') || config.url?.startsWith('/dictionaries/')) {
+        return Promise.reject({ isGuestDictionariesMock: true, url: config.url, params: config.params, method: config.method, data: config.data });
+      }
+    }
+
     return config;
   },
   (error) => {
@@ -31,6 +40,84 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error && error.isGuestDictionaryMock) {
+      const store = useStore.getState();
+      const currentDictId = error.params?.dictionaryId ?? store.selectedDictionaryId ?? store.activeDictionaryId ?? store.dictionaries[0]?.id;
+      const dictWords = (currentDictId && store.guestDictionaryWords[currentDictId]) || store.dictionary || [];
+      return Promise.resolve({ data: { dictionary: dictWords } });
+    }
+
+    if (error && error.isGuestDictionariesMock) {
+      const store = useStore.getState();
+      const method = (error.method || 'get').toLowerCase();
+
+      if (method === 'get') {
+        return Promise.resolve({
+          data: {
+            dictionaries: store.dictionaries,
+            activeDictionaryId: store.activeDictionaryId,
+          },
+        });
+      }
+
+      if (method === 'post') {
+        const data = typeof error.data === 'string' ? JSON.parse(error.data) : (error.data || {});
+        if (error.url?.includes('/select')) {
+          const match = error.url.match(/\/dictionaries\/(\d+)\/select/);
+          if (match) {
+            const id = Number(match[1]);
+            store.setActiveDictionaryId(id);
+            store.setSelectedDictionaryId(id);
+            const dictWords = store.guestDictionaryWords[id] || [];
+            store.setDictionary(dictWords);
+          }
+          return Promise.resolve({ data: { success: true } });
+        }
+
+        const dictId = Date.now();
+        const isFirst = store.dictionaries.length === 0 || !store.activeDictionaryId;
+        const defaultName = `${(data.targetLanguage || 'en').toUpperCase()} (${(data.baseLanguage || 'ru').toUpperCase()})`;
+        const newDict = {
+          id: dictId,
+          name: data.name?.trim().length > 0 ? data.name.trim() : defaultName,
+          targetLanguage: (data.targetLanguage || 'en').toLowerCase(),
+          baseLanguage: (data.baseLanguage || 'ru').toLowerCase(),
+          wordCount: 0,
+          isActive: isFirst,
+          createdAt: new Date().toISOString(),
+        };
+        store.addDictionary(newDict);
+        if (newDict.isActive) {
+          store.setActiveDictionaryId(newDict.id);
+        }
+        store.setSelectedDictionaryId(newDict.id);
+        store.setDictionary([]);
+        return Promise.resolve({ data: { dictionary: newDict } });
+      }
+
+      if (method === 'patch') {
+        const match = error.url?.match(/\/dictionaries\/(\d+)/);
+        if (match) {
+          const id = Number(match[1]);
+          const data = typeof error.data === 'string' ? JSON.parse(error.data) : (error.data || {});
+          if (data.name) {
+            store.updateDictionaryItem(id, { name: data.name });
+          }
+        }
+        return Promise.resolve({ data: { success: true } });
+      }
+
+      if (method === 'delete') {
+        const match = error.url?.match(/\/dictionaries\/(\d+)/);
+        if (match) {
+          const id = Number(match[1]);
+          store.removeDictionary(id);
+        }
+        return Promise.resolve({ data: { success: true } });
+      }
+
+      return Promise.resolve({ data: {} });
+    }
     if (error && error.isOfflineMock) {
       const store = useStore.getState();
       const dictionary = store.dictionary;
@@ -102,8 +189,13 @@ apiClient.interceptors.response.use(
       }
     }
     
-    // Ignore aborted requests or offline mocks for error tracking
-    if (!axios.isCancel(error) && !error.isOfflineMock) {
+    // Ignore aborted requests or offline/guest mocks for error tracking
+    if (
+      !axios.isCancel(error) &&
+      !error.isOfflineMock &&
+      !error.isGuestDictionaryMock &&
+      !error.isGuestDictionariesMock
+    ) {
       trackEvent('API Error', { 
         status: error.response?.status || 'network_error', 
         url: error.config?.url || 'unknown_url' 
