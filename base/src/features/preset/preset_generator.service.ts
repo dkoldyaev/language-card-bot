@@ -578,7 +578,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
     const updated = await prisma.preset.update({
       where: { id: options.presetId },
       data: {
-        body: existingBodyList,
+        body: existingBodyList as any,
       },
     });
 
@@ -651,7 +651,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
         description,
         forLanguage: language,
         type: 'word-definition',
-        body: newBody,
+        body: newBody as any,
       },
     });
 
