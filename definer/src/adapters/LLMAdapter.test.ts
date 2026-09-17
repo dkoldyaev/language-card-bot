@@ -38,9 +38,11 @@ describe('LLMAdapter', () => {
     
     const parsedBody = JSON.parse(options.body);
     expect(parsedBody.provider).toBe('mistral');
-    expect(parsedBody.model).toBe('mistral-large-latest');
     expect(parsedBody.prompt).toContain('apple');
     expect(parsedBody.prompt).toContain('en');
+    expect(parsedBody.prompt).toContain('A0');
+    expect(parsedBody.prompt).toContain('C2');
+    expect(parsedBody.prompt).toContain('Under NO circumstances should the target word or phrase');
     expect(parsedBody.jsonFormat).toBeDefined();
 
     expect(result).toEqual(['Definition 1', 'Definition 2']);

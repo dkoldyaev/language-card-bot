@@ -19,7 +19,9 @@ export class LLMAdapter implements IDefiner {
   }
 
   async define(text: string, language: string): Promise<string[]> {
-    const prompt = `Please provide a list of definitions for the word or phrase "${text}" in the language "${language}". Only provide the definitions.`;
+    const prompt = `Please provide a comprehensive and extensive list with the maximum possible number of distinct definitions and senses for the word or phrase "${text}" in the language "${language}".
+Cover all CEFR proficiency levels from beginner (A0, A1, A2) to intermediate (B1, B2) and advanced/mastery (C1, C2 and above), ranging from simple, accessible explanations to nuanced, figurative, formal, and specialized meanings.
+CRITICAL REQUIREMENT: Under NO circumstances should the target word or phrase "${text}" (including its inflections, plurals, or variations, case-insensitive) appear anywhere in the text of the definitions. Never provide circular definitions or the word itself; explain the meaning purely through description, context, and function. Only provide the definitions.`;
 
     const jsonFormat = {
       type: 'object',
@@ -27,7 +29,7 @@ export class LLMAdapter implements IDefiner {
         definitions: {
           type: 'array',
           items: { type: 'string' },
-          description: 'List of definitions for the word or phrase',
+          description: 'Comprehensive list of definitions across all levels from A0 to C2+ without containing the target word itself',
         },
       },
       required: ['definitions'],
