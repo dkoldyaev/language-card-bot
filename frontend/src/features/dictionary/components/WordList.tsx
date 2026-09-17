@@ -25,6 +25,7 @@ export default function WordList({ loading }: { loading: boolean }) {
   const [selectedWordIds, setSelectedWordIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 
+  const token = useStore((state) => state.token);
   const dictionary = useStore((state) => state.dictionary);
   const setDictionary = useStore((state) => state.setDictionary);
   const removeDictionaryWord = useStore((state) => state.removeDictionaryWord);
@@ -52,7 +53,9 @@ export default function WordList({ loading }: { loading: boolean }) {
     e.stopPropagation();
     if (window.confirm(t('dictionary.deleteWordConfirm', { text }))) {
       try {
-        await apiClient.delete(`/word_delete/${wordId}`);
+        if (token) {
+          await apiClient.delete(`/word_delete/${wordId}`);
+        }
         trackEvent('Word Deleted');
         removeDictionaryWord(wordId);
         if (selectedWordIds.has(wordId)) {
@@ -90,7 +93,9 @@ export default function WordList({ loading }: { loading: boolean }) {
     if (selectedWordIds.size === 0) return;
     if (window.confirm(t('dictionary.bulkDeleteConfirm', { count: selectedWordIds.size }))) {
       try {
-        await apiClient.post('/word_delete/bulk', { wordIds: Array.from(selectedWordIds) });
+        if (token) {
+          await apiClient.post('/word_delete/bulk', { wordIds: Array.from(selectedWordIds) });
+        }
         trackEvent('Word Deleted', { count: selectedWordIds.size });
         const remaining = dictionary.filter(w => !selectedWordIds.has(w.id));
         setDictionary(remaining);
@@ -103,7 +108,9 @@ export default function WordList({ loading }: { loading: boolean }) {
 
   const handleEditDefinition = async (wordId: number, defId: number) => {
     try {
-      await apiClient.put(`/definition_edit/${defId}`, { text: editDefText });
+      if (token) {
+        await apiClient.put(`/definition_edit/${defId}`, { text: editDefText });
+      }
       updateDictionaryDefinition(wordId, defId, editDefText);
       setEditingDefId(null);
     } catch (error) {
@@ -113,7 +120,9 @@ export default function WordList({ loading }: { loading: boolean }) {
 
   const handleEditTranslation = async (wordId: number, defId: number) => {
     try {
-      await apiClient.put(`/definition_translate_edit/${defId}`, { text: editTransText });
+      if (token) {
+        await apiClient.put(`/definition_translate_edit/${defId}`, { text: editTransText });
+      }
       updateDictionaryTranslation(wordId, defId, editTransText);
       setEditingTransId(null);
     } catch (error) {
@@ -125,8 +134,12 @@ export default function WordList({ loading }: { loading: boolean }) {
     const text = window.prompt(t('dictionary.enterNewDefinitionPrompt'));
     if (text && text.trim()) {
       try {
-        const res = await apiClient.post('/definition_add', { wordId, text: text.trim() });
-        addDictionaryDefinition(wordId, { id: res.data.definitionId, text: text.trim(), translation: null });
+        let defId = Date.now();
+        if (token) {
+          const res = await apiClient.post('/definition_add', { wordId, text: text.trim() });
+          defId = res.data.definitionId;
+        }
+        addDictionaryDefinition(wordId, { id: defId, text: text.trim(), translation: null });
       } catch (error) {
         console.error('Failed to add definition:', error);
       }
@@ -136,7 +149,9 @@ export default function WordList({ loading }: { loading: boolean }) {
   const handleDeleteDefinition = async (wordId: number, defId: number) => {
     if (window.confirm(t('dictionary.deleteDefConfirm'))) {
       try {
-        await apiClient.delete(`/definition_delete/${defId}`);
+        if (token) {
+          await apiClient.delete(`/definition_delete/${defId}`);
+        }
         removeDictionaryDefinition(wordId, defId);
       } catch (error) {
         console.error('Failed to delete definition:', error);

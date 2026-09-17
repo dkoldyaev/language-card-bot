@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
-import type { DictionaryItem } from '../../../store/useStore';
+import useStore, { type DictionaryItem } from '../../../store/useStore';
 import DictionaryPresets from './DictionaryPresets';
 
 const mockDictionary: DictionaryItem = {
@@ -36,6 +36,7 @@ const mockPresets = [
 describe('DictionaryPresets', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    useStore.setState({ token: 'mock-token', dictionary: [] });
   });
 
   it('fetches presets for the dictionary target language', async () => {
@@ -152,6 +153,32 @@ describe('DictionaryPresets', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Failed to apply preset')).toBeInTheDocument();
+    });
+  });
+
+  it('applies a preset locally in guest mode without API call', async () => {
+    useStore.setState({ token: null, dictionary: [], dictionaries: [mockDictionary] });
+    const user = userEvent.setup();
+    vi.spyOn(apiClient, 'get').mockResolvedValue({
+      data: { presets: mockPresets },
+    });
+    const postSpy = vi.spyOn(apiClient, 'post');
+    const onApplied = vi.fn();
+
+    render(<DictionaryPresets dictionary={mockDictionary} onPresetApplied={onApplied} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Spanish Essentials')).toBeInTheDocument();
+    });
+
+    const applyBtn = screen.getByTestId('apply-preset-btn-10');
+    await user.click(applyBtn);
+
+    expect(postSpy).not.toHaveBeenCalled();
+    expect(useStore.getState().dictionary).toHaveLength(5);
+    expect(onApplied).toHaveBeenCalledWith(mockPresets[0]);
+    await waitFor(() => {
+      expect(screen.getByText(/Added "Spanish Essentials" to Spanish 101!/i)).toBeInTheDocument();
     });
   });
 });

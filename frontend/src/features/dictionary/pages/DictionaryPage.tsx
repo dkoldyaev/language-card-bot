@@ -21,6 +21,7 @@ export default function DictionaryPage() {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const actionButtonsRef = useRef<HTMLDivElement>(null);
 
+  const token = useStore((state) => state.token);
   const setDictionary = useStore((state) => state.setDictionary);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const selectedDictionaryId = useStore((state) => state.selectedDictionaryId);
@@ -45,6 +46,12 @@ export default function DictionaryPage() {
       setLoading(false);
       return;
     }
+    if (!token) {
+      setLoading(false);
+      const dictWords = useStore.getState().guestDictionaryWords[currentDictId] || [];
+      setDictionary(dictWords);
+      return;
+    }
     setLoading(true);
     apiClient.get('/dictionary', { params: { dictionaryId: currentDictId } })
       .then((res) => {
@@ -54,11 +61,15 @@ export default function DictionaryPage() {
       })
       .catch((error) => console.error('Failed to load dictionary:', error))
       .finally(() => setLoading(false));
-  }, [setDictionary, currentDictId]);
+  }, [setDictionary, currentDictId, token]);
 
   const handleSelectDictionary = (dictId: number) => {
     // Only switch working dictionary, do NOT switch active learning language
     setSelectedDictionaryId(dictId);
+    if (!token) {
+      const dictWords = useStore.getState().guestDictionaryWords[dictId] || [];
+      setDictionary(dictWords);
+    }
   };
 
   const startEditTitle = () => {
@@ -89,7 +100,9 @@ export default function DictionaryPage() {
 
     try {
       setIsSavingTitle(true);
-      await apiClient.patch(`/dictionaries/${currentDict.id}`, { name: newName });
+      if (token) {
+        await apiClient.patch(`/dictionaries/${currentDict.id}`, { name: newName });
+      }
       updateDictionaryItem(currentDict.id, { name: newName });
       setIsEditingTitle(false);
     } catch (error) {
@@ -133,11 +146,15 @@ export default function DictionaryPage() {
     }
 
     try {
-      await apiClient.delete(`/dictionaries/${dictId}`);
+      if (token) {
+        await apiClient.delete(`/dictionaries/${dictId}`);
+      }
       removeDictionary(dictId);
-      const dictsRes = await apiClient.get('/dictionaries');
-      if (dictsRes.data.dictionaries) {
-        setDictionaries(dictsRes.data.dictionaries);
+      if (token) {
+        const dictsRes = await apiClient.get('/dictionaries');
+        if (dictsRes.data.dictionaries) {
+          setDictionaries(dictsRes.data.dictionaries);
+        }
       }
     } catch (err) {
       console.error('Failed to delete dictionary:', err);

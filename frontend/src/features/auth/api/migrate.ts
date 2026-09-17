@@ -5,9 +5,15 @@ export async function performGuestMigration(token: string, mode: 'merge' | 'repl
   const store = useStore.getState();
   const dictionaries = store.dictionaries;
   const dictionary = store.dictionary;
+  const guestDictionaryWords = store.guestDictionaryWords;
   const guestAttempts = store.guestQuizAttempts;
 
-  if (dictionaries.length === 0 && dictionary.length === 0 && guestAttempts.length === 0) {
+  if (
+    dictionaries.length === 0 &&
+    dictionary.length === 0 &&
+    Object.keys(guestDictionaryWords).length === 0 &&
+    guestAttempts.length === 0
+  ) {
     return null;
   }
 
@@ -15,21 +21,40 @@ export async function performGuestMigration(token: string, mode: 'merge' | 'repl
   const targetLanguage = activeDict?.targetLanguage || 'en';
   const baseLanguage = activeDict?.baseLanguage || 'ru';
 
+  const guestEntries = Object.entries(guestDictionaryWords);
+  const words =
+    guestEntries.length > 0
+      ? guestEntries.flatMap(([dictIdStr, dictWords]) => {
+          const dict = dictionaries.find((d) => d.id === Number(dictIdStr));
+          const target = dict?.targetLanguage || targetLanguage;
+          const base = dict?.baseLanguage || baseLanguage;
+          return dictWords.map((w) => ({
+            text: w.text,
+            targetLanguage: target,
+            baseLanguage: base,
+            definitions: w.definitions.map((def) => ({
+              text: def.text,
+              translation: def.translation?.text || null,
+            })),
+          }));
+        })
+      : dictionary.map((w) => ({
+          text: w.text,
+          targetLanguage,
+          baseLanguage,
+          definitions: w.definitions.map((def) => ({
+            text: def.text,
+            translation: def.translation?.text || null,
+          })),
+        }));
+
   const payload = {
     dictionaries: dictionaries.map((d) => ({
       name: d.name,
       targetLanguage: d.targetLanguage,
       baseLanguage: d.baseLanguage,
     })),
-    words: dictionary.map((w) => ({
-      text: w.text,
-      targetLanguage,
-      baseLanguage,
-      definitions: w.definitions.map((def) => ({
-        text: def.text,
-        translation: def.translation?.text || null,
-      })),
-    })),
+    words,
     quizAttempts: guestAttempts.map((a) => ({
       wordText: a.wordText,
       result: a.result,

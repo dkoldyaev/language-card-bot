@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
 import { I18nProvider, NATIVE_LANGUAGE_COOKIE } from '../../../shared/i18n';
 import { getCookie, setCookie } from '../../../shared/lib/cookie';
+import useStore from '../../../store/useStore';
 import CreateDictionaryDialog from './CreateDictionaryDialog';
 
 function TestWrapper({ initialLocale = 'en', children }: { initialLocale?: string; children: React.ReactNode }) {
@@ -18,6 +19,7 @@ describe('CreateDictionaryDialog - native language defaults and cookie persisten
       document.cookie = c.replace(/^ +/, '').replace(/=.*/, `=;expires=${new Date(0).toUTCString()};path=/`);
     });
     vi.restoreAllMocks();
+    useStore.setState({ token: 'mock-token', dictionaries: [] });
   });
 
   afterEach(() => {
@@ -83,7 +85,8 @@ describe('CreateDictionaryDialog - native language defaults and cookie persisten
     expect(nativeSelect).toHaveValue('ja');
   });
 
-  it('submits dictionary with selected languages', async () => {
+  it('submits dictionary with selected languages when authenticated', async () => {
+    useStore.setState({ token: 'mock-token' });
     const user = userEvent.setup();
     const onCreated = vi.fn();
     const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
@@ -122,5 +125,45 @@ describe('CreateDictionaryDialog - native language defaults and cookie persisten
     await waitFor(() => {
       expect(onCreated).toHaveBeenCalled();
     });
+  });
+
+  it('creates dictionary locally without API call in guest mode', async () => {
+    useStore.setState({ token: null, dictionaries: [] });
+    const user = userEvent.setup();
+    const onCreated = vi.fn();
+    const postSpy = vi.spyOn(apiClient, 'post');
+
+    render(
+      <TestWrapper initialLocale="en">
+        <CreateDictionaryDialog open={true} onClose={vi.fn()} onCreated={onCreated} />
+      </TestWrapper>
+    );
+
+    // Target language select
+    const targetTrigger = screen.getByLabelText(/Language to Learn \(Target\)/i);
+    await user.click(targetTrigger);
+    await user.click(screen.getByRole('option', { name: /German \(DE\)/i }));
+
+    // Enter custom name
+    const nameInput = screen.getByLabelText(/Dictionary Name \(Optional\)/i);
+    await user.type(nameInput, 'My German Deck');
+
+    // Submit
+    const createBtn = screen.getByRole('button', { name: /Create Dictionary/i });
+    await user.click(createBtn);
+
+    expect(postSpy).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onCreated).toHaveBeenCalled();
+    });
+
+    const storeState = useStore.getState();
+    expect(storeState.dictionaries).toHaveLength(1);
+    expect(storeState.dictionaries[0].name).toBe('My German Deck');
+    expect(storeState.dictionaries[0].targetLanguage).toBe('de');
+    expect(storeState.dictionaries[0].baseLanguage).toBe('en');
+    expect(storeState.dictionaries[0].isActive).toBe(true);
+    expect(storeState.activeDictionaryId).toBe(storeState.dictionaries[0].id);
+    expect(storeState.selectedDictionaryId).toBe(storeState.dictionaries[0].id);
   });
 });

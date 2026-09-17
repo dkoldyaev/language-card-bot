@@ -9,6 +9,7 @@ describe('DictionaryPage', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     useStore.setState({
+      token: 'mock-token',
       dictionaries: [
         { id: 1, name: 'English Deck', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true },
         { id: 2, name: 'Spanish Deck', targetLanguage: 'es', baseLanguage: 'ru', wordCount: 0, isActive: false },
@@ -124,5 +125,43 @@ describe('DictionaryPage', () => {
     expect(patchSpy).not.toHaveBeenCalled();
     expect(heading).toHaveTextContent('English Deck');
     expect(heading).not.toHaveAttribute('contenteditable', 'true');
+  });
+
+  it('operates in guest mode without calling dictionary APIs', async () => {
+    const user = userEvent.setup();
+    useStore.setState({
+      token: null,
+      dictionaries: [
+        { id: 1, name: 'Guest English Deck', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true },
+      ],
+      activeDictionaryId: 1,
+      selectedDictionaryId: 1,
+      dictionary: [
+        { id: 101, text: 'guest_word', definitions: [] },
+      ],
+      guestDictionaryWords: {
+        1: [{ id: 101, text: 'guest_word', definitions: [] }],
+      },
+    });
+    const getSpy = vi.spyOn(apiClient, 'get');
+    const patchSpy = vi.spyOn(apiClient, 'patch');
+
+    render(<DictionaryPage />);
+
+    // Should NOT call apiClient.get
+    expect(getSpy).not.toHaveBeenCalledWith('/dictionary', expect.anything());
+
+    // Rename dictionary in guest mode
+    const editBtn = screen.getByTestId('edit-dictionary-title-btn');
+    await user.click(editBtn);
+    const heading = screen.getByRole('heading', { level: 1 });
+    heading.innerText = 'Renamed Guest Deck';
+    const saveBtn = screen.getByTestId('save-dictionary-title-btn');
+    await user.click(saveBtn);
+
+    // Should NOT call apiClient.patch
+    expect(patchSpy).not.toHaveBeenCalled();
+    // Store should be updated locally
+    expect(useStore.getState().dictionaries[0].name).toBe('Renamed Guest Deck');
   });
 });

@@ -125,6 +125,7 @@ interface AppState {
   appState: any | null;
   dictionary: DictionaryWord[];
   guestQuizAttempts: GuestQuizAttempt[];
+  guestDictionaryWords: Record<number, DictionaryWord[]>;
   recordGuestQuizAttempt: (wordText: string, result: 'SUCCESS' | 'CLOSE_MATCH' | 'INCORRECT') => void;
   clearGuestData: () => void;
   quizCard: QuizCardData | null;
@@ -180,6 +181,7 @@ const initialState = {
   appState: null,
   dictionary: [] as DictionaryWord[],
   guestQuizAttempts: [] as GuestQuizAttempt[],
+  guestDictionaryWords: {} as Record<number, DictionaryWord[]>,
   quizCard: null,
   quizEvaluation: null,
   quizTranslation: null,
@@ -218,17 +220,31 @@ const useStore = create<AppState>()(
           isActive: d.id === activeDictionaryId
         }))
       })),
-      setSelectedDictionaryId: (selectedDictionaryId) => set({ selectedDictionaryId }),
+      setSelectedDictionaryId: (selectedDictionaryId) => set((state) => {
+        if (!state.token && selectedDictionaryId) {
+          const dictWords = state.guestDictionaryWords[selectedDictionaryId] || [];
+          return {
+            selectedDictionaryId,
+            dictionary: dictWords,
+          };
+        }
+        return { selectedDictionaryId };
+      }),
       addDictionary: (dict) => set((state) => ({
         dictionaries: state.dictionaries.some(d => d.id === dict.id)
           ? state.dictionaries.map(d => d.id === dict.id ? dict : d)
           : [...state.dictionaries, dict]
       })),
-      removeDictionary: (id) => set((state) => ({
-        dictionaries: state.dictionaries.filter(d => d.id !== id),
-        activeDictionaryId: state.activeDictionaryId === id ? null : state.activeDictionaryId,
-        selectedDictionaryId: state.selectedDictionaryId === id ? null : state.selectedDictionaryId,
-      })),
+      removeDictionary: (id) => set((state) => {
+        const updatedGuestWords = { ...state.guestDictionaryWords };
+        delete updatedGuestWords[id];
+        return {
+          dictionaries: state.dictionaries.filter(d => d.id !== id),
+          guestDictionaryWords: updatedGuestWords,
+          activeDictionaryId: state.activeDictionaryId === id ? null : state.activeDictionaryId,
+          selectedDictionaryId: state.selectedDictionaryId === id ? null : state.selectedDictionaryId,
+        };
+      }),
       updateDictionaryItem: (id, partial) => set((state) => ({
         dictionaries: state.dictionaries.map(d => d.id === id ? { ...d, ...partial } : d)
       })),
@@ -258,9 +274,14 @@ const useStore = create<AppState>()(
       setDictionary: (dictionary) => set((state) => {
         const dictionaryWordIds = new Set(dictionary.map(w => w.id));
         const shouldResetQuiz = state.quizCard && !dictionaryWordIds.has(state.quizCard.wordId);
-        return { 
+        const currentDictId = state.selectedDictionaryId ?? state.activeDictionaryId ?? state.dictionaries[0]?.id;
+        const updatedGuestWords = (!state.token && currentDictId)
+          ? { ...state.guestDictionaryWords, [currentDictId]: dictionary }
+          : state.guestDictionaryWords;
+        return {
           dictionary,
-          ...(shouldResetQuiz && { quizCard: null, quizEvaluation: null, quizTranslation: null, quizVariants: null })
+          guestDictionaryWords: updatedGuestWords,
+          ...(shouldResetQuiz ? { quizCard: null, quizVariants: null } : {})
         };
       }),
       setQuizCard: (card) => set({ quizCard: card, quizEvaluation: null, quizTranslation: null, quizVariants: null }),
@@ -477,6 +498,7 @@ const useStore = create<AppState>()(
       })),
       clearGuestData: () => set({
         guestQuizAttempts: [],
+        guestDictionaryWords: {},
         dictionary: [],
         dictionaries: [],
         activeDictionaryId: null,

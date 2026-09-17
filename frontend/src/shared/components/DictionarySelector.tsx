@@ -22,9 +22,11 @@ import { useTranslation } from '../i18n/I18nContext';
 
 export default function DictionarySelector() {
   const { t } = useTranslation();
+  const token = useStore((state) => state.token);
   const dictionaries = useStore((state) => state.dictionaries);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
+  const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
   const setDictionary = useStore((state) => state.setDictionary);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -44,9 +46,18 @@ export default function DictionarySelector() {
     handleCloseMenu();
     if (dictId === activeDictionaryId) return;
 
+    if (!token) {
+      setActiveDictionaryId(dictId);
+      setSelectedDictionaryId(dictId);
+      const dictWords = useStore.getState().guestDictionaryWords[dictId] || [];
+      setDictionary(dictWords);
+      return;
+    }
+
     try {
       await apiClient.post(`/dictionaries/${dictId}/select`);
       setActiveDictionaryId(dictId);
+      setSelectedDictionaryId(dictId);
 
       // Fetch words for newly selected dictionary
       const res = await apiClient.get('/dictionary');

@@ -37,6 +37,9 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const token = useStore((state) => state.token);
+  const dictionaries = useStore((state) => state.dictionaries);
+  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const addDictionary = useStore((state) => state.addDictionary);
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
   const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
@@ -63,14 +66,30 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
       setSubmitting(true);
       setError(null);
 
-      const payload = {
-        name: name.trim() || undefined,
-        targetLanguage,
-        baseLanguage,
-      };
+      let newDict: DictionaryItem;
+      if (!token) {
+        const dictId = Date.now();
+        const isFirst = dictionaries.length === 0 || !activeDictionaryId;
+        const defaultName = `${targetLanguage.toUpperCase()} (${baseLanguage.toUpperCase()})`;
+        newDict = {
+          id: dictId,
+          name: name.trim().length > 0 ? name.trim() : defaultName,
+          targetLanguage: targetLanguage.toLowerCase(),
+          baseLanguage: baseLanguage.toLowerCase(),
+          wordCount: 0,
+          isActive: isFirst,
+          createdAt: new Date().toISOString(),
+        };
+      } else {
+        const payload = {
+          name: name.trim().length > 0 ? name.trim() : undefined,
+          targetLanguage,
+          baseLanguage,
+        };
 
-      const res = await apiClient.post('/dictionaries', payload);
-      const newDict: DictionaryItem = res.data.dictionary;
+        const res = await apiClient.post('/dictionaries', payload);
+        newDict = res.data.dictionary;
+      }
 
       addDictionary(newDict);
       if (newDict.isActive) {

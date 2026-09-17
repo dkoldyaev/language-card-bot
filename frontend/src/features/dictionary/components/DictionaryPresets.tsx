@@ -24,7 +24,7 @@ import {
 import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
-import type { DictionaryItem } from '../../../store/useStore';
+import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
 import type { PresetItem, WordDefinitionPresetItem } from '../../presets/types';
 
 interface DictionaryPresetsProps {
@@ -35,6 +35,10 @@ interface DictionaryPresetsProps {
 export default function DictionaryPresets({ dictionary, onPresetApplied }: DictionaryPresetsProps) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const token = useStore((state) => state.token);
+  const setDictionary = useStore((state) => state.setDictionary);
+  const updateDictionaryItem = useStore((state) => state.updateDictionaryItem);
+
   const [presets, setPresets] = useState<PresetItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +84,49 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
     setApplyingId(preset.id);
     setError(null);
     setSuccessMessage(null);
+
+    if (!token) {
+      try {
+        const currentWords = useStore.getState().dictionary;
+        let wordCounter = currentWords.length > 0 ? Math.max(...currentWords.map((w) => w.id)) + 1 : 1;
+        let defCounter = 1;
+        const presetWords = Array.isArray(preset.body) ? preset.body : [];
+        const newWords: DictionaryWord[] = presetWords.map((item: any) => ({
+          id: wordCounter++,
+          text: item.word,
+          definitions: (item.definitions || []).map((defText: string) => ({
+            id: defCounter++,
+            text: defText,
+            translation: null,
+            presets: [{ id: preset.id, title: preset.title }],
+          })),
+          presets: [{ id: preset.id, title: preset.title }],
+        }));
+
+        const updatedWords = [...currentWords, ...newWords];
+        setDictionary(updatedWords);
+        updateDictionaryItem(dictionary.id, { wordCount: updatedWords.length });
+
+        setSuccessMessage(
+          t('presets.addedSuccess', {
+            title: preset.title,
+            name: dictionary.name,
+            words: newWords.length,
+            defs: newWords.reduce((acc, w) => acc + w.definitions.length, 0),
+          })
+        );
+
+        if (onPresetApplied) {
+          onPresetApplied(preset);
+        }
+      } catch (err: any) {
+        console.error('Failed to apply preset locally:', err);
+        setError(t('presets.failedApply'));
+      } finally {
+        setApplyingId(null);
+      }
+      return;
+    }
 
     try {
       const res = await apiClient.post('/preset/apply_preset', {
