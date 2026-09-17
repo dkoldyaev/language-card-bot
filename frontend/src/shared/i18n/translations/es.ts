@@ -112,6 +112,7 @@ const es = {
   'dictionary.helperText': 'Crearemos una tarjeta por cada línea.',
   'dictionary.submitWordsBtn': 'Enviar palabras',
   'dictionary.submittingBtn': 'Enviando...',
+  'dictionary.addWordsAuthNotice': 'Inicia sesión para añadir nuevas palabras a tu diccionario',
 
   // Word List
   'dictionary.yourWords': 'Tus palabras',

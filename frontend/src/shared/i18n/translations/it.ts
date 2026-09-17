@@ -112,6 +112,7 @@ const it = {
   'dictionary.helperText': 'Creeremo una carta per ogni riga.',
   'dictionary.submitWordsBtn': 'Invia parole',
   'dictionary.submittingBtn': 'Invio in corso...',
+  'dictionary.addWordsAuthNotice': 'Accedi per aggiungere nuove parole al tuo dizionario',
 
   // Word List
   'dictionary.yourWords': 'Le tue parole',

@@ -141,6 +141,7 @@ const en = {
   'dictionary.helperText': 'We will create a card for every line.',
   'dictionary.submitWordsBtn': 'Submit Words',
   'dictionary.submittingBtn': 'Submitting...',
+  'dictionary.addWordsAuthNotice': 'Sign in to add new words to your dictionary',
 
   // Word List
   'dictionary.yourWords': 'Your words',

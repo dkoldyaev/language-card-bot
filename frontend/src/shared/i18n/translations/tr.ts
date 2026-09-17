@@ -112,6 +112,7 @@ const tr = {
   'dictionary.helperText': 'Her satır için ayrı bir kart oluşturulacaktır.',
   'dictionary.submitWordsBtn': 'Kelimeleri Ekle',
   'dictionary.submittingBtn': 'Gönderiliyor...',
+  'dictionary.addWordsAuthNotice': 'Sözlüğünüze yeni kelimeler eklemek için giriş yapın',
 
   // Word List
   'dictionary.yourWords': 'Kelimeleriniz',

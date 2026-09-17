@@ -112,6 +112,7 @@ const ja = {
   'dictionary.helperText': '1行ごとに1枚のカードが作成されます。',
   'dictionary.submitWordsBtn': '単語を登録',
   'dictionary.submittingBtn': '送信中...',
+  'dictionary.addWordsAuthNotice': '辞書に新しい単語を追加するにはログインしてください',
 
   // Word List
   'dictionary.yourWords': '登録単語',

@@ -141,6 +141,7 @@ const ru = {
   'dictionary.helperText': 'Для каждой строки будет создана отдельная карточка.',
   'dictionary.submitWordsBtn': 'Добавить слова',
   'dictionary.submittingBtn': 'Отправка...',
+  'dictionary.addWordsAuthNotice': 'Чтобы добавлять новые слова в словарь, войдите в аккаунт',
 
   // Word List
   'dictionary.yourWords': 'Ваши слова',

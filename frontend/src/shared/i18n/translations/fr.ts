@@ -112,6 +112,7 @@ const fr = {
   'dictionary.helperText': 'Nous créerons une carte pour chaque ligne.',
   'dictionary.submitWordsBtn': 'Ajouter les mots',
   'dictionary.submittingBtn': 'Envoi en cours...',
+  'dictionary.addWordsAuthNotice': 'Connectez-vous pour ajouter de nouveaux mots à votre dictionnaire',
 
   // Word List
   'dictionary.yourWords': 'Vos mots',

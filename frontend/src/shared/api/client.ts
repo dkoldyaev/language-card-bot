@@ -22,6 +22,9 @@ apiClient.interceptors.request.use(
     }
 
     if (!state.token) {
+      if (config.url === '/add_word' || config.url === '/add_word/batch' || config.url?.startsWith('/add_word/')) {
+        return Promise.reject({ isGuestAddWordMock: true, url: config.url });
+      }
       if (config.url === '/dictionary' || config.url?.startsWith('/dictionary?') || config.url?.startsWith('/dictionary/')) {
         return Promise.reject({ isGuestDictionaryMock: true, url: config.url, params: config.params, method: config.method });
       }
@@ -40,6 +43,10 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error && error.isGuestAddWordMock) {
+      return Promise.resolve({ data: { message: 'Guest mode: word addition disabled' } });
+    }
+
     if (error && error.isGuestDictionaryMock) {
       const store = useStore.getState();
       const currentDictId = error.params?.dictionaryId ?? store.selectedDictionaryId ?? store.activeDictionaryId ?? store.dictionaries[0]?.id;
@@ -194,7 +201,8 @@ apiClient.interceptors.response.use(
       !axios.isCancel(error) &&
       !error.isOfflineMock &&
       !error.isGuestDictionaryMock &&
-      !error.isGuestDictionariesMock
+      !error.isGuestDictionariesMock &&
+      !error.isGuestAddWordMock
     ) {
       trackEvent('API Error', { 
         status: error.response?.status || 'network_error', 

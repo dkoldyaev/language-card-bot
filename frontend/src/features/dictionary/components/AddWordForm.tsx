@@ -2,6 +2,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import { Box, Button, Card, CardContent, CircularProgress, TextField, Typography, alpha } from '@mui/material';
 import { useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
@@ -16,6 +17,7 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
   const [wordsText, setWordsText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const token = useStore((state) => state.token);
   const selectedDictionaryId = useStore((state) => state.selectedDictionaryId);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const dictionaries = useStore((state) => state.dictionaries);
@@ -24,6 +26,7 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
   const targetDict = dictionaries.find((d) => d.id === targetDictId);
 
   const handleSubmitWords = async () => {
+    if (!token) return;
     const words = wordsText.split('\n').map((w) => w.trim()).filter(Boolean);
     if (words.length === 0) return;
 
@@ -66,27 +69,59 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
           </Box>
         </Box>
 
-        <TextField
-          label={t('dictionary.wordsToAddLabel')}
-          multiline
-          rows={4}
-          fullWidth
-          value={wordsText}
-          onChange={(e) => setWordsText(e.target.value)}
-          placeholder={t('dictionary.placeholderWords')}
-          disabled={submitting}
-          helperText={t('dictionary.helperText')}
-          sx={{ mb: 2.25 }}
-        />
+        {!token ? (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+              p: 2,
+              borderRadius: 2,
+              backgroundColor: (th) => (th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.08) : '#F4F7FB'),
+              border: '1px solid',
+              borderColor: 'divider',
+              flexWrap: 'wrap',
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+              {t('dictionary.addWordsAuthNotice')}
+            </Typography>
+            <Button
+              component={RouterLink}
+              to="/login"
+              variant="contained"
+              size="small"
+              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
+            >
+              {t('auth.loginTitle')}
+            </Button>
+          </Box>
+        ) : (
+          <>
+            <TextField
+              label={t('dictionary.wordsToAddLabel')}
+              multiline
+              rows={4}
+              fullWidth
+              value={wordsText}
+              onChange={(e) => setWordsText(e.target.value)}
+              placeholder={t('dictionary.placeholderWords')}
+              disabled={submitting}
+              helperText={t('dictionary.helperText')}
+              sx={{ mb: 2.25 }}
+            />
 
-        <Button
-          variant="contained"
-          disabled={!wordsText.trim() || submitting}
-          onClick={handleSubmitWords}
-          endIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <SendRoundedIcon />}
-        >
-          {submitting ? t('dictionary.submittingBtn') : t('dictionary.submitWordsBtn')}
-        </Button>
+            <Button
+              variant="contained"
+              disabled={!wordsText.trim() || submitting}
+              onClick={handleSubmitWords}
+              endIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <SendRoundedIcon />}
+            >
+              {submitting ? t('dictionary.submittingBtn') : t('dictionary.submitWordsBtn')}
+            </Button>
+          </>
+        )}
       </CardContent>
     </Card>
   );

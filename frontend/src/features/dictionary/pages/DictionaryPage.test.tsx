@@ -1,9 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
 import DictionaryPage from './DictionaryPage';
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <DictionaryPage />
+    </MemoryRouter>
+  );
+}
 
 describe('DictionaryPage', () => {
   beforeEach(() => {
@@ -31,7 +40,7 @@ describe('DictionaryPage', () => {
   });
 
   it('fetches words for the active dictionary initially', async () => {
-    render(<DictionaryPage />);
+    renderPage();
 
     expect(screen.getByRole('heading', { level: 1, name: 'English Deck' })).toBeInTheDocument();
     expect(apiClient.get).toHaveBeenCalledWith('/dictionary', {
@@ -50,7 +59,7 @@ describe('DictionaryPage', () => {
     });
     const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({ data: {} });
 
-    render(<DictionaryPage />);
+    renderPage();
 
     // Click on the Spanish dictionary in the switcher
     const spanishBtn = screen.getByText('Spanish Deck');
@@ -80,7 +89,7 @@ describe('DictionaryPage', () => {
       },
     });
 
-    render(<DictionaryPage />);
+    renderPage();
 
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading).toHaveTextContent('English Deck');
@@ -112,7 +121,7 @@ describe('DictionaryPage', () => {
     const user = userEvent.setup();
     const patchSpy = vi.spyOn(apiClient, 'patch');
 
-    render(<DictionaryPage />);
+    renderPage();
 
     const heading = screen.getByRole('heading', { level: 1 });
     const editBtn = screen.getByTestId('edit-dictionary-title-btn');
@@ -146,7 +155,7 @@ describe('DictionaryPage', () => {
     const getSpy = vi.spyOn(apiClient, 'get');
     const patchSpy = vi.spyOn(apiClient, 'patch');
 
-    render(<DictionaryPage />);
+    renderPage();
 
     // Should NOT call apiClient.get
     expect(getSpy).not.toHaveBeenCalledWith('/dictionary', expect.anything());

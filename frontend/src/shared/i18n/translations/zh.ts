@@ -112,6 +112,7 @@ const zh = {
   'dictionary.helperText': '我们将为每一行创建一张卡片。',
   'dictionary.submitWordsBtn': '提交单词',
   'dictionary.submittingBtn': '提交中...',
+  'dictionary.addWordsAuthNotice': '登录以向词典添加新单词',
 
   // Word List
   'dictionary.yourWords': '您的单词',

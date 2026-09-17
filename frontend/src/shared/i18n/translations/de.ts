@@ -112,6 +112,7 @@ const de = {
   'dictionary.helperText': 'Wir erstellen für jede Zeile eine Karteikarte.',
   'dictionary.submitWordsBtn': 'Wörter absenden',
   'dictionary.submittingBtn': 'Wird gesendet...',
+  'dictionary.addWordsAuthNotice': 'Melde dich an, um neue Wörter zu deinem Wörterbuch hinzuzufügen',
 
   // Word List
   'dictionary.yourWords': 'Deine Wörter',
