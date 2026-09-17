@@ -5,8 +5,16 @@ import { SettingsSyncMercureEvent } from '../event_bus/event_bus.type';
 import { publishEvent } from '../event_bus/event_bus.service';
 import { getAuthUser } from '../auth/auth.service';
 import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
+import { env } from '../../core/env';
 
 const router = Router();
+
+router.get('/guest-policy', (req: Request, res: Response) => {
+  res.json({
+    allowGuestAi: env.ALLOW_GUEST_AI_GENERATION === 'true',
+    dailyLimit: parseInt(env.GUEST_AI_DAILY_LIMIT, 10),
+  });
+});
 
 router.get('/', authMiddleware, async (req: Request, res: Response) => {
   const { id: userId } = getAuthUser(req);

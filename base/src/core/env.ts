@@ -20,6 +20,8 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   ENABLE_TEST_AUTH: z.string().optional(),
   ENABLE_DB_LOGGING: z.enum(['true', 'false']),
+  ALLOW_GUEST_AI_GENERATION: z.enum(['true', 'false']),
+  GUEST_AI_DAILY_LIMIT: z.string().regex(/^\d+$/),
   LLM_API_URL: z.string().min(1),
   LLM_PROVIDER: z.enum(['mistral', 'gemini', 'mock']),
   LLM_MODEL: z.string().min(1),

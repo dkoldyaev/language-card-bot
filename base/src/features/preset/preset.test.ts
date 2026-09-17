@@ -47,9 +47,22 @@ describe('Preset Feature API', () => {
   });
 
   describe('GET /api/v1/preset', () => {
-    it('should return 401 if unauthenticated', async () => {
+    it('should return presets for unauthenticated guest user', async () => {
+      prismaMock.preset.findMany.mockResolvedValue([
+        {
+          id: 1,
+          title: 'Top 100 Spanish Words',
+          forLanguage: 'es',
+          type: 'word-definition',
+          body: [{ word: 'hola', definitions: ['hello'] }],
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+        } as any,
+      ]);
+
       const res = await request(app).get('/api/v1/preset');
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(200);
+      expect(res.body.presets).toHaveLength(1);
     });
 
     it('should return presets for authenticated regular user', async () => {

@@ -26,8 +26,8 @@ const router = Router();
 // 1. PUBLIC (AUTHENTICATED) ROUTES
 // ==========================================
 
-// GET all presets (accessible to all authenticated users)
-router.get('/', authMiddleware, async (req: Request, res: Response) => {
+// GET all presets (accessible publicly)
+router.get('/', async (req: Request, res: Response) => {
   try {
     const forLanguage = (req.query.for_language || req.query.forLanguage) as string | undefined;
     const presets = await listPresets(forLanguage ? { forLanguage } : undefined);
@@ -83,8 +83,8 @@ router.post('/:id/apply', authMiddleware, async (req: Request, res: Response) =>
   }
 });
 
-// GET single preset by ID
-router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
+// GET single preset by ID (accessible publicly)
+router.get('/:id', async (req: Request, res: Response) => {
   const id = parseInt(String(req.params.id), 10);
   try {
     const preset = await getPresetById(id);

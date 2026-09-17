@@ -10,8 +10,11 @@ import {
   GoogleAuthRequest,
   UsernameAuthRequestSchema,
   UsernameAuthRequest,
+  MigrateGuestRequestSchema,
+  MigrateGuestRequest,
   AuthResponse
 } from './auth.type';
+import { migrateGuestData } from './migrate_guest.service';
 import { env } from '../../core/env';
 
 const router = Router();
@@ -289,6 +292,24 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
       is_admin: user.isAdmin,
     }
   });
+});
+
+// ==========================================
+// MIGRATE GUEST DATA
+// ==========================================
+
+router.post('/migrate-guest', authMiddleware, validateRequest(MigrateGuestRequestSchema), async (req: Request<{}, {}, MigrateGuestRequest>, res: Response) => {
+  const { id: userId } = getAuthUser(req);
+  try {
+    const result = await migrateGuestData(userId, req.body);
+    res.json({
+      message: 'Guest data migrated successfully',
+      ...result,
+    });
+  } catch (error: any) {
+    console.error('Migrate guest data error:', error);
+    res.status(500).json({ error: error.message || 'Failed to migrate guest data' });
+  }
 });
 
 export default router;

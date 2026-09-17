@@ -85,9 +85,26 @@ describe('Dictionary Fetch Endpoint', () => {
     expect(res.body.dictionary[0].text).toBe('apple');
     expect(res.body.dictionary[0].definitions[0].text).toBe('A fruit');
     expect(res.body.dictionary[0].definitions[0].translation.text).toBe('Яблоко');
+    expect(res.body.dictionaryInfo.id).toBe(10);
+    expect(res.body.dictionaryInfo.name).toBe('EN (RU)');
 
     expect(prismaMock.word.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { dictionaryId: 10 }
     }));
+  });
+
+  describe('POST /api/v1/dictionary/define-guest', () => {
+    it('should return 403 when ALLOW_GUEST_AI_GENERATION is false', async () => {
+      const res = await request(app)
+        .post('/api/v1/dictionary/define-guest')
+        .send({
+          word: 'test',
+          targetLanguage: 'en',
+          baseLanguage: 'ru',
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('GUEST_AI_DISABLED');
+    });
   });
 });
