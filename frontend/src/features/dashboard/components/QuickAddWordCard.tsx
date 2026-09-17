@@ -2,6 +2,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import { Alert, alpha, Box, Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
@@ -18,6 +19,7 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
   const [successWord, setSuccessWord] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const token = useStore((state) => state.token);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const selectedDictionaryId = useStore((state) => state.selectedDictionaryId);
   const dictionaries = useStore((state) => state.dictionaries);
@@ -27,6 +29,7 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
 
   const handleAdd = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!token) return;
     const cleanWord = wordText.trim();
     if (!cleanWord || submitting || !targetDictId) return;
 
@@ -87,26 +90,57 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
           </Alert>
         )}
 
-        <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', gap: 1 }}>
-          <TextField
-            size="small"
-            fullWidth
-            placeholder={t('dashboard.quickAddPlaceholder')}
-            value={wordText}
-            onChange={(e) => setWordText(e.target.value)}
-            disabled={submitting}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={!wordText.trim() || submitting}
-            endIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendRoundedIcon fontSize="small" />}
-            sx={{ whiteSpace: 'nowrap', px: 2 }}
+        {!token ? (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1.5,
+              p: 1.5,
+              borderRadius: 2,
+              backgroundColor: (th) => (th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.08) : '#F4F7FB'),
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
           >
-            {t('dashboard.quickAddBtn')}
-          </Button>
-        </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem' }}>
+              {t('dashboard.quickAddAuthNotice')}
+            </Typography>
+            <Button
+              component={RouterLink}
+              to="/login"
+              size="small"
+              variant="outlined"
+              color="primary"
+              data-testid="quick-add-login-btn"
+              sx={{ whiteSpace: 'nowrap', textTransform: 'none', fontWeight: 700 }}
+            >
+              {t('auth.submitLogin')}
+            </Button>
+          </Box>
+        ) : (
+          <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              size="small"
+              fullWidth
+              placeholder={t('dashboard.quickAddPlaceholder')}
+              value={wordText}
+              onChange={(e) => setWordText(e.target.value)}
+              disabled={submitting}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={!wordText.trim() || submitting}
+              endIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendRoundedIcon fontSize="small" />}
+              sx={{ whiteSpace: 'nowrap', px: 2 }}
+            >
+              {t('dashboard.quickAddBtn')}
+            </Button>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

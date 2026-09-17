@@ -96,6 +96,7 @@ const en = {
   'dashboard.quickAddTitle': 'Quick Add',
   'dashboard.quickAddPlaceholder': 'Type a new word...',
   'dashboard.quickAddBtn': 'Add Word',
+  'dashboard.quickAddAuthNotice': 'Sign in to add custom words',
   'dashboard.quickAddSuccess': 'Word "{{word}}" queued for definition!',
   'dashboard.onboardingTitle': 'Get started in 3 simple steps',
   'dashboard.step1': '1. Deck ready: {{name}}',

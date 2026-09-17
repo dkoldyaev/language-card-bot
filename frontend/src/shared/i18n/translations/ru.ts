@@ -96,6 +96,7 @@ const ru = {
   'dashboard.quickAddTitle': 'Быстрое добавление',
   'dashboard.quickAddPlaceholder': 'Введите новое слово...',
   'dashboard.quickAddBtn': 'Добавить',
+  'dashboard.quickAddAuthNotice': 'Чтобы добавлять слова, войдите в аккаунт',
   'dashboard.quickAddSuccess': 'Слово "{{word}}" добавлено на обработку!',
   'dashboard.onboardingTitle': 'Быстрый старт за 3 шага',
   'dashboard.step1': '1. Словарь готов: {{name}}',
