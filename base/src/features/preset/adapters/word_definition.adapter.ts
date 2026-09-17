@@ -115,8 +115,14 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
       );
     }
 
+    const dictionary = await prisma.dictionary.findUnique({
+      where: { id: dictionaryId },
+      select: { baseLanguage: true, targetLanguage: true },
+    });
+    const baseLang = dictionary?.baseLanguage.toLowerCase() || 'ru';
+
     // Pass 2: Batch add definitions for each word
-    const defsToCreate: { wordId: number; text: string }[] = [];
+    const defsToCreate: { wordId: number; text: string; translation?: string }[] = [];
     const defIdsToLink: number[] = [];
 
     for (const item of items) {
@@ -124,13 +130,29 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
       const word = existingWordsMap.get(wordText)!;
 
       for (const def of item.definitions) {
-        const defText = typeof def === 'string' ? def.trim() : def.text.trim();
+        let defText = '';
+        let defTranslation: string | undefined;
+
+        if (typeof def === 'string') {
+          defText = def.trim();
+        } else if (def && typeof def === 'object') {
+          defText = typeof def.text === 'string' ? def.text.trim() : '';
+          if (def.translations && typeof def.translations === 'object') {
+            defTranslation = def.translations[baseLang] || def.translations[baseLang.toUpperCase()];
+          }
+          if (!defTranslation && typeof def.translation === 'string') {
+            defTranslation = def.translation.trim();
+          }
+        }
+
+        if (!defText) continue;
+
         const existingDef = word.definitions.find(
           (d) => d.text.toLowerCase() === defText.toLowerCase()
         );
 
         if (!existingDef) {
-          defsToCreate.push({ wordId: word.id, text: defText });
+          defsToCreate.push({ wordId: word.id, text: defText, translation: defTranslation });
         } else {
           const isDefLinked = existingDef.presets?.some((p) => p.id === preset.id);
           if (!isDefLinked) {
@@ -144,7 +166,7 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
 
     if (defsToCreate.length > 0) {
       const createdDefs = await prisma.definition.createManyAndReturn({
-        data: defsToCreate,
+        data: defsToCreate.map((d) => ({ wordId: d.wordId, text: d.text })),
         select: {
           id: true,
           text: true,
@@ -163,6 +185,48 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
           },
         },
       });
+
+      // Insert translations for definitions that have them
+      const translationsToCreate = createdDefs
+        .map((cd, index) => {
+          const trans = defsToCreate[index]?.translation;
+          if (trans) {
+            return {
+              definitionId: cd.id,
+              text: trans,
+            };
+          }
+          return null;
+        })
+        .filter((t): t is { definitionId: number; text: string } => t !== null);
+
+      if (translationsToCreate.length > 0) {
+        await prisma.definitionTranslation.createMany({
+          data: translationsToCreate,
+          skipDuplicates: true,
+        });
+
+        // Group translations by wordId and emit TRANSLATION_ADDED for real-time SSE
+        const translationsByWord = new Map<number, { id: number; translation: string }[]>();
+        for (const t of translationsToCreate) {
+          const createdDef = createdDefs.find((cd) => cd.id === t.definitionId);
+          if (createdDef) {
+            const list = translationsByWord.get(createdDef.wordId) || [];
+            list.push({ id: t.definitionId, translation: t.text });
+            translationsByWord.set(createdDef.wordId, list);
+          }
+        }
+
+        for (const [wordId, defTranslations] of translationsByWord.entries()) {
+          const word = Array.from(existingWordsMap.values()).find((w) => w.id === wordId);
+          appEvents.emit(Events.TRANSLATION_ADDED, {
+            username,
+            wordId,
+            wordText: word?.text || '',
+            definitions: defTranslations,
+          });
+        }
+      }
 
       for (const newDef of createdDefs) {
         const word = Array.from(existingWordsMap.values()).find((w) => w.id === newDef.wordId)!;

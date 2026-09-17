@@ -12,6 +12,7 @@ export interface GeneratePresetOptions {
   title?: string;
   description?: string;
   excludedWords?: string[] | Set<string>;
+  translationLanguages?: string[];
   onProgress?: (message: string) => void;
 }
 
@@ -71,6 +72,47 @@ export async function fetchDefinitionsFromDefiner(text: string, language: string
 
   const json = (await response.json()) as { definitions?: string[]; error?: string };
   return json.definitions || [];
+}
+
+export async function fetchTranslationsFromTranslator(options: {
+  texts: string[];
+  sourceLanguage: string;
+  targetLanguage: string;
+}): Promise<string[]> {
+  const { texts, sourceLanguage, targetLanguage } = options;
+  if (texts.length === 0) return [];
+
+  let response: Response;
+  try {
+    response = await fetch(env.TRANSLATOR_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sourceLanguage,
+        targetLanguage,
+        texts,
+        translatorApp: env.TRANSLATOR_APP_TYPE,
+      }),
+    });
+  } catch (err: any) {
+    throw new Error(
+      `Failed to connect to Translator service at ${env.TRANSLATOR_API_URL}: ${err.message}. Please verify that the Translator service is running and accessible.`
+    );
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Translator API error (${response.status}): ${errorText}`);
+  }
+
+  const json = (await response.json()) as { translations?: string[]; error?: string };
+  if (!Array.isArray(json.translations) || json.translations.length !== texts.length) {
+    throw new Error(
+      `Translator API returned mismatched translations count: expected ${texts.length}, got ${json.translations?.length}`
+    );
+  }
+
+  return json.translations;
 }
 
 export async function fetchWordsFromLLM(options: {
@@ -250,10 +292,28 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
     }${theme ? `, theme: "${theme}"` : ''}`
   );
 
+  interface PresetDefItem {
+    text: string;
+    translations: Record<string, string>;
+  }
+  interface PresetWordItem {
+    word: string;
+    definitions: PresetDefItem[];
+  }
+
+  // Determine target translation languages
+  const rawTargetLanguages =
+    options.translationLanguages && options.translationLanguages.length > 0
+      ? options.translationLanguages
+          .map((l) => l.trim().toLowerCase())
+          .filter((l) => l.length > 0 && l !== language)
+      : (AVAILABLE_LANGUAGES as readonly string[]).filter((l) => l !== language);
+  const targetLanguages = Array.from(new Set(rawTargetLanguages));
+
   // If presetId is specified, verify it exists and load existing words & definitions
   let existingPreset: any = null;
   const existingWordMap = new Map<string, Set<string>>(); // lowercase word -> Set of lowercase definitions
-  let existingBodyList: Array<{ word: string; definitions: string[] }> = [];
+  let existingBodyList: PresetWordItem[] = [];
 
   if (options.presetId) {
     existingPreset = await prisma.preset.findUnique({
@@ -274,14 +334,28 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
       for (const item of existingPreset.body) {
         if (item && typeof item === 'object' && typeof item.word === 'string') {
           const w = item.word.trim().toLowerCase();
-          const defs: string[] = [];
+          const defs: PresetDefItem[] = [];
           if (Array.isArray(item.definitions)) {
             for (const d of item.definitions) {
-              const defText = typeof d === 'string' ? d.trim() : typeof d?.text === 'string' ? d.text.trim() : '';
-              if (defText) defs.push(defText);
+              if (typeof d === 'string') {
+                const text = d.trim();
+                if (text) defs.push({ text, translations: {} });
+              } else if (d && typeof d === 'object' && typeof d.text === 'string') {
+                const text = d.text.trim();
+                const translations: Record<string, string> = {};
+                if (d.translations && typeof d.translations === 'object') {
+                  for (const [k, v] of Object.entries(d.translations)) {
+                    if (typeof v === 'string') translations[k] = v;
+                  }
+                } else if (typeof d.translation === 'string' && d.translation.trim()) {
+                  const fallbackLang = language === 'ru' ? 'en' : 'ru';
+                  translations[fallbackLang] = d.translation.trim();
+                }
+                if (text) defs.push({ text, translations });
+              }
             }
           }
-          existingWordMap.set(w, new Set(defs.map((d) => d.toLowerCase())));
+          existingWordMap.set(w, new Set(defs.map((d) => d.text.toLowerCase())));
           existingBodyList.push({ word: item.word.trim(), definitions: defs });
         }
       }
@@ -451,18 +525,53 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
       const idx = existingIndexMap.get(word.toLowerCase());
       if (idx !== undefined) {
         const currentDefs = existingBodyList[idx].definitions;
-        const currentSet = new Set(currentDefs.map((d) => d.toLowerCase()));
+        const currentSet = new Set(currentDefs.map((d) => d.text.toLowerCase()));
         for (const d of defs) {
           if (!currentSet.has(d.toLowerCase())) {
-            currentDefs.push(d);
+            currentDefs.push({ text: d, translations: {} });
             currentSet.add(d.toLowerCase());
           }
         }
       } else {
         existingBodyList.push({
           word,
-          definitions: [...defs],
+          definitions: defs.map((d) => ({ text: d, translations: {} })),
         });
+      }
+    }
+
+    // Translate any definitions that are missing translations for targetLanguages
+    if (targetLanguages.length > 0) {
+      for (const targetLang of targetLanguages) {
+        const missingDefs = new Set<string>();
+        for (const item of existingBodyList) {
+          for (const def of item.definitions) {
+            if (!def.translations[targetLang] && def.text) {
+              missingDefs.add(def.text);
+            }
+          }
+        }
+
+        const missingList = Array.from(missingDefs);
+        if (missingList.length > 0) {
+          log(`[${language} -> ${targetLang}] Translating ${missingList.length} definition(s)...`);
+          const translations = await fetchTranslationsFromTranslator({
+            texts: missingList,
+            sourceLanguage: language,
+            targetLanguage: targetLang,
+          });
+
+          const transMap = new Map<string, string>();
+          missingList.forEach((text, i) => transMap.set(text, translations[i] || ''));
+
+          for (const item of existingBodyList) {
+            for (const def of item.definitions) {
+              if (!def.translations[targetLang] && transMap.has(def.text)) {
+                def.translations[targetLang] = transMap.get(def.text)!;
+              }
+            }
+          }
+        }
       }
     }
 
@@ -480,9 +589,52 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
   } else {
     log(`Creating new preset for language "${language}"...`);
 
+    const allUniqueDefTexts = Array.from(
+      new Set(
+        Array.from(runCollectedWords.values()).flatMap((defs) => defs)
+      )
+    ).filter((t) => t.length > 0);
+
+    const translationsByLang = new Map<string, Map<string, string>>();
+    for (const targetLang of targetLanguages) {
+      translationsByLang.set(targetLang, new Map<string, string>());
+    }
+
+    if (allUniqueDefTexts.length > 0 && targetLanguages.length > 0) {
+      log(
+        `\nTranslating ${allUniqueDefTexts.length} definition(s) from "${language}" to ${targetLanguages.length} language(s): [${targetLanguages.join(', ')}]...`
+      );
+
+      for (const targetLang of targetLanguages) {
+        log(`[${language} -> ${targetLang}] Translating ${allUniqueDefTexts.length} definition(s)...`);
+        const translatedList = await fetchTranslationsFromTranslator({
+          texts: allUniqueDefTexts,
+          sourceLanguage: language,
+          targetLanguage: targetLang,
+        });
+
+        const langMap = translationsByLang.get(targetLang)!;
+        allUniqueDefTexts.forEach((text, idx) => {
+          langMap.set(text, translatedList[idx] || '');
+        });
+      }
+    }
+
     const newBody = Array.from(runCollectedWords.entries()).map(([word, definitions]) => ({
       word,
-      definitions,
+      definitions: definitions.map((defText) => {
+        const translationsObj: Record<string, string> = {};
+        for (const targetLang of targetLanguages) {
+          const trans = translationsByLang.get(targetLang)?.get(defText);
+          if (trans) {
+            translationsObj[targetLang] = trans;
+          }
+        }
+        return {
+          text: defText,
+          translations: translationsObj,
+        };
+      }),
     }));
 
     const validLevels = levels.filter(Boolean);

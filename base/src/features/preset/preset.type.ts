@@ -23,6 +23,8 @@ export const WordDefinitionPresetBodySchema = z.array(
         z.string().trim().min(1),
         z.object({
           text: z.string().trim().min(1),
+          translation: z.string().trim().optional(),
+          translations: z.record(z.string(), z.string()).optional(),
         })
       ])
     ).min(1),

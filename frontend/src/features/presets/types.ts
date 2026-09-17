@@ -1,6 +1,14 @@
+export interface PresetDefinitionObject {
+  text: string;
+  translation?: string;
+  translations?: Record<string, string>;
+}
+
+export type PresetDefinitionItem = string | PresetDefinitionObject;
+
 export interface WordDefinitionPresetItem {
   word: string;
-  definitions: string[];
+  definitions: PresetDefinitionItem[];
 }
 
 export interface PresetItem {

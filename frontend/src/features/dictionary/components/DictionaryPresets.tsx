@@ -447,7 +447,20 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                       }
                       secondary={
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                          {item.definitions?.join('; ') || t('presets.noDefinitions')}
+                          {item.definitions
+                            ?.map((d: any) => {
+                              if (typeof d === 'string') return d;
+                              if (d && typeof d === 'object' && typeof d.text === 'string') {
+                                const baseLang = dictionary?.baseLanguage?.toLowerCase() || '';
+                                const trans =
+                                  d.translations?.[baseLang] ||
+                                  (typeof d.translation === 'string' ? d.translation : '');
+                                return trans ? `${d.text} (${trans})` : d.text;
+                              }
+                              return '';
+                            })
+                            .filter(Boolean)
+                            .join('; ') || t('presets.noDefinitions')}
                         </Typography>
                       }
                     />

@@ -6,6 +6,7 @@ import {
   generatePreset,
   fetchWordsFromLLM,
   fetchDefinitionsFromDefiner,
+  fetchTranslationsFromTranslator,
   filterDefinitionsWithLLM,
   filterDefinitionsBatchWithLLM,
 } from './preset_generator.service';
@@ -82,6 +83,82 @@ describe('Preset Generator Service', () => {
 
       const defs = await fetchDefinitionsFromDefiner('apple', 'en');
       expect(defs).toEqual(['A sweet red or green fruit', 'A technology company']);
+    });
+  });
+
+  describe('fetchTranslationsFromTranslator', () => {
+    it('should call translator endpoint and return translations', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          translations: ['Красное яблоко', 'Зеленое яблоко'],
+        }),
+      } as any);
+
+      const translations = await fetchTranslationsFromTranslator({
+        texts: ['Red apple', 'Green apple'],
+        sourceLanguage: 'en',
+        targetLanguage: 'ru',
+      });
+
+      expect(translations).toEqual(['Красное яблоко', 'Зеленое яблоко']);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceLanguage: 'en',
+            targetLanguage: 'ru',
+            texts: ['Red apple', 'Green apple'],
+            translatorApp: 'mock',
+          }),
+        })
+      );
+    });
+
+    it('should return empty array when texts is empty without calling fetch', async () => {
+      global.fetch = vi.fn();
+      const translations = await fetchTranslationsFromTranslator({
+        texts: [],
+        sourceLanguage: 'en',
+        targetLanguage: 'ru',
+      });
+      expect(translations).toEqual([]);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('should handle translator API error', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: async () => 'Translator failed',
+      } as any);
+
+      await expect(
+        fetchTranslationsFromTranslator({
+          texts: ['Hello'],
+          sourceLanguage: 'en',
+          targetLanguage: 'ru',
+        })
+      ).rejects.toThrow('Translator API error (500): Translator failed');
+    });
+
+    it('should throw if translations count does not match texts count', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          translations: ['Only one'],
+        }),
+      } as any);
+
+      await expect(
+        fetchTranslationsFromTranslator({
+          texts: ['One', 'Two'],
+          sourceLanguage: 'en',
+          targetLanguage: 'ru',
+        })
+      ).rejects.toThrow('Translator API returned mismatched translations count: expected 2, got 1');
     });
   });
 
@@ -194,11 +271,21 @@ describe('Preset Generator Service', () => {
     it('should generate a new preset with wordsCount words and save it in DB', async () => {
       // Step 1: LLM returns 2 words ('water', 'apple')
       // Step 2 & 3: Definer & LLM filter definitions
-      let fetchCallIndex = 0;
+      // Step 4: Translator translates definitions
       global.fetch = vi.fn().mockImplementation(async (url: string, init: any) => {
         const body = JSON.parse(init.body);
 
-        // Check if call to LLM words generation
+        // Translator call
+        if (body.texts && Array.isArray(body.texts)) {
+          return {
+            ok: true,
+            json: async () => ({
+              translations: body.texts.map((t: string) => `[${body.targetLanguage}] ${t}`),
+            }),
+          };
+        }
+
+        // LLM words generation
         if (body.prompt && body.prompt.includes('unique words')) {
           return {
             ok: true,
@@ -208,7 +295,7 @@ describe('Preset Generator Service', () => {
           };
         }
 
-        // Check if call to definer
+        // Definer
         if (body.definerApp) {
           if (body.text === 'water') {
             return {
@@ -224,7 +311,7 @@ describe('Preset Generator Service', () => {
           }
         }
 
-        // Check if call to LLM filter
+        // LLM filter
         if (body.prompt && body.prompt.includes('evaluate the following definitions')) {
           return {
             ok: true,
@@ -252,8 +339,14 @@ describe('Preset Generator Service', () => {
         forLanguage: 'en',
         type: 'word-definition',
         body: [
-          { word: 'water', definitions: ['Filtered definition'] },
-          { word: 'apple', definitions: ['Filtered definition'] },
+          {
+            word: 'water',
+            definitions: [{ text: 'Filtered definition', translations: { ru: '[ru] Filtered definition' } }],
+          },
+          {
+            word: 'apple',
+            definitions: [{ text: 'Filtered definition', translations: { ru: '[ru] Filtered definition' } }],
+          },
         ],
         createdAt: new Date('2026-01-01'),
         updatedAt: new Date('2026-01-01'),
@@ -275,8 +368,30 @@ describe('Preset Generator Service', () => {
           type: 'word-definition',
           description: 'Test Description',
           body: [
-            { word: 'water', definitions: ['Filtered definition'] },
-            { word: 'apple', definitions: ['Filtered definition'] },
+            {
+              word: 'water',
+              definitions: [
+                {
+                  text: 'Filtered definition',
+                  translations: expect.objectContaining({
+                    ru: '[ru] Filtered definition',
+                    es: '[es] Filtered definition',
+                  }),
+                },
+              ],
+            },
+            {
+              word: 'apple',
+              definitions: [
+                {
+                  text: 'Filtered definition',
+                  translations: expect.objectContaining({
+                    ru: '[ru] Filtered definition',
+                    es: '[es] Filtered definition',
+                  }),
+                },
+              ],
+            },
           ],
         }),
       });
@@ -286,6 +401,16 @@ describe('Preset Generator Service', () => {
       let batchCount = 0;
       global.fetch = vi.fn().mockImplementation(async (url: string, init: any) => {
         const body = JSON.parse(init.body);
+
+        // Translator
+        if (body.texts && Array.isArray(body.texts)) {
+          return {
+            ok: true,
+            json: async () => ({
+              translations: body.texts.map((t: string) => `[${body.targetLanguage}] ${t}`),
+            }),
+          };
+        }
 
         // LLM words: first batch returns 'difficult_word', second batch returns 'simple_word'
         if (body.prompt && body.prompt.includes('unique words')) {
@@ -341,7 +466,7 @@ describe('Preset Generator Service', () => {
         description: null,
         forLanguage: 'en',
         type: 'word-definition',
-        body: [{ word: 'simple_word', definitions: ['Simple definition'] }],
+        body: [{ word: 'simple_word', definitions: [{ text: 'Simple definition', translations: {} }] }],
         createdAt: new Date(),
         updatedAt: new Date(),
       } as any);
@@ -356,7 +481,17 @@ describe('Preset Generator Service', () => {
       expect(result.id).toBe(11);
       expect(prismaMock.preset.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          body: [{ word: 'simple_word', definitions: ['Simple definition'] }],
+          body: [
+            {
+              word: 'simple_word',
+              definitions: [
+                {
+                  text: 'Simple definition',
+                  translations: expect.any(Object),
+                },
+              ],
+            },
+          ],
         }),
       });
     });
@@ -375,13 +510,19 @@ describe('Preset Generator Service', () => {
         updatedAt: new Date(),
       } as any);
 
-      // LLM returns 'apple' and 'banana'
-      // 'apple' returns defs ['definition 1'] (no new defs) -> should be discarded
-      // 'banana' returns defs ['yellow fruit'] (new word) -> should be added
-      // Next iteration: LLM returns 'orange' -> added
       let llmCall = 0;
       global.fetch = vi.fn().mockImplementation(async (url: string, init: any) => {
         const body = JSON.parse(init.body);
+
+        // Translator
+        if (body.texts && Array.isArray(body.texts)) {
+          return {
+            ok: true,
+            json: async () => ({
+              translations: body.texts.map((t: string) => `[${body.targetLanguage}] ${t}`),
+            }),
+          };
+        }
 
         if (body.prompt && body.prompt.includes('unique words')) {
           llmCall++;
@@ -431,9 +572,18 @@ describe('Preset Generator Service', () => {
         forLanguage: 'en',
         type: 'word-definition',
         body: [
-          { word: 'apple', definitions: ['definition 1'] },
-          { word: 'banana', definitions: ['yellow fruit'] },
-          { word: 'orange', definitions: ['orange fruit'] },
+          {
+            word: 'apple',
+            definitions: [{ text: 'definition 1', translations: { ru: '[ru] definition 1' } }],
+          },
+          {
+            word: 'banana',
+            definitions: [{ text: 'yellow fruit', translations: { ru: '[ru] yellow fruit' } }],
+          },
+          {
+            word: 'orange',
+            definitions: [{ text: 'orange fruit', translations: { ru: '[ru] orange fruit' } }],
+          },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -450,9 +600,39 @@ describe('Preset Generator Service', () => {
         where: { id: 5 },
         data: {
           body: [
-            { word: 'apple', definitions: ['definition 1'] },
-            { word: 'banana', definitions: ['yellow fruit'] },
-            { word: 'orange', definitions: ['orange fruit'] },
+            {
+              word: 'apple',
+              definitions: [
+                {
+                  text: 'definition 1',
+                  translations: expect.objectContaining({
+                    ru: '[ru] definition 1',
+                  }),
+                },
+              ],
+            },
+            {
+              word: 'banana',
+              definitions: [
+                {
+                  text: 'yellow fruit',
+                  translations: expect.objectContaining({
+                    ru: '[ru] yellow fruit',
+                  }),
+                },
+              ],
+            },
+            {
+              word: 'orange',
+              definitions: [
+                {
+                  text: 'orange fruit',
+                  translations: expect.objectContaining({
+                    ru: '[ru] orange fruit',
+                  }),
+                },
+              ],
+            },
           ],
         },
       });
@@ -473,6 +653,17 @@ describe('Preset Generator Service', () => {
     it('should generate a preset with theme in title and description', async () => {
       global.fetch = vi.fn().mockImplementation(async (url: string, init: any) => {
         const body = JSON.parse(init.body);
+
+        // Translator
+        if (body.texts && Array.isArray(body.texts)) {
+          return {
+            ok: true,
+            json: async () => ({
+              translations: body.texts.map((t: string) => `[${body.targetLanguage}] ${t}`),
+            }),
+          };
+        }
+
         if (body.prompt && body.prompt.includes('unique words')) {
           return { ok: true, json: async () => ({ data: { words: ['pizza'] } }) };
         }
@@ -498,7 +689,12 @@ describe('Preset Generator Service', () => {
         description: 'Theme: food',
         forLanguage: 'en',
         type: 'word-definition',
-        body: [{ word: 'pizza', definitions: ['A *** is delicious Italian dish'] }],
+        body: [
+          {
+            word: 'pizza',
+            definitions: [{ text: 'A *** is delicious Italian dish', translations: {} }],
+          },
+        ],
         createdAt: new Date(),
         updatedAt: new Date(),
       } as any);
@@ -516,7 +712,17 @@ describe('Preset Generator Service', () => {
           title: 'Preset EN - food (B2) - 1 words',
           description: 'Theme: food',
           forLanguage: 'en',
-          body: [{ word: 'pizza', definitions: ['A *** is delicious Italian dish'] }],
+          body: [
+            {
+              word: 'pizza',
+              definitions: [
+                {
+                  text: 'A *** is delicious Italian dish',
+                  translations: expect.any(Object),
+                },
+              ],
+            },
+          ],
         }),
       });
       expect(result.id).toBe(20);
@@ -526,8 +732,17 @@ describe('Preset Generator Service', () => {
       global.fetch = vi.fn().mockImplementation(async (url: string, init: any) => {
         const body = JSON.parse(init.body);
 
+        // Translator
+        if (body.texts && Array.isArray(body.texts)) {
+          return {
+            ok: true,
+            json: async () => ({
+              translations: body.texts.map((t: string) => `[${body.targetLanguage}] ${t}`),
+            }),
+          };
+        }
+
         if (body.prompt && body.prompt.includes('unique words')) {
-          // Verify that excluded words were included in prompt
           expect(body.prompt).toContain('water');
           return {
             ok: true,
@@ -574,7 +789,12 @@ describe('Preset Generator Service', () => {
         description: null,
         forLanguage: 'en',
         type: 'word-definition',
-        body: [{ word: 'bread', definitions: ['A food made of flour and *** baked'] }],
+        body: [
+          {
+            word: 'bread',
+            definitions: [{ text: 'A food made of flour and *** baked', translations: {} }],
+          },
+        ],
         createdAt: new Date(),
         updatedAt: new Date(),
       } as any);
@@ -588,12 +808,159 @@ describe('Preset Generator Service', () => {
 
       expect(prismaMock.preset.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          body: [{ word: 'bread', definitions: ['A food made of flour and *** baked'] }],
+          body: [
+            {
+              word: 'bread',
+              definitions: [
+                {
+                  text: 'A food made of flour and *** baked',
+                  translations: expect.any(Object),
+                },
+              ],
+            },
+          ],
         }),
       });
       expect(result.body).toEqual([
-        { word: 'bread', definitions: ['A food made of flour and *** baked'] },
+        {
+          word: 'bread',
+          definitions: [{ text: 'A food made of flour and *** baked', translations: {} }],
+        },
       ]);
+    });
+
+    it('should translate definitions into only specified translationLanguages when provided', async () => {
+      const translatedTargetLangs: string[] = [];
+
+      global.fetch = vi.fn().mockImplementation(async (url: string, init: any) => {
+        const body = JSON.parse(init.body);
+
+        if (body.texts && Array.isArray(body.texts)) {
+          translatedTargetLangs.push(body.targetLanguage);
+          return {
+            ok: true,
+            json: async () => ({
+              translations: body.texts.map((t: string) => `[${body.targetLanguage}] ${t}`),
+            }),
+          };
+        }
+
+        if (body.prompt && body.prompt.includes('unique words')) {
+          return { ok: true, json: async () => ({ data: { words: ['cat'] } }) };
+        }
+        if (body.definerApp) {
+          return { ok: true, json: async () => ({ definitions: ['A small domesticated carnivorous mammal'] }) };
+        }
+        if (body.prompt && body.prompt.includes('evaluate the following definitions')) {
+          return {
+            ok: true,
+            json: async () => ({
+              data: {
+                results: [{ word: 'cat', filteredDefinitions: ['A small domesticated carnivorous mammal'] }],
+              },
+            }),
+          };
+        }
+        return { ok: true, json: async () => ({ data: {} }) };
+      });
+
+      prismaMock.preset.create.mockResolvedValue({
+        id: 30,
+        title: 'Preset EN (A1) - 1 words',
+        forLanguage: 'en',
+        type: 'word-definition',
+        body: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      await generatePreset({
+        language: 'en',
+        levels: ['A1'],
+        wordsCount: 1,
+        translationLanguages: ['ru', 'es'],
+      });
+
+      // Target languages translated should be exactly 'ru' and 'es'
+      expect(translatedTargetLangs.sort()).toEqual(['es', 'ru']);
+
+      // Check create call
+      expect(prismaMock.preset.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          body: [
+            {
+              word: 'cat',
+              definitions: [
+                {
+                  text: 'A small domesticated carnivorous mammal',
+                  translations: {
+                    es: '[es] A small domesticated carnivorous mammal',
+                    ru: '[ru] A small domesticated carnivorous mammal',
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      });
+    });
+
+    it('should translate definitions into all available languages except source language when translationLanguages is omitted', async () => {
+      const translatedTargetLangs: string[] = [];
+
+      global.fetch = vi.fn().mockImplementation(async (url: string, init: any) => {
+        const body = JSON.parse(init.body);
+
+        if (body.texts && Array.isArray(body.texts)) {
+          translatedTargetLangs.push(body.targetLanguage);
+          return {
+            ok: true,
+            json: async () => ({
+              translations: body.texts.map((t: string) => `[${body.targetLanguage}] ${t}`),
+            }),
+          };
+        }
+
+        if (body.prompt && body.prompt.includes('unique words')) {
+          return { ok: true, json: async () => ({ data: { words: ['cat'] } }) };
+        }
+        if (body.definerApp) {
+          return { ok: true, json: async () => ({ definitions: ['A small domesticated mammal'] }) };
+        }
+        if (body.prompt && body.prompt.includes('evaluate the following definitions')) {
+          return {
+            ok: true,
+            json: async () => ({
+              data: {
+                results: [{ word: 'cat', filteredDefinitions: ['A small domesticated mammal'] }],
+              },
+            }),
+          };
+        }
+        return { ok: true, json: async () => ({ data: {} }) };
+      });
+
+      prismaMock.preset.create.mockResolvedValue({
+        id: 31,
+        title: 'Preset EN (A1) - 1 words',
+        forLanguage: 'en',
+        type: 'word-definition',
+        body: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      await generatePreset({
+        language: 'en',
+        levels: ['A1'],
+        wordsCount: 1,
+      });
+
+      // All AVAILABLE_LANGUAGES except 'en': es, fr, de, ru, it, pt, zh, ja, tr
+      expect(translatedTargetLangs.sort()).toEqual(
+        ['de', 'es', 'fr', 'it', 'ja', 'pt', 'ru', 'tr', 'zh'].sort()
+      );
+      expect(translatedTargetLangs).not.toContain('en');
     });
   });
 });
