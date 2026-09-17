@@ -38,5 +38,6 @@ RUN npm ci --only=production
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN DATABASE_URL="postgresql://dummy:5432/dummy" npx prisma generate
+COPY run-script.js ./
 COPY --from=builder /app/dist ./dist
 CMD sh -c "npx prisma migrate deploy && npm start"
