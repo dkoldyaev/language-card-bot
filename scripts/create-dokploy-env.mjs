@@ -199,6 +199,8 @@ function generateComposeEnv({ domainHost, pgAppName, pgUser, pgPassword, pgDbNam
     `BASE_LLM_PROVIDER=${getEnvVar('BASE_LLM_PROVIDER')}`,
     `BASE_LLM_MODEL=${getEnvVar('BASE_LLM_MODEL')}`,
     `BASE_ENABLE_DB_LOGGING=${getEnvVar('BASE_ENABLE_DB_LOGGING')}`,
+    `BASE_ALLOW_GUEST_AI_GENERATION=${getEnvVar('BASE_ALLOW_GUEST_AI_GENERATION')}`,
+    `BASE_GUEST_AI_DAILY_LIMIT=${getEnvVar('BASE_GUEST_AI_DAILY_LIMIT')}`,
     '',
     '# MERCURE SERVICE',
     `MERCURE_PORT=${getEnvVar('MERCURE_PORT')}`,
