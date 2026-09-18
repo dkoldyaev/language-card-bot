@@ -1,7 +1,6 @@
-import { driver, type Driver } from 'driver.js';
+import { type Driver, driver } from 'driver.js';
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import useStore from '../../../store/useStore';
 import { useTranslation } from '../../../shared/i18n';
 import '../guideline.css';
 import { useGuidelineStore } from '../store/useGuidelineStore';
@@ -86,10 +85,6 @@ const STEP_CONFIGS: Record<GuidelineStep, StepConfig> = {
 export default function GuidelineController() {
   const { t } = useTranslation();
   const location = useLocation();
-
-  const token = useStore((state) => state.token);
-  const dictionaries = useStore((state) => state.dictionaries);
-  const hasSeenOnboarding = useStore((state) => state.hasCompletedGuestOnboarding);
 
   const isActive = useGuidelineStore((state) => state.isActive);
   const isCompleted = useGuidelineStore((state) => state.isCompleted);

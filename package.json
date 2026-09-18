@@ -23,6 +23,7 @@
     "test:cli:llm": "npm run --prefix llm test:cli --",
     "dokploy:configure-dev": "npx --prefix base tsx scripts/configure-dokploy-dev.ts",
     "dokploy:deploy": "node scripts/create-dokploy-env.mjs",
+    "read:dokploy:logs": "node scripts/read-dokploy-logs.mjs",
     "docker:up": "docker compose up --build",
     "docker:up:d": "docker compose up --build -d",
     "docker:down": "docker compose down",
