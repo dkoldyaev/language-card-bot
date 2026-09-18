@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Auth from '../features/auth/pages/AuthPage';
+import OnboardingPage from '../features/onboarding/pages/OnboardingPage';
 import Dashboard from '../features/dashboard/pages/DashboardPage';
 import Dictionary from '../features/dictionary/pages/DictionaryPage';
 import Presets from '../features/presets/pages/PresetsPage';
@@ -37,6 +38,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="settings" element={<Navigate to="/" replace />} />

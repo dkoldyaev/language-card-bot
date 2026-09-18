@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import useStore from '../../store/useStore';
 import Layout from './Layout';
@@ -27,18 +27,52 @@ describe('Layout', () => {
     expect(screen.queryByText('Settings')).not.toBeInTheDocument();
   });
 
-  it('renders guest onboarding modal when unauthenticated with no dictionaries', () => {
+  it('redirects to /onboarding when unauthenticated with no dictionaries and empty localStorage', () => {
+    localStorage.clear();
     useStore.setState({
       token: null,
       dictionaries: [],
       dictionary: [],
+      hasSeenOnboarding: false,
     });
     render(
-      <MemoryRouter>
-        <Layout />
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<Layout />} />
+          <Route path="/onboarding" element={<div>Onboarding Page Content</div>} />
+        </Routes>
       </MemoryRouter>
     );
-    expect(screen.getByText(/Welcome to CardBot/i)).toBeInTheDocument();
+    expect(screen.getByText('Onboarding Page Content')).toBeInTheDocument();
+  });
+
+  it('does not redirect to /onboarding when localStorage already has data', () => {
+    localStorage.setItem(
+      'english-card-bot-storage',
+      JSON.stringify({
+        state: {
+          token: null,
+          hasSeenOnboarding: true,
+          dictionaries: [],
+        },
+      })
+    );
+    useStore.setState({
+      token: null,
+      dictionaries: [],
+      dictionary: [],
+      hasSeenOnboarding: true,
+    });
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<Layout />} />
+          <Route path="/onboarding" element={<div>Onboarding Page Content</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+    expect(screen.queryByText('Onboarding Page Content')).not.toBeInTheDocument();
+    expect(screen.getByText('Dictionary')).toBeInTheDocument();
   });
 
   it('disables Quiz navigation when dictionary is empty', () => {

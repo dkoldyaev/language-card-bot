@@ -167,6 +167,8 @@ interface AppState {
   setQuizEvaluation: (evalData: QuizEvaluationData | null) => void;
   setQuizTranslation: (translation: string | null) => void;
   setQuizVariants: (variants: string[] | null) => void;
+  hasSeenOnboarding: boolean;
+  setHasSeenOnboarding: (hasSeen: boolean) => void;
   reset: () => void;
 }
 
@@ -184,19 +186,22 @@ const initialState = {
   dictionary: [] as DictionaryWord[],
   guestQuizAttempts: [] as GuestQuizAttempt[],
   guestDictionaryWords: {} as Record<number, DictionaryWord[]>,
-  hasCompletedGuestOnboarding: false,
   quizCard: null,
   quizEvaluation: null,
   quizTranslation: null,
   quizVariants: null,
   dashboardStats: null,
   themeMode: 'light' as 'light' | 'dark' | 'system',
+  hasSeenOnboarding: false,
+  hasCompletedGuestOnboarding: false,
 };
 
 const useStore = create<AppState>()(
   persist(
     (set) => ({
       ...initialState,
+      setHasSeenOnboarding: (hasSeenOnboarding) => set({ hasSeenOnboarding }),
+      setHasCompletedGuestOnboarding: (hasCompletedGuestOnboarding) => set({ hasCompletedGuestOnboarding }),
       setThemeMode: (themeMode) => set({ themeMode }),
       toggleThemeMode: () => set((state) => {
         let currentMode = state.themeMode;
@@ -499,11 +504,9 @@ const useStore = create<AppState>()(
           { wordText, result, createdAt: new Date().toISOString() },
         ],
       })),
-      setHasCompletedGuestOnboarding: (hasCompletedGuestOnboarding) => set({ hasCompletedGuestOnboarding }),
       clearGuestData: () => set({
         guestQuizAttempts: [],
         guestDictionaryWords: {},
-        hasCompletedGuestOnboarding: false,
         dictionary: [],
         dictionaries: [],
         activeDictionaryId: null,
@@ -513,6 +516,8 @@ const useStore = create<AppState>()(
         quizEvaluation: null,
         quizTranslation: null,
         quizVariants: null,
+        hasSeenOnboarding: false,
+        hasCompletedGuestOnboarding: false,
       }),
       reset: () => set((state) => ({ ...initialState, themeMode: state.themeMode, isOffline: !navigator.onLine })),
     }),

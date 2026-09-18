@@ -1,21 +1,20 @@
 import { Alert, Box, Button, Typography, alpha, useMediaQuery, useTheme } from '@mui/material';
 import { useEffect } from 'react';
-import { Link as RouterLink, Outlet } from 'react-router-dom';
+import { Link as RouterLink, Navigate, Outlet } from 'react-router-dom';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import { useTranslation } from '../i18n/I18nContext';
+import { hasExistingLocalStorage } from '../lib/storage';
 import DictionarySelector from './DictionarySelector';
 import LocaleSwitcher from './LocaleSwitcher';
 import Sidebar from './Sidebar';
 import ThemeSwitcher from './ThemeSwitcher';
-import GuestOnboardingModal from '../../features/onboarding/components/GuestOnboardingModal';
 
 export default function Layout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { t } = useTranslation();
   const token = useStore((state) => state.token);
-  const dictionaries = useStore((state) => state.dictionaries);
   const setDictionary = useStore((state) => state.setDictionary);
   const setSettings = useStore((state) => state.setSettings);
   const setAppState = useStore((state) => state.setAppState);
@@ -23,7 +22,10 @@ export default function Layout() {
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
   const setProfile = useStore((state) => state.setProfile);
   const isOffline = useStore((state) => state.isOffline);
-  const hasCompletedGuestOnboarding = useStore((state) => state.hasCompletedGuestOnboarding);
+
+  if (!token && !hasExistingLocalStorage()) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   useEffect(() => {
     if (!token) return;
@@ -176,8 +178,6 @@ export default function Layout() {
           <Outlet />
         </Box>
       </Box>
-
-      <GuestOnboardingModal open={!token && dictionaries.length === 0 && !hasCompletedGuestOnboarding} />
     </Box>
   );
 }

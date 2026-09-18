@@ -19,21 +19,18 @@ test.describe('Anonymous (Guest) Access Flow', () => {
     // 1. Visit root with empty storage as first-time guest
     await page.goto('/');
 
-    // Verify Guest Onboarding Dialog opens
+    // Verify redirected to /onboarding and Onboarding Dialog/Card opens
+    await expect(page).toHaveURL('/onboarding');
     const onboardingDialog = page.locator('[data-testid="guest-onboarding-dialog"]');
     await expect(onboardingDialog).toBeVisible({ timeout: 10000 });
     await expect(onboardingDialog).toContainText('Welcome to CardBot');
 
-    // Step 1 (Auth offer): Click "Next" to continue as guest to language selection
+    // Step 1: Click "Next" to go to preset selection
     const nextBtn = page.locator('[data-testid="guest-onboarding-next-btn"]');
     await expect(nextBtn).toBeVisible();
     await nextBtn.click();
 
-    // Step 2 (Languages): Click "Next" to advance to preset selection
-    await expect(nextBtn).toBeVisible();
-    await nextBtn.click();
-
-    // Step 3: Presets should be loaded and displayed
+    // Step 2: Presets should be loaded and displayed
     const presetCards = page.locator('[data-testid^="preset-card-"]');
     await expect(presetCards.first()).toBeVisible({ timeout: 10000 });
 
@@ -140,7 +137,7 @@ test.describe('Anonymous (Guest) Access Flow', () => {
     // Sign out
     const signOutBtn = page.locator('button, [role="button"]').filter({ hasText: /Sign out|Logout/i }).first();
     await signOutBtn.click();
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL('/onboarding');
     await expect(onboardingDialog).toBeVisible({ timeout: 10000 });
 
     // Pick another preset as a new guest session
