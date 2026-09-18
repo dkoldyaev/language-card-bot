@@ -42,12 +42,8 @@ describe('useGuidelineStore', () => {
     useGuidelineStore.getState().advanceStep('step3_select_preset');
     expect(useGuidelineStore.getState().currentStep).toBe('step4_nav_quiz');
 
-    // Step 4 Nav -> Step 4 Start (Quiz nav clicked, navigated to /quiz)
+    // Step 4 Nav -> Completed (Quiz nav clicked, navigated to /quiz)
     useGuidelineStore.getState().advanceStep('step4_nav_quiz');
-    expect(useGuidelineStore.getState().currentStep).toBe('step4_start_quiz');
-
-    // Step 4 Start -> Completed (Start quiz clicked)
-    useGuidelineStore.getState().advanceStep('step4_start_quiz');
     const finalState = useGuidelineStore.getState();
     expect(finalState.currentStep).toBe('completed');
     expect(finalState.isCompleted).toBe(true);

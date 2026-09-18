@@ -27,7 +27,7 @@ describe('Layout', () => {
     expect(screen.queryByText('Settings')).not.toBeInTheDocument();
   });
 
-  it('redirects to /onboarding when unauthenticated with no dictionaries and empty localStorage', () => {
+  it('does not redirect to /onboarding when unauthenticated with empty localStorage', () => {
     localStorage.clear();
     useStore.setState({
       token: null,
@@ -43,7 +43,8 @@ describe('Layout', () => {
         </Routes>
       </MemoryRouter>
     );
-    expect(screen.getByText('Onboarding Page Content')).toBeInTheDocument();
+    expect(screen.queryByText('Onboarding Page Content')).not.toBeInTheDocument();
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
   });
 
   it('does not redirect to /onboarding when localStorage already has data', () => {

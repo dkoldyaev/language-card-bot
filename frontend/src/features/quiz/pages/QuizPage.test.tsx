@@ -36,21 +36,12 @@ describe('Quiz', () => {
     expect(screen.getByRole('button', { name: /Go to Dictionary/i })).toBeInTheDocument();
   });
 
-  it('renders start quiz button when no card is set', () => {
-    render(<Quiz />);
-    expect(screen.getByText('Ready to test your vocabulary?')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Start Quiz/i })).toBeInTheDocument();
-  });
-
-  it('starts quiz and sets loading state', async () => {
-    const user = userEvent.setup();
+  it('automatically starts quiz and displays loading state when no card is set', () => {
     vi.spyOn(apiClient, 'post').mockResolvedValue({});
 
     render(<Quiz />);
-    
-    const startBtn = screen.getByRole('button', { name: /Start Quiz/i });
-    await user.click(startBtn);
 
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
     expect(apiClient.post).toHaveBeenCalledWith('/quiz/start');
   });
 
