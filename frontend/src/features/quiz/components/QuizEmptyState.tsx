@@ -47,6 +47,7 @@ export default function QuizEmptyState() {
                 placeItems: 'center',
                 color: '#172033',
                 backgroundColor: '#E8A17F',
+                borderRadius: '50%',
               }}
             >
               <LockOutlinedIcon sx={{ fontSize: 30 }} />

@@ -25,6 +25,7 @@ import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
 import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
+import { useGuidelineStore } from '../../guideline';
 import type { PresetItem, WordDefinitionPresetItem } from '../../presets/types';
 
 interface DictionaryPresetsProps {
@@ -91,15 +92,25 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
         let wordCounter = currentWords.length > 0 ? Math.max(...currentWords.map((w) => w.id)) + 1 : 1;
         let defCounter = 1;
         const presetWords = Array.isArray(preset.body) ? preset.body : [];
+        const baseLang = dictionary?.baseLanguage?.toLowerCase() || '';
         const newWords: DictionaryWord[] = presetWords.map((item: any) => ({
           id: wordCounter++,
           text: item.word,
-          definitions: (item.definitions || []).map((defText: string) => ({
-            id: defCounter++,
-            text: defText,
-            translation: null,
-            presets: [{ id: preset.id, title: preset.title }],
-          })),
+          definitions: (item.definitions || []).map((def: any) => {
+            const text = typeof def === 'string' ? def : (def?.text || '');
+            const transText =
+              typeof def === 'object' && def?.translations && baseLang
+                ? def.translations[baseLang] || null
+                : typeof def?.translation === 'string'
+                ? def.translation
+                : null;
+            return {
+              id: defCounter++,
+              text,
+              translation: transText ? { id: defCounter++, text: transText } : null,
+              presets: [{ id: preset.id, title: preset.title }],
+            };
+          }),
           presets: [{ id: preset.id, title: preset.title }],
         }));
 
@@ -119,6 +130,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
         if (onPresetApplied) {
           onPresetApplied(preset);
         }
+        useGuidelineStore.getState().advanceStep('step3_select_preset');
       } catch (err: any) {
         console.error('Failed to apply preset locally:', err);
         setError(t('presets.failedApply'));
@@ -148,6 +160,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
       if (onPresetApplied) {
         onPresetApplied(preset);
       }
+      useGuidelineStore.getState().advanceStep('step3_select_preset');
     } catch (err: any) {
       console.error('Failed to apply preset:', err);
       setError(err.response?.data?.error || t('presets.failedApply'));
@@ -395,6 +408,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                       disabled={isApplying || applyingId !== null}
                       onClick={() => handleApply(preset)}
                       data-testid={`apply-preset-btn-${preset.id}`}
+                      data-tour="preset-apply-btn"
                       sx={{
                         textTransform: 'none',
                         fontWeight: 700,

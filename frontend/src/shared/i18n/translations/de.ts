@@ -137,9 +137,9 @@ const de = {
 
   // Create Dictionary Dialog
   'dialogs.createDeckTitle': 'Neues Wörterbuch erstellen',
-  'dialogs.createDeckDesc': 'Richte ein separates Vokabeldeck ein. Du kannst jede Sprache anhand einer beliebigen Muttersprache lernen.',
+  'dialogs.createDeckDesc': 'Richte ein separates Vokabeldeck ein. Wähle die Lernsprache und die Sprache für Übersetzungen.',
   'dialogs.targetLangLabel': 'Zu lernende Sprache (Zielsprache)',
-  'dialogs.nativeLangLabel': 'Erklärungen / Muttersprache',
+  'dialogs.nativeLangLabel': 'Sprache für Übersetzungen',
   'dialogs.dictNameLabel': 'Name des Wörterbuchs (optional)',
   'dialogs.dictNamePlaceholder': '{{target}} ({{base}})',
   'dialogs.dictNameHelper': 'z. B. Spanisch für die Reise, Wirtschaftsfranzösisch',
@@ -286,6 +286,27 @@ const de = {
   'guest.mergeDiscard': 'Nur Kontodaten behalten',
   'guest.continueWithoutAuth': 'Als Gast fortfahren',
   'guest.noPresetsFound': 'Keine Presets für die ausgewählte Sprache gefunden',
+
+  // Guideline Tour
+  'guideline.step0.title': 'Oberflächensprache',
+  'guideline.step0.desc': 'Wähle deine bevorzugte Sprache für die Benutzeroberfläche. Alle Menüs und Hinweise werden sofort angepasst.',
+  'guideline.step1.title': 'Wörterbuch-Auswahl',
+  'guideline.step1.desc': 'In CardBot kannst du mehrere Sprachen lernen. Klicke hier, um deine Decks zu sehen oder ein neues zu erstellen.',
+  'guideline.step2.title': 'Neues Wörterbuch erstellen',
+  'guideline.step2.desc': 'Klicke hier, um ein neues Wörterbuch für ein gewünschtes Sprachpaar anzulegen.',
+  'guideline.step2_dialog.title': 'Deck einrichten',
+  'guideline.step2_dialog.desc': 'Wähle die Lernsprache und die Sprache für Übersetzungen aus und klicke auf Erstellen.',
+  'guideline.step3.title': 'Vorgefertigte Wortpakete',
+  'guideline.step3.desc': 'Spare Zeit: Füge mit einem Klick kuratierte Wortpakete mit verlässlichen Definitionen hinzu.',
+  'guideline.step4_nav.title': 'Zum Quiz gehen',
+  'guideline.step4_nav.desc': 'Dein Wörterbuch ist gefüllt! Gehe jetzt zum Quiz-Bereich, um Vokabeln aktiv zu wiederholen.',
+  'guideline.step4_start.title': 'Quiz starten',
+  'guideline.step4_start.desc': 'Klicke auf Quiz starten, um deine interaktive Lernrunde zu beginnen.',
+  'guideline.finish.title': 'Tour abgeschlossen!',
+  'guideline.finish.desc': 'Alles bereit! Du weißt nun, wie du Wörterbücher anlegst, Wortpakete hinzufügst und im Quiz übst. Viel Erfolg beim Lernen!',
+  'guideline.buttons.next': 'Weiter',
+  'guideline.buttons.skip': 'Tour überspringen',
+  'guideline.buttons.finish': 'Verstanden!',
 };
 
 export default de;

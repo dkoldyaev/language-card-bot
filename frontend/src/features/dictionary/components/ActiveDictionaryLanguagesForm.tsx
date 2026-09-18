@@ -56,6 +56,10 @@ export default function ActiveDictionaryLanguagesForm({
             onChange={(e) => onTargetLanguageChange(e.target.value)}
             disabled={disabled}
             inputProps={{ 'data-testid': 'learned-language-select' }}
+            MenuProps={{
+              disablePortal: true,
+              transitionDuration: 0,
+            }}
           >
             {SUPPORTED_LOCALES.map((lang) => (
               <MenuItem key={lang} value={lang}>
@@ -74,6 +78,10 @@ export default function ActiveDictionaryLanguagesForm({
             onChange={(e) => onBaseLanguageChange(e.target.value)}
             disabled={disabled}
             inputProps={{ 'data-testid': 'base-language-select' }}
+            MenuProps={{
+              disablePortal: true,
+              transitionDuration: 0,
+            }}
           >
             {SUPPORTED_LOCALES.map((lang) => (
               <MenuItem key={lang} value={lang}>

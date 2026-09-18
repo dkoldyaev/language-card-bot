@@ -137,9 +137,9 @@ const es = {
 
   // Create Dictionary Dialog
   'dialogs.createDeckTitle': 'Crear nuevo diccionario',
-  'dialogs.createDeckDesc': 'Configura un mazo de vocabulario independiente. Puedes aprender cualquier idioma usando cualquier lengua materna de referencia.',
+  'dialogs.createDeckDesc': 'Configura un mazo de vocabulario independiente. Selecciona el idioma de aprendizaje y el idioma para las traducciones.',
   'dialogs.targetLangLabel': 'Idioma a aprender (Objetivo)',
-  'dialogs.nativeLangLabel': 'Explicaciones / Lengua materna',
+  'dialogs.nativeLangLabel': 'Idioma para las traducciones',
   'dialogs.dictNameLabel': 'Nombre del diccionario (opcional)',
   'dialogs.dictNamePlaceholder': '{{target}} ({{base}})',
   'dialogs.dictNameHelper': 'p. ej. Español para viajar, Francés de negocios',
@@ -286,6 +286,27 @@ const es = {
   'guest.mergeDiscard': 'Conservar solo los datos de la cuenta',
   'guest.continueWithoutAuth': 'Continuar como invitado',
   'guest.noPresetsFound': 'No se encontraron presets para el idioma seleccionado',
+
+  // Guideline Tour
+  'guideline.step0.title': 'Idioma de la interfaz',
+  'guideline.step0.desc': 'Elige tu idioma preferido para la interfaz. Todos los menús y sugerencias se mostrarán en este idioma.',
+  'guideline.step1.title': 'Selector de diccionarios',
+  'guideline.step1.desc': 'En CardBot puedes aprender varios idiomas. Haz clic aquí para ver tus diccionarios o crear uno nuevo.',
+  'guideline.step2.title': 'Crear nuevo diccionario',
+  'guideline.step2.desc': 'Haz clic aquí para añadir un nuevo diccionario con el par de idiomas que quieras aprender.',
+  'guideline.step2_dialog.title': 'Configurar tu diccionario',
+  'guideline.step2_dialog.desc': 'Selecciona el idioma de aprendizaje y el idioma en el que se mostrarán las traducciones, luego haz clic en Crear.',
+  'guideline.step3.title': 'Paquetes predefinidos',
+  'guideline.step3.desc': '¡No empieces desde cero! Añade paquetes temáticos de vocabulario con definiciones con un solo clic.',
+  'guideline.step4_nav.title': 'Ir al Quiz',
+  'guideline.step4_nav.desc': '¡Tu diccionario ya tiene palabras! Ve a la sección de Quiz para practicar con recuerdo activo.',
+  'guideline.step4_start.title': 'Iniciar práctica',
+  'guideline.step4_start.desc': 'Haz clic en Comenzar Quiz para iniciar tu sesión de tarjetas interactivas.',
+  'guideline.finish.title': '¡Guía completada!',
+  'guideline.finish.desc': '¡Todo listo! Has aprendido a gestionar diccionarios, añadir paquetes de palabras y practicar en el Quiz. ¡Buen aprendizaje!',
+  'guideline.buttons.next': 'Siguiente',
+  'guideline.buttons.skip': 'Omitir guía',
+  'guideline.buttons.finish': '¡Entendido!',
 };
 
 export default es;

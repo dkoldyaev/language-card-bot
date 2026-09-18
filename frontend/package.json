@@ -23,6 +23,7 @@
     "@plausible-analytics/tracker": "^0.4.6",
     "@react-oauth/google": "^0.13.5",
     "axios": "^1.19.0",
+    "driver.js": "^1.8.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",

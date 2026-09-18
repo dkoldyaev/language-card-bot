@@ -1,10 +1,10 @@
 import { Alert, Box, Button, Typography, alpha, useMediaQuery, useTheme } from '@mui/material';
 import { useEffect } from 'react';
-import { Link as RouterLink, Navigate, Outlet } from 'react-router-dom';
+import { Link as RouterLink, Outlet } from 'react-router-dom';
+import { GuidelineController } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import { useTranslation } from '../i18n/I18nContext';
-import { hasExistingLocalStorage } from '../lib/storage';
 import DictionarySelector from './DictionarySelector';
 import LocaleSwitcher from './LocaleSwitcher';
 import Sidebar from './Sidebar';
@@ -22,10 +22,6 @@ export default function Layout() {
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
   const setProfile = useStore((state) => state.setProfile);
   const isOffline = useStore((state) => state.isOffline);
-
-  if (!token && !hasExistingLocalStorage()) {
-    return <Navigate to="/onboarding" replace />;
-  }
 
   useEffect(() => {
     if (!token) return;
@@ -74,6 +70,7 @@ export default function Layout() {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
+      <GuidelineController />
       <Sidebar />
       <Box
         component="main"

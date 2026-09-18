@@ -1,0 +1,109 @@
+@import 'driver.js/dist/driver.css';
+
+/* Allow interaction with MUI menus, popovers and select dropdowns while product tour is active */
+.driver-active .MuiPopover-root,
+.driver-active .MuiPopover-root *,
+.driver-active .MuiMenu-root,
+.driver-active .MuiMenu-root * {
+  pointer-events: auto !important;
+}
+
+.cardbot-tour-popover.driver-popover {
+  border-radius: 14px;
+  padding: 18px 20px;
+  background-color: var(--mui-palette-background-paper, #ffffff);
+  color: var(--mui-palette-text-primary, #1e293b);
+  border: 1px solid var(--mui-palette-divider, rgba(0, 0, 0, 0.1));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+  font-family: inherit;
+  max-width: 300px;
+}
+
+.cardbot-tour-popover .driver-popover-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--mui-palette-text-primary, #0f172a);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.cardbot-tour-popover .driver-popover-description {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--mui-palette-text-secondary, #64748b);
+  margin-bottom: 16px;
+}
+
+.cardbot-tour-popover .driver-popover-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mui-palette-divider, rgba(0, 0, 0, 0.08));
+}
+
+.cardbot-tour-popover .driver-popover-footer-btn {
+  border-radius: 8px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.cardbot-tour-popover .driver-popover-next-btn {
+  background-color: #2453a6 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.cardbot-tour-popover .driver-popover-next-btn:hover {
+  background-color: #1b3e7d !important;
+  box-shadow: 0 2px 8px rgba(36, 83, 166, 0.35);
+}
+
+.cardbot-tour-popover .driver-popover-close-btn {
+  color: #94a3b8;
+  font-size: 20px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  top: 10px;
+  right: 10px;
+}
+
+.cardbot-tour-popover .driver-popover-close-btn:hover {
+  color: #0f172a;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  .cardbot-tour-popover.driver-popover {
+    background-color: #172033;
+    color: #f1f5f9;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+  }
+
+  .cardbot-tour-popover .driver-popover-title {
+    color: #ffffff;
+  }
+
+  .cardbot-tour-popover .driver-popover-description {
+    color: #94a3b8;
+  }
+
+  .cardbot-tour-popover .driver-popover-footer {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .cardbot-tour-popover .driver-popover-close-btn:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}

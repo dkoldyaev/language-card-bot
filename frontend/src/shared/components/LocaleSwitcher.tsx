@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
+import { useGuidelineStore } from '../../features/guideline';
 import { useTranslation } from '../i18n';
 import type { LocaleInfo, SupportedLocale } from '../i18n/types';
 
@@ -38,6 +39,7 @@ export default function LocaleSwitcher({
   const handleSelect = (code: SupportedLocale) => {
     setLocale(code);
     handleClose();
+    useGuidelineStore.getState().advanceStep('step0_locale');
   };
 
   return (
@@ -48,6 +50,7 @@ export default function LocaleSwitcher({
         size={size}
         aria-label="Change language"
         data-testid="locale-switcher-button"
+        data-tour="locale-switcher"
         endIcon={<KeyboardArrowDownRoundedIcon fontSize="small" />}
         sx={{
           textTransform: 'none',
@@ -80,8 +83,10 @@ export default function LocaleSwitcher({
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
+        transitionDuration={0}
         slotProps={{
           paper: {
+            'data-tour': 'locale-menu-paper',
             sx: {
               minWidth: 180,
               borderRadius: 2,
@@ -89,7 +94,7 @@ export default function LocaleSwitcher({
               mt: 0.75,
               maxHeight: 380,
             },
-          },
+          } as any,
         }}
       >
         {locales.map((item: LocaleInfo) => {

@@ -21,6 +21,7 @@ import { useTranslation } from '../../../shared/i18n';
 import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
 import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
 import useStore, { type DictionaryItem } from '../../../store/useStore';
+import { useGuidelineStore } from '../../guideline';
 
 interface CreateDictionaryDialogProps {
   open: boolean;
@@ -102,6 +103,10 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
         onCreated(newDict);
       }
 
+      if (useGuidelineStore.getState().isActive) {
+        useGuidelineStore.getState().advanceStep('step2_create_dict_dialog');
+      }
+
       handleClose();
     } catch (err: any) {
       console.error('Failed to create dictionary:', err);
@@ -117,19 +122,42 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
     onClose();
   };
 
+  const handleCancel = () => {
+    handleClose();
+    if (
+      useGuidelineStore.getState().isActive &&
+      useGuidelineStore.getState().currentStep === 'step2_create_dict_dialog'
+    ) {
+      useGuidelineStore.setState({ currentStep: 'step1_dict_selector' });
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (
+      useGuidelineStore.getState().isActive &&
+      useGuidelineStore.getState().currentStep === 'step2_create_dict_dialog'
+    ) {
+      useGuidelineStore.getState().dismissCurrentStep();
+    }
+  };
+
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={handleCancel}
+      disableAutoFocus
+      disableEnforceFocus
+      transitionDuration={0}
       fullWidth
       maxWidth="xs"
       slotProps={{
         paper: {
+          'data-tour': 'create-dictionary-dialog-paper',
           sx: {
             borderRadius: 2,
             p: 1,
           },
-        },
+        } as any,
       }}
     >
       <DialogTitle sx={{ pb: 1 }}>
@@ -162,7 +190,11 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
           </Alert>
         )}
 
-        <Box sx={{ display: 'grid', gap: 2.5 }}>
+        <Box
+          sx={{ display: 'grid', gap: 2.5 }}
+          onFocusCapture={handleInputFocus}
+          onPointerDownCapture={handleInputFocus}
+        >
           <FormControl fullWidth>
             <InputLabel id="target-language-label">{t('dialogs.targetLangLabel')}</InputLabel>
             <Select
@@ -170,6 +202,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
               value={targetLanguage}
               label={t('dialogs.targetLangLabel')}
               onChange={(e) => setTargetLanguage(e.target.value)}
+              inputProps={{ 'data-testid': 'dialog-target-language-select' }}
             >
               {SUPPORTED_LOCALES.map((langCode) => (
                 <MenuItem key={langCode} value={langCode}>
@@ -208,7 +241,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={handleClose} disabled={submitting} color="inherit">
+        <Button onClick={handleCancel} disabled={submitting} color="inherit">
           {t('dialogs.cancel')}
         </Button>
         <Button
@@ -216,6 +249,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
           variant="contained"
           color="primary"
           disabled={submitting}
+          data-tour="create-dictionary-dialog-submit"
           startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <AddRoundedIcon />}
         >
           {submitting ? t('dialogs.creatingDeckBtn') : t('dialogs.createDeckBtn')}

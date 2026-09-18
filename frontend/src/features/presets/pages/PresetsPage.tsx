@@ -464,6 +464,10 @@ export default function PresetsPage() {
                     value={formLanguage}
                     label={t('languages.targetLangLabel')}
                     onChange={(e) => setFormLanguage(e.target.value)}
+                    MenuProps={{
+                      disablePortal: true,
+                      transitionDuration: 0,
+                    }}
                   >
                     {SUPPORTED_LOCALES.map((lang) => (
                       <MenuItem key={lang} value={lang}>
@@ -481,6 +485,10 @@ export default function PresetsPage() {
                     label={t('presets.typeLabel')}
                     readOnly
                     inputProps={{ readOnly: true }}
+                    MenuProps={{
+                      disablePortal: true,
+                      transitionDuration: 0,
+                    }}
                   >
                     <MenuItem value="word-definition">word-definition</MenuItem>
                   </Select>

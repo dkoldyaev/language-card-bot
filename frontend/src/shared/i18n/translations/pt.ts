@@ -137,9 +137,9 @@ const pt = {
 
   // Create Dictionary Dialog
   'dialogs.createDeckTitle': 'Criar novo dicionário',
-  'dialogs.createDeckDesc': 'Crie um baralho de vocabulário separado. Você pode aprender qualquer idioma usando sua língua materna como base.',
+  'dialogs.createDeckDesc': 'Crie um baralho de vocabulário separado. Escolha o idioma de estudo e o idioma para as traduções.',
   'dialogs.targetLangLabel': 'Idioma a aprender (Alvo)',
-  'dialogs.nativeLangLabel': 'Explicações / Língua materna',
+  'dialogs.nativeLangLabel': 'Idioma para as traduções',
   'dialogs.dictNameLabel': 'Nome do dicionário (opcional)',
   'dialogs.dictNamePlaceholder': '{{target}} ({{base}})',
   'dialogs.dictNameHelper': 'ex.: Espanhol para viagens, Francês para negócios',
@@ -286,6 +286,27 @@ const pt = {
   'guest.mergeDiscard': 'Manter apenas os dados da conta',
   'guest.continueWithoutAuth': 'Continuar como convidado',
   'guest.noPresetsFound': 'Nenhum preset encontrado para o idioma selecionado',
+
+  // Guideline Tour
+  'guideline.step0.title': 'Idioma da interface',
+  'guideline.step0.desc': 'Selecione o idioma da interface. Todos os menus e dicas serão exibidos neste idioma.',
+  'guideline.step1.title': 'Seletor de dicionários',
+  'guideline.step1.desc': 'No CardBot você pode aprender vários idiomas. Clique aqui para ver seus dicionários ou criar um novo.',
+  'guideline.step2.title': 'Criar novo dicionário',
+  'guideline.step2.desc': 'Clique aqui para criar um novo dicionário para o par de idiomas que você deseja estudar.',
+  'guideline.step2_dialog.title': 'Configurar dicionário',
+  'guideline.step2_dialog.desc': 'Escolha o idioma de estudo e o idioma em que as traduções serão exibidas, depois clique em Criar.',
+  'guideline.step3.title': 'Pacotes de vocabulário',
+  'guideline.step3.desc': 'Economize tempo: adicione um pacote de palavras selecionadas com definições em apenas um clique.',
+  'guideline.step4_nav.title': 'Ir para o Quiz',
+  'guideline.step4_nav.desc': 'Seu dicionário está pronto! Vá para o Quiz para praticar através da recordação ativa.',
+  'guideline.step4_start.title': 'Iniciar Quiz',
+  'guideline.step4_start.desc': 'Clique em Iniciar Quiz para começar sua sessão de flashcards interativos.',
+  'guideline.finish.title': 'Guia concluído!',
+  'guideline.finish.desc': 'Tudo pronto! Você aprendeu a gerenciar dicionários, adicionar pacotes de palavras e treinar no Quiz. Bons estudos!',
+  'guideline.buttons.next': 'Próximo',
+  'guideline.buttons.skip': 'Pular guia',
+  'guideline.buttons.finish': 'Entendido!',
 };
 
 export default pt;

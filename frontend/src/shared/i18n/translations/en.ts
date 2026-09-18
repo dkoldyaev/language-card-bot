@@ -315,6 +315,27 @@ const en = {
   'guest.mergeDiscard': 'Keep account data only',
   'guest.continueWithoutAuth': 'Continue as guest',
   'guest.noPresetsFound': 'No presets found for selected language',
+
+  // Guideline Tour
+  'guideline.step0.title': 'Interface Language',
+  'guideline.step0.desc': 'Select your preferred interface language. All navigation, titles, and prompts will be displayed in this language.',
+  'guideline.step1.title': 'Dictionary Selector',
+  'guideline.step1.desc': 'CardBot supports multiple languages and decks. Click here to open your dictionaries list or create a new one.',
+  'guideline.step2.title': 'Create New Dictionary',
+  'guideline.step2.desc': 'Click here to create a new dictionary for any language pair you want to study.',
+  'guideline.step2_dialog.title': 'Set Up Your Deck',
+  'guideline.step2_dialog.desc': 'Choose the language you want to learn and the language for translations, then click Create.',
+  'guideline.step3.title': 'Curated Starter Packs',
+  'guideline.step3.desc': 'Save time by adding a curated pack of essential vocabulary with definitions and context in one click.',
+  'guideline.step4_nav.title': 'Go to Quiz',
+  'guideline.step4_nav.desc': 'Your dictionary is stocked with words! Now head to the Quiz section to practice through active recall.',
+  'guideline.step4_start.title': 'Start Your Practice',
+  'guideline.step4_start.desc': 'Click Start Quiz to begin your interactive flashcard training session.',
+  'guideline.finish.title': 'Tour Complete!',
+  'guideline.finish.desc': "You're all set! You've learned how to switch languages, create decks, add vocabulary packs, and train in the Quiz. Happy learning!",
+  'guideline.buttons.next': 'Next',
+  'guideline.buttons.skip': 'Skip tour',
+  'guideline.buttons.finish': 'Got it!',
 };
 
 export default en;

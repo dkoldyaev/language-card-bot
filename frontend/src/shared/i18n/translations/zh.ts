@@ -137,9 +137,9 @@ const zh = {
 
   // Create Dictionary Dialog
   'dialogs.createDeckTitle': '创建新词典',
-  'dialogs.createDeckDesc': '建立独立的词汇卡组。您可以使用任何母语作为参考来学习任何语言。',
+  'dialogs.createDeckDesc': '建立独立的词汇卡组。选择要学习的语言以及用于显示翻译的语言。',
   'dialogs.targetLangLabel': '要学习的语言（目标语言）',
-  'dialogs.nativeLangLabel': '释义与参考语言（母语）',
+  'dialogs.nativeLangLabel': '用于显示翻译的语言',
   'dialogs.dictNameLabel': '词典名称（可选）',
   'dialogs.dictNamePlaceholder': '{{target}} ({{base}})',
   'dialogs.dictNameHelper': '例如：旅游西班牙语、商务法语，或留空使用默认名称',
@@ -286,6 +286,27 @@ const zh = {
   'guest.mergeDiscard': '仅保留账户数据',
   'guest.continueWithoutAuth': '以访客身份继续',
   'guest.noPresetsFound': '未找到所选语言的预设卡组',
+
+  // Guideline Tour
+  'guideline.step0.title': '界面语言',
+  'guideline.step0.desc': '选择您习惯的界面语言。所有菜单、提示和导航都将立即以此语言显示。',
+  'guideline.step1.title': '词典选择器',
+  'guideline.step1.desc': '在 CardBot 中您可以学习多种语言。点击此处查看词典列表或创建新词典。',
+  'guideline.step2.title': '创建新词典',
+  'guideline.step2.desc': '点击此处为您想学习的任何语言对添加新词典。',
+  'guideline.step2_dialog.title': '设置词典',
+  'guideline.step2_dialog.desc': '选择您要学习的目标语言以及用于显示翻译的语言，然后点击“创建”。',
+  'guideline.step3.title': '预设词汇包',
+  'guideline.step3.desc': '无需从零手动添加！一键即可添加包含详细释义的精选词汇包。',
+  'guideline.step4_nav.title': '前往测验',
+  'guideline.step4_nav.desc': '词典已填充完毕！现在前往“测验”板块，通过主动回忆练习巩固记忆。',
+  'guideline.step4_start.title': '开始测验',
+  'guideline.step4_start.desc': '点击“开始测验”，开启交互式卡片复习训练。',
+  'guideline.finish.title': '教程完成！',
+  'guideline.finish.desc': '您已掌握主要流程：管理词典、添加预设词汇以及进行测验训练。祝您学习愉快！',
+  'guideline.buttons.next': '下一步',
+  'guideline.buttons.skip': '跳过指南',
+  'guideline.buttons.finish': '明白了！',
 };
 
 export default zh;

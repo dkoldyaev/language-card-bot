@@ -137,9 +137,9 @@ const fr = {
 
   // Create Dictionary Dialog
   'dialogs.createDeckTitle': 'Créer un nouveau dictionnaire',
-  'dialogs.createDeckDesc': 'Créez un deck de vocabulaire indépendant. Vous pouvez apprendre n\'importe quelle langue avec votre langue maternelle comme référence.',
+  'dialogs.createDeckDesc': 'Créez un deck de vocabulaire indépendant. Choisissez la langue d’apprentissage et la langue pour les traductions.',
   'dialogs.targetLangLabel': 'Langue à apprendre (Cible)',
-  'dialogs.nativeLangLabel': 'Explications / Langue maternelle',
+  'dialogs.nativeLangLabel': 'Langue pour les traductions',
   'dialogs.dictNameLabel': 'Nom du dictionnaire (facultatif)',
   'dialogs.dictNamePlaceholder': '{{target}} ({{base}})',
   'dialogs.dictNameHelper': 'ex. Espagnol de voyage, Français des affaires',
@@ -286,6 +286,27 @@ const fr = {
   'guest.mergeDiscard': 'Conserver uniquement les données du compte',
   'guest.continueWithoutAuth': 'Continuer en tant qu\'invité',
   'guest.noPresetsFound': 'Aucun paquet trouvé pour la langue sélectionnée',
+
+  // Guideline Tour
+  'guideline.step0.title': "Langue de l'interface",
+  'guideline.step0.desc': "Choisissez votre langue d'interface préférée. Tous les menus et conseils s'afficheront dans cette langue.",
+  'guideline.step1.title': 'Sélecteur de dictionnaires',
+  'guideline.step1.desc': 'CardBot vous permet d’apprendre plusieurs langues. Cliquez ici pour voir vos dictionnaires ou en créer un nouveau.',
+  'guideline.step2.title': 'Créer un nouveau dictionnaire',
+  'guideline.step2.desc': 'Cliquez ici pour créer un dictionnaire pour la combinaison linguistique de votre choix.',
+  'guideline.step2_dialog.title': 'Configurer le dictionnaire',
+  'guideline.step2_dialog.desc': 'Choisissez la langue d’apprentissage et la langue d’affichage des traductions, puis cliquez sur Créer.',
+  'guideline.step3.title': 'Packs de mots prêts à l’emploi',
+  'guideline.step3.desc': 'Gagnez du temps : ajoutez en un clic un ensemble thématique de vocabulaire avec ses définitions.',
+  'guideline.step4_nav.title': 'Aller au Quiz',
+  'guideline.step4_nav.desc': 'Votre dictionnaire est prêt ! Rendez-vous dans la section Quiz pour réviser avec la mémorisation active.',
+  'guideline.step4_start.title': 'Démarrer le Quiz',
+  'guideline.step4_start.desc': 'Cliquez sur Démarrer le quiz pour lancer votre entraînement de cartes mémoire.',
+  'guideline.finish.title': 'Tutoriel terminé !',
+  'guideline.finish.desc': 'Félicitations ! Vous savez désormais gérer vos dictionnaires, ajouter des packs et vous entraîner dans le Quiz. Bon apprentissage !',
+  'guideline.buttons.next': 'Suivant',
+  'guideline.buttons.skip': 'Passer',
+  'guideline.buttons.finish': 'Compris !',
 };
 
 export default fr;

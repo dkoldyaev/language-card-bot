@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "test:frontend": "npm run --prefix frontend test",
+    "test:frontend:unit": "npm run --prefix frontend test:unit",
+    "test:frontend:build": "npm run --prefix frontend build",
     "test:base": "npm run --prefix base test",
     "test:definer": "npm run --prefix definer test",
     "test:translator": "npm run --prefix translator test",
@@ -27,9 +29,12 @@
     "docker:ps": "docker compose ps",
     "docker:logs:app": "docker compose logs app",
     "docker:logs:redis": "docker compose logs redis",
+    "docker:logs:frontend": "docker compose logs --tail=20 frontend",
+    "docker:restart:frontend": "docker compose restart frontend",
     "db:profile": "npm run --prefix base db:profile",
     "stats:clear": "npm run --prefix base stats:clear",
     "docker:stats:clear": "docker compose exec app npm run stats:clear",
+    "docker:frontend:install": "docker compose exec frontend npm install",
     "lint": "biome check .",
     "lint:check": "biome check .",
     "lint:fix": "biome check --write ."

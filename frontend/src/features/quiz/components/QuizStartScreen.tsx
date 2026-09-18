@@ -7,6 +7,7 @@ import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
 import { trackEvent } from '../../../shared/lib/analytics';
 import useStore from '../../../store/useStore';
+import { useGuidelineStore } from '../../guideline';
 
 export default function QuizStartScreen() {
   const { t } = useTranslation();
@@ -21,6 +22,7 @@ export default function QuizStartScreen() {
     setStarting(true);
     try {
       trackEvent('Quiz Started');
+      useGuidelineStore.getState().advanceStep('step4_start_quiz');
       await apiClient.post('/quiz/start');
     } catch (error) {
       console.error('Failed to start quiz:', error);
@@ -119,6 +121,7 @@ export default function QuizStartScreen() {
                 color="secondary"
                 size="large"
                 onClick={handleStartQuiz}
+                data-tour="start-quiz-btn"
                 disabled={starting || dictionary.length === 0}
                 endIcon={starting ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
               >

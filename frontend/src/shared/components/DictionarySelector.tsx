@@ -15,13 +15,16 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
+import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import { useTranslation } from '../i18n/I18nContext';
 
 export default function DictionarySelector() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const token = useStore((state) => state.token);
   const dictionaries = useStore((state) => state.dictionaries);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
@@ -36,10 +39,17 @@ export default function DictionarySelector() {
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
+    useGuidelineStore.getState().advanceStep('step1_dict_selector');
   };
 
   const handleCloseMenu = () => {
     setAnchorEl(null);
+    if (
+      useGuidelineStore.getState().isActive &&
+      useGuidelineStore.getState().currentStep === 'step2_create_dict_menu'
+    ) {
+      useGuidelineStore.setState({ currentStep: 'step1_dict_selector' });
+    }
   };
 
   const handleSelect = async (dictId: number) => {
@@ -77,6 +87,7 @@ export default function DictionarySelector() {
         size="small"
         aria-label={t('dictionary.selectDictionary')}
         data-testid="dictionary-selector-button"
+        data-tour="dictionary-selector"
         endIcon={<KeyboardArrowDownRoundedIcon fontSize="small" />}
         startIcon={<MenuBookRoundedIcon fontSize="small" sx={{ color: 'primary.main' }} />}
         sx={{
@@ -117,15 +128,17 @@ export default function DictionarySelector() {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
+        transitionDuration={0}
         slotProps={{
           paper: {
+            'data-tour': 'dictionary-menu-paper',
             sx: {
               minWidth: 260,
               borderRadius: 2,
               boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
               mt: 0.75,
             },
-          },
+          } as any,
         }}
       >
         <Box sx={{ px: 2, py: 1 }}>
@@ -164,8 +177,10 @@ export default function DictionarySelector() {
         <Divider sx={{ my: 1 }} />
 
         <MenuItem
+          data-tour="create-dictionary-menu-item"
           onClick={() => {
-            handleCloseMenu();
+            useGuidelineStore.getState().advanceStep('step2_create_dict_menu');
+            setAnchorEl(null);
             setCreateDialogOpen(true);
           }}
           sx={{ py: 1, px: 2, color: 'secondary.dark', fontWeight: 600 }}
@@ -182,6 +197,11 @@ export default function DictionarySelector() {
       <CreateDictionaryDialog
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
+        onCreated={() => {
+          if (useGuidelineStore.getState().isActive) {
+            navigate('/dictionary');
+          }
+        }}
       />
     </>
   );

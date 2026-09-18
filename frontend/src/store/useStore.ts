@@ -196,6 +196,37 @@ const initialState = {
   hasCompletedGuestOnboarding: false,
 };
 
+export const normalizeWordDefinitions = (word: DictionaryWord, baseLang?: string): DictionaryWord => {
+  return {
+    ...word,
+    definitions: (word.definitions || []).map((def: any) => {
+      let text = def.text;
+      let translation = def.translation;
+      if (text && typeof text === 'object') {
+        if (text.translations && !translation && baseLang) {
+          const transStr = text.translations[baseLang];
+          if (transStr) {
+            translation = { id: def.id, text: transStr };
+          }
+        }
+        text = typeof text.text === 'string' ? text.text : '';
+      }
+      if (typeof translation === 'string') {
+        translation = { id: def.id, text: translation };
+      }
+      return {
+        ...def,
+        text,
+        translation,
+      };
+    }),
+  };
+};
+
+export const normalizeWords = (words: DictionaryWord[], baseLang?: string): DictionaryWord[] => {
+  return (words || []).map((w) => normalizeWordDefinitions(w, baseLang));
+};
+
 const useStore = create<AppState>()(
   persist(
     (set) => ({
@@ -230,7 +261,9 @@ const useStore = create<AppState>()(
       })),
       setSelectedDictionaryId: (selectedDictionaryId) => set((state) => {
         if (!state.token && selectedDictionaryId) {
-          const dictWords = state.guestDictionaryWords[selectedDictionaryId] || [];
+          const dict = state.dictionaries.find(d => d.id === selectedDictionaryId);
+          const baseLang = dict?.baseLanguage?.toLowerCase();
+          const dictWords = normalizeWords(state.guestDictionaryWords[selectedDictionaryId] || [], baseLang);
           return {
             selectedDictionaryId,
             dictionary: dictWords,
@@ -280,14 +313,36 @@ const useStore = create<AppState>()(
         };
       }),
       setDictionary: (dictionary) => set((state) => {
-        const dictionaryWordIds = new Set(dictionary.map(w => w.id));
+        const normalizedDictionary = (dictionary || []).map((word) => ({
+          ...word,
+          definitions: (word.definitions || []).map((def: any) => {
+            let text = def.text;
+            let translation = def.translation;
+            if (text && typeof text === 'object') {
+              if (text.translations && !translation) {
+                const baseLang = state.dictionaries.find(d => d.id === state.selectedDictionaryId)?.baseLanguage?.toLowerCase();
+                const transStr = baseLang ? text.translations[baseLang] : null;
+                if (transStr) {
+                  translation = { id: def.id, text: transStr };
+                }
+              }
+              text = text.text || '';
+            }
+            return {
+              ...def,
+              text,
+              translation,
+            };
+          }),
+        }));
+        const dictionaryWordIds = new Set(normalizedDictionary.map(w => w.id));
         const shouldResetQuiz = state.quizCard && !dictionaryWordIds.has(state.quizCard.wordId);
         const currentDictId = state.selectedDictionaryId ?? state.activeDictionaryId ?? state.dictionaries[0]?.id;
         const updatedGuestWords = (!state.token && currentDictId)
-          ? { ...state.guestDictionaryWords, [currentDictId]: dictionary }
+          ? { ...state.guestDictionaryWords, [currentDictId]: normalizedDictionary }
           : state.guestDictionaryWords;
         return {
-          dictionary,
+          dictionary: normalizedDictionary,
           guestDictionaryWords: updatedGuestWords,
           ...(shouldResetQuiz ? { quizCard: null, quizVariants: null } : {})
         };
@@ -298,14 +353,18 @@ const useStore = create<AppState>()(
       setQuizVariants: (variants) => set({ quizVariants: variants }),
       setDashboardStats: (dashboardStats) => set({ dashboardStats }),
       addDictionaryWord: (word) => set((state) => {
-        const exists = state.dictionary.some(w => w.id === word.id || w.text.toLowerCase() === word.text.toLowerCase());
+        const dict = state.dictionaries.find(d => d.id === state.selectedDictionaryId) ?? state.dictionaries[0];
+        const normalized = normalizeWordDefinitions(word, dict?.baseLanguage?.toLowerCase());
+        const exists = state.dictionary.some(w => w.id === normalized.id || w.text.toLowerCase() === normalized.text.toLowerCase());
         if (exists) return state;
-        return { dictionary: [word, ...state.dictionary] };
+        return { dictionary: [normalized, ...state.dictionary] };
       }),
       addDictionaryWords: (words) => set((state) => {
+        const dict = state.dictionaries.find(d => d.id === state.selectedDictionaryId) ?? state.dictionaries[0];
+        const normalized = normalizeWords(words, dict?.baseLanguage?.toLowerCase());
         const existingIds = new Set(state.dictionary.map(w => w.id));
         const existingTexts = new Set(state.dictionary.map(w => w.text.toLowerCase()));
-        const newWords = words.filter(w => !existingIds.has(w.id) && !existingTexts.has(w.text.toLowerCase()));
+        const newWords = normalized.filter(w => !existingIds.has(w.id) && !existingTexts.has(w.text.toLowerCase()));
         if (newWords.length === 0) return state;
         return { dictionary: [...newWords, ...state.dictionary] };
       }),
@@ -523,6 +582,20 @@ const useStore = create<AppState>()(
     }),
     {
       name: 'english-card-bot-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          if (Array.isArray(state.dictionary)) {
+            state.dictionary = normalizeWords(state.dictionary);
+          }
+          if (state.guestDictionaryWords && typeof state.guestDictionaryWords === 'object') {
+            for (const [id, words] of Object.entries(state.guestDictionaryWords)) {
+              if (Array.isArray(words)) {
+                state.guestDictionaryWords[Number(id)] = normalizeWords(words);
+              }
+            }
+          }
+        }
+      },
     }
   )
 );

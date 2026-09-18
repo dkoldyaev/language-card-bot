@@ -166,17 +166,17 @@ const ru = {
 
   // Create Dictionary Dialog
   'dialogs.createDeckTitle': 'Создать новый словарь',
-  'dialogs.createDeckDesc': 'Создайте отдельную тематическую колоду. Вы можете учить любой язык, опираясь на свой родной.',
+  'dialogs.createDeckDesc': 'Создайте отдельную тематическую колоду. Выберите изучаемый язык и язык, на котором будут показаны переводы.',
   'dialogs.targetLangLabel': 'Изучаемый язык (целевой)',
-  'dialogs.nativeLangLabel': 'Язык подсказок (родной)',
+  'dialogs.nativeLangLabel': 'Язык для показа переводов',
   'dialogs.dictNameLabel': 'Название словаря (необязательно)',
   'dialogs.dictNamePlaceholder': '{{target}} ({{base}})',
   'dialogs.dictNameHelper': 'например: Испанский для путешествий, Деловой французский',
   'dialogs.cancel': 'Отмена',
   'dialogs.createDeckBtn': 'Создать словарь',
   'dialogs.creatingDeckBtn': 'Создание...',
-  'dialogs.selectBothLangsError': 'Пожалуйста, укажите изучаемый и родной языки',
-  'dialogs.diffLangsError': 'Изучаемый и родной языки должны различаться',
+  'dialogs.selectBothLangsError': 'Пожалуйста, укажите изучаемый язык и язык для переводов',
+  'dialogs.diffLangsError': 'Изучаемый язык и язык для переводов должны различаться',
   'dialogs.createDeckError': 'Не удалось создать словарь',
 
   // Active Dictionary Languages Form
@@ -315,6 +315,27 @@ const ru = {
   'guest.mergeDiscard': 'Оставить только данные аккаунта',
   'guest.continueWithoutAuth': 'Продолжить без регистрации',
   'guest.noPresetsFound': 'Пресеты для выбранного языка не найдены',
+
+  // Guideline Tour
+  'guideline.step0.title': 'Язык интерфейса',
+  'guideline.step0.desc': 'Выберите удобный для вас язык интерфейса. Все меню, навигация и подсказки приложения будут отображаться на нем.',
+  'guideline.step1.title': 'Селектор словарей',
+  'guideline.step1.desc': 'В CardBot можно учить несколько языков параллельно. Нажмите сюда, чтобы просмотреть список словарей или создать новый.',
+  'guideline.step2.title': 'Создание нового словаря',
+  'guideline.step2.desc': 'Нажмите «Создать колоду», чтобы добавить отдельный словарь для нужной языковой пары.',
+  'guideline.step2_dialog.title': 'Настройка словаря',
+  'guideline.step2_dialog.desc': 'Выберите изучаемый язык и язык, на котором будут показаны переводы, затем нажмите кнопку «Создать».',
+  'guideline.step3.title': 'Готовые наборы слов',
+  'guideline.step3.desc': 'Чтобы не добавлять слова вручную с нуля, добавьте готовый тематический набор с качественными определениями одним кликом.',
+  'guideline.step4_nav.title': 'Переход в Квиз',
+  'guideline.step4_nav.desc': 'Словарь успешно наполнен! Теперь перейдите в раздел «Квиз», чтобы закрепить изученные слова через интервальное повторение.',
+  'guideline.step4_start.title': 'Запуск тренировки',
+  'guideline.step4_start.desc': 'Нажмите «Начать квиз», чтобы запустить интерактивную сессию с карточками активного вспоминания.',
+  'guideline.finish.title': 'Обучение завершено!',
+  'guideline.finish.desc': 'Вы освоили базовые возможности: выбор языков, создание словарей, наполнение пресетами и тренировки. Приятного обучения!',
+  'guideline.buttons.next': 'Далее',
+  'guideline.buttons.skip': 'Пропустить',
+  'guideline.buttons.finish': 'Понятно!',
 };
 
 export default ru;

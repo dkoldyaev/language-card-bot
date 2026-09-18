@@ -188,6 +188,7 @@ export default function QuizPlayground() {
             backgroundColor: result.background,
             border: '1px solid',
             borderColor: alpha(result.color, 0.22),
+            borderRadius: 1.5,
           }}
         >
           <Box sx={{ flexGrow: 1 }}>

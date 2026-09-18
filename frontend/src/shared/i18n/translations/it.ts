@@ -137,9 +137,9 @@ const it = {
 
   // Create Dictionary Dialog
   'dialogs.createDeckTitle': 'Crea nuovo dizionario',
-  'dialogs.createDeckDesc': 'Crea un mazzo di vocaboli separato. Puoi imparare qualsiasi lingua usando la tua lingua madre come riferimento.',
+  'dialogs.createDeckDesc': 'Crea un mazzo di vocaboli separato. Scegli la lingua da apprendere e la lingua per le traduzioni.',
   'dialogs.targetLangLabel': 'Lingua da imparare (Target)',
-  'dialogs.nativeLangLabel': 'Spiegazioni / Lingua madre',
+  'dialogs.nativeLangLabel': 'Lingua per le traduzioni',
   'dialogs.dictNameLabel': 'Nome dizionario (opzionale)',
   'dialogs.dictNamePlaceholder': '{{target}} ({{base}})',
   'dialogs.dictNameHelper': 'es. Spagnolo per viaggiare, Francese commerciale',
@@ -286,6 +286,27 @@ const it = {
   'guest.mergeDiscard': 'Mantieni solo i dati dell\'account',
   'guest.continueWithoutAuth': 'Continua come ospite',
   'guest.noPresetsFound': 'Nessun mazzo trovato per la lingua selezionata',
+
+  // Guideline Tour
+  'guideline.step0.title': "Lingua dell'interfaccia",
+  'guideline.step0.desc': "Scegli la tua lingua preferita per l'interfaccia. Tutti i menu e i suggerimenti appariranno in questa lingua.",
+  'guideline.step1.title': 'Selettore dei dizionari',
+  'guideline.step1.desc': 'In CardBot puoi imparare più lingue. Clicca qui per vedere i tuoi dizionari o crearne uno nuovo.',
+  'guideline.step2.title': 'Crea un nuovo dizionario',
+  'guideline.step2.desc': 'Clicca qui per aggiungere un nuovo dizionario per la combinazione linguistica che preferisci.',
+  'guideline.step2_dialog.title': 'Configura il tuo dizionario',
+  'guideline.step2_dialog.desc': 'Scegli la lingua da apprendere e la lingua in cui visualizzare le traduzioni, quindi clicca su Crea.',
+  'guideline.step3.title': 'Pacchetti di parole pronti',
+  'guideline.step3.desc': 'Non partire da zero: aggiungi con un clic pacchetti di vocaboli con definizioni accurate.',
+  'guideline.step4_nav.title': 'Vai al Quiz',
+  'guideline.step4_nav.desc': 'Il tuo dizionario è pronto! Vai alla sezione Quiz per esercitarti con il richiamo attivo.',
+  'guideline.step4_start.title': 'Avvia il Quiz',
+  'guideline.step4_start.desc': 'Clicca su Inizia quiz per cominciare la sessione di flashcard interattive.',
+  'guideline.finish.title': 'Guida completata!',
+  'guideline.finish.desc': 'Tutto pronto! Ora sai come gestire i dizionari, aggiungere vocaboli e allenarti con i Quiz. Buono studio!',
+  'guideline.buttons.next': 'Avanti',
+  'guideline.buttons.skip': 'Salta guida',
+  'guideline.buttons.finish': 'Ho capito!',
 };
 
 export default it;

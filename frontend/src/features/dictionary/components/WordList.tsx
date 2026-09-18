@@ -354,7 +354,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                     ) : (
                       <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}>
                         <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                          {idx + 1}. {def.text}
+                          {idx + 1}. {typeof def.text === 'string' ? def.text : (def.text as any)?.text || ''}
                         </Typography>
                         {def.presets && def.presets.length > 0 && (
                           <Box sx={{ display: 'inline-flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -433,14 +433,16 @@ export default function WordList({ loading }: { loading: boolean }) {
                         {def.translation ? (
                           <>
                             <Typography variant="body2" color="text.secondary">
-                              {t('dictionary.translationPrefix', { text: def.translation.text })}
+                              {t('dictionary.translationPrefix', {
+                                text: typeof def.translation === 'string' ? def.translation : def.translation?.text || '',
+                              })}
                             </Typography>
                             <IconButton
                               size="small"
                               aria-label={t('dictionary.editTranslationTooltip')}
                               onClick={() => {
                                 setEditingTransId(def.id);
-                                setEditTransText(def.translation?.text || '');
+                                setEditTransText(typeof def.translation === 'string' ? def.translation : def.translation?.text || '');
                               }}
                             >
                               <EditIcon fontSize="small" />

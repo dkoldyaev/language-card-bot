@@ -18,6 +18,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import { useTranslation } from '../i18n/I18nContext';
 
@@ -105,6 +106,12 @@ export default function Sidebar() {
               to={isDisabled ? undefined : item.path}
               disabled={isDisabled}
               aria-label={item.label}
+              data-tour={item.path === '/quiz' ? 'nav-quiz' : undefined}
+              onClick={() => {
+                if (item.path === '/quiz') {
+                  useGuidelineStore.getState().advanceStep('step4_nav_quiz');
+                }
+              }}
               sx={{
                 minWidth: 62,
                 maxWidth: 86,
@@ -242,6 +249,12 @@ export default function Sidebar() {
               component={isDisabled ? 'button' : NavLink}
               to={isDisabled ? undefined : item.path}
               disabled={isDisabled}
+              data-tour={item.path === '/quiz' ? 'nav-quiz' : undefined}
+              onClick={() => {
+                if (item.path === '/quiz') {
+                  useGuidelineStore.getState().advanceStep('step4_nav_quiz');
+                }
+              }}
               sx={{
                 position: 'relative',
                 minHeight: 52,

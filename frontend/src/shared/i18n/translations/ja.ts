@@ -137,9 +137,9 @@ const ja = {
 
   // Create Dictionary Dialog
   'dialogs.createDeckTitle': '新しい辞書を作成',
-  'dialogs.createDeckDesc': '別の単語デッキを作成します。母国語を基準にして、どんな言語でも学習できます。',
+  'dialogs.createDeckDesc': '別の単語デッキを作成します。学習する言語と翻訳を表示する言語を選択してください。',
   'dialogs.targetLangLabel': '学習する言語 (対象言語)',
-  'dialogs.nativeLangLabel': '解説 / 母国語',
+  'dialogs.nativeLangLabel': '翻訳表示言語',
   'dialogs.dictNameLabel': '辞書名 (任意)',
   'dialogs.dictNamePlaceholder': '{{target}} ({{base}})',
   'dialogs.dictNameHelper': '例: 旅行スペイン語、ビジネスフランス語（空欄の場合はデフォルト名）',
@@ -286,6 +286,27 @@ const ja = {
   'guest.mergeDiscard': 'アカウントのデータのみ保持',
   'guest.continueWithoutAuth': 'ゲストとして続ける',
   'guest.noPresetsFound': '選択した言語のプリセットが見つかりません',
+
+  // Guideline Tour
+  'guideline.step0.title': 'インターフェース言語',
+  'guideline.step0.desc': 'お好みの表示言語を選択してください。すべてのメニューやヒントがこの言語で表示されます。',
+  'guideline.step1.title': '単語帳セレクター',
+  'guideline.step1.desc': 'CardBotでは複数の言語を学習できます。ここをクリックして単語帳一覧を開くか、新規作成します。',
+  'guideline.step2.title': '新しい単語帳を作成',
+  'guideline.step2.desc': 'ここをクリックして、学習したい言語ペアの新しい単語帳を追加します。',
+  'guideline.step2_dialog.title': '単語帳の設定',
+  'guideline.step2_dialog.desc': '学習したい言語と翻訳を表示する言語を選択し、「作成」をクリックします。',
+  'guideline.step3.title': 'おすすめ単語プリセット',
+  'guideline.step3.desc': 'ゼロから単語を入力する必要はありません！ワンクリックで定義付きの厳選単語パックを追加できます。',
+  'guideline.step4_nav.title': 'クイズへ移動',
+  'guideline.step4_nav.desc': '単語帳の準備が完了しました！クイズセクションに移動して、アクティブリコールで復習しましょう。',
+  'guideline.step4_start.title': 'クイズを開始',
+  'guideline.step4_start.desc': '「クイズを開始」をクリックして、フラッシュカード形式の学習を始めましょう。',
+  'guideline.finish.title': 'ガイド完了！',
+  'guideline.finish.desc': '単語帳の管理、プリセットの追加、クイズでの学習方法をマスターしました。楽しく学習を進めましょう！',
+  'guideline.buttons.next': '次へ',
+  'guideline.buttons.skip': 'スキップ',
+  'guideline.buttons.finish': '了解！',
 };
 
 export default ja;

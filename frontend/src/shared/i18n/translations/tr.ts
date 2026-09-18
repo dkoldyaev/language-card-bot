@@ -137,9 +137,9 @@ const tr = {
 
   // Create Dictionary Dialog
   'dialogs.createDeckTitle': 'Yeni Sözlük Oluştur',
-  'dialogs.createDeckDesc': 'Ayrı bir kelime destesi oluşturun. Ana dilinizi referans alarak dilediğiniz dili öğrenebilirsiniz.',
+  'dialogs.createDeckDesc': 'Ayrı bir kelime destesi oluşturun. Öğrenilecek dili ve çevirilerin gösterileceği dili seçin.',
   'dialogs.targetLangLabel': 'Öğrenilecek Dil (Hedef)',
-  'dialogs.nativeLangLabel': 'Açıklamalar / Ana Dil',
+  'dialogs.nativeLangLabel': 'Çevirilerin gösterileceği dil',
   'dialogs.dictNameLabel': 'Sözlük Adı (isteğe bağlı)',
   'dialogs.dictNamePlaceholder': '{{target}} ({{base}})',
   'dialogs.dictNameHelper': 'örn. Seyahat İspanyolcası, İş Fransızcası',
@@ -286,6 +286,27 @@ const tr = {
   'guest.mergeDiscard': 'Yalnızca hesap verilerini koru',
   'guest.continueWithoutAuth': 'Misafir olarak devam et',
   'guest.noPresetsFound': 'Seçilen dil için ön ayar bulunamadı',
+
+  // Guideline Tour
+  'guideline.step0.title': 'Arayüz Dili',
+  'guideline.step0.desc': 'Tercih ettiğiniz arayüz dilini seçin. Tüm menüler ve ipuçları bu dilde görüntülenecektir.',
+  'guideline.step1.title': 'Sözlük Seçici',
+  'guideline.step1.desc': 'CardBot ile birden fazla dil öğrenebilirsiniz. Sözlüklerinizi görmek veya yenisini oluşturmak için buraya tıklayın.',
+  'guideline.step2.title': 'Yeni Sözlük Oluştur',
+  'guideline.step2.desc': 'Öğrenmek istediğiniz dil çifti için yeni bir sözlük eklemek üzere buraya tıklayın.',
+  'guideline.step2_dialog.title': 'Sözlük Ayarları',
+  'guideline.step2_dialog.desc': 'Öğrenmek istediğiniz dili ve çevirilerin gösterileceği dili seçin, ardından Oluştur butonuna tıklayın.',
+  'guideline.step3.title': 'Hazır Kelime Paketleri',
+  'guideline.step3.desc': 'Sıfırdan tek tek kelime eklemekle vakit kaybetmeyin! Tek tıkla tanımlı hazır kelime paketlerini ekleyin.',
+  'guideline.step4_nav.title': 'Quiz Bölümüne Git',
+  'guideline.step4_nav.desc': 'Sözlüğünüz kelimelerle dolduruldu! Şimdi aktif hatırlama ile pratik yapmak için Quiz bölümüne geçin.',
+  'guideline.step4_start.title': 'Quiz’i Başlat',
+  'guideline.step4_start.desc': 'İnteraktif kelime kartı alıştırmasını başlatmak için Quiz’i Başlat’a tıklayın.',
+  'guideline.finish.title': 'Rehber Tamamlandı!',
+  'guideline.finish.desc': 'Her şey hazır! Sözlük yönetimini, hazır paket eklemeyi ve Quiz ile pratik yapmayı öğrendiniz. İyi çalışmalar!',
+  'guideline.buttons.next': 'İleri',
+  'guideline.buttons.skip': 'Rehberi Atla',
+  'guideline.buttons.finish': 'Anladım!',
 };
 
 export default tr;
