@@ -24,12 +24,16 @@ test.describe('Anonymous (Guest) Access Flow', () => {
     await expect(onboardingDialog).toBeVisible({ timeout: 10000 });
     await expect(onboardingDialog).toContainText('Welcome to CardBot');
 
-    // Step 1: Click "Next" to go to preset selection
+    // Step 1 (Auth offer): Click "Next" to continue as guest to language selection
     const nextBtn = page.locator('[data-testid="guest-onboarding-next-btn"]');
     await expect(nextBtn).toBeVisible();
     await nextBtn.click();
 
-    // Step 2: Presets should be loaded and displayed
+    // Step 2 (Languages): Click "Next" to advance to preset selection
+    await expect(nextBtn).toBeVisible();
+    await nextBtn.click();
+
+    // Step 3: Presets should be loaded and displayed
     const presetCards = page.locator('[data-testid^="preset-card-"]');
     await expect(presetCards.first()).toBeVisible({ timeout: 10000 });
 

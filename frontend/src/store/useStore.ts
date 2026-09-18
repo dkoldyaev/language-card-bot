@@ -128,6 +128,8 @@ interface AppState {
   guestDictionaryWords: Record<number, DictionaryWord[]>;
   recordGuestQuizAttempt: (wordText: string, result: 'SUCCESS' | 'CLOSE_MATCH' | 'INCORRECT') => void;
   clearGuestData: () => void;
+  hasCompletedGuestOnboarding: boolean;
+  setHasCompletedGuestOnboarding: (hasCompletedGuestOnboarding: boolean) => void;
   quizCard: QuizCardData | null;
   quizEvaluation: QuizEvaluationData | null;
   quizTranslation: string | null;
@@ -182,6 +184,7 @@ const initialState = {
   dictionary: [] as DictionaryWord[],
   guestQuizAttempts: [] as GuestQuizAttempt[],
   guestDictionaryWords: {} as Record<number, DictionaryWord[]>,
+  hasCompletedGuestOnboarding: false,
   quizCard: null,
   quizEvaluation: null,
   quizTranslation: null,
@@ -496,9 +499,11 @@ const useStore = create<AppState>()(
           { wordText, result, createdAt: new Date().toISOString() },
         ],
       })),
+      setHasCompletedGuestOnboarding: (hasCompletedGuestOnboarding) => set({ hasCompletedGuestOnboarding }),
       clearGuestData: () => set({
         guestQuizAttempts: [],
         guestDictionaryWords: {},
+        hasCompletedGuestOnboarding: false,
         dictionary: [],
         dictionaries: [],
         activeDictionaryId: null,

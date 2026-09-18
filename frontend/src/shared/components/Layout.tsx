@@ -23,6 +23,7 @@ export default function Layout() {
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
   const setProfile = useStore((state) => state.setProfile);
   const isOffline = useStore((state) => state.isOffline);
+  const hasCompletedGuestOnboarding = useStore((state) => state.hasCompletedGuestOnboarding);
 
   useEffect(() => {
     if (!token) return;
@@ -176,7 +177,7 @@ export default function Layout() {
         </Box>
       </Box>
 
-      <GuestOnboardingModal open={!token && dictionaries.length === 0} />
+      <GuestOnboardingModal open={!token && dictionaries.length === 0 && !hasCompletedGuestOnboarding} />
     </Box>
   );
 }

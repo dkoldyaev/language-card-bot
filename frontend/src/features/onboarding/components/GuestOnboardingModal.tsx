@@ -1,8 +1,11 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import CloudDoneRoundedIcon from '@mui/icons-material/CloudDoneRounded';
 import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
+import SyncRoundedIcon from '@mui/icons-material/SyncRounded';
+import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import {
   Alert,
   alpha,
@@ -16,12 +19,16 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  TextField,
   Typography,
 } from '@mui/material';
+import { GoogleLogin } from '@react-oauth/google';
 import { useEffect, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
 import { getInitialBaseLanguage } from '../../../shared/i18n/helpers';
+import { trackEvent } from '../../../shared/lib/analytics';
 import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 import type { PresetItem } from '../../presets/types';
@@ -33,7 +40,7 @@ interface GuestOnboardingModalProps {
 
 export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingModalProps) {
   const { t, locale } = useTranslation();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [baseLanguage, setBaseLanguage] = useState(getInitialBaseLanguage(locale));
   const [targetLanguage, setTargetLanguage] = useState(locale === 'en' ? 'es' : 'en');
   const [presets, setPresets] = useState<PresetItem[]>([]);
@@ -42,9 +49,19 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
   const [guestPolicy, setGuestPolicy] = useState<{ allowGuestAi: boolean; dailyLimit: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Auth states for Step 1
+  const authProvider = import.meta.env.VITE_AUTH_PROVIDER;
+  const isTestAuth = authProvider === 'test-username';
+  const [testUsername, setTestUsername] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+
+  const setToken = useStore((state) => state.setToken);
+  const setMercureToken = useStore((state) => state.setMercureToken);
+  const setProfile = useStore((state) => state.setProfile);
   const addDictionary = useStore((state) => state.addDictionary);
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
   const setDictionary = useStore((state) => state.setDictionary);
+  const setHasCompletedGuestOnboarding = useStore((state) => state.setHasCompletedGuestOnboarding);
 
   useEffect(() => {
     if (open) {
@@ -59,6 +76,59 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
     }
   }, [open]);
 
+  const handleTestLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!testUsername.trim()) {
+      setError(t('auth.usernameRequired'));
+      return;
+    }
+    setAuthLoading(true);
+    setError(null);
+    try {
+      let res;
+      try {
+        res = await apiClient.post('/auth/login', { username: testUsername.trim() });
+      } catch (err: any) {
+        if (err.response?.status === 404 || err.response?.data?.error?.includes('not found')) {
+          res = await apiClient.post('/auth/register', { username: testUsername.trim() });
+        } else {
+          throw err;
+        }
+      }
+      const { token, mercureToken, user } = res.data;
+      setToken(token);
+      if (mercureToken) setMercureToken(mercureToken);
+      setProfile(user);
+      trackEvent('Sign In');
+      if (onClose) onClose();
+    } catch (err: any) {
+      setError(err.response?.data?.error || t('auth.authFailed'));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setAuthLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.post('/auth/google', {
+        credential: credentialResponse.credential,
+      });
+      const { token, mercureToken, user } = response.data;
+      setToken(token);
+      if (mercureToken) setMercureToken(mercureToken);
+      setProfile(user);
+      trackEvent('Sign In');
+      if (onClose) onClose();
+    } catch (err: any) {
+      console.error('Google auth error', err);
+      setError(err.response?.data?.error || t('auth.authFailed'));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const handleNextToPresets = async () => {
     if (!targetLanguage || !baseLanguage) {
       setError(t('auth.selectBothLanguages'));
@@ -71,7 +141,7 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
 
     setError(null);
     setLoadingPresets(true);
-    setStep(2);
+    setStep(3);
 
     try {
       const res = await apiClient.get('/preset', {
@@ -127,6 +197,7 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
     addDictionary(newDict);
     setActiveDictionaryId(dictId);
     setDictionary(words);
+    setHasCompletedGuestOnboarding(true);
 
     if (onClose) onClose();
   };
@@ -159,14 +230,18 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
               color: 'primary.contrastText',
             }}
           >
-            <SchoolRoundedIcon />
+            {step === 3 ? <LayersRoundedIcon /> : <SchoolRoundedIcon />}
           </Box>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 800 }}>
               {t('guest.onboardingTitle')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {t('guest.onboardingSubtitle')}
+              {step === 1
+                ? t('guest.stepAuth')
+                : step === 2
+                ? t('guest.stepLanguages')
+                : t('guest.stepPresets')}
             </Typography>
           </Box>
         </Box>
@@ -179,7 +254,116 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
           </Alert>
         )}
 
+        {/* STEP 1: AUTHENTICATION OFFER */}
         {step === 1 && (
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
+              {t('guest.authOfferTitle')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+              {t('guest.authOfferDesc')}
+            </Typography>
+
+            {/* Benefits list */}
+            <Box sx={{ display: 'grid', gap: 1.25, mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <SyncRoundedIcon color="primary" fontSize="small" />
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {t('guest.benefitSync')}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <TrendingUpRoundedIcon color="primary" fontSize="small" />
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {t('guest.benefitStats')}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <CloudDoneRoundedIcon color="primary" fontSize="small" />
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {t('guest.benefitBackup')}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Auth Buttons */}
+            <Box sx={{ display: 'grid', gap: 1.5, p: 2, borderRadius: 2.5, backgroundColor: (th) => alpha(th.palette.primary.main, 0.04), border: '1px solid', borderColor: 'divider' }}>
+              {isTestAuth ? (
+                <Box component="form" onSubmit={handleTestLogin} sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    placeholder={t('auth.username')}
+                    value={testUsername}
+                    onChange={(e) => setTestUsername(e.target.value)}
+                    disabled={authLoading}
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={authLoading || !testUsername.trim()}
+                    sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+                  >
+                    {authLoading ? <CircularProgress size={20} color="inherit" /> : t('auth.loginBtn')}
+                  </Button>
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                  {authLoading ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => setError(t('auth.googleLoginFailed'))}
+                      theme="outline"
+                      size="large"
+                      shape="rectangular"
+                      text="continue_with"
+                      width="100%"
+                    />
+                  )}
+                </Box>
+              )}
+
+              <Button
+                component={RouterLink}
+                to="/login"
+                variant="outlined"
+                color="inherit"
+                size="small"
+                sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 600 }}
+              >
+                {t('guest.loginOrRegisterBtn')}
+              </Button>
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
+              <Divider sx={{ flexGrow: 1 }} />
+              <Typography variant="caption" color="text.secondary" sx={{ px: 2, textTransform: 'uppercase', fontWeight: 700 }}>
+                {t('guest.orDivider')}
+              </Typography>
+              <Divider sx={{ flexGrow: 1 }} />
+            </Box>
+
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
+              endIcon={<ArrowForwardRoundedIcon />}
+              onClick={() => {
+                setError(null);
+                setStep(2);
+              }}
+              data-testid="guest-onboarding-continue-guest-btn"
+              sx={{ py: 1.25, borderRadius: 2.5, fontWeight: 700, textTransform: 'none' }}
+            >
+              {t('guest.continueAsGuest')}
+            </Button>
+          </Box>
+        )}
+
+        {/* STEP 2: LANGUAGE SELECTION */}
+        {step === 2 && (
           <Box sx={{ mt: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: 'text.secondary' }}>
               {t('guest.stepLanguages')}
@@ -199,7 +383,8 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
           </Box>
         )}
 
-        {step === 2 && (
+        {/* STEP 3: ADD SUBJECT / PRESETS */}
+        {step === 3 && (
           <Box sx={{ mt: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'text.secondary' }}>
               {t('guest.stepPresets')} ({targetLanguage.toUpperCase()})
@@ -276,12 +461,60 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
       <Divider />
 
       <DialogActions sx={{ px: 3, py: 2, display: 'flex', justifyContent: 'space-between' }}>
-        {step === 2 ? (
+        {step === 1 ? (
+          <>
+            <Button
+              component={RouterLink}
+              to="/login"
+              variant="text"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            >
+              {t('guest.loginOrRegisterBtn')}
+            </Button>
+            <Button
+              variant="contained"
+              endIcon={<ArrowForwardRoundedIcon />}
+              onClick={() => {
+                setError(null);
+                setStep(2);
+              }}
+              data-testid="guest-onboarding-next-btn"
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+            >
+              {t('common.next')}
+            </Button>
+          </>
+        ) : step === 2 ? (
           <>
             <Button
               variant="text"
               startIcon={<ArrowBackRoundedIcon />}
-              onClick={() => setStep(1)}
+              onClick={() => {
+                setError(null);
+                setStep(1);
+              }}
+              data-testid="guest-onboarding-back-btn"
+            >
+              {t('common.back')}
+            </Button>
+            <Button
+              variant="contained"
+              endIcon={<ArrowForwardRoundedIcon />}
+              onClick={handleNextToPresets}
+              data-testid="guest-onboarding-next-btn"
+            >
+              {t('common.next')}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="text"
+              startIcon={<ArrowBackRoundedIcon />}
+              onClick={() => {
+                setError(null);
+                setStep(2);
+              }}
               data-testid="guest-onboarding-back-btn"
             >
               {t('common.back')}
@@ -306,17 +539,6 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
               </Button>
             </Box>
           </>
-        ) : (
-          <Box sx={{ ml: 'auto' }}>
-            <Button
-              variant="contained"
-              endIcon={<ArrowForwardRoundedIcon />}
-              onClick={handleNextToPresets}
-              data-testid="guest-onboarding-next-btn"
-            >
-              {t('common.next')}
-            </Button>
-          </Box>
         )}
       </DialogActions>
     </Dialog>
