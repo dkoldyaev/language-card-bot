@@ -15,6 +15,22 @@ interface RawDefinition {
   tags: string[];
 }
 
+export type FreeDictionaryResponse = {
+  word: string;
+  entries: FreeDictionaryEntry[];
+}
+
+export type FreeDictionaryEntry = {
+  partOfSpeech: string;
+  senses: FreeDictionarySense[];
+}
+
+export type FreeDictionarySense = {
+  definition: string;
+  subsenses: FreeDictionarySense[];
+  tags: string[];
+}
+
 export class FreeDictionaryDefiner implements IDefiner {
   private translatorApiUrl: string;
   private translatorAppType: 'googletranslate' | 'mock' | 'laratranslate' | 'llm' | 'mistral' | 'gemini';
@@ -44,43 +60,13 @@ export class FreeDictionaryDefiner implements IDefiner {
         throw new Error(`Failed to fetch from FreeDictionary API: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
-      const rawDefinitions: RawDefinition[] = [];
-
-      if (data.entries && Array.isArray(data.entries)) {
-        for (const dictEntry of data.entries) {
-          const entryPartOfSpeech = typeof dictEntry.partOfSpeech === 'string' && dictEntry.partOfSpeech.trim().length > 0
-            ? dictEntry.partOfSpeech.trim()
-            : null;
-
-          if (dictEntry.senses && Array.isArray(dictEntry.senses)) {
-            for (const sense of dictEntry.senses) {
-              const parseSense = (s: any) => {
-                if (s?.definition && typeof s.definition === 'string' && s.definition.trim().length > 0) {
-                  const tags = Array.isArray(s.tags)
-                    ? s.tags.map((t: any) => String(t).trim()).filter((t: string) => t.length > 0)
-                    : [];
-                  rawDefinitions.push({
-                    text: s.definition.trim(),
-                    partOfSpeech: entryPartOfSpeech,
-                    tags,
-                  });
-                }
-                if (s?.subsenses && Array.isArray(s.subsenses)) {
-                  for (const subsense of s.subsenses) {
-                    parseSense(subsense);
-                  }
-                }
-              };
-              parseSense(sense);
-            }
-          }
-        }
-      }
-
-      if (rawDefinitions.length === 0) {
-        return [];
-      }
+      const data: FreeDictionaryResponse = await response.json();
+      const definitions: DefinitionItem[] = data.entries.map(({partOfSpeech, senses}) => senses.map(({definition: text, tags}) => ({
+        text,
+        partOfSpeech,
+        tags,
+        levels: [],
+      }))).flat();
 
       // FreeDictionary API definitions are provided in English.
       // If the requested language is not English, translate them in a batch using the Translator service.
@@ -94,7 +80,7 @@ export class FreeDictionaryDefiner implements IDefiner {
           body: JSON.stringify({
             sourceLanguage: 'en',
             targetLanguage: language,
-            texts: rawDefinitions.map((d) => d.text),
+            texts: definitions.map((d) => d.text),
             translatorApp: this.translatorAppType,
           }),
         });
@@ -107,8 +93,8 @@ export class FreeDictionaryDefiner implements IDefiner {
         const transData = (await transResponse.json()) as { translations?: string[] };
         if (transData?.translations && Array.isArray(transData.translations)) {
           transData.translations.forEach((translatedText, idx) => {
-            if (rawDefinitions[idx] && typeof translatedText === 'string') {
-              rawDefinitions[idx].text = translatedText;
+            if (definitions[idx] && typeof translatedText === 'string') {
+              definitions[idx].text = translatedText;
             }
           });
         }
@@ -119,9 +105,10 @@ export class FreeDictionaryDefiner implements IDefiner {
 A single definition can belong to one or more CEFR levels.
 
 Definitions:
-${rawDefinitions.map((d, index) => `${index + 1}. [${d.partOfSpeech || 'unknown'}] ${d.text}`).join('\n')}
+${definitions.map((d, index) => `${index + 1}. [${d.partOfSpeech || 'unknown'}] ${d.text}`).join('\n')}
 
-For each definition, provide an array of CEFR levels by 1-based index.`;
+For each definition, provide an array of CEFR levels by 1-based index.
+For each definition, provide a list of tags for this definition.`;
 
       const jsonFormat = {
         type: 'object',
@@ -134,6 +121,11 @@ For each definition, provide an array of CEFR levels by 1-based index.`;
                 index: {
                   type: 'number',
                   description: '1-based index corresponding to the definition in the list',
+                },
+                tags: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Tags for this definition',
                 },
                 levels: {
                   type: 'array',
@@ -169,27 +161,30 @@ For each definition, provide an array of CEFR levels by 1-based index.`;
 
       const llmData = (await llmResponse.json()) as {
         data?: {
-          levelsByIndex?: Array<{ index?: number; levels?: string[] }>;
+          levelsByIndex?: Array<{ index?: number; levels?: string[], tags?: string[] }>;
         };
       };
 
-      const levelsMap = new Map<number, string[]>();
+      const levelsMap = new Map<number, {levels:string[], tags: string[]}>();
       if (Array.isArray(llmData?.data?.levelsByIndex)) {
         for (const item of llmData.data.levelsByIndex) {
           if (typeof item?.index === 'number' && Array.isArray(item?.levels)) {
             levelsMap.set(
               item.index,
-              item.levels.map((l: any) => String(l).trim().toUpperCase()).filter(Boolean)
+              {
+                levels: item.levels.map((l: any) => String(l).trim().toUpperCase()).filter(Boolean),
+                tags: item.tags?.map((t: any) => String(t).trim().toLowerCase()).filter(Boolean) || [],
+              }
             );
           }
         }
       }
 
-      return rawDefinitions.map((d, index): DefinitionItem => ({
+      return definitions.map((d, index): DefinitionItem => ({
         text: d.text,
         partOfSpeech: d.partOfSpeech,
-        tags: d.tags,
-        levels: levelsMap.get(index + 1) || [],
+        tags: Array.from(new Set([...d.tags, ...(levelsMap.get(index + 1)?.tags || [])])),
+        levels: levelsMap.get(index + 1)?.levels || [],
       }));
     } catch (error) {
       console.error('FreeDictionary API error:', error);
