@@ -43,6 +43,9 @@ Options:
   --preset-level <level>   Level(s) for presets (default: A0,A1,A2,B1,B2,C1,C2)
   --preset-theme <theme>   Theme(s) for presets (default: IT,travel,common,food,work,shopping,education,health)
   --preset-word-count <n>  Target number of words per preset (default: 10)
+  --admin-email <email>    Email of admin user to create or promote to ADMIN
+  --admin-name <name>      Optional display name for the admin user
+  --admin-only             Only run admin user creation in container (skips deploy and presets)
   --check                  Perform HTTP check of deployed services
   -h, --help               Show help
 
@@ -50,6 +53,8 @@ Examples:
   npm run dokploy:deploy
   npm run dokploy:deploy -- dev
   npm run dokploy:deploy -- dev --skip-presets
+  npm run dokploy:deploy -- dev --admin-email admin@example.com
+  npm run dokploy:deploy -- dev --admin-only --admin-email admin@example.com
   npm run dokploy:deploy -- dev --presets-only
   npm run dokploy:deploy -- dev --presets-only --preset-language en --preset-level A1 --preset-theme IT --preset-word-count 5
   npm run dokploy:deploy -- feature-quiz --branch feature-quiz
@@ -62,6 +67,7 @@ const resetDb = args.includes('--reset-db') || args.includes('--recreate-db') ||
 const skipDeploy = args.includes('--skip-deploy') || args.includes('--no-deploy');
 const skipPresets = args.includes('--skip-presets') || args.includes('--no-presets');
 const presetsOnly = args.includes('--presets-only');
+const adminOnly = args.includes('--admin-only');
 const runCheck = args.includes('--check');
 const customBranch = getArgValue('--branch');
 const customAppName = getArgValue('--app-name') !== null ? getArgValue('--app-name') : 'app';
@@ -86,6 +92,9 @@ const rawPresetWordCount =
 const presetWordCount =
   rawPresetWordCount !== null ? rawPresetWordCount : '10';
 
+const cliAdminEmail = getArgValue('--admin-email');
+const cliAdminName = getArgValue('--admin-name');
+
 const positionalArgs = args.filter((a) => {
   if (a.startsWith('--')) return false;
   const prevIdx = args.indexOf(a) - 1;
@@ -102,6 +111,8 @@ const positionalArgs = args.filter((a) => {
       '--theme',
       '--preset-word-count',
       '--word-count',
+      '--admin-email',
+      '--admin-name',
     ].includes(args[prevIdx])
   ) {
     return false;
@@ -149,6 +160,13 @@ function loadEnv(filePath) {
 }
 
 const envVars = loadEnv(ENV_FILE_PATH);
+const envAdminEmail =
+  envVars['ADMIN_EMAIL'] !== undefined && envVars['ADMIN_EMAIL'] !== '' ? envVars['ADMIN_EMAIL'].trim() : null;
+const adminEmail = cliAdminEmail !== null ? cliAdminEmail.trim() : envAdminEmail;
+
+const envAdminName =
+  envVars['ADMIN_NAME'] !== undefined && envVars['ADMIN_NAME'] !== '' ? envVars['ADMIN_NAME'].trim() : null;
+const adminName = cliAdminName !== null ? cliAdminName.trim() : envAdminName;
 
 function requireEnvVar(name) {
   const value = envVars[name] !== undefined ? envVars[name] : process.env[name];
@@ -641,8 +659,10 @@ async function main() {
   }
 
   // 8. Trigger Deploy
-  if (skipDeploy || presetsOnly) {
-    if (presetsOnly) {
+  if (skipDeploy || presetsOnly || adminOnly) {
+    if (adminOnly) {
+      console.log('\n⏩ Flag --admin-only: compose deployment skipped, proceeding directly to admin user configuration.');
+    } else if (presetsOnly) {
       console.log('\n⏩ Flag --presets-only: compose deployment skipped, proceeding directly to preset creation.');
     } else {
       console.log('\n⏩ Flag --skip-deploy: deployment skipped.');
@@ -699,12 +719,11 @@ async function main() {
     }
   }
 
-  // 9. Preset Creation in app container
-  if (skipPresets || (skipDeploy && !presetsOnly)) {
-    console.log('\n⏩ Skipping preset creation in app container.');
-  } else {
+  let appContainer = null;
+
+  async function getAppContainer() {
+    if (appContainer) return appContainer;
     console.log('\n\x1b[34m🔍 Searching for running app container...\x1b[0m');
-    let appContainer = null;
     const containerWaitStart = Date.now();
 
     while (Date.now() - containerWaitStart < 60000) {
@@ -715,21 +734,29 @@ async function main() {
       if (running) {
         appContainer = running;
         console.log(`  ✅ Found app container: ${running.name} (${running.containerId})`);
-        break;
+        return appContainer;
       }
       await new Promise((r) => setTimeout(r, 2000));
     }
 
-    if (!appContainer) {
-      throw new Error(`Failed to find running app container for compose app "${composeApp.appName}"`);
-    }
+    throw new Error(`Failed to find running app container for compose app "${composeApp.appName}"`);
+  }
 
+  // 9. Preset Creation in app container
+  if (skipPresets || adminOnly || (skipDeploy && !presetsOnly)) {
+    if (adminOnly) {
+      console.log('\n⏩ Flag --admin-only: preset creation skipped.');
+    } else {
+      console.log('\n⏩ Skipping preset creation in app container.');
+    }
+  } else {
+    const container = await getAppContainer();
     const presetCmd = `cd /app && node run-script.js preset-create --language ${presetLanguage} --level ${presetLevel} --theme ${presetTheme} --word-count ${presetWordCount}`;
     console.log(`\n\x1b[34m⚙️  Executing preset creation in app container:\x1b[0m`);
     console.log(`  ${presetCmd}\n`);
 
     await execInContainer({
-      containerId: appContainer.containerId,
+      containerId: container.containerId,
       command: presetCmd,
       timeoutMs: 10 * 60 * 1000,
     });
@@ -737,7 +764,30 @@ async function main() {
     console.log('\n\x1b[32m✅ Presets created successfully!\x1b[0m');
   }
 
-  // 10. Optional Health Check
+  // 10. Admin User Creation in app container
+  if (adminEmail) {
+    console.log(`\n\x1b[34m👤 Ensuring admin user exists for email "${adminEmail}"...\x1b[0m`);
+    const container = await getAppContainer();
+
+    const cleanEmail = adminEmail.replace(/'/g, "\\'");
+    const cleanName = adminName !== null ? adminName.replace(/'/g, "\\'") : cleanEmail.split('@')[0];
+
+    const adminCmd = `cd /app && node -e "const { prisma } = require('./dist/prisma'); (async () => { const email = '${cleanEmail}'; const name = '${cleanName}'; let u = await prisma.user.findUnique({ where: { email } }); if (u) { u = await prisma.user.update({ where: { id: u.id }, data: { isAdmin: true, name: name } }); console.log('Promoted user #' + u.id + ' (' + u.email + ') to ADMIN'); } else { u = await prisma.user.create({ data: { email, name, isAdmin: true, state: { create: {} } } }); console.log('Created new ADMIN user #' + u.id + ' (' + u.email + ')'); } await prisma.\\$disconnect(); })().catch(e => { console.error(e); process.exit(1); });"`;
+
+    console.log(`  Command: ${adminCmd}\n`);
+
+    await execInContainer({
+      containerId: container.containerId,
+      command: adminCmd,
+      timeoutMs: 60000,
+    });
+
+    console.log(`\n\x1b[32m✅ Admin user "${adminEmail}" configured successfully!\x1b[0m`);
+  } else if (adminOnly) {
+    throw new Error('Flag --admin-only was passed but no --admin-email was specified.');
+  }
+
+  // 11. Optional Health Check
   if (runCheck) {
     console.log('\n--- VERIFYING DEPLOYED ENVIRONMENT ---');
     try {
@@ -770,6 +820,9 @@ async function main() {
   console.log(`📡 Mercure SSE:        https://${domainHost}/.well-known/mercure`);
   console.log(`🐘 Postgres AppName:   ${pgService.appName}`);
   console.log(`🔴 Redis AppName:      ${redisService.appName}`);
+  if (adminEmail) {
+    console.log(`👤 Admin User:         ${adminEmail}`);
+  }
   console.log(`🌿 Git Branch:         ${gitBranch}\n`);
 }
 

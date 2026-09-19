@@ -68,6 +68,58 @@ async function setAdminRole(identifier: string, isAdmin: boolean) {
   console.log(`Role is now: ${roleText}`);
 }
 
+async function createOrUpdateAdmin(emailInput: string, nameInput?: string) {
+  if (!emailInput || !emailInput.trim()) {
+    console.error('Error: Email is required.');
+    console.log('Usage: node run-script.js manage-users create-admin <email> [name]');
+    process.exit(1);
+  }
+
+  const cleanEmail = emailInput.trim().toLowerCase();
+  const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+
+  if (existingUser) {
+    const updated = await prisma.user.update({
+      where: { id: existingUser.id },
+      data: {
+        isAdmin: true,
+        ...(nameInput ? { name: nameInput.trim() } : {}),
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        isAdmin: true,
+      },
+    });
+    console.log(`\nUser with email "${cleanEmail}" already exists (ID: #${updated.id}).`);
+    console.log(`Promoted to ADMIN: ID: #${updated.id}, Email: ${updated.email}, Name: ${updated.name !== null ? updated.name : '-'}, Role: ADMIN`);
+    return updated;
+  }
+
+  const created = await prisma.user.create({
+    data: {
+      email: cleanEmail,
+      name: nameInput ? nameInput.trim() : cleanEmail.split('@')[0],
+      isAdmin: true,
+      state: {
+        create: {},
+      },
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      isAdmin: true,
+      createdAt: true,
+    },
+  });
+
+  console.log(`\nSuccessfully created new ADMIN user:`);
+  console.log(`ID: #${created.id}, Email: ${created.email}, Name: ${created.name !== null ? created.name : '-'}, Role: ADMIN`);
+  return created;
+}
+
 async function main() {
   const [,, command, ...args] = process.argv;
   const target = args[0];
@@ -86,18 +138,55 @@ async function main() {
       case 'regular':
         await setAdminRole(target, false);
         break;
+      case 'create-admin':
+      case 'add-admin': {
+        let emailArg: string | undefined;
+        let nameArg: string | undefined;
+
+        for (let i = 0; i < args.length; i++) {
+          const a = args[i];
+          if (a.startsWith('--email=')) {
+            emailArg = a.split('=')[1];
+          } else if (a === '--email') {
+            emailArg = args[++i];
+          } else if (a.startsWith('--name=')) {
+            nameArg = a.split('=')[1];
+          } else if (a === '--name') {
+            nameArg = args[++i];
+          } else if (!emailArg && !a.startsWith('--')) {
+            emailArg = a;
+          } else if (!nameArg && !a.startsWith('--')) {
+            nameArg = a;
+          }
+        }
+
+        if (!emailArg) {
+          console.error('Error: Email is required.');
+          console.log('Usage: node run-script.js manage-users create-admin <email> [name]');
+          process.exit(1);
+        }
+
+        await createOrUpdateAdmin(emailArg, nameArg);
+        break;
+      }
       default:
         console.log(`
 Available commands:
-  list                        - List all users
-  make-admin <id | email>     - Grant admin privileges to a user
-  make-regular <id | email>   - Set user as regular (revoke admin privileges)
+  list                                - List all users
+  create-admin <email> [name]         - Create a new admin user (or promote existing)
+  make-admin <id | email>             - Grant admin privileges to an existing user
+  make-regular <id | email>           - Set user as regular (revoke admin privileges)
 
 Examples:
   npm run users:list
+  npm run users:create-admin admin@example.com
+  npm run users:create-admin admin@example.com "Super Admin"
   npm run users:make-admin admin@example.com
   npm run users:make-regular 1
 `);
+        if (command) {
+          process.exit(1);
+        }
         break;
     }
   } catch (error) {
