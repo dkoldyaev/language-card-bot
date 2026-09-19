@@ -19,7 +19,14 @@ test.describe('Anonymous (Guest) Access Flow', () => {
     // 1. Visit root with empty storage as first-time guest
     await page.goto('/');
 
-    // Verify redirected to /onboarding and Onboarding Dialog/Card opens
+    // Verify stays on root and guest banner is visible (no unwanted redirect)
+    await expect(page).toHaveURL('/');
+    const initialGuestBanner = page.locator('[data-testid="guest-banner"]');
+    await expect(initialGuestBanner).toBeVisible();
+    await expect(initialGuestBanner).toContainText(/guest mode/i);
+
+    // Guest opens onboarding wizard
+    await page.goto('/onboarding');
     await expect(page).toHaveURL('/onboarding');
     const onboardingDialog = page.locator('[data-testid="guest-onboarding-dialog"]');
     await expect(onboardingDialog).toBeVisible({ timeout: 10000 });
@@ -137,6 +144,10 @@ test.describe('Anonymous (Guest) Access Flow', () => {
     // Sign out
     const signOutBtn = page.locator('button, [role="button"]').filter({ hasText: /Sign out|Logout/i }).first();
     await signOutBtn.click();
+    await expect(page).toHaveURL('/');
+
+    // Pick another preset as a new guest session
+    await page.goto('/onboarding');
     await expect(page).toHaveURL('/onboarding');
     await expect(onboardingDialog).toBeVisible({ timeout: 10000 });
 

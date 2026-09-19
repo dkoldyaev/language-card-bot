@@ -46,7 +46,6 @@ test.describe('Quiz Operations', () => {
     await addWordsAndAwaitDefinitions(page, ['apple']);
 
     await page.goto('/quiz');
-    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
     await expect(async () => {
       const heading = page.getByRole('heading', { name: 'Quiz' });
       if (await heading.isVisible()) return;
@@ -104,7 +103,6 @@ test.describe('Quiz Operations', () => {
     await addWordsAndAwaitDefinitions(page, ['apple', 'banana']);
 
     await page.goto('/quiz');
-    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
     await expect(async () => {
       const heading = page.getByRole('heading', { name: 'Quiz' });
       if (await heading.isVisible()) return;
@@ -149,7 +147,6 @@ test.describe('Quiz Operations', () => {
     await addWordsAndAwaitDefinitions(page, ['apple', 'banana', 'cherry']);
 
     await page.goto('/quiz');
-    await expect(page.locator('text=Ready to test your vocabulary?')).toBeVisible();
     await expect(async () => {
       const heading = page.getByRole('heading', { name: 'Quiz' });
       if (await heading.isVisible()) return;

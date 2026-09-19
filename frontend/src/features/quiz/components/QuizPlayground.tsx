@@ -35,7 +35,13 @@ export default function QuizPlayground() {
     setSubmitting(true);
     try {
       trackEvent('Card Answered');
-      await apiClient.post('/quiz/answer', { suggestion });
+      const res = await apiClient.post('/quiz/answer', { suggestion });
+      if (res.data?.evaluation) {
+        useStore.getState().setQuizEvaluation({
+          result: res.data.evaluation.result,
+          suggestion: res.data.evaluation.suggestion,
+        });
+      }
       setSuggestion('');
     } catch (error) {
       console.error('Failed to submit answer:', error);
@@ -248,6 +254,14 @@ export default function QuizPlayground() {
                       setSuggestion(variant);
                       trackEvent('Card Answered');
                       apiClient.post('/quiz/answer', { suggestion: variant })
+                        .then((res) => {
+                          if (res.data?.evaluation) {
+                            useStore.getState().setQuizEvaluation({
+                              result: res.data.evaluation.result,
+                              suggestion: res.data.evaluation.suggestion,
+                            });
+                          }
+                        })
                         .catch((error) => console.error(error));
                     }}
                   >

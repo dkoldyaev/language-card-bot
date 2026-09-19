@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from '../../../shared/i18n';
 import '../guideline.css';
+import useStore from '../../../store/useStore';
 import { useGuidelineStore } from '../store/useGuidelineStore';
 import type { GuidelineStep } from '../types';
 
@@ -94,6 +95,7 @@ export default function GuidelineController() {
   const resetGuideline = useGuidelineStore((state) => state.resetGuideline);
   const advanceStep = useGuidelineStore((state) => state.advanceStep);
   const closeGuideline = useGuidelineStore((state) => state.closeGuideline);
+  const token = useStore((state) => state.token);
 
   const driverInstanceRef = useRef<Driver | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -108,9 +110,9 @@ export default function GuidelineController() {
     }
   }, [location.search, location.pathname, resetGuideline]);
 
-  // Initialize guideline on main page if not completed
+  // Initialize guideline on main page if not completed and user is guest
   useEffect(() => {
-    if (isCompleted || isActive) return;
+    if (isCompleted || isActive || token) return;
 
     // Only start on main page
     if (location.pathname !== '/') return;
@@ -120,7 +122,7 @@ export default function GuidelineController() {
       startGuideline();
     }, 700);
     return () => clearTimeout(timer);
-  }, [isCompleted, isActive, location.pathname, startGuideline]);
+  }, [isCompleted, isActive, token, location.pathname, startGuideline]);
 
   // Clean up driver on unmount
   useEffect(() => {
@@ -149,6 +151,24 @@ export default function GuidelineController() {
     }
 
     if (!isActive || !currentStep || isStepDismissed) {
+      if (driverInstanceRef.current?.isActive()) {
+        driverInstanceRef.current.destroy();
+      }
+      return;
+    }
+
+    const validRoutes: Record<string, string[]> = {
+      step0_locale: ['/'],
+      step1_dict_selector: ['/'],
+      step2_create_dict_menu: ['/'],
+      step2_create_dict_dialog: ['/'],
+      step3_select_preset: ['/dictionary'],
+      step4_nav_quiz: ['/dictionary'],
+      completed: ['/quiz', '/'],
+    };
+
+    const allowed = validRoutes[currentStep];
+    if (allowed && !allowed.includes(location.pathname)) {
       if (driverInstanceRef.current?.isActive()) {
         driverInstanceRef.current.destroy();
       }

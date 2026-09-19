@@ -19,6 +19,7 @@ export async function login(page: Page, username: string) {
   await page.getByLabel(/Username|Login/i).fill(username);
   await page.click('button:has-text("Log in")');
   await expect(page).toHaveURL('/');
+  await page.evaluate(() => localStorage.setItem('cardbot_guideline_completed', 'true'));
 }
 
 export async function addWordsToDictionary(page: Page, words: string[]) {
