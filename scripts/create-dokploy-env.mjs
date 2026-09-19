@@ -33,16 +33,25 @@ Usage:
   node scripts/create-dokploy-env.mjs [environment-name] [options]
 
 Options:
-  --branch <name>        Git branch to deploy (default: current git branch)
-  --app-name <name>      Compose application name in Dokploy (default: app)
-  --reset-db             Reset database volumes on deploy (freshVolumes)
-  --skip-deploy          Create and configure environment without triggering deploy
-  --check                Perform HTTP check of deployed services
-  -h, --help             Show help
+  --branch <name>          Git branch to deploy (default: current git branch)
+  --app-name <name>        Compose application name in Dokploy (default: app)
+  --reset-db               Reset database volumes on deploy (freshVolumes)
+  --skip-deploy            Create and configure environment without triggering deploy
+  --skip-presets           Skip creating presets after deployment
+  --presets-only           Only run preset creation in container (skips stack deploy)
+  --preset-language <lang> Language(s) for presets (default: en,es,fr,de,ru,it,pt,zh,ja,tr)
+  --preset-level <level>   Level(s) for presets (default: A0,A1,A2,B1,B2,C1,C2)
+  --preset-theme <theme>   Theme(s) for presets (default: IT,travel,common,food,work,shopping,education,health)
+  --preset-word-count <n>  Target number of words per preset (default: 10)
+  --check                  Perform HTTP check of deployed services
+  -h, --help               Show help
 
 Examples:
   npm run dokploy:deploy
   npm run dokploy:deploy -- dev
+  npm run dokploy:deploy -- dev --skip-presets
+  npm run dokploy:deploy -- dev --presets-only
+  npm run dokploy:deploy -- dev --presets-only --preset-language en --preset-level A1 --preset-theme IT --preset-word-count 5
   npm run dokploy:deploy -- feature-quiz --branch feature-quiz
   npm run dokploy:deploy -- feature-quiz --skip-deploy
 `);
@@ -51,14 +60,50 @@ Examples:
 
 const resetDb = args.includes('--reset-db') || args.includes('--recreate-db') || args.includes('--fresh-volumes');
 const skipDeploy = args.includes('--skip-deploy') || args.includes('--no-deploy');
+const skipPresets = args.includes('--skip-presets') || args.includes('--no-presets');
+const presetsOnly = args.includes('--presets-only');
 const runCheck = args.includes('--check');
 const customBranch = getArgValue('--branch');
 const customAppName = getArgValue('--app-name') !== null ? getArgValue('--app-name') : 'app';
 
+const rawPresetLanguage =
+  getArgValue('--preset-language') !== null ? getArgValue('--preset-language') : getArgValue('--language');
+const presetLanguage =
+  rawPresetLanguage !== null ? rawPresetLanguage : 'en,es,fr,de,ru,it,pt,zh,ja,tr';
+
+const rawPresetLevel =
+  getArgValue('--preset-level') !== null ? getArgValue('--preset-level') : getArgValue('--level');
+const presetLevel =
+  rawPresetLevel !== null ? rawPresetLevel : 'A0,A1,A2,B1,B2,C1,C2';
+
+const rawPresetTheme =
+  getArgValue('--preset-theme') !== null ? getArgValue('--preset-theme') : getArgValue('--theme');
+const presetTheme =
+  rawPresetTheme !== null ? rawPresetTheme : 'IT,travel,common,food,work,shopping,education,health';
+
+const rawPresetWordCount =
+  getArgValue('--preset-word-count') !== null ? getArgValue('--preset-word-count') : getArgValue('--word-count');
+const presetWordCount =
+  rawPresetWordCount !== null ? rawPresetWordCount : '10';
+
 const positionalArgs = args.filter((a) => {
   if (a.startsWith('--')) return false;
   const prevIdx = args.indexOf(a) - 1;
-  if (prevIdx >= 0 && ['--branch', '--app-name'].includes(args[prevIdx])) {
+  if (
+    prevIdx >= 0 &&
+    [
+      '--branch',
+      '--app-name',
+      '--preset-language',
+      '--language',
+      '--preset-level',
+      '--level',
+      '--preset-theme',
+      '--theme',
+      '--preset-word-count',
+      '--word-count',
+    ].includes(args[prevIdx])
+  ) {
     return false;
   }
   return true;
@@ -170,6 +215,78 @@ function dokployRequest(endpoint, method = 'GET', body = null) {
     req.on('error', reject);
     if (bodyData) req.write(bodyData);
     req.end();
+  });
+}
+
+// Helper to execute commands inside container via Dokploy WebSocket Terminal
+function execInContainer({ containerId, command, timeoutMs = 600000 }) {
+  return new Promise((resolve, reject) => {
+    const wsUrl = new URL(BASE_URL);
+    const wsProtocol = wsUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socketUrl = `${wsProtocol}//${wsUrl.host}/docker-container-terminal?containerId=${containerId}&activeWay=sh`;
+
+    let timer = null;
+    const resetTimer = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (ws) ws.close();
+        reject(new Error(`Command execution timed out after ${Math.round(timeoutMs / 1000)}s of inactivity`));
+      }, timeoutMs);
+    };
+
+    const ws = new WebSocket(socketUrl, {
+      headers: {
+        'x-api-key': API_KEY,
+      },
+    });
+
+    let sent = false;
+    let fullOutput = '';
+    resetTimer();
+
+    ws.onopen = () => {
+      // Terminal connected, awaiting prompt
+    };
+
+    ws.onmessage = (event) => {
+      resetTimer();
+      const text = typeof event.data === 'string' ? event.data : event.data.toString();
+      process.stdout.write(text);
+      fullOutput += text;
+
+      // When shell prompt appears and command has not been sent yet
+      if (!sent && (fullOutput.includes('# ') || fullOutput.includes('$ '))) {
+        sent = true;
+        const wrappedCommand = `${command} && echo "__CMD_SUCCESS__" || echo "__CMD_FAILED__"\r`;
+        ws.send(wrappedCommand);
+      }
+
+      // Check for completion marker preceded by newline to avoid matching echoed input
+      if (sent && fullOutput.match(/[\r\n]__CMD_(SUCCESS|FAILED)__/)) {
+        if (timer) clearTimeout(timer);
+        const isSuccess = fullOutput.includes('__CMD_SUCCESS__');
+        setTimeout(() => {
+          ws.close();
+          if (isSuccess) {
+            resolve(fullOutput);
+          } else {
+            reject(new Error('Command execution failed in container'));
+          }
+        }, 500);
+      }
+    };
+
+    ws.onerror = (event) => {
+      if (timer) clearTimeout(timer);
+      reject(new Error(`WebSocket connection error to container terminal: ${event.message ? event.message : 'connection failed'}`));
+    };
+
+    ws.onclose = () => {
+      if (timer) clearTimeout(timer);
+      if (!sent) {
+        reject(new Error('WebSocket connection closed before command execution'));
+      }
+    };
   });
 }
 
@@ -427,6 +544,7 @@ async function main() {
   }
 
   const composeId = composeApp.composeId;
+  composeApp = await dokployRequest(`/compose.one?composeId=${composeId}`);
 
   // 7. Generate and save environment variables
   const domainHost = `${envName}.languagecards.194-163-164-255.sslip.io`;
@@ -523,8 +641,12 @@ async function main() {
   }
 
   // 8. Trigger Deploy
-  if (skipDeploy) {
-    console.log('\n⏩ Flag --skip-deploy: deployment skipped.');
+  if (skipDeploy || presetsOnly) {
+    if (presetsOnly) {
+      console.log('\n⏩ Flag --presets-only: compose deployment skipped, proceeding directly to preset creation.');
+    } else {
+      console.log('\n⏩ Flag --skip-deploy: deployment skipped.');
+    }
   } else {
     console.log('\n🚀 Triggering compose stack deployment...');
     const deployTriggerTime = Date.now() - 2000;
@@ -577,7 +699,45 @@ async function main() {
     }
   }
 
-  // 9. Optional Health Check
+  // 9. Preset Creation in app container
+  if (skipPresets || (skipDeploy && !presetsOnly)) {
+    console.log('\n⏩ Skipping preset creation in app container.');
+  } else {
+    console.log('\n\x1b[34m🔍 Searching for running app container...\x1b[0m');
+    let appContainer = null;
+    const containerWaitStart = Date.now();
+
+    while (Date.now() - containerWaitStart < 60000) {
+      const containers = (await dokployRequest('/docker.getContainers')) || [];
+      const running = containers.find(
+        (c) => c.name && c.name.includes(composeApp.appName) && c.name.includes('-app-') && c.state === 'running'
+      );
+      if (running) {
+        appContainer = running;
+        console.log(`  ✅ Found app container: ${running.name} (${running.containerId})`);
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+
+    if (!appContainer) {
+      throw new Error(`Failed to find running app container for compose app "${composeApp.appName}"`);
+    }
+
+    const presetCmd = `cd /app && node run-script.js preset-create --language ${presetLanguage} --level ${presetLevel} --theme ${presetTheme} --word-count ${presetWordCount}`;
+    console.log(`\n\x1b[34m⚙️  Executing preset creation in app container:\x1b[0m`);
+    console.log(`  ${presetCmd}\n`);
+
+    await execInContainer({
+      containerId: appContainer.containerId,
+      command: presetCmd,
+      timeoutMs: 10 * 60 * 1000,
+    });
+
+    console.log('\n\x1b[32m✅ Presets created successfully!\x1b[0m');
+  }
+
+  // 10. Optional Health Check
   if (runCheck) {
     console.log('\n--- VERIFYING DEPLOYED ENVIRONMENT ---');
     try {
