@@ -1,10 +1,19 @@
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import { alpha, Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
+import { alpha, Box, Tooltip, Typography } from '@mui/material';
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import {
+  AppChip,
+  AppIconButton,
+  colorTokens,
+  PageContainer,
+  radiusTokens,
+  spacingTokens,
+} from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 import AddWordForm from '../components/AddWordForm';
 import CreateDictionaryDialog from '../components/CreateDictionaryDialog';
@@ -64,7 +73,6 @@ export default function DictionaryPage() {
   }, [setDictionary, currentDictId, token]);
 
   const handleSelectDictionary = (dictId: number) => {
-    // Only switch working dictionary, do NOT switch active learning language
     setSelectedDictionaryId(dictId);
     if (!token) {
       const dictWords = useStore.getState().guestDictionaryWords[dictId] || [];
@@ -162,23 +170,16 @@ export default function DictionaryPage() {
   };
 
   return (
-    <Box className="animate-fade-in">
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-          <Typography variant="overline" color="secondary.main">
+    <PageContainer size="default">
+      <Box sx={{ mb: spacingTokens.section_header_gap * 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: spacingTokens.header_overline_title_gap }}>
+          <Typography variant="overline" color="secondary.main" sx={{ fontWeight: 800 }}>
             {t('dictionary.overline')}
           </Typography>
           {currentDict && (
-            <Chip
+            <AppChip
+              variant="lang"
               label={`${currentDict.targetLanguage.toUpperCase()} → ${currentDict.baseLanguage.toUpperCase()}`}
-              size="small"
-              sx={{
-                height: 22,
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                backgroundColor: alpha('#2453A6', 0.1),
-                color: 'primary.dark',
-              }}
             />
           )}
         </Box>
@@ -196,10 +197,10 @@ export default function DictionaryPage() {
               lineHeight: 1.2,
               outline: isEditingTitle ? '2px solid' : 'none',
               outlineColor: 'primary.main',
-              borderRadius: 1.5,
+              borderRadius: `${radiusTokens.sm}px`,
               px: isEditingTitle ? 1 : 0,
               py: isEditingTitle ? 0.25 : 0,
-              backgroundColor: isEditingTitle ? alpha('#2453A6', 0.05) : 'transparent',
+              backgroundColor: isEditingTitle ? alpha(colorTokens.brand.blue, 0.05) : 'transparent',
               transition: 'all 0.15s ease-in-out',
               cursor: isEditingTitle ? 'text' : 'inherit',
               wordBreak: 'break-word',
@@ -218,7 +219,7 @@ export default function DictionaryPage() {
                 <>
                   <Tooltip title={t('dictionary.saveTooltip')}>
                     <span>
-                      <IconButton
+                      <AppIconButton
                         size="small"
                         color="primary"
                         onClick={saveTitle}
@@ -227,12 +228,12 @@ export default function DictionaryPage() {
                         data-testid="save-dictionary-title-btn"
                       >
                         <CheckRoundedIcon fontSize="small" />
-                      </IconButton>
+                      </AppIconButton>
                     </span>
                   </Tooltip>
                   <Tooltip title={t('dictionary.cancelTooltip')}>
                     <span>
-                      <IconButton
+                      <AppIconButton
                         size="small"
                         onClick={cancelEditTitle}
                         disabled={isSavingTitle}
@@ -240,30 +241,29 @@ export default function DictionaryPage() {
                         data-testid="cancel-dictionary-title-btn"
                       >
                         <CloseRoundedIcon fontSize="small" />
-                      </IconButton>
+                      </AppIconButton>
                     </span>
                   </Tooltip>
                 </>
               ) : (
-                <Tooltip title={t('dictionary.renameTooltip')}>
-                  <IconButton
-                    size="small"
-                    onClick={startEditTitle}
-                    aria-label="Edit dictionary name"
-                    data-testid="edit-dictionary-title-btn"
-                    sx={{
-                      color: 'text.secondary',
-                      '&:hover': { color: 'primary.main', backgroundColor: alpha('#2453A6', 0.08) },
-                    }}
-                  >
-                    <EditRoundedIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                <AppIconButton
+                  size="small"
+                  onClick={startEditTitle}
+                  aria-label="Edit dictionary name"
+                  data-testid="edit-dictionary-title-btn"
+                  tooltip={t('dictionary.renameTooltip')}
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main', backgroundColor: alpha(colorTokens.brand.blue, 0.08) },
+                  }}
+                >
+                  <EditRoundedIcon fontSize="small" />
+                </AppIconButton>
               )}
             </Box>
           )}
         </Box>
-        <Typography variant="body1" sx={{ color: 'text.secondary', mt: 1, maxWidth: 620 }}>
+        <Typography variant="body1" sx={{ color: 'text.secondary', mt: spacingTokens.header_title_subtitle_gap, maxWidth: 620 }}>
           {currentDict
             ? t('dictionary.targetLanguageDesc', { target: currentDict.targetLanguage.toUpperCase(), base: currentDict.baseLanguage.toUpperCase() })
             : t('dictionary.defaultDesc')}
@@ -296,6 +296,6 @@ export default function DictionaryPage() {
           setSelectedDictionaryId(newDict.id);
         }}
       />
-    </Box>
+    </PageContainer>
   );
 }

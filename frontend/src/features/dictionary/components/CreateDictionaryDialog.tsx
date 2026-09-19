@@ -2,8 +2,6 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import {
   Alert,
   Box,
-  Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,7 +10,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  TextField,
   Typography,
 } from '@mui/material';
 import { type FormEvent, useState } from 'react';
@@ -20,6 +17,7 @@ import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
 import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
 import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
+import { AppButton, AppTextField, radiusTokens, spacingTokens } from '../../../shared/ui';
 import useStore, { type DictionaryItem } from '../../../store/useStore';
 import { useGuidelineStore } from '../../guideline';
 
@@ -28,7 +26,6 @@ interface CreateDictionaryDialogProps {
   onClose: () => void;
   onCreated?: (dict: DictionaryItem) => void;
 }
-
 
 export default function CreateDictionaryDialog({ open, onClose, onCreated }: CreateDictionaryDialogProps) {
   const { t, locale } = useTranslation();
@@ -97,7 +94,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
         setActiveDictionaryId(newDict.id);
       }
       setSelectedDictionaryId(newDict.id);
-      setDictionary([]); // New dictionary starts with empty words list
+      setDictionary([]);
 
       if (onCreated) {
         onCreated(newDict);
@@ -154,13 +151,13 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
         paper: {
           'data-tour': 'create-dictionary-dialog-paper',
           sx: {
-            borderRadius: 2,
+            borderRadius: `${radiusTokens.lg}px`,
             p: 1,
           },
         } as any,
       }}
     >
-      <DialogTitle sx={{ pb: 1 }}>
+      <DialogTitle sx={{ pb: 1, pt: 2, px: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
@@ -168,30 +165,31 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
               height: 36,
               display: 'grid',
               placeItems: 'center',
-              borderRadius: 2,
+              borderRadius: '50%',
               backgroundColor: '#FBE8E0',
               color: 'secondary.dark',
+              flexShrink: 0,
             }}
           >
             <AddRoundedIcon fontSize="small" />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>{t('dialogs.createDeckTitle')}</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>{t('dialogs.createDeckTitle')}</Typography>
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ pt: 2 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <DialogContent sx={{ px: 3, pt: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
           {t('dialogs.createDeckDesc')}
         </Typography>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mb: 2, borderRadius: `${radiusTokens.sm}px` }}>
             {error}
           </Alert>
         )}
 
         <Box
-          sx={{ display: 'grid', gap: 2.5 }}
+          sx={{ display: 'grid', gap: spacingTokens.form_field_gap }}
           onFocusCapture={handleInputFocus}
           onPointerDownCapture={handleInputFocus}
         >
@@ -203,6 +201,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
               label={t('dialogs.targetLangLabel')}
               onChange={(e) => setTargetLanguage(e.target.value)}
               inputProps={{ 'data-testid': 'dialog-target-language-select' }}
+              sx={{ borderRadius: `${radiusTokens.md}px` }}
             >
               {SUPPORTED_LOCALES.map((langCode) => (
                 <MenuItem key={langCode} value={langCode}>
@@ -220,6 +219,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
               label={t('dialogs.nativeLangLabel')}
               onChange={(e) => handleBaseLanguageChange(e.target.value)}
               inputProps={{ 'data-testid': 'dialog-native-language-select' }}
+              sx={{ borderRadius: `${radiusTokens.md}px` }}
             >
               {SUPPORTED_LOCALES.map((langCode) => (
                 <MenuItem key={langCode} value={langCode}>
@@ -229,7 +229,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
             </Select>
           </FormControl>
 
-          <TextField
+          <AppTextField
             label={t('dialogs.dictNameLabel')}
             placeholder={t('dialogs.dictNamePlaceholder', { target: targetLanguage, base: baseLanguage })}
             value={name}
@@ -240,20 +240,26 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={handleCancel} disabled={submitting} color="inherit">
-          {t('dialogs.cancel')}
-        </Button>
-        <Button
-          onClick={() => handleSubmit()}
-          variant="contained"
-          color="primary"
+      <DialogActions sx={{ px: 3, pb: 2.5, pt: 1.5, gap: 1 }}>
+        <AppButton
+          variant="ghost"
+          size="small"
+          onClick={handleCancel}
           disabled={submitting}
+        >
+          {t('dialogs.cancel')}
+        </AppButton>
+        <AppButton
+          variant="primary"
+          size="small"
+          onClick={() => handleSubmit()}
+          disabled={submitting}
+          loading={submitting}
           data-tour="create-dictionary-dialog-submit"
-          startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <AddRoundedIcon />}
+          startIcon={<AddRoundedIcon />}
         >
           {submitting ? t('dialogs.creatingDeckBtn') : t('dialogs.createDeckBtn')}
-        </Button>
+        </AppButton>
       </DialogActions>
     </Dialog>
   );

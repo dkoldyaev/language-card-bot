@@ -167,7 +167,7 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
               height: 42,
               display: 'grid',
               placeItems: 'center',
-              borderRadius: 2.5,
+              borderRadius: '50%',
               backgroundColor: 'primary.main',
               color: 'primary.contrastText',
             }}

@@ -3,10 +3,8 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import {
-  alpha,
   Box,
   Button,
-  Chip,
   Divider,
   ListItemIcon,
   ListItemText,
@@ -21,6 +19,7 @@ import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import { useTranslation } from '../i18n/I18nContext';
+import { AppChip, radiusTokens, spacingTokens } from '../ui';
 
 export default function DictionarySelector() {
   const { t } = useTranslation();
@@ -96,7 +95,7 @@ export default function DictionarySelector() {
           borderColor: 'divider',
           color: 'text.primary',
           backgroundColor: 'background.paper',
-          borderRadius: 2,
+          borderRadius: `${radiusTokens.md}px`,
           px: 1.5,
           py: 0.6,
           fontWeight: 600,
@@ -106,19 +105,12 @@ export default function DictionarySelector() {
           },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: spacingTokens.micro_gap * 1.5 }}>
           <span>{activeDict ? activeDict.name : t('dictionary.selectDictionary')}</span>
           {activeDict && (
-            <Chip
+            <AppChip
+              variant="lang"
               label={`${activeDict.targetLanguage.toUpperCase()} → ${activeDict.baseLanguage.toUpperCase()}`}
-              size="small"
-              sx={{
-                height: 20,
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                backgroundColor: alpha('#2453A6', 0.1),
-                color: 'primary.dark',
-              }}
             />
           )}
         </Box>
@@ -134,7 +126,7 @@ export default function DictionarySelector() {
             'data-tour': 'dictionary-menu-paper',
             sx: {
               minWidth: 260,
-              borderRadius: 2,
+              borderRadius: `${radiusTokens.lg}px`,
               boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
               mt: 0.75,
             },

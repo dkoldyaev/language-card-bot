@@ -1,11 +1,13 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
-import { Alert, alpha, Box, Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
+import { Alert, alpha, Box, Button, Typography } from '@mui/material';
+import type React from 'react';
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
+import { AppButton, AppCard, AppTextField, radiusTokens, spacingTokens } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 
 interface QuickAddWordCardProps {
@@ -50,98 +52,107 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
   };
 
   return (
-    <Card sx={{ backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
-      <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              display: 'grid',
-              placeItems: 'center',
-              borderRadius: 2,
-              color: 'secondary.main',
-              backgroundColor: alpha('#E8A17F', 0.15),
-            }}
-          >
-            <AddRoundedIcon fontSize="small" />
-          </Box>
-          <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-              {t('dashboard.quickAddTitle')}
-            </Typography>
-            {targetDict && (
-              <Typography variant="caption" color="text.secondary">
-                {targetDict.name} ({targetDict.targetLanguage.toUpperCase()})
-              </Typography>
-            )}
-          </Box>
+    <AppCard padding="compact">
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: spacingTokens.element_group_gap * 1.5 }}>
+        <Box
+          sx={{
+            width: 34,
+            height: 34,
+            display: 'grid',
+            placeItems: 'center',
+            borderRadius: '50%',
+            color: 'secondary.main',
+            backgroundColor: alpha('#E8A17F', 0.15),
+            flexShrink: 0,
+          }}
+        >
+          <AddRoundedIcon fontSize="small" />
         </Box>
-
-        {successWord && (
-          <Alert severity="success" sx={{ mb: 1.5, py: 0 }} onClose={() => setSuccessWord(null)}>
-            {t('dashboard.quickAddSuccess', { word: successWord })}
-          </Alert>
-        )}
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 1.5, py: 0 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
-
-        {!token ? (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 1.5,
-              p: 1.5,
-              borderRadius: 2,
-              backgroundColor: (th) => (th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.08) : '#F4F7FB'),
-              border: '1px solid',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem' }}>
-              {t('dashboard.quickAddAuthNotice')}
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+            {t('dashboard.quickAddTitle')}
+          </Typography>
+          {targetDict && (
+            <Typography variant="caption" color="text.secondary">
+              {targetDict.name} ({targetDict.targetLanguage.toUpperCase()})
             </Typography>
-            <Button
-              component={RouterLink}
-              to="/login"
-              size="small"
-              variant="outlined"
-              color="primary"
-              data-testid="quick-add-login-btn"
-              sx={{ whiteSpace: 'nowrap', textTransform: 'none', fontWeight: 700 }}
-            >
-              {t('auth.submitLogin')}
-            </Button>
-          </Box>
-        ) : (
-          <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', gap: 1 }}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder={t('dashboard.quickAddPlaceholder')}
-              value={wordText}
-              onChange={(e) => setWordText(e.target.value)}
-              disabled={submitting}
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              disabled={!wordText.trim() || submitting}
-              endIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendRoundedIcon fontSize="small" />}
-              sx={{ whiteSpace: 'nowrap', px: 2 }}
-            >
-              {t('dashboard.quickAddBtn')}
-            </Button>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </Box>
+      </Box>
+
+      {successWord && (
+        <Alert
+          severity="success"
+          sx={{ mb: spacingTokens.element_group_gap * 1.5, py: 0, borderRadius: `${radiusTokens.sm}px` }}
+          onClose={() => setSuccessWord(null)}
+        >
+          {t('dashboard.quickAddSuccess', { word: successWord })}
+        </Alert>
+      )}
+
+      {error && (
+        <Alert
+          severity="error"
+          sx={{ mb: spacingTokens.element_group_gap * 1.5, py: 0, borderRadius: `${radiusTokens.sm}px` }}
+          onClose={() => setError(null)}
+        >
+          {error}
+        </Alert>
+      )}
+
+      {!token ? (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: spacingTokens.element_group_gap * 1.5,
+            p: spacingTokens.element_group_gap * 1.5,
+            borderRadius: `${radiusTokens.md}px`,
+            backgroundColor: (th) =>
+              th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.08) : '#F4F7FB',
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem' }}>
+            {t('dashboard.quickAddAuthNotice')}
+          </Typography>
+          <Button
+            component={RouterLink}
+            to="/login"
+            size="small"
+            variant="outlined"
+            color="primary"
+            data-testid="quick-add-login-btn"
+            sx={{ whiteSpace: 'nowrap', textTransform: 'none', fontWeight: 700, borderRadius: `${radiusTokens.sm}px` }}
+          >
+            {t('auth.submitLogin')}
+          </Button>
+        </Box>
+      ) : (
+        <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', gap: spacingTokens.element_group_gap }}>
+          <AppTextField
+            size="small"
+            fullWidth
+            placeholder={t('dashboard.quickAddPlaceholder')}
+            value={wordText}
+            onChange={(e) => setWordText(e.target.value)}
+            disabled={submitting}
+          />
+          <AppButton
+            type="submit"
+            variant="primary"
+            size="small"
+            disabled={!wordText.trim() || submitting}
+            loading={submitting}
+            endIcon={<SendRoundedIcon fontSize="small" />}
+            sx={{ whiteSpace: 'nowrap', px: 2 }}
+          >
+            {t('dashboard.quickAddBtn')}
+          </AppButton>
+        </Box>
+      )}
+    </AppCard>
   );
 }

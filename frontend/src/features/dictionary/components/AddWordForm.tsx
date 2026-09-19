@@ -1,11 +1,12 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
-import { Box, Button, Card, CardContent, CircularProgress, TextField, Typography, alpha } from '@mui/material';
+import { alpha, Box, Typography } from '@mui/material';
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
+import { AppButton, AppCard, AppTextField, radiusTokens, spacingTokens } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 
 interface AddWordFormProps {
@@ -43,86 +44,91 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
   };
 
   return (
-    <Card sx={{ mb: 4, backgroundColor: 'background.paper' }}>
-      <CardContent sx={{ p: { xs: 2, sm: 3 }, '&:last-child': { pb: { xs: 2, sm: 3 } } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.75 }}>
-          <Box
-            sx={{
-              width: 38,
-              height: 38,
-              display: 'grid',
-              placeItems: 'center',
-              borderRadius: 2,
-              color: 'secondary.dark',
-              backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.secondary.main, 0.15) : '#FBE8E0',
-            }}
-          >
-            <AddRoundedIcon fontSize="small" />
-          </Box>
-          <Box>
-            <Typography variant="subtitle1">
-              {targetDict ? t('dictionary.addWordsToDeck', { name: targetDict.name }) : t('dictionary.addWords')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {targetDict ? t('dictionary.targetLangPrefix', { lang: targetDict.targetLanguage.toUpperCase() }) : ''}{t('dictionary.oneWordPerLine')}
-            </Typography>
-          </Box>
+    <AppCard
+      padding="normal"
+      sx={{ mb: spacingTokens.section_vertical_gap }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: spacingTokens.element_group_gap * 2 }}>
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            display: 'grid',
+            placeItems: 'center',
+            borderRadius: '50%',
+            color: 'secondary.dark',
+            backgroundColor: (th) =>
+              th.palette.mode === 'dark' ? alpha(th.palette.secondary.main, 0.15) : '#FBE8E0',
+            flexShrink: 0,
+          }}
+        >
+          <AddRoundedIcon fontSize="small" />
         </Box>
+        <Box>
+          <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+            {targetDict ? t('dictionary.addWordsToDeck', { name: targetDict.name }) : t('dictionary.addWords')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {targetDict ? t('dictionary.targetLangPrefix', { lang: targetDict.targetLanguage.toUpperCase() }) : ''}
+            {t('dictionary.oneWordPerLine')}
+          </Typography>
+        </Box>
+      </Box>
 
-        {!token ? (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 2,
-              p: 2,
-              borderRadius: 2,
-              backgroundColor: (th) => (th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.08) : '#F4F7FB'),
-              border: '1px solid',
-              borderColor: 'divider',
-              flexWrap: 'wrap',
-            }}
+      {!token ? (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            p: 2,
+            borderRadius: `${radiusTokens.md}px`,
+            backgroundColor: (th) =>
+              th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.08) : '#F4F7FB',
+            border: '1px solid',
+            borderColor: 'divider',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+            {t('dictionary.addWordsAuthNotice')}
+          </Typography>
+          <AppButton
+            component={RouterLink}
+            to="/login"
+            size="small"
+            variant="primary"
           >
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-              {t('dictionary.addWordsAuthNotice')}
-            </Typography>
-            <Button
-              component={RouterLink}
-              to="/login"
-              variant="contained"
-              size="small"
-              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
-            >
-              {t('auth.loginTitle')}
-            </Button>
-          </Box>
-        ) : (
-          <>
-            <TextField
-              label={t('dictionary.wordsToAddLabel')}
-              multiline
-              rows={4}
-              fullWidth
-              value={wordsText}
-              onChange={(e) => setWordsText(e.target.value)}
-              placeholder={t('dictionary.placeholderWords')}
-              disabled={submitting}
-              helperText={t('dictionary.helperText')}
-              sx={{ mb: 2.25 }}
-            />
+            {t('auth.loginTitle')}
+          </AppButton>
+        </Box>
+      ) : (
+        <>
+          <AppTextField
+            label={t('dictionary.wordsToAddLabel')}
+            multiline
+            rows={4}
+            fullWidth
+            value={wordsText}
+            onChange={(e) => setWordsText(e.target.value)}
+            placeholder={t('dictionary.placeholderWords')}
+            disabled={submitting}
+            helperText={t('dictionary.helperText')}
+            sx={{ mb: spacingTokens.element_group_gap * 2 }}
+          />
 
-            <Button
-              variant="contained"
-              disabled={!wordsText.trim() || submitting}
-              onClick={handleSubmitWords}
-              endIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <SendRoundedIcon />}
-            >
-              {submitting ? t('dictionary.submittingBtn') : t('dictionary.submitWordsBtn')}
-            </Button>
-          </>
-        )}
-      </CardContent>
-    </Card>
+          <AppButton
+            variant="primary"
+            disabled={!wordsText.trim() || submitting}
+            loading={submitting}
+            onClick={handleSubmitWords}
+            endIcon={<SendRoundedIcon />}
+          >
+            {submitting ? t('dictionary.submittingBtn') : t('dictionary.submitWordsBtn')}
+          </AppButton>
+        </>
+      )}
+    </AppCard>
   );
 }

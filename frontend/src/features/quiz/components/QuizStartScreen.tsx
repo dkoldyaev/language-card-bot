@@ -69,6 +69,7 @@ export default function QuizStartScreen() {
                 placeItems: 'center',
                 color: '#172033',
                 backgroundColor: '#E8A17F',
+                borderRadius: '50%',
               }}
             >
               <SchoolRoundedIcon sx={{ fontSize: 30 }} />

@@ -9,6 +9,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import { colorTokens, radiusTokens, spacingTokens } from '../../../shared/ui';
 import type { DictionaryItem } from '../../../store/useStore';
 
 interface DictionarySwitcherProps {
@@ -36,8 +37,8 @@ export default function DictionarySwitcher({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: 1.5,
-        mb: 3,
+        gap: spacingTokens.element_group_gap * 1.5,
+        mb: spacingTokens.section_vertical_gap,
         flexWrap: 'wrap',
       }}
     >
@@ -45,7 +46,7 @@ export default function DictionarySwitcher({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
+          gap: spacingTokens.element_group_gap,
           flexWrap: 'wrap',
         }}
       >
@@ -59,7 +60,7 @@ export default function DictionarySwitcher({
               sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                borderRadius: 2,
+                borderRadius: `${radiusTokens.md}px`,
                 border: '1px solid',
                 borderColor: isSelected ? 'primary.main' : 'divider',
                 backgroundColor: isSelected ? 'primary.main' : 'background.paper',
@@ -79,7 +80,7 @@ export default function DictionarySwitcher({
                   color: isSelected ? '#FFFFFF' : 'text.primary',
                   px: 1.75,
                   py: 0.75,
-                  fontWeight: isSelected ? 700 : 500,
+                  fontWeight: isSelected ? 800 : 600,
                   fontSize: '0.875rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -98,7 +99,8 @@ export default function DictionarySwitcher({
                     height: 20,
                     fontSize: '0.68rem',
                     fontWeight: 700,
-                    backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.22)' : alpha('#2453A6', 0.08),
+                    borderRadius: `${radiusTokens.sm}px`,
+                    backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.22)' : alpha(colorTokens.brand.blue, 0.08),
                     color: isSelected ? '#FFFFFF' : 'primary.main',
                   }}
                 />
@@ -111,8 +113,9 @@ export default function DictionarySwitcher({
                         height: 18,
                         fontSize: '0.6rem',
                         fontWeight: 800,
-                        backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.3)' : alpha('#24756D', 0.12),
-                        color: isSelected ? '#FFFFFF' : '#24756D',
+                        borderRadius: `${radiusTokens.sm}px`,
+                        backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.3)' : alpha(colorTokens.learningStatus.mastered.color, 0.12),
+                        color: isSelected ? '#FFFFFF' : colorTokens.learningStatus.mastered.color,
                       }}
                     />
                   </Tooltip>
@@ -153,18 +156,18 @@ export default function DictionarySwitcher({
         startIcon={<AddRoundedIcon />}
         onClick={onOpenCreateDialog}
         sx={{
-          borderRadius: 2,
+          borderRadius: `${radiusTokens.md}px`,
           textTransform: 'none',
-          fontWeight: 600,
+          fontWeight: 700,
           borderColor: 'divider',
           color: 'text.primary',
           backgroundColor: 'background.paper',
-          px: 1.5,
-          py: 0.7,
+          px: 1.75,
+          py: 0.75,
           '&:hover': {
             borderColor: 'primary.main',
             color: 'primary.main',
-            backgroundColor: alpha('#2453A6', 0.04),
+            backgroundColor: alpha(colorTokens.brand.blue, 0.04),
           },
         }}
       >

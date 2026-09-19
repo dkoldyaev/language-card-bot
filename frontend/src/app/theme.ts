@@ -1,9 +1,10 @@
 import { alpha, createTheme, type Theme } from '@mui/material/styles';
+import { colorTokens, radiusTokens } from '../shared/ui/tokens';
 
-const ink = '#172033';
-const blue = '#2453A6';
-const coral = '#D86642';
-const paper = '#F7F5EF';
+const ink = colorTokens.brand.ink;
+const blue = colorTokens.brand.blue;
+const coral = colorTokens.brand.coral;
+const paper = colorTokens.brand.paper;
 
 export function createAppTheme(mode: 'light' | 'dark' = 'light'): Theme {
   const isDark = mode === 'dark';
@@ -89,7 +90,7 @@ export function createAppTheme(mode: 'light' | 'dark' = 'light'): Theme {
       button: { fontWeight: 750, textTransform: 'none', letterSpacing: '0' },
       overline: { fontWeight: 800, letterSpacing: '0.11em', lineHeight: 1.45 },
     },
-    shape: { borderRadius: 14 },
+    shape: { borderRadius: radiusTokens.lg },
     components: {
       MuiCssBaseline: {
         styleOverrides: {
@@ -104,7 +105,7 @@ export function createAppTheme(mode: 'light' | 'dark' = 'light'): Theme {
         styleOverrides: {
           root: {
             minHeight: 44,
-            borderRadius: 12,
+            borderRadius: radiusTokens.md,
             padding: '10px 18px',
             boxShadow: 'none',
             transition: 'background-color 160ms ease, border-color 160ms ease, color 160ms ease',
@@ -127,7 +128,7 @@ export function createAppTheme(mode: 'light' | 'dark' = 'light'): Theme {
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 20,
+            borderRadius: radiusTokens.xl,
             border: `1px solid ${dividerColor}`,
             backgroundColor: bgPaper,
             boxShadow: isDark
@@ -148,7 +149,7 @@ export function createAppTheme(mode: 'light' | 'dark' = 'light'): Theme {
         styleOverrides: {
           root: {
             '& .MuiOutlinedInput-root': {
-              borderRadius: 12,
+              borderRadius: radiusTokens.md,
               backgroundColor: bgPaper,
               '& fieldset': { borderColor: borderColor },
               '&:hover fieldset': {
@@ -165,20 +166,20 @@ export function createAppTheme(mode: 'light' | 'dark' = 'light'): Theme {
       MuiSelect: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
+            borderRadius: radiusTokens.md,
             backgroundColor: bgPaper,
           },
         },
       },
       MuiChip: {
-        styleOverrides: { root: { borderRadius: 8, fontWeight: 750 } },
+        styleOverrides: { root: { borderRadius: radiusTokens.sm, fontWeight: 750 } },
       },
       MuiIconButton: {
         styleOverrides: {
           root: {
             minWidth: 40,
             minHeight: 40,
-            borderRadius: 10,
+            borderRadius: '50%',
             '&:hover': { backgroundColor: alpha(primaryMain, isDark ? 0.12 : 0.06) },
           },
         },

@@ -205,7 +205,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                 height: 38,
                 display: 'grid',
                 placeItems: 'center',
-                borderRadius: 2,
+                borderRadius: '50%',
                 color: 'primary.dark',
                 backgroundColor: alpha(theme.palette.primary.main, 0.12),
               }}

@@ -28,7 +28,7 @@ export default function ThemeSwitcher({ size = 'small' }: ThemeSwitcherProps) {
           border: '1px solid',
           borderColor: 'divider',
           backgroundColor: 'background.paper',
-          borderRadius: 2,
+          borderRadius: '50%',
           width: 38,
           height: 38,
           transition: 'background-color 160ms ease, border-color 160ms ease, color 160ms ease',

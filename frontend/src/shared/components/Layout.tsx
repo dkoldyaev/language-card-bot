@@ -1,10 +1,11 @@
-import { Alert, Box, Button, Typography, alpha, useMediaQuery, useTheme } from '@mui/material';
+import { Alert, alpha, Box, Button, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { useEffect } from 'react';
-import { Link as RouterLink, Outlet } from 'react-router-dom';
+import { Outlet, Link as RouterLink } from 'react-router-dom';
 import { GuidelineController } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import { useTranslation } from '../i18n/I18nContext';
+import { radiusTokens, spacingTokens } from '../ui/tokens';
 import DictionarySelector from './DictionarySelector';
 import LocaleSwitcher from './LocaleSwitcher';
 import Sidebar from './Sidebar';
@@ -87,7 +88,7 @@ export default function Layout() {
           <Box
             sx={{
               minHeight: 64,
-              px: 2,
+              px: spacingTokens.page_outer_horizontal_padding,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -97,11 +98,11 @@ export default function Layout() {
               backdropFilter: 'blur(14px)',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: spacingTokens.element_group_gap }}>
               <Box component="img" src="/favicon.svg" alt="" sx={{ width: 28, height: 28 }} />
               <Typography sx={{ fontWeight: 800, letterSpacing: '-0.035em' }}>CardBot</Typography>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: spacingTokens.element_group_gap }}>
               <ThemeSwitcher />
               <DictionarySelector />
               <LocaleSwitcher />
@@ -113,13 +114,13 @@ export default function Layout() {
               maxWidth: 1120,
               width: '100%',
               mx: 'auto',
-              px: { xs: 2, sm: 3, md: 4 },
-              pt: 2.5,
+              px: spacingTokens.page_outer_horizontal_padding,
+              pt: spacingTokens.page_outer_vertical_padding,
               pb: 0,
               display: 'flex',
               justifyContent: 'flex-end',
               alignItems: 'center',
-              gap: 1.5,
+              gap: spacingTokens.element_group_gap * 1.5,
             }}
           >
             <ThemeSwitcher />
@@ -129,9 +130,11 @@ export default function Layout() {
         )}
 
         {isOffline && (
-          <Alert severity="warning" sx={{ mx: { xs: 2, sm: 3 }, mt: 2 }}>
-            {t('common.offlineNotice')}
-          </Alert>
+          <Box sx={{ maxWidth: 1120, width: '100%', mx: 'auto', px: spacingTokens.page_outer_horizontal_padding, mt: spacingTokens.element_group_gap * 2 }}>
+            <Alert severity="warning">
+              {t('common.offlineNotice')}
+            </Alert>
+          </Box>
         )}
 
         <Box
@@ -139,8 +142,8 @@ export default function Layout() {
             maxWidth: 1120,
             width: '100%',
             mx: 'auto',
-            px: { xs: 2, sm: 3, md: 4 },
-            py: { xs: 3, md: 4 },
+            px: spacingTokens.page_outer_horizontal_padding,
+            py: spacingTokens.page_outer_vertical_padding,
             flexGrow: 1,
           }}
         >
@@ -156,14 +159,14 @@ export default function Layout() {
                   size="small"
                   variant="outlined"
                   data-testid="guest-banner-auth-btn"
-                  sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none', whiteSpace: 'nowrap' }}
+                  sx={{ borderRadius: `${radiusTokens.sm}px`, fontWeight: 700, textTransform: 'none', whiteSpace: 'nowrap' }}
                 >
                   {t('guest.bannerAction')}
                 </Button>
               }
               sx={{
-                borderRadius: 3,
-                mb: 3,
+                borderRadius: `${radiusTokens.lg}px`,
+                mb: spacingTokens.section_header_gap * 1.5,
                 alignItems: 'center',
                 backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.info.main, 0.15) : '#EBF5FF',
               }}

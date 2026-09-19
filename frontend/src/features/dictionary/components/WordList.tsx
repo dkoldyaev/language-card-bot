@@ -2,18 +2,38 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import {
-  Accordion, AccordionDetails,AccordionSummary, alpha,Box, Button, Card, CardContent,Checkbox, 
-  Chip, CircularProgress,Divider, FormControlLabel, 
-  IconButton, InputAdornment, TextField, Tooltip, 
-  Typography, 
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  alpha,
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  Divider,
+  FormControlLabel,
+  IconButton,
+  TextField,
+  Tooltip,
+  Typography,
 } from '@mui/material';
+import type React from 'react';
 import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import StatusChip from '../../../shared/components/StatusChip';
 import { useTranslation } from '../../../shared/i18n';
 import { trackEvent } from '../../../shared/lib/analytics';
+import {
+  AppButton,
+  AppChip,
+  AppSearchInput,
+  colorTokens,
+  EmptyState,
+  LoadingState,
+  radiusTokens,
+  spacingTokens,
+} from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 
 export default function WordList({ loading }: { loading: boolean }) {
@@ -97,7 +117,7 @@ export default function WordList({ loading }: { loading: boolean }) {
           await apiClient.post('/word_delete/bulk', { wordIds: Array.from(selectedWordIds) });
         }
         trackEvent('Word Deleted', { count: selectedWordIds.size });
-        const remaining = dictionary.filter(w => !selectedWordIds.has(w.id));
+        const remaining = dictionary.filter((w) => !selectedWordIds.has(w.id));
         setDictionary(remaining);
         setSelectedWordIds(new Set());
       } catch (error) {
@@ -160,44 +180,49 @@ export default function WordList({ loading }: { loading: boolean }) {
   };
 
   return (
-    <Box sx={{ mb: 2 }}>
-      <Typography variant="h5" sx={{ mb: 1.75 }}>
-        {t('dictionary.yourWords')}
+    <Box sx={{ mb: spacingTokens.section_vertical_gap }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: spacingTokens.element_group_gap * 2 }}>
+        <Typography variant="h5" sx={{ fontWeight: 800 }}>
+          {t('dictionary.yourWords')}
+        </Typography>
         {dictionary.length > 0 && (
           <Chip
             label={dictionary.length}
             size="small"
             sx={{
-              ml: 1.5,
-              backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.2) : '#E7EEF9',
-              color: (th) => th.palette.mode === 'dark' ? th.palette.primary.light : 'primary.dark',
-              fontWeight: 700,
+              borderRadius: `${radiusTokens.sm}px`,
+              backgroundColor: (th) =>
+                th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.2) : '#E7EEF9',
+              color: (th) =>
+                th.palette.mode === 'dark' ? th.palette.primary.light : 'primary.dark',
+              fontWeight: 800,
               fontSize: '0.75rem',
             }}
           />
         )}
-      </Typography>
+      </Box>
 
       {/* Search + Bulk Actions */}
       {dictionary.length > 0 && (
-        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-          <TextField
-            size="small"
-            placeholder={t('dictionary.searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchRoundedIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{ flex: 1, minWidth: 200 }}
-          />
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: spacingTokens.element_group_gap * 2,
+            mb: spacingTokens.element_group_gap * 2,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+          }}
+        >
+          <Box sx={{ flex: 1, minWidth: 220 }}>
+            <AppSearchInput
+              placeholder={t('dictionary.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery('')}
+              fullWidth
+            />
+          </Box>
+          <Box sx={{ display: 'flex', gap: spacingTokens.element_group_gap * 1.5, alignItems: 'center' }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -206,280 +231,271 @@ export default function WordList({ loading }: { loading: boolean }) {
                   disabled={filteredDictionary.length === 0}
                   onChange={handleSelectAll}
                   size="small"
+                  slotProps={{
+                    input: {
+                      'data-indeterminate': isFilteredIndeterminate ? 'true' : 'false',
+                    } as any,
+                  }}
                 />
               }
-              label={<Typography variant="body2">{t('dictionary.selectAll')}</Typography>}
+              label={<Typography variant="body2" sx={{ fontWeight: 600 }}>{t('dictionary.selectAll')}</Typography>}
               sx={{ mr: 0 }}
             />
             {selectedWordIds.size > 0 && (
-              <Button
-                variant="outlined"
-                color="error"
+              <AppButton
+                variant="outline"
                 size="small"
-                startIcon={<DeleteIcon />}
+                startIcon={<DeleteIcon fontSize="small" />}
                 onClick={handleBulkDelete}
-                sx={{ whiteSpace: 'nowrap' }}
+                sx={{
+                  color: 'error.main',
+                  borderColor: 'error.main',
+                  '&:hover': {
+                    backgroundColor: alpha(colorTokens.learningStatus.attention.color, 0.08),
+                    borderColor: 'error.dark',
+                  },
+                }}
               >
                 {t('dictionary.bulkDeleteBtn', { count: selectedWordIds.size })}
-              </Button>
+              </AppButton>
             )}
           </Box>
         </Box>
       )}
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-          <CircularProgress />
-        </Box>
+        <LoadingState minHeight="30vh" />
       ) : filteredDictionary.length === 0 ? (
-        <Card sx={{ textAlign: 'center', py: 4 }}>
-          <CardContent>
-            <Typography color="text.secondary" sx={{ fontSize: '2rem', mb: 1 }}>
-              {dictionary.length === 0 ? '📚' : '🔍'}
-            </Typography>
-            <Typography color="text.secondary">
-              {dictionary.length === 0 ? t('dictionary.emptyDeckMessage') : t('dictionary.emptySearchMessage')}
-            </Typography>
-            {dictionary.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {t('dictionary.emptyDeckPrompt')}
-              </Typography>
-            )}
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={dictionary.length === 0 ? '📚' : '🔍'}
+          title={dictionary.length === 0 ? t('dictionary.emptyDeckMessage') : t('dictionary.emptySearchMessage')}
+          description={dictionary.length === 0 ? t('dictionary.emptyDeckPrompt') : undefined}
+          variant="dashed"
+        />
       ) : (
-        <Box className="stagger-children">
+        <Box className="stagger-children" sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
           {filteredDictionary.map((word) => {
             return (
-              <Accordion key={word.id}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box sx={{ display: 'flex', width: '100%', alignItems: 'center', minWidth: 0 }}>
-                  <Checkbox
-                    checked={selectedWordIds.has(word.id)}
-                    onChange={(e) => handleSelectWord(e, word.id)}
-                    onClick={(e) => e.stopPropagation()}
-                    size="small"
-                  />
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: 700,
-                      color: 'text.primary',
-                      mr: 1,
-                    }}
-                  >
-                    {word.text}
-                  </Typography>
+              <Accordion
+                key={word.id}
+                sx={{
+                  borderRadius: `${radiusTokens.lg}px !important`,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: 'none',
+                  overflow: 'hidden',
+                  '&::before': { display: 'none' },
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box sx={{ display: 'flex', width: '100%', alignItems: 'center', minWidth: 0 }}>
+                    <Checkbox
+                      checked={selectedWordIds.has(word.id)}
+                      onChange={(e) => handleSelectWord(e, word.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      size="small"
+                    />
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        fontWeight: 800,
+                        color: 'text.primary',
+                        mr: 1.5,
+                      }}
+                    >
+                      {word.text}
+                    </Typography>
 
-                  {word.presets && word.presets.length > 0 && (
-                    <Box sx={{ display: 'inline-flex', gap: 0.5, mr: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                      {word.presets.map((preset) => (
-                        <Tooltip key={preset.id} title={`Preset: ${preset.title}`}>
-                          <Chip
-                            data-testid={`word-preset-chip-${preset.id}`}
-                            label={preset.title}
-                            size="small"
-                            sx={{
-                              height: 20,
-                              fontSize: '0.68rem',
-                              fontWeight: 700,
-                              backgroundColor: alpha('#7C3AED', 0.1),
-                              color: (th) => th.palette.mode === 'dark' ? '#C4B5FD' : '#6D28D9',
-                              border: '1px solid',
-                              borderColor: alpha('#7C3AED', 0.25),
-                              borderRadius: 1.5,
-                              maxWidth: { xs: 90, sm: 140 },
-                              '& .MuiChip-label': {
-                                px: 0.75,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              },
-                            }}
-                          />
-                        </Tooltip>
-                      ))}
-                    </Box>
-                  )}
-
-                  <Box sx={{ flexGrow: 1 }} />
-                  <StatusChip word={word.text} />
-                  <Chip
-                    label={t('dictionary.definitionCount', { count: word.definitions.length })}
-                    size="small"
-                    sx={{
-                      mr: 1,
-                      display: { xs: 'none', sm: 'inline-flex' },
-                      backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.success.main, 0.15) : '#E8F3F1',
-                      color: (th) => th.palette.mode === 'dark' ? th.palette.success.main : '#15554F',
-                      fontWeight: 600,
-                      fontSize: '0.7rem',
-                    }}
-                  />
-                  <IconButton
-                    component="span"
-                    size="small"
-                    color="error"
-                    onClick={(e) => handleDelete(e, word.id, word.text)}
-                    aria-label={t('dictionary.deleteWordTooltip', { word: word.text })}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                {word.definitions.map((def, idx) => (
-                  <Box key={def.id} sx={{ mb: idx !== word.definitions.length - 1 ? 2 : 0 }}>
-                    {editingDefId === def.id ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-                        <TextField
-                          size="small"
-                          value={editDefText}
-                          onChange={(e) => setEditDefText(e.target.value)}
-                          sx={{ flexGrow: 1 }}
-                        />
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={() => handleEditDefinition(word.id, def.id)}
-                        >
-                          {t('common.save')}
-                        </Button>
-                        <Button
-                          size="small"
-                          onClick={() => setEditingDefId(null)}
-                        >
-                          {t('common.cancel')}
-                        </Button>
-                      </Box>
-                    ) : (
-                      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                          {idx + 1}. {typeof def.text === 'string' ? def.text : (def.text as any)?.text || ''}
-                        </Typography>
-                        {def.presets && def.presets.length > 0 && (
-                          <Box sx={{ display: 'inline-flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
-                            {def.presets.map((preset) => (
-                              <Tooltip key={preset.id} title={`Preset: ${preset.title}`}>
-                                <Chip
-                                  data-testid={`def-preset-chip-${preset.id}`}
-                                  label={preset.title}
-                                  size="small"
-                                  sx={{
-                                    height: 18,
-                                    fontSize: '0.62rem',
-                                    fontWeight: 600,
-                                    backgroundColor: alpha('#7C3AED', 0.08),
-                                    color: (th) => th.palette.mode === 'dark' ? '#C4B5FD' : '#6D28D9',
-                                    border: '1px solid',
-                                    borderColor: alpha('#7C3AED', 0.2),
-                                    borderRadius: 1.5,
-                                    maxWidth: 120,
-                                    '& .MuiChip-label': {
-                                      px: 0.6,
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                    },
-                                  }}
-                                />
-                              </Tooltip>
-                            ))}
-                          </Box>
-                        )}
-                        <IconButton
-                          size="small"
-                          aria-label={t('dictionary.editDefinitionTooltip')}
-                          onClick={() => {
-                            setEditingDefId(def.id);
-                            setEditDefText(def.text);
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDeleteDefinition(word.id, def.id)}
-                          aria-label={t('dictionary.deleteDefinitionTooltip')}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                    {word.presets && word.presets.length > 0 && (
+                      <Box sx={{ display: 'inline-flex', gap: 0.5, mr: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                        {word.presets.map((preset) => (
+                          <Tooltip key={preset.id} title={`Preset: ${preset.title}`}>
+                            <Box component="span" data-testid={`word-preset-chip-${preset.id}`}>
+                              <AppChip
+                                variant="preset"
+                                label={preset.title}
+                                sx={{
+                                  maxWidth: { xs: 90, sm: 140 },
+                                  '& .MuiChip-label': {
+                                    px: 0.75,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  },
+                                }}
+                              />
+                            </Box>
+                          </Tooltip>
+                        ))}
                       </Box>
                     )}
 
-                    {editingTransId === def.id ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', ml: 2, mt: 0.5, gap: 1 }}>
-                        <TextField
-                          size="small"
-                          value={editTransText}
-                          onChange={(e) => setEditTransText(e.target.value)}
-                          sx={{ flexGrow: 1 }}
-                        />
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={() => handleEditTranslation(word.id, def.id)}
-                        >
-                          {t('common.save')}
-                        </Button>
-                        <Button
-                          size="small"
-                          onClick={() => setEditingTransId(null)}
-                        >
-                          {t('common.cancel')}
-                        </Button>
-                      </Box>
-                    ) : (
-                      <Box sx={{ display: 'flex', alignItems: 'center', ml: 2, mt: 0.5 }}>
-                        {def.translation ? (
-                          <>
-                            <Typography variant="body2" color="text.secondary">
-                              {t('dictionary.translationPrefix', {
-                                text: typeof def.translation === 'string' ? def.translation : def.translation?.text || '',
-                              })}
-                            </Typography>
-                            <IconButton
-                              size="small"
-                              aria-label={t('dictionary.editTranslationTooltip')}
-                              onClick={() => {
-                                setEditingTransId(def.id);
-                                setEditTransText(typeof def.translation === 'string' ? def.translation : def.translation?.text || '');
-                              }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </>
-                        ) : (
-                          <Button
+                    <Box sx={{ flexGrow: 1 }} />
+                    <StatusChip word={word.text} />
+                    <Chip
+                      label={t('dictionary.definitionCount', { count: word.definitions.length })}
+                      size="small"
+                      sx={{
+                        mr: 1,
+                        display: { xs: 'none', sm: 'inline-flex' },
+                        borderRadius: `${radiusTokens.sm}px`,
+                        backgroundColor: (th) =>
+                          th.palette.mode === 'dark' ? alpha(th.palette.success.main, 0.15) : '#E8F3F1',
+                        color: (th) => (th.palette.mode === 'dark' ? th.palette.success.main : '#15554F'),
+                        fontWeight: 700,
+                        fontSize: '0.7rem',
+                      }}
+                    />
+                    <IconButton
+                      component="span"
+                      size="small"
+                      color="error"
+                      onClick={(e) => handleDelete(e, word.id, word.text)}
+                      aria-label={t('dictionary.deleteWordTooltip', { word: word.text })}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0, px: 2.5, pb: 2.5 }}>
+                  {word.definitions.map((def, idx) => (
+                    <Box key={def.id} sx={{ mb: idx !== word.definitions.length - 1 ? 2 : 0 }}>
+                      {editingDefId === def.id ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
+                          <TextField
                             size="small"
-                            variant="outlined"
+                            value={editDefText}
+                            onChange={(e) => setEditDefText(e.target.value)}
+                            sx={{ flexGrow: 1 }}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => handleEditDefinition(word.id, def.id)}
+                          >
+                            {t('common.save')}
+                          </Button>
+                          <Button size="small" onClick={() => setEditingDefId(null)}>
+                            {t('common.cancel')}
+                          </Button>
+                        </Box>
+                      ) : (
+                        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 700 }}>
+                            {idx + 1}. {typeof def.text === 'string' ? def.text : (def.text as any)?.text || ''}
+                          </Typography>
+                          {def.presets && def.presets.length > 0 && (
+                            <Box sx={{ display: 'inline-flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                              {def.presets.map((preset) => (
+                                <Tooltip key={preset.id} title={`Preset: ${preset.title}`}>
+                                  <Box component="span" data-testid={`def-preset-chip-${preset.id}`}>
+                                    <AppChip
+                                      variant="preset"
+                                      label={preset.title}
+                                      sx={{
+                                        maxWidth: 120,
+                                        '& .MuiChip-label': {
+                                          px: 0.6,
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                        },
+                                      }}
+                                    />
+                                  </Box>
+                                </Tooltip>
+                              ))}
+                            </Box>
+                          )}
+                          <IconButton
+                            size="small"
+                            aria-label={t('dictionary.editDefinitionTooltip')}
                             onClick={() => {
-                              setEditingTransId(def.id);
-                              setEditTransText('');
+                              setEditingDefId(def.id);
+                              setEditDefText(def.text);
                             }}
                           >
-                            {t('dictionary.addTranslationBtn')}
-                          </Button>
-                        )}
-                      </Box>
-                    )}
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteDefinition(word.id, def.id)}
+                            aria-label={t('dictionary.deleteDefinitionTooltip')}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      )}
 
-                    {idx < word.definitions.length - 1 && (
-                      <Divider sx={{ mt: 2 }} />
-                    )}
+                      {editingTransId === def.id ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2, mt: 0.5, gap: 1 }}>
+                          <TextField
+                            size="small"
+                            value={editTransText}
+                            onChange={(e) => setEditTransText(e.target.value)}
+                            sx={{ flexGrow: 1 }}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => handleEditTranslation(word.id, def.id)}
+                          >
+                            {t('common.save')}
+                          </Button>
+                          <Button size="small" onClick={() => setEditingTransId(null)}>
+                            {t('common.cancel')}
+                          </Button>
+                        </Box>
+                      ) : (
+                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2, mt: 0.5 }}>
+                          {def.translation ? (
+                            <>
+                              <Typography variant="body2" color="text.secondary">
+                                {t('dictionary.translationPrefix', {
+                                  text: typeof def.translation === 'string' ? def.translation : def.translation?.text || '',
+                                })}
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                aria-label={t('dictionary.editTranslationTooltip')}
+                                onClick={() => {
+                                  setEditingTransId(def.id);
+                                  setEditTransText(typeof def.translation === 'string' ? def.translation : def.translation?.text || '');
+                                }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </>
+                          ) : (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => {
+                                setEditingTransId(def.id);
+                                setEditTransText('');
+                              }}
+                              sx={{ textTransform: 'none', borderRadius: `${radiusTokens.sm}px` }}
+                            >
+                              {t('dictionary.addTranslationBtn')}
+                            </Button>
+                          )}
+                        </Box>
+                      )}
+
+                      {idx < word.definitions.length - 1 && <Divider sx={{ mt: 2 }} />}
+                    </Box>
+                  ))}
+                  <Box sx={{ mt: 2 }}>
+                    <AppButton
+                      variant="outline"
+                      size="small"
+                      onClick={() => handleAddDefinition(word.id)}
+                      startIcon={<AddRoundedIcon />}
+                    >
+                      {t('dictionary.addDefinitionBtn')}
+                    </AppButton>
                   </Box>
-                ))}
-                <Box sx={{ mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => handleAddDefinition(word.id)}
-                    startIcon={<AddRoundedIcon />}
-                  >
-                    {t('dictionary.addDefinitionBtn')}
-                  </Button>
-                </Box>
-              </AccordionDetails>
-            </Accordion>
+                </AccordionDetails>
+              </Accordion>
             );
           })}
         </Box>

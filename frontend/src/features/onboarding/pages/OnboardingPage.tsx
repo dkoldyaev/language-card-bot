@@ -21,6 +21,12 @@ import ThemeSwitcher from '../../../shared/components/ThemeSwitcher';
 import { getInitialBaseLanguage } from '../../../shared/i18n/helpers';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { hasExistingLocalStorage } from '../../../shared/lib/storage';
+import {
+  AppButton,
+  colorTokens,
+  radiusTokens,
+  spacingTokens,
+} from '../../../shared/ui';
 import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 import type { PresetItem } from '../../presets/types';
@@ -157,7 +163,7 @@ export default function OnboardingPage() {
     >
       <Box className="animate-scale-in" sx={{ width: '100%', maxWidth: 960 }}>
         {/* Top bar with Branding, ThemeSwitcher, LocaleSwitcher */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: spacingTokens.element_group_gap * 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
             <Box component="img" src="/favicon.svg" alt="" sx={{ width: 42, height: 42 }} />
             <Box>
@@ -176,7 +182,15 @@ export default function OnboardingPage() {
         </Box>
 
         {/* Main Card */}
-        <Card sx={{ overflow: 'hidden' }} data-testid="guest-onboarding-dialog">
+        <Card
+          sx={{
+            overflow: 'hidden',
+            borderRadius: `${radiusTokens.xl}px`,
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
+          data-testid="guest-onboarding-dialog"
+        >
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '0.86fr 1.14fr' } }}>
             {/* Left Brand Panel (Desktop) */}
             <Box
@@ -186,15 +200,16 @@ export default function OnboardingPage() {
                 justifyContent: 'space-between',
                 minHeight: 520,
                 p: 5,
-                backgroundColor: '#172033',
+                backgroundColor: (th) =>
+                  th.palette.mode === 'dark' ? colorTokens.hero.darkBg : colorTokens.hero.lightBg,
                 color: '#FFFFFF',
               }}
             >
-              <Typography variant="overline" sx={{ color: '#E8A17F' }}>
+              <Typography variant="overline" sx={{ color: colorTokens.hero.accent, fontWeight: 800 }}>
                 {t('guest.onboardingTitle')}
               </Typography>
               <Box>
-                <Typography variant="h2" sx={{ color: '#FFFFFF', fontSize: '2.5rem', maxWidth: 330, lineHeight: 1.2 }}>
+                <Typography variant="h2" sx={{ color: '#FFFFFF', fontSize: '2.5rem', maxWidth: 330, lineHeight: 1.2, fontWeight: 850 }}>
                   {t('guest.onboardingSubtitle')}
                 </Typography>
                 <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 2, maxWidth: 315 }}>
@@ -202,10 +217,10 @@ export default function OnboardingPage() {
                 </Typography>
               </Box>
               <Box>
-                <Button
+                <AppButton
                   component={RouterLink}
                   to="/login"
-                  variant="outlined"
+                  variant="outline"
                   sx={{
                     color: '#FFFFFF',
                     borderColor: 'rgba(255, 255, 255, 0.3)',
@@ -213,12 +228,10 @@ export default function OnboardingPage() {
                       borderColor: '#FFFFFF',
                       backgroundColor: 'rgba(255, 255, 255, 0.08)',
                     },
-                    textTransform: 'none',
-                    borderRadius: 2,
                   }}
                 >
                   {t('guest.loginOrRegisterBtn')}
-                </Button>
+                </AppButton>
               </Box>
             </Box>
 
@@ -233,10 +246,10 @@ export default function OnboardingPage() {
               }}
             >
               <Box>
-                <Typography variant="overline" color="secondary.main">
+                <Typography variant="overline" color="secondary.main" sx={{ fontWeight: 800 }}>
                   {step === 1 ? t('guest.stepLanguages') : t('guest.stepPresets')}
                 </Typography>
-                <Typography variant="h5" sx={{ fontSize: { xs: '1.5rem', sm: '1.8rem' }, mt: 0.5, mb: 1, fontWeight: 700 }}>
+                <Typography variant="h5" sx={{ fontSize: { xs: '1.5rem', sm: '1.8rem' }, mt: 0.5, mb: 1, fontWeight: 800 }}>
                   {step === 1
                     ? t('guest.stepLanguages')
                     : `${t('guest.stepPresets')} (${targetLanguage.toUpperCase()})`}
@@ -246,7 +259,7 @@ export default function OnboardingPage() {
                 </Typography>
 
                 {error && (
-                  <Alert severity="error" sx={{ mb: 2.5 }}>
+                  <Alert severity="error" sx={{ mb: 2.5, borderRadius: `${radiusTokens.sm}px` }}>
                     {error}
                   </Alert>
                 )}
@@ -293,6 +306,7 @@ export default function OnboardingPage() {
                               onClick={() => setSelectedPreset(preset)}
                               sx={{
                                 cursor: 'pointer',
+                                borderRadius: `${radiusTokens.md}px`,
                                 borderColor: isSelected ? 'primary.main' : 'divider',
                                 backgroundColor: isSelected
                                   ? (th) => alpha(th.palette.primary.main, 0.08)
@@ -307,7 +321,7 @@ export default function OnboardingPage() {
                                 <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <LayersRoundedIcon fontSize="small" color={isSelected ? 'primary' : 'action'} />
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
                                       {preset.title}
                                     </Typography>
                                   </Box>
@@ -318,7 +332,7 @@ export default function OnboardingPage() {
                                     {preset.description}
                                   </Typography>
                                 )}
-                                <Typography variant="caption" sx={{ display: 'block', mt: 1, fontWeight: 600, color: 'text.secondary' }}>
+                                <Typography variant="caption" sx={{ display: 'block', mt: 1, fontWeight: 700, color: 'text.secondary' }}>
                                   {t('dictionary.wordsCount', { count: wordCount })}
                                 </Typography>
                               </CardContent>
@@ -329,7 +343,7 @@ export default function OnboardingPage() {
                     )}
 
                     {!guestPolicy?.allowGuestAi && (
-                      <Alert severity="info" sx={{ mt: 2, fontSize: '0.8rem' }}>
+                      <Alert severity="info" sx={{ mt: 2, fontSize: '0.8rem', borderRadius: `${radiusTokens.sm}px` }}>
                         {t('guest.emptyNotAllowed')}
                       </Alert>
                     )}
@@ -348,27 +362,28 @@ export default function OnboardingPage() {
                         startIcon={<ArrowBackRoundedIcon />}
                         onClick={() => setStep(1)}
                         data-testid="guest-onboarding-back-btn"
+                        sx={{ textTransform: 'none', fontWeight: 600 }}
                       >
                         {t('common.back')}
                       </Button>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Box sx={{ display: 'flex', gap: spacingTokens.element_group_gap }}>
                         {guestPolicy?.allowGuestAi && (
-                          <Button
-                            variant="outlined"
+                          <AppButton
+                            variant="outline"
                             onClick={() => handleFinishWithPreset(null)}
                             data-testid="guest-onboarding-start-empty-btn"
                           >
                             {t('guest.startEmpty')}
-                          </Button>
+                          </AppButton>
                         )}
-                        <Button
-                          variant="contained"
+                        <AppButton
+                          variant="primary"
                           disabled={!selectedPreset}
                           onClick={() => handleFinishWithPreset(selectedPreset)}
                           data-testid="guest-onboarding-finish-btn"
                         >
                           {t('guest.startLearning')}
-                        </Button>
+                        </AppButton>
                       </Box>
                     </>
                   ) : (
@@ -377,19 +392,19 @@ export default function OnboardingPage() {
                         component={RouterLink}
                         to="/login"
                         variant="text"
-                        sx={{ textTransform: 'none', display: { xs: 'inline-flex', md: 'none' } }}
+                        sx={{ textTransform: 'none', fontWeight: 600, display: { xs: 'inline-flex', md: 'none' } }}
                       >
                         {t('guest.loginOrRegisterBtn')}
                       </Button>
                       <Box sx={{ ml: 'auto' }}>
-                        <Button
-                          variant="contained"
+                        <AppButton
+                          variant="primary"
                           endIcon={<ArrowForwardRoundedIcon />}
                           onClick={handleNextToPresets}
                           data-testid="guest-onboarding-next-btn"
                         >
                           {t('common.next')}
-                        </Button>
+                        </AppButton>
                       </Box>
                     </>
                   )}

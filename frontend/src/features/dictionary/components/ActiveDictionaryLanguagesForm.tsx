@@ -1,5 +1,5 @@
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
-import { Box, FormControl, InputLabel, MenuItem, Select, Typography, alpha } from '@mui/material';
+import { alpha, Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import { useTranslation } from '../../../shared/i18n';
 import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
 
@@ -29,7 +29,7 @@ export default function ActiveDictionaryLanguagesForm({
             height: 36,
             display: 'grid',
             placeItems: 'center',
-            borderRadius: 2,
+            borderRadius: '50%',
             color: 'secondary.main',
             backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.secondary.main, 0.15) : '#FBE8E0',
           }}

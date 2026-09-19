@@ -19,7 +19,7 @@ export default function WeeklyActivityChart({ activity }: WeeklyActivityChartPro
             sx={{
               width: 36,
               height: 36,
-              borderRadius: 2,
+              borderRadius: '50%',
               display: 'grid',
               placeItems: 'center',
               backgroundColor: alpha('#3A86FF', 0.12),

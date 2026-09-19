@@ -1,7 +1,7 @@
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import {
@@ -21,6 +21,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import { useTranslation } from '../i18n/I18nContext';
+import { colorTokens, radiusTokens, spacingTokens } from '../ui/tokens';
 
 function Brand({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation();
@@ -224,22 +225,23 @@ export default function Sidebar() {
         zIndex: 1100,
         overflowY: 'auto',
         color: '#FFFFFF',
-        backgroundColor: (th) => th.palette.mode === 'dark' ? '#111622' : '#172033',
+        backgroundColor: (th) =>
+          th.palette.mode === 'dark' ? colorTokens.hero.darkBg : colorTokens.hero.lightBg,
         borderRight: '1px solid',
-        borderRightColor: (th) => th.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+        borderRightColor: (th) => (th.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'transparent'),
       }}
     >
-      <Box sx={{ px: 3, pt: 3.25, pb: 4 }}>
+      <Box sx={{ px: spacingTokens.block_inner_padding_normal.sm, pt: 3, pb: spacingTokens.section_vertical_gap }}>
         <Brand />
       </Box>
 
-      <Box sx={{ px: 2.5, pb: 1 }}>
+      <Box sx={{ px: spacingTokens.block_inner_padding_compact.sm, pb: 1 }}>
         <Typography variant="overline" sx={{ color: alpha('#FFFFFF', 0.42), fontSize: '0.64rem' }}>
           {t('nav.workspace')}
         </Typography>
       </Box>
 
-      <List sx={{ px: 1.5, pt: 0, flexGrow: 1 }}>
+      <List sx={{ px: spacingTokens.element_group_gap * 1.5, pt: 0, flexGrow: 1 }}>
         {currentNavItems.map((item) => {
           const isActive = location.pathname === item.path;
           const isDisabled = item.path === '/quiz' && !hasWords;
@@ -257,10 +259,10 @@ export default function Sidebar() {
               }}
               sx={{
                 position: 'relative',
-                minHeight: 52,
-                mb: 0.75,
-                px: 1.5,
-                borderRadius: 3,
+                minHeight: 48,
+                mb: spacingTokens.element_group_gap,
+                px: spacingTokens.element_group_gap * 1.5,
+                borderRadius: `${radiusTokens.md}px`,
                 color: isDisabled ? alpha('#FFFFFF', 0.28) : isActive ? '#FFFFFF' : alpha('#FFFFFF', 0.65),
                 backgroundColor: isActive ? alpha('#FFFFFF', 0.12) : 'transparent',
                 cursor: isDisabled ? 'not-allowed' : 'pointer',
@@ -313,9 +315,9 @@ export default function Sidebar() {
             <ListItemButton
               onClick={handleLogout}
               sx={{
-                minHeight: 48,
-                borderRadius: 3,
-                px: 1.5,
+                minHeight: 44,
+                borderRadius: `${radiusTokens.md}px`,
+                px: spacingTokens.element_group_gap * 1.5,
                 color: alpha('#FFFFFF', 0.7),
                 '&:hover': {
                   color: '#FFFFFF',
@@ -342,6 +344,7 @@ export default function Sidebar() {
                   color: '#FFFFFF',
                   fontWeight: 700,
                   fontSize: '0.75rem',
+                  borderRadius: `${radiusTokens.sm}px`,
                 }}
               />
             </Box>
@@ -350,9 +353,9 @@ export default function Sidebar() {
               to="/login"
               data-testid="sidebar-login-btn"
               sx={{
-                minHeight: 48,
-                borderRadius: 3,
-                px: 1.5,
+                minHeight: 44,
+                borderRadius: `${radiusTokens.md}px`,
+                px: spacingTokens.element_group_gap * 1.5,
                 color: '#FFFFFF',
                 backgroundColor: 'rgba(255, 255, 255, 0.12)',
                 '&:hover': {

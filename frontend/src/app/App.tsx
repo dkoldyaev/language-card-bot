@@ -1,8 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Auth from '../features/auth/pages/AuthPage';
-import OnboardingPage from '../features/onboarding/pages/OnboardingPage';
 import Dashboard from '../features/dashboard/pages/DashboardPage';
 import Dictionary from '../features/dictionary/pages/DictionaryPage';
+import OnboardingPage from '../features/onboarding/pages/OnboardingPage';
 import Presets from '../features/presets/pages/PresetsPage';
 import Quiz from '../features/quiz/pages/QuizPage';
 import { useMercure } from '../shared/api/useMercure';

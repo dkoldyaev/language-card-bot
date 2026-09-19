@@ -48,7 +48,7 @@ export default function MergeGuestDataDialog({
               height: 40,
               display: 'grid',
               placeItems: 'center',
-              borderRadius: 2,
+              borderRadius: '50%',
               backgroundColor: 'primary.main',
               color: 'primary.contrastText',
             }}

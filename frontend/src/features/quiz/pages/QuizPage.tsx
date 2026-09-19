@@ -1,7 +1,7 @@
-import { Box, CircularProgress } from '@mui/material';
 import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { trackEvent } from '../../../shared/lib/analytics';
+import { LoadingState, PageContainer } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 import QuizEmptyState from '../components/QuizEmptyState';
 import QuizPlayground from '../components/QuizPlayground';
@@ -26,16 +26,24 @@ export default function QuizPage() {
   }, [dictionary.length, quizCard, starting]);
 
   if (dictionary.length === 0) {
-    return <QuizEmptyState />;
+    return (
+      <PageContainer size="default">
+        <QuizEmptyState />
+      </PageContainer>
+    );
   }
 
   if (!quizCard) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', minHeight: '60vh' }}>
-        <CircularProgress />
-      </Box>
+      <PageContainer size="narrow">
+        <LoadingState minHeight="60vh" />
+      </PageContainer>
     );
   }
 
-  return <QuizPlayground />;
+  return (
+    <PageContainer size="narrow">
+      <QuizPlayground />
+    </PageContainer>
+  );
 }

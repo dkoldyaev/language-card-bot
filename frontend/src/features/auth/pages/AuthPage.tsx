@@ -1,6 +1,6 @@
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import {
-  Alert, Box, Button, Card, CardContent, CircularProgress, TextField, Typography,
+  Alert, Box, Button, Card, CardContent, CircularProgress, Typography,
 } from '@mui/material';
 import { GoogleLogin } from '@react-oauth/google';
 import { useEffect, useState } from 'react';
@@ -11,6 +11,7 @@ import ThemeSwitcher from '../../../shared/components/ThemeSwitcher';
 import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
+import { AppButton, AppTextField, colorTokens, radiusTokens, spacingTokens } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 import { performGuestMigration } from '../api/migrate';
@@ -278,13 +279,16 @@ export default function Auth() {
                 justifyContent: 'space-between',
                 minHeight: 520,
                 p: 5,
-                backgroundColor: '#172033',
+                backgroundColor: (th) =>
+                  th.palette.mode === 'dark' ? colorTokens.hero.darkBg : colorTokens.hero.lightBg,
                 color: '#FFFFFF',
               }}
             >
-              <Typography variant="overline" sx={{ color: '#E8A17F' }}>{t('auth.heroOverline')}</Typography>
+              <Typography variant="overline" sx={{ color: colorTokens.hero.accent, fontWeight: 800 }}>
+                {t('auth.heroOverline')}
+              </Typography>
               <Box>
-                <Typography variant="h2" sx={{ color: '#FFFFFF', fontSize: '2.75rem', maxWidth: 330 }}>
+                <Typography variant="h2" sx={{ color: '#FFFFFF', fontSize: '2.75rem', maxWidth: 330, fontWeight: 850 }}>
                   {t('auth.heroTitle')}
                 </Typography>
                 <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 2, maxWidth: 315 }}>
@@ -302,10 +306,10 @@ export default function Auth() {
                 // TEST USERNAME FORM
                 // ==========================================
                 <Box>
-                  <Typography variant="overline" color="secondary.main">
+                  <Typography variant="overline" color="secondary.main" sx={{ fontWeight: 800 }}>
                     {isRegisterRoute ? t('auth.createAccountOverline') : t('auth.welcomeBackOverline')}
                   </Typography>
-                  <Typography variant="h5" sx={{ fontSize: { xs: '1.75rem', sm: '2.1rem' }, mt: 0.45, mb: 1, fontWeight: 700 }}>
+                  <Typography variant="h5" sx={{ fontSize: { xs: '1.75rem', sm: '2.1rem' }, mt: 0.45, mb: 1, fontWeight: 800 }}>
                     {isRegisterRoute ? t('auth.createAccountTitle') : t('auth.loginTitle')}
                   </Typography>
                   <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
@@ -314,29 +318,27 @@ export default function Auth() {
                       : t('auth.loginDesc')}
                   </Typography>
 
-                  {error && <Alert severity="error" sx={{ mb: 2.5 }}>{error}</Alert>}
+                  {error && <Alert severity="error" sx={{ mb: 2.5, borderRadius: `${radiusTokens.sm}px` }}>{error}</Alert>}
 
                   {registrationSuccess ? (
                     <Box sx={{ textAlign: 'center', py: 2 }}>
-                      <Alert severity="success" sx={{ mb: 2 }}>
+                      <Alert severity="success" sx={{ mb: 2, borderRadius: `${radiusTokens.sm}px` }}>
                         {t('auth.registrationSuccess')}
                       </Alert>
-                      <Button
+                      <AppButton
                         component={RouterLink}
                         to="/login"
-                        variant="contained"
-                        color="secondary"
+                        variant="secondary"
                         sx={{ mt: 1 }}
                       >
                         {t('auth.backToLogin')}
-                      </Button>
+                      </AppButton>
                     </Box>
                   ) : (
-                    <Box component="form" onSubmit={handleTestAuthSubmit} sx={{ display: 'grid', gap: 2 }}>
-                      <TextField
+                    <Box component="form" onSubmit={handleTestAuthSubmit} sx={{ display: 'grid', gap: spacingTokens.form_field_gap }}>
+                      <AppTextField
                         fullWidth
                         label={t('auth.usernameLabel')}
-                        variant="outlined"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         disabled={loading}
@@ -354,16 +356,17 @@ export default function Auth() {
                         />
                       )}
 
-                      <Button
+                      <AppButton
                         type="submit"
-                        variant="contained"
-                        color="secondary"
+                        variant="secondary"
+                        size="large"
                         disabled={loading}
-                        endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
-                        sx={{ mt: 1, py: 1.2 }}
+                        loading={loading}
+                        endIcon={<ArrowForwardRoundedIcon />}
+                        sx={{ mt: 1 }}
                       >
                         {isRegisterRoute ? t('auth.submitRegister') : t('auth.submitLogin')}
-                      </Button>
+                      </AppButton>
 
                       <Box sx={{ textAlign: 'center', mt: 1 }}>
                         {isRegisterRoute ? (
@@ -371,7 +374,7 @@ export default function Auth() {
                             component={RouterLink}
                             to="/login"
                             variant="text"
-                            sx={{ color: 'text.secondary' }}
+                            sx={{ color: 'text.secondary', textTransform: 'none', fontWeight: 600 }}
                           >
                             {t('auth.loginInstead')}
                           </Button>
@@ -380,7 +383,7 @@ export default function Auth() {
                             component={RouterLink}
                             to="/register"
                             variant="text"
-                            sx={{ color: 'text.secondary' }}
+                            sx={{ color: 'text.secondary', textTransform: 'none', fontWeight: 600 }}
                           >
                             {t('auth.signUp')}
                           </Button>
@@ -418,16 +421,17 @@ export default function Auth() {
                         disabled={loading}
                       />
 
-                      <Button
-                        variant="contained"
-                        color="secondary"
+                      <AppButton
+                        variant="secondary"
+                        size="large"
                         onClick={handleProfileCompletion}
                         disabled={loading}
-                        endIcon={loading ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
+                        loading={loading}
+                        endIcon={<ArrowForwardRoundedIcon />}
                         sx={{ mt: 1 }}
                       >
                         {t('auth.continue')}
-                      </Button>
+                      </AppButton>
                     </Box>
                   ) : (
                     <Box sx={{ width: '100%', minHeight: 44, display: 'flex', alignItems: 'center' }}>

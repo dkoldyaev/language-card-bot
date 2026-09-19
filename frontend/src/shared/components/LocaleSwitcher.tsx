@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { useGuidelineStore } from '../../features/guideline';
 import { useTranslation } from '../i18n';
 import type { LocaleInfo, SupportedLocale } from '../i18n/types';
+import { radiusTokens } from '../ui';
 
 interface LocaleSwitcherProps {
   variant?: 'outlined' | 'text';
@@ -58,8 +59,8 @@ export default function LocaleSwitcher({
           borderColor: 'divider',
           color: 'text.primary',
           backgroundColor: 'background.paper',
-          borderRadius: 2,
-          px: 1.25,
+          borderRadius: `${radiusTokens.md}px`,
+          px: 1.5,
           py: 0.6,
           fontWeight: 600,
           minWidth: 'auto',
@@ -89,7 +90,7 @@ export default function LocaleSwitcher({
             'data-tour': 'locale-menu-paper',
             sx: {
               minWidth: 180,
-              borderRadius: 2,
+              borderRadius: `${radiusTokens.md}px`,
               boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
               mt: 0.75,
               maxHeight: 380,
