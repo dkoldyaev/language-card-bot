@@ -1,13 +1,14 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { type NextFunction, type Request, type Response, Router } from 'express';
 import { z } from 'zod';
-import { TranslatorFactory } from '../core/TranslatorFactory';
 import { redisClient } from '../core/cache';
+import { TranslatorFactory } from '../core/TranslatorFactory';
+import { SUPPORTED_LANGUAGES } from '../types/language';
 
 const router = Router();
 
 const TranslateRequestSchema = z.object({
-  sourceLanguage: z.string().min(1, 'Source language is required'),
-  targetLanguage: z.string().min(1, 'Target language is required'),
+  sourceLanguage: z.enum(SUPPORTED_LANGUAGES),
+  targetLanguage: z.enum(SUPPORTED_LANGUAGES),
   texts: z.array(z.string().min(1)).min(1, 'Texts array must not be empty'),
   translatorApp: z.enum(['googletranslate', 'mock', 'laratranslate', 'llm', 'mistral', 'gemini'] as const),
 });

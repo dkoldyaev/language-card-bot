@@ -1,21 +1,21 @@
-import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import { type Request, type Response, Router } from 'express';
 import { OAuth2Client } from 'google-auth-library';
-import { prisma } from '../../prisma';
-import { validateRequest } from '../../middleware/validate';
+import jwt from 'jsonwebtoken';
+import { env } from '../../core/env';
 import { authMiddleware } from '../../middleware/auth';
+import { validateRequest } from '../../middleware/validate';
+import { prisma } from '../../prisma';
 import { getAuthUser } from './auth.service';
 import {
+  type AuthResponse, 
+  type GoogleAuthRequest,
   GoogleAuthRequestSchema,
-  GoogleAuthRequest,
-  UsernameAuthRequestSchema,
-  UsernameAuthRequest,
+  type MigrateGuestRequest,
   MigrateGuestRequestSchema,
-  MigrateGuestRequest,
-  AuthResponse
+  type UsernameAuthRequest,
+  UsernameAuthRequestSchema
 } from './auth.type';
 import { migrateGuestData } from './migrate_guest.service';
-import { env } from '../../core/env';
 
 const router = Router();
 const JWT_SECRET = env.JWT_SECRET;
@@ -39,7 +39,7 @@ function createMercureToken(identifier: string | number) {
 // TEST USERNAME AUTH (for tests & dev)
 // ==========================================
 
-router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req: Request<{}, {}, UsernameAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req: Request<unknown, unknown, UsernameAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
   if (env.ENABLE_TEST_AUTH !== 'true') {
     return res.status(403).json({ error: 'Test authentication is disabled' });
   }
@@ -71,7 +71,8 @@ router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req:
       return res.status(400).json({ error: 'Username already exists' });
     }
 
-    const isAdmin = Boolean((req.body as any).isAdmin || (req.body as any).is_admin || username.startsWith('admin_'));
+    const registerBody = req.body as UsernameAuthRequest & { isAdmin?: boolean; is_admin?: boolean };
+    const isAdmin = Boolean(registerBody.isAdmin || registerBody.is_admin || username.startsWith('admin_'));
 
     const user = await prisma.user.create({
       data: {
@@ -113,7 +114,7 @@ router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req:
   }
 });
 
-router.post('/login', validateRequest(UsernameAuthRequestSchema), async (req: Request<{}, {}, UsernameAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+router.post('/login', validateRequest(UsernameAuthRequestSchema), async (req: Request<unknown, unknown, UsernameAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
   if (env.ENABLE_TEST_AUTH !== 'true') {
     return res.status(403).json({ error: 'Test authentication is disabled' });
   }
@@ -175,7 +176,7 @@ router.post('/login', validateRequest(UsernameAuthRequestSchema), async (req: Re
 // GOOGLE OAUTH
 // ==========================================
 
-router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Request<{}, {}, GoogleAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Request<unknown, unknown, GoogleAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
   if (!env.GOOGLE_CLIENT_ID) {
     return res.status(500).json({ error: 'Google OAuth is not configured on the server' });
   }
@@ -189,7 +190,7 @@ router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Req
     });
     
     const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
+    if (!payload?.email) {
       return res.status(400).json({ error: 'Invalid Google token payload' });
     }
 
@@ -298,7 +299,7 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
 // MIGRATE GUEST DATA
 // ==========================================
 
-router.post('/migrate-guest', authMiddleware, validateRequest(MigrateGuestRequestSchema), async (req: Request<{}, {}, MigrateGuestRequest>, res: Response) => {
+router.post('/migrate-guest', authMiddleware, validateRequest(MigrateGuestRequestSchema), async (req: Request<{}, unknown, MigrateGuestRequest>, res: Response) => {
   const { id: userId } = getAuthUser(req);
   try {
     const result = await migrateGuestData(userId, req.body);
@@ -306,9 +307,10 @@ router.post('/migrate-guest', authMiddleware, validateRequest(MigrateGuestReques
       message: 'Guest data migrated successfully',
       ...result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Migrate guest data error:', error);
-    res.status(500).json({ error: error.message || 'Failed to migrate guest data' });
+    const message = error instanceof Error ? error.message : 'Failed to migrate guest data';
+    res.status(500).json({ error: message });
   }
 });
 

@@ -1,16 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
+import type { PrismaClient, UserState, Word } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import app from '../../app';
+import { env } from '../../core/env';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
 
 vi.mock('../../prisma');
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Dictionary Fetch Endpoint', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
 
   beforeEach(() => {
     mockReset(prismaMock);
@@ -47,7 +48,7 @@ describe('Dictionary Fetch Endpoint', () => {
       currentDefinitionId: null,
       showVariants: false,
       showDefinitionTranslation: false,
-    } as any);
+    } as UserState);
 
     prismaMock.dictionary.findFirst.mockResolvedValue(mockDict);
 
@@ -74,7 +75,7 @@ describe('Dictionary Fetch Endpoint', () => {
       }
     ];
 
-    prismaMock.word.findMany.mockResolvedValue(mockWords as any);
+    prismaMock.word.findMany.mockResolvedValue(mockWords as Word);
 
     const res = await request(app)
       .get('/api/v1/dictionary')

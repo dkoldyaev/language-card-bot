@@ -1,9 +1,10 @@
-import { Worker, Job } from 'bullmq';
+import { type Job, Worker } from 'bullmq';
 import IORedis from 'ioredis';
+import { env } from '../../core/env';
 import { publishEvent } from '../event_bus/event_bus.service';
-import { QuizCleanupMercureEvent } from '../event_bus/event_bus.type';
+import type { QuizCleanupMercureEvent } from '../event_bus/event_bus.type';
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const redisUrl = env.REDIS_URL;
 export const workerConnection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 
 export const quizCleanupWorker = new Worker('quizCleanupQueue', async (job: Job) => {

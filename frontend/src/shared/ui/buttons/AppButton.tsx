@@ -1,4 +1,5 @@
 import { alpha, Button, type ButtonProps, CircularProgress } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import type React from 'react';
 import { radiusTokens } from '../tokens/radii';
 
@@ -31,7 +32,6 @@ export const AppButton: React.FC<AppButtonProps> = ({
         return 'secondary';
       case 'danger':
         return 'error';
-      case 'primary':
       default:
         return 'primary';
     }
@@ -42,7 +42,6 @@ export const AppButton: React.FC<AppButtonProps> = ({
         return 36;
       case 'large':
         return 50;
-      case 'medium':
       default:
         return 44;
     }
@@ -74,7 +73,7 @@ export const AppButton: React.FC<AppButtonProps> = ({
           borderColor: 'divider',
           '&:hover': {
             borderColor: 'primary.main',
-            backgroundColor: (th: any) =>
+            backgroundColor: (th: Theme) =>
               alpha(th.palette.primary.main, th.palette.mode === 'dark' ? 0.12 : 0.05),
           },
         };
@@ -87,7 +86,6 @@ export const AppButton: React.FC<AppButtonProps> = ({
             color: 'text.primary',
           },
         };
-      case 'primary':
       default:
         return {
           backgroundColor: 'primary.main',

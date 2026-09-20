@@ -69,7 +69,7 @@ async function setAdminRole(identifier: string, isAdmin: boolean) {
 }
 
 async function createOrUpdateAdmin(emailInput: string, nameInput?: string) {
-  if (!emailInput || !emailInput.trim()) {
+  if (!emailInput?.trim()) {
     console.error('Error: Email is required.');
     console.log('Usage: node run-script.js manage-users create-admin <email> [name]');
     process.exit(1);

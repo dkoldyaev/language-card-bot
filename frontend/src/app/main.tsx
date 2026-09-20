@@ -16,7 +16,12 @@ window.addEventListener('unhandledrejection', (event) => {
   trackEvent('Error', { message: event.reason?.toString() || 'Unknown rejection', source: 'promise' });
 });
 
-createRoot(document.getElementById('root')!).render(
+const root = document.getElementById('root');
+if (!root) {
+  throw new Error('Root element not found');
+}
+
+createRoot(root).render(
   <StrictMode>
     <I18nProvider>
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>

@@ -67,7 +67,7 @@ export default function Layout() {
         }
       })
       .catch((error) => console.error('Failed to sync state:', error));
-  }, [token, setDictionary, setSettings, setAppState, setDictionaries, setActiveDictionaryId]);
+  }, [token, setDictionary, setSettings, setAppState, setDictionaries, setActiveDictionaryId, setProfile]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh' }}>

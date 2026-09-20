@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import request from 'supertest';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mockVerifyIdToken } = vi.hoisted(() => {
   return { mockVerifyIdToken: vi.fn() };
@@ -15,7 +15,7 @@ vi.mock('google-auth-library', () => {
 });
 
 vi.mock('../../core/env', () => {
-  const jwtSecret = process.env.JWT_SECRET || 'supersecret';
+  const jwtSecret = env.JWT_SECRET;
   return {
     env: {
       DATABASE_URL: 'postgresql://test@localhost:5432/test',
@@ -37,17 +37,18 @@ vi.mock('../../core/env', () => {
   };
 });
 
+import type { Account, PrismaClient, User } from '@prisma/client';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
 import app from '../../app';
+import { env } from '../../core/env';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
 
 vi.mock('../../prisma');
 
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Auth Endpoints', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
 
   beforeEach(() => {
     mockReset(prismaMock);
@@ -74,7 +75,7 @@ describe('Auth Endpoints', () => {
         name: 'Test User',
         picture: 'http://example.com/pic.jpg',
         createdAt: new Date(),
-      } as any);
+      } as User);
 
       const res = await request(app)
         .post('/api/v1/auth/google')
@@ -104,14 +105,7 @@ describe('Auth Endpoints', () => {
         userId: 2,
         provider: 'google',
         providerAccountId: 'google_456',
-        user: {
-          id: 2,
-          email: 'existing@example.com',
-          name: 'Existing User',
-          picture: 'http://example.com/pic2.jpg',
-          createdAt: new Date(),
-        }
-      } as any);
+      });
 
       const res = await request(app)
         .post('/api/v1/auth/google')
@@ -135,7 +129,7 @@ describe('Auth Endpoints', () => {
         name: 'tester',
         picture: null,
         createdAt: new Date(),
-      } as any);
+      } as User);
 
       const res = await request(app)
         .post('/api/v1/auth/register')
@@ -160,7 +154,7 @@ describe('Auth Endpoints', () => {
         userId: 10,
         provider: 'test-username',
         providerAccountId: 'tester',
-      } as any);
+      } as Account);
 
       const res = await request(app)
         .post('/api/v1/auth/register')
@@ -176,14 +170,7 @@ describe('Auth Endpoints', () => {
         userId: 10,
         provider: 'test-username',
         providerAccountId: 'tester',
-        user: {
-          id: 10,
-          email: 'tester@test.local',
-          name: 'tester',
-          picture: null,
-          createdAt: new Date(),
-        }
-      } as any);
+      });
 
       const res = await request(app)
         .post('/api/v1/auth/login')
@@ -223,7 +210,7 @@ describe('Auth Endpoints', () => {
         name: 'Test Me',
         picture: null,
         createdAt: new Date(),
-      } as any);
+      } as User);
 
       const res = await request(app)
         .get('/api/v1/auth/me')

@@ -1,4 +1,5 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
+import type { LanguageCode } from '../types/language';
 
 export const appEvents = new EventEmitter();
 
@@ -30,8 +31,8 @@ export interface DefinitionAddedPayload {
   totalDefinitions: number;
   dictionaryId?: number;
   presets?: { id: number; title: string }[];
-  sourceLanguage?: string;
-  targetLanguage?: string;
+  sourceLanguage?: LanguageCode;
+  targetLanguage?: LanguageCode;
 }
 
 export interface TranslationAddedDefinitionItem {

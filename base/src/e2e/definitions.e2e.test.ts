@@ -1,14 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest';
 import request from 'supertest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import app from '../app';
 import { prisma } from '../prisma';
-import { clearDatabase, setupTestUser, setupMercureListener, teardownMercureListener } from './helpers';
+import type { TMessage } from '../types/message';
+import { clearDatabase, setupMercureListener, setupTestUser, teardownMercureListener } from './helpers';
 
 describe('Definitions E2E', () => {
   const testUsername = 'def_user';
   let userToken: string;
   let reader: ReadableStreamDefaultReader<Uint8Array>;
-  let messages: any[] = [];
+  let messages: TMessage[] = [];
   let streamPromise: Promise<void>;
   let wordId: number;
 

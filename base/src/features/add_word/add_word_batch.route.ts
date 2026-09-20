@@ -1,17 +1,17 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
+import { appEvents, Events } from '../../core/events';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
-import { AddWordBatchRequest, AddWordBatchResponse } from './add_word.type';
-import { DictionaryAddDuplicateEvent } from '../event_bus/event_bus.type';
-import { publishEvent } from '../event_bus/event_bus.service';
-import { appEvents, Events } from '../../core/events';
 import { getAuthUser } from '../auth/auth.service';
-import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
+import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
+import { publishEvent } from '../event_bus/event_bus.service';
+import type { DictionaryAddDuplicateEvent } from '../event_bus/event_bus.type';
+import type { AddWordBatchRequest, AddWordBatchResponse } from './add_word.type';
 
 const router = Router();
 
-router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordBatchRequest>, res: Response<AddWordBatchResponse | { error: string }>) => {
+router.post('/', authMiddleware, async (req: Request<{}, unknown, AddWordBatchRequest>, res: Response<AddWordBatchResponse | { error: string }>) => {
   const { words, dictionaryId } = req.body;
 
   if (!Array.isArray(words) || words.length === 0) {

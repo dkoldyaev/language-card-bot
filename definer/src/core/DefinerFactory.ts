@@ -1,8 +1,8 @@
-import { IDefiner, DefinerAppType } from './IDefiner';
-import { MockDefiner } from '../adapters/MockDefiner';
-import { LLMAdapter } from '../adapters/LLMAdapter';
 import { FreeDictionaryDefiner } from '../adapters/FreeDictionaryDefiner';
+import { LLMAdapter } from '../adapters/LLMAdapter';
+import { MockDefiner } from '../adapters/MockDefiner';
 import { env } from './env';
+import type { DefinerAppType, IDefiner } from './IDefiner';
 
 export class DefinerFactory {
   static getDefiner(definerApp: DefinerAppType): IDefiner {

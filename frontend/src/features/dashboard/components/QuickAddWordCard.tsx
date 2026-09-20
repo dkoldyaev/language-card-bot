@@ -1,6 +1,7 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import { Alert, alpha, Box, Button, Typography } from '@mui/material';
+import { isAxiosError } from 'axios';
 import type React from 'react';
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -43,9 +44,10 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
       setSuccessWord(cleanWord);
       setWordText('');
       if (onWordAdded) onWordAdded(cleanWord);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to quick-add word:', err);
-      setError(err?.response?.data?.error || 'Failed to add word');
+      const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
+      setError(message || 'Failed to add word');
     } finally {
       setSubmitting(false);
     }

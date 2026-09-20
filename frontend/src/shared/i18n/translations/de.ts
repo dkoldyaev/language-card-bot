@@ -190,6 +190,11 @@ const de = {
   'presets.createPresetBtn': 'Vorlage erstellen',
   'presets.filterByLang': 'Nach Sprache filtern:',
   'presets.allLanguages': 'Alle Sprachen',
+  'presets.filterByLevel': 'Nach Level filtern:',
+  'presets.allLevels': 'Alle Level',
+  'presets.filterByTag': 'Nach Tag filtern:',
+  'presets.allTags': 'Alle Tags',
+  'presets.alreadyAdded': 'Hinzugefügt',
   'presets.noPresetsFound': 'Keine Vorlagen gefunden',
   'presets.noPresetsAllDesc': 'Erstelle jetzt deine erste Vokabelvorlage.',
   'presets.noPresetsLangDesc': 'Keine Vorlagen für {{lang}} verfügbar.',
@@ -218,6 +223,13 @@ const de = {
   'presets.presetSuccessCreated': 'Vorlage "{{title}}" erfolgreich erstellt.',
   'presets.presetSuccessUpdated': 'Vorlage "{{title}}" erfolgreich aktualisiert.',
   'presets.presetSuccessDeleted': 'Vorlage "{{title}}" gelöscht.',
+  'presets.addToDictionaryBtn': 'Zum Wörterbuch hinzufügen',
+  'presets.chooseDictionaryTitle': 'Zum Wörterbuch hinzufügen',
+  'presets.chooseDictionarySubtitle': 'Wähle ein Wörterbuch für „{{preset}}"',
+  'presets.noCompatibleDictionaries': 'Keine kompatiblen Wörterbücher',
+  'presets.createDictionaryHint': 'Erstelle zuerst ein {{lang}}-Wörterbuch, um dieses Preset hinzuzufügen',
+  'presets.addedSuccessDict': '„{{title}}" wurde zu „{{name}}" hinzugefügt!',
+
 
   // Quiz
   'quiz.recallPracticeOverline': 'Gedächtnistraining',

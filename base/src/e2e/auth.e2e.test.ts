@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import app from '../app';
 import { prisma } from '../prisma';
 import { clearDatabase } from './helpers';

@@ -1,5 +1,6 @@
-import { IDefiner, DefinitionItem } from '../core/IDefiner';
 import { env } from '../core/env';
+import type { DefinitionItem, IDefiner } from '../core/IDefiner';
+import type { LanguageCode } from '../types/language';
 
 export interface FreeDictionaryDefinerOptions {
   translatorApiUrl?: string;
@@ -9,11 +10,11 @@ export interface FreeDictionaryDefinerOptions {
   llmModel?: string;
 }
 
-interface RawDefinition {
-  text: string;
-  partOfSpeech: string | null;
-  tags: string[];
-}
+// interface RawDefinition {
+//   text: string;
+//   partOfSpeech: string | null;
+//   tags: string[];
+// }
 
 export type FreeDictionaryResponse = {
   word: string;
@@ -46,7 +47,7 @@ export class FreeDictionaryDefiner implements IDefiner {
     this.llmModel = options?.llmModel !== undefined ? options.llmModel : env.LLM_MODEL;
   }
 
-  async define(text: string, language: string): Promise<DefinitionItem[]> {
+  async define(text: string, language: LanguageCode): Promise<DefinitionItem[]> {
     const entry = encodeURIComponent(text.trim().toLowerCase());
     const url = `https://freedictionaryapi.com/api/v1/entries/${language}/${entry}`;
 
@@ -61,12 +62,12 @@ export class FreeDictionaryDefiner implements IDefiner {
       }
 
       const data: FreeDictionaryResponse = await response.json();
-      const definitions: DefinitionItem[] = data.entries.map(({partOfSpeech, senses}) => senses.map(({definition: text, tags}) => ({
+      const definitions: DefinitionItem[] = data.entries.flatMap(({partOfSpeech, senses}) => senses.map(({definition: text, tags}) => ({
         text,
         partOfSpeech,
         tags,
         levels: [],
-      }))).flat();
+      })));
 
       // FreeDictionary API definitions are provided in English.
       // If the requested language is not English, translate them in a batch using the Translator service.
@@ -172,8 +173,8 @@ For each definition, provide a list of tags for this definition.`;
             levelsMap.set(
               item.index,
               {
-                levels: item.levels.map((l: any) => String(l).trim().toUpperCase()).filter(Boolean),
-                tags: item.tags?.map((t: any) => String(t).trim().toLowerCase()).filter(Boolean) || [],
+                levels: item.levels.map((l: string) => String(l).trim().toUpperCase()).filter(Boolean),
+                tags: item.tags?.map((t: string) => String(t).trim().toLowerCase()).filter(Boolean) || [],
               }
             );
           }

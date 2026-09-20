@@ -1,11 +1,11 @@
-import { appEvents, Events, DefinitionAddedPayload } from '../../core/events';
+import { appEvents, type DefinitionAddedPayload, Events } from '../../core/events';
 import { enqueueFetchTranslations } from '../add_word/add_word.queue';
 import { publishEvent } from '../event_bus/event_bus.service';
-import { DictionaryAddDefinitionsReceivedEvent } from '../event_bus/event_bus.type';
+import type { DictionaryAddDefinitionsReceivedEvent } from '../event_bus/event_bus.type';
 
 // 1. Trigger: Send Mercure event that definition was added
 appEvents.on(Events.DEFINITION_ADDED, async (payload: DefinitionAddedPayload) => {
-  const { username, wordText, totalDefinitions } = payload;
+  const { username, wordText } = payload;
   
   try {
     const event: DictionaryAddDefinitionsReceivedEvent = {

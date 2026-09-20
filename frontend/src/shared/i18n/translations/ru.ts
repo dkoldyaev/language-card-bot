@@ -219,6 +219,11 @@ const ru = {
   'presets.createPresetBtn': 'Создать пресет',
   'presets.filterByLang': 'Фильтр по языку:',
   'presets.allLanguages': 'Все языки',
+  'presets.filterByLevel': 'Уровень:',
+  'presets.allLevels': 'Все уровни',
+  'presets.filterByTag': 'Тег:',
+  'presets.allTags': 'Все теги',
+  'presets.alreadyAdded': 'Добавлено',
   'presets.noPresetsFound': 'Пресеты не найдены',
   'presets.noPresetsAllDesc': 'Начните с создания первого словарного пресета.',
   'presets.noPresetsLangDesc': 'Для языка {{lang}} пресетов пока нет.',
@@ -247,6 +252,13 @@ const ru = {
   'presets.presetSuccessCreated': 'Пресет "{{title}}" успешно создан.',
   'presets.presetSuccessUpdated': 'Пресет "{{title}}" успешно обновлён.',
   'presets.presetSuccessDeleted': 'Пресет "{{title}}" удалён.',
+  'presets.addToDictionaryBtn': 'Добавить в словарь',
+  'presets.chooseDictionaryTitle': 'Добавить в словарь',
+  'presets.chooseDictionarySubtitle': 'Выберите словарь для добавления «{{preset}}»',
+  'presets.noCompatibleDictionaries': 'Нет совместимых словарей',
+  'presets.createDictionaryHint': 'Сначала создайте словарь с языком {{lang}}, чтобы добавить этот пресет',
+  'presets.addedSuccessDict': '«{{title}}» добавлен в «{{name}}»!',
+
 
   // Quiz
   'quiz.recallPracticeOverline': 'Тренировка памяти',

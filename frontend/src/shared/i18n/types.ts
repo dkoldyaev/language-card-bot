@@ -1,4 +1,4 @@
-export const SUPPORTED_LOCALES = [
+export const SUPPORTED_LANGUAGES = [
   'en',
   'ru',
   'es',
@@ -11,7 +11,10 @@ export const SUPPORTED_LOCALES = [
   'tr',
 ] as const;
 
-export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+export const SUPPORTED_LOCALES = SUPPORTED_LANGUAGES;
+
+export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number];
+export type SupportedLocale = LanguageCode;
 
 export interface LocaleInfo {
   code: SupportedLocale;

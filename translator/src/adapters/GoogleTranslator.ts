@@ -1,5 +1,6 @@
-import { ITranslator } from '../core/ITranslator';
 import { env } from '../core/env';
+import type { ITranslator } from '../core/ITranslator';
+import type { LanguageCode } from '../types/language';
 
 export class GoogleTranslator implements ITranslator {
   private apiKey: string;
@@ -8,7 +9,7 @@ export class GoogleTranslator implements ITranslator {
     this.apiKey = env.GOOGLE_TRANSLATE_API_KEY || '';
   }
 
-  async translate(texts: string[], sourceLang: string, targetLang: string): Promise<string[]> {
+  async translate(texts: string[], sourceLang: LanguageCode, targetLang: LanguageCode): Promise<string[]> {
     if (texts.length === 0) {
       return [];
     }
@@ -34,8 +35,10 @@ export class GoogleTranslator implements ITranslator {
         throw new Error(`Google Translate API error: ${response.status} ${errorData}`);
       }
 
-      const data = await response.json();
-      return data.data.translations.map((item: any) => item.translatedText);
+      const data = (await response.json()) as {
+        data: { translations: Array<{ translatedText: string }> };
+      };
+      return data.data.translations.map((item) => item.translatedText);
     } catch (error) {
       console.error('Error translating with Google API:', error);
       throw error;

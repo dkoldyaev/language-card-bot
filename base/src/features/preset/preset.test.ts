@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
+import type { Definition, Dictionary, Preset, PrismaClient, User, UserState, Word } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
-import { publishEvent } from '../event_bus/event_bus.service';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import app from '../../app';
 import { appEvents, Events } from '../../core/events';
+import { prisma } from '../../prisma';
+import { publishEvent } from '../event_bus/event_bus.service';
+import { env } from '../../core/env';
 
 const { mockRedisClient, mockInvalidateKeysByPattern } = vi.hoisted(() => ({
   mockRedisClient: {
@@ -30,7 +31,7 @@ vi.mock('../event_bus/event_bus.service', () => ({
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Preset Feature API', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
   const regularUserId = 1;
   const adminUserId = 2;
   const regularToken = jwt.sign({ id: regularUserId, username: 'regular_user' }, JWT_SECRET, { expiresIn: '1h' });
@@ -57,7 +58,7 @@ describe('Preset Feature API', () => {
           body: [{ word: 'hola', definitions: ['hello'] }],
           createdAt: new Date('2026-01-01'),
           updatedAt: new Date('2026-01-01'),
-        } as any,
+        } as unknown,
       ]);
 
       const res = await request(app).get('/api/v1/preset');
@@ -75,7 +76,7 @@ describe('Preset Feature API', () => {
           body: [{ word: 'hola', definitions: ['hello'] }],
           createdAt: new Date('2026-01-01'),
           updatedAt: new Date('2026-01-01'),
-        } as any,
+        } as unknown,
       ]);
 
       const res = await request(app)
@@ -150,7 +151,7 @@ describe('Preset Feature API', () => {
         body: [{ word: 'hola', definitions: ['hello'] }],
         createdAt: new Date('2026-01-01'),
         updatedAt: new Date('2026-01-01'),
-      } as any);
+      } as Preset);
 
       const res = await request(app)
         .get('/api/v1/preset/1')
@@ -167,7 +168,7 @@ describe('Preset Feature API', () => {
       prismaMock.user.findUnique.mockResolvedValue({
         id: regularUserId,
         isAdmin: false,
-      } as any);
+      } as User);
 
       const res = await request(app)
         .post('/api/v1/preset')
@@ -187,7 +188,7 @@ describe('Preset Feature API', () => {
       prismaMock.user.findUnique.mockResolvedValue({
         id: adminUserId,
         isAdmin: true,
-      } as any);
+      } as User);
 
       prismaMock.preset.create.mockResolvedValue({
         id: 10,
@@ -197,7 +198,7 @@ describe('Preset Feature API', () => {
         body: [{ word: 'casa', definitions: ['house'] }],
         createdAt: new Date('2026-01-01'),
         updatedAt: new Date('2026-01-01'),
-      } as any);
+      } as Preset);
 
       const res = await request(app)
         .post('/api/v1/preset')
@@ -230,7 +231,7 @@ describe('Preset Feature API', () => {
       prismaMock.user.findUnique.mockResolvedValue({
         id: regularUserId,
         isAdmin: false,
-      } as any);
+      } as User);
 
       const res = await request(app)
         .put('/api/v1/preset/1')
@@ -244,7 +245,7 @@ describe('Preset Feature API', () => {
       prismaMock.user.findUnique.mockResolvedValue({
         id: adminUserId,
         isAdmin: true,
-      } as any);
+      } as User);
 
       prismaMock.preset.findUnique.mockResolvedValue({
         id: 1,
@@ -254,7 +255,7 @@ describe('Preset Feature API', () => {
         body: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as any);
+      } as Preset);
 
       prismaMock.preset.update.mockResolvedValue({
         id: 1,
@@ -264,7 +265,7 @@ describe('Preset Feature API', () => {
         body: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as any);
+      } as Preset);
 
       const res = await request(app)
         .put('/api/v1/preset/1')
@@ -281,7 +282,7 @@ describe('Preset Feature API', () => {
       prismaMock.user.findUnique.mockResolvedValue({
         id: regularUserId,
         isAdmin: false,
-      } as any);
+      } as User);
 
       const res = await request(app)
         .delete('/api/v1/preset/1')
@@ -294,7 +295,7 @@ describe('Preset Feature API', () => {
       prismaMock.user.findUnique.mockResolvedValue({
         id: adminUserId,
         isAdmin: true,
-      } as any);
+      } as User);
 
       prismaMock.preset.findUnique.mockResolvedValue({
         id: 1,
@@ -304,9 +305,9 @@ describe('Preset Feature API', () => {
         body: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as any);
+      } as Preset);
 
-      prismaMock.preset.delete.mockResolvedValue({ id: 1 } as any);
+      prismaMock.preset.delete.mockResolvedValue({ id: 1 } as Preset);
 
       const res = await request(app)
         .delete('/api/v1/preset/1')
@@ -337,7 +338,7 @@ describe('Preset Feature API', () => {
         name: 'ES (EN)',
         targetLanguage: 'es',
         baseLanguage: 'en',
-      } as any);
+      } as Dictionary);
 
       prismaMock.preset.findUnique.mockResolvedValue(null);
 
@@ -357,7 +358,7 @@ describe('Preset Feature API', () => {
         name: 'FR (EN)',
         targetLanguage: 'fr',
         baseLanguage: 'en',
-      } as any);
+      } as Dictionary);
 
       prismaMock.preset.findUnique.mockResolvedValue({
         id: 1,
@@ -365,7 +366,7 @@ describe('Preset Feature API', () => {
         forLanguage: 'es',
         type: 'word-definition',
         body: [{ word: 'hola', definitions: ['hello'] }],
-      } as any);
+      } as Preset);
 
       const res = await request(app)
         .post('/api/v1/preset/apply_preset')
@@ -385,7 +386,7 @@ describe('Preset Feature API', () => {
         name: 'ES (EN)',
         targetLanguage: 'es',
         baseLanguage: 'en',
-      } as any);
+      } as Dictionary);
 
       prismaMock.preset.findUnique.mockResolvedValue({
         id: 1,
@@ -402,13 +403,13 @@ describe('Preset Feature API', () => {
             definitions: [{ text: 'Used to express gratitude' }],
           },
         ],
-      } as any);
+      } as unknown);
 
       // Mock userState for getUserDictionaries
       prismaMock.userState.findUnique.mockResolvedValue({
         userId: regularUserId,
         activeDictionaryId: 10,
-      } as any);
+      } as UserState);
 
       prismaMock.dictionary.findMany.mockResolvedValue([
         {
@@ -419,7 +420,7 @@ describe('Preset Feature API', () => {
           userId: regularUserId,
           createdAt: new Date(),
           _count: { words: 2 },
-        } as any,
+        } as unknown,
       ]);
 
       // Batch word prefetch: neither 'hola' nor 'gracias' exists yet
@@ -433,15 +434,15 @@ describe('Preset Feature API', () => {
       prismaMock.word.createManyAndReturn.mockResolvedValue([
         { id: 101, text: 'hola' },
         { id: 102, text: 'gracias' },
-      ] as any);
+      ] as Word);
 
-      prismaMock.preset.update.mockResolvedValue({} as any);
+      prismaMock.preset.update.mockResolvedValue({} as Word);
 
       prismaMock.definition.createManyAndReturn.mockResolvedValue([
         { id: 201, wordId: 101, text: 'An informal greeting' },
         { id: 202, wordId: 101, text: 'Used when meeting someone' },
         { id: 203, wordId: 102, text: 'Used to express gratitude' },
-      ] as any);
+      ] as Definition);
 
       const res = await request(app)
         .post('/api/v1/preset/apply_preset')

@@ -1,12 +1,13 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { type NextFunction, type Request, type Response, Router } from 'express';
 import { z } from 'zod';
-import { DefinerFactory } from '../core/DefinerFactory';
 import { redisClient } from '../core/cache';
+import { DefinerFactory } from '../core/DefinerFactory';
+import { SUPPORTED_LANGUAGES } from '../types/language';
 
 const router = Router();
 
 const DefineRequestSchema = z.object({
-  language: z.string().min(1, 'Language is required'),
+  language: z.enum(SUPPORTED_LANGUAGES),
   text: z.string().min(1, 'Text is required'),
   definerApp: z.enum(['mistral', 'gemini', 'mock', 'freedictionary', 'llm'] as const),
 });

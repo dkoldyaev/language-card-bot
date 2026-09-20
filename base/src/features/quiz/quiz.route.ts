@@ -1,13 +1,13 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
-import { getAuthUser } from '../auth/auth.service';
 import { prisma } from '../../prisma';
-import { publishEvent } from '../event_bus/event_bus.service';
-import { QuizCardMercureEvent, QuizVariantsMercureEvent, QuizDefinitionTranslationMercureEvent, QuizAnswerEvaluationMercureEvent } from '../event_bus/event_bus.type';
-import { generateQuizCard, getQuizVariants, getNextDefinition } from './quiz.service';
-import { evaluateSuggestion } from './evaluation.service';
-import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
+import { getAuthUser } from '../auth/auth.service';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
+import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
+import { publishEvent } from '../event_bus/event_bus.service';
+import type { QuizAnswerEvaluationMercureEvent, QuizCardMercureEvent, QuizDefinitionTranslationMercureEvent, QuizVariantsMercureEvent } from '../event_bus/event_bus.type';
+import { evaluateSuggestion } from './evaluation.service';
+import { generateQuizCard, getNextDefinition, getQuizVariants } from './quiz.service';
 
 const router = Router();
 
@@ -59,7 +59,7 @@ router.post('/variants', authMiddleware, async (req: Request, res: Response) => 
   try {
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
     
-    if (!userState || !userState.currentWordId) {
+    if (!userState?.currentWordId) {
       return res.status(400).json({ error: 'Quiz not active or current word not set' });
     }
 
@@ -92,7 +92,7 @@ router.post('/translate_definition', authMiddleware, async (req: Request, res: R
   try {
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
 
-    if (!userState || !userState.currentDefinitionId) {
+    if (!userState?.currentDefinitionId) {
       return res.status(400).json({ error: 'Quiz not active or current definition not set' });
     }
 
@@ -101,7 +101,7 @@ router.post('/translate_definition', authMiddleware, async (req: Request, res: R
       include: { translation: true }
     });
 
-    if (!definition || !definition.translation) {
+    if (!definition?.translation) {
       return res.status(404).json({ error: 'Translation not found for current definition' });
     }
 
@@ -136,7 +136,7 @@ router.post('/answer', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
 
-    if (!userState || !userState.currentWordId) {
+    if (!userState?.currentWordId) {
       return res.status(400).json({ error: 'Quiz not active or current word not set' });
     }
 
@@ -227,7 +227,7 @@ router.post('/next_definition', authMiddleware, async (req: Request, res: Respon
 
   try {
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
-    if (!userState || !userState.currentWordId || !userState.currentDefinitionId) {
+    if (!userState?.currentWordId || !userState.currentDefinitionId) {
       return res.status(400).json({ error: 'Quiz not active or current word/definition not set' });
     }
 

@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import request from 'supertest';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../core/env', () => {
-  const jwtSecret = process.env.JWT_SECRET || 'supersecret';
+  const jwtSecret = env.JWT_SECRET;
   return {
     env: {
       DATABASE_URL: 'postgresql://test@localhost:5432/test',
@@ -31,17 +31,18 @@ vi.mock('../../core/env', () => {
   };
 });
 
+import type { PrismaClient } from '@prisma/client';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
 import app from '../../app';
+import { env } from '../../core/env';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
 
 vi.mock('../../prisma');
 
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('POST /api/v1/auth/migrate-guest', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
   const token = jwt.sign({ id: 1, email: 'user@test.local', username: 'testuser' }, JWT_SECRET);
 
   beforeEach(() => {
@@ -75,7 +76,7 @@ describe('POST /api/v1/auth/migrate-guest', () => {
 
   it('should migrate guest data successfully in merge mode', async () => {
     // Mock transaction callback
-    prismaMock.$transaction.mockImplementation(async (callback: any) => {
+    prismaMock.$transaction.mockImplementation(async (callback: (tx: PrismaClient) => Promise<unknown>) => {
       const txMock = {
         dictionary: {
           deleteMany: vi.fn(),
@@ -106,7 +107,7 @@ describe('POST /api/v1/auth/migrate-guest', () => {
           upsert: vi.fn().mockResolvedValue({ userId: 1, activeDictionaryId: 10 }),
         },
       };
-      return callback(txMock);
+      return callback(txMock as unknown as PrismaClient);
     });
 
     const response = await request(app)

@@ -24,6 +24,39 @@ import {
 } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 
+
+const handleTranslateDefinition = async () => {
+  try {
+    await apiClient.post('/quiz/translate_definition');
+  } catch (error) {
+    console.error('Failed to translate definition:', error);
+  }
+};
+
+const handleNextDefinition = async () => {
+  try {
+    await apiClient.post('/quiz/next_definition');
+  } catch (error) {
+    console.error('Failed to get next definition:', error);
+  }
+};
+
+const handleVariants = async () => {
+  try {
+    await apiClient.post('/quiz/variants');
+  } catch (error) {
+    console.error('Failed to get variants:', error);
+  }
+};
+
+const handleNextCard = async () => {
+  try {
+    await apiClient.post('/quiz/next_card');
+  } catch (error) {
+    console.error('Failed to get next card:', error);
+  }
+};
+
 export default function QuizPlayground() {
   const { t } = useTranslation();
   const [submitting, setSubmitting] = useState(false);
@@ -62,38 +95,6 @@ export default function QuizPlayground() {
     }
   };
 
-  const handleTranslateDefinition = async () => {
-    try {
-      await apiClient.post('/quiz/translate_definition');
-    } catch (error) {
-      console.error('Failed to translate definition:', error);
-    }
-  };
-
-  const handleNextDefinition = async () => {
-    try {
-      await apiClient.post('/quiz/next_definition');
-    } catch (error) {
-      console.error('Failed to get next definition:', error);
-    }
-  };
-
-  const handleVariants = async () => {
-    try {
-      await apiClient.post('/quiz/variants');
-    } catch (error) {
-      console.error('Failed to get variants:', error);
-    }
-  };
-
-  const handleNextCard = async () => {
-    try {
-      await apiClient.post('/quiz/next_card');
-    } catch (error) {
-      console.error('Failed to get next card:', error);
-    }
-  };
-
   useEffect(() => {
     if (quizEvaluation?.result === 'SUCCESS') {
       const timer = setTimeout(() => {
@@ -105,7 +106,7 @@ export default function QuizPlayground() {
 
   useEffect(() => {
     setSuggestion('');
-  }, [quizCard]);
+  }, []);
 
   if (!quizCard) return null;
 

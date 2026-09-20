@@ -1,4 +1,5 @@
 import { alpha, IconButton, type IconButtonProps, Tooltip } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import type React from 'react';
 
 export interface AppIconButtonProps extends IconButtonProps {
@@ -23,7 +24,7 @@ export const AppIconButton: React.FC<AppIconButtonProps> = ({
           borderColor: 'divider',
           '&:hover': {
             borderColor: 'primary.main',
-            backgroundColor: (th: any) =>
+            backgroundColor: (th: Theme) =>
               alpha(th.palette.primary.main, th.palette.mode === 'dark' ? 0.12 : 0.06),
           },
         };
@@ -34,11 +35,10 @@ export const AppIconButton: React.FC<AppIconButtonProps> = ({
             backgroundColor: 'action.selected',
           },
         };
-      case 'ghost':
       default:
         return {
           '&:hover': {
-            backgroundColor: (th: any) =>
+            backgroundColor: (th: Theme) =>
               alpha(th.palette.primary.main, th.palette.mode === 'dark' ? 0.12 : 0.06),
           },
         };

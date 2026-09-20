@@ -1,17 +1,18 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
+import type { PrismaClient, Word } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import app from '../../app';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
+import { env } from '../../core/env';
 
 vi.mock('../../prisma');
 
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Word Delete Endpoint', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
 
   beforeEach(() => {
     process.env.JWT_SECRET = JWT_SECRET;
@@ -58,15 +59,7 @@ describe('Word Delete Endpoint', () => {
       text: 'hello',
       dictionaryId: 2,
       createdAt: new Date(),
-      dictionary: {
-        id: 2,
-        userId: 2,
-        name: 'Other',
-        targetLanguage: 'en',
-        baseLanguage: 'ru',
-        createdAt: new Date(),
-      }
-    } as any);
+    });
 
     const res = await request(app)
       .delete('/api/v1/word_delete/99')
@@ -84,22 +77,14 @@ describe('Word Delete Endpoint', () => {
       text: 'hello',
       dictionaryId: 1,
       createdAt: new Date(),
-      dictionary: {
-        id: 1,
-        userId: 1,
-        name: 'Mine',
-        targetLanguage: 'en',
-        baseLanguage: 'ru',
-        createdAt: new Date(),
-      }
-    } as any);
+    });
 
     prismaMock.word.delete.mockResolvedValue({
       id: 99,
       text: 'hello',
       dictionaryId: 1,
-      createdAt: new Date()
-    } as any);
+      createdAt: new Date(),
+    } as Word);
 
     const res = await request(app)
       .delete('/api/v1/word_delete/99')

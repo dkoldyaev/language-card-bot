@@ -1,6 +1,6 @@
-import { appEvents, Events, TranslationAddedPayload } from '../../core/events';
+import { appEvents, Events, type TranslationAddedPayload } from '../../core/events';
 import { publishEvent } from '../event_bus/event_bus.service';
-import { DefinitionTranslateLoadedEvent } from '../event_bus/event_bus.type';
+import type { DefinitionTranslateLoadedEvent } from '../event_bus/event_bus.type';
 
 // Trigger: Send Mercure event that translation was added or updated
 appEvents.on(Events.TRANSLATION_ADDED, async (payload: TranslationAddedPayload) => {

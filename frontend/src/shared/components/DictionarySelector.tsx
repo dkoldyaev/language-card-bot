@@ -10,6 +10,7 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  type PaperProps,
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
@@ -20,6 +21,8 @@ import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import { useTranslation } from '../i18n/I18nContext';
 import { AppChip, radiusTokens, spacingTokens } from '../ui';
+
+type MenuPaperSlotProps = PaperProps & { 'data-testid'?: string };
 
 export default function DictionarySelector() {
   const { t } = useTranslation();
@@ -130,7 +133,7 @@ export default function DictionarySelector() {
               boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
               mt: 0.75,
             },
-          } as any,
+          } as MenuPaperSlotProps,
         }}
       >
         <Box sx={{ px: 2, py: 1 }}>

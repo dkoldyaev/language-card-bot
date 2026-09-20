@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
-import app from '../index';
-import { LLMProviderFactory } from '../core/LLMProviderFactory';
-import { ILLMProvider } from '../core/ILLMProvider';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { redisClient } from '../core/cache';
+import type { ILLMProvider } from '../core/ILLMProvider';
+import { LLMProviderFactory } from '../core/LLMProviderFactory';
+import app from '../index';
 
 vi.mock('../core/LLMProviderFactory', () => ({
   LLMProviderFactory: {

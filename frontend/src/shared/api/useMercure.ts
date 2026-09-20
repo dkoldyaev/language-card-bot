@@ -44,7 +44,7 @@ export function useMercure() {
                 if (data.type === 'dictionary_add_processing') {
                   if (Array.isArray(data.words)) {
                     useStore.getState().addDictionaryWords(
-                      data.words.map((item: any) => ({
+                      data.words.map((item: { wordId: number; word: string; presets?: { id: number; title: string }[] }) => ({
                         id: item.wordId,
                         text: item.word,
                         definitions: [],

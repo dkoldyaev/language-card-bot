@@ -92,9 +92,9 @@ export default function WordList({ loading }: { loading: boolean }) {
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSelected = new Set(selectedWordIds);
     if (e.target.checked) {
-      filteredDictionary.forEach((w) => newSelected.add(w.id));
+      filteredDictionary.forEach((w) => {newSelected.add(w.id)});
     } else {
-      filteredDictionary.forEach((w) => newSelected.delete(w.id));
+      filteredDictionary.forEach((w) => {newSelected.delete(w.id)});
     }
     setSelectedWordIds(newSelected);
   };
@@ -152,7 +152,7 @@ export default function WordList({ loading }: { loading: boolean }) {
 
   const handleAddDefinition = async (wordId: number) => {
     const text = window.prompt(t('dictionary.enterNewDefinitionPrompt'));
-    if (text && text.trim()) {
+    if (text?.trim()) {
       try {
         let defId = Date.now();
         if (token) {
@@ -234,7 +234,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                   slotProps={{
                     input: {
                       'data-indeterminate': isFilteredIndeterminate ? 'true' : 'false',
-                    } as any,
+                    } as React.InputHTMLAttributes<HTMLInputElement>,
                   }}
                 />
               }
@@ -381,7 +381,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                       ) : (
                         <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}>
                           <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                            {idx + 1}. {typeof def.text === 'string' ? def.text : (def.text as any)?.text || ''}
+                            {idx + 1}. {typeof def.text === 'string' ? def.text : (def.text as { text?: string })?.text || ''}
                           </Typography>
                           {def.presets && def.presets.length > 0 && (
                             <Box sx={{ display: 'inline-flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>

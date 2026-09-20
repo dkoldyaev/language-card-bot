@@ -1,17 +1,18 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
+import { prisma } from '../../prisma';
+import type { LanguageCode } from '../../types/language';
 import { getAuthUser } from '../auth/auth.service';
-import { CreateDictionaryRequestSchema, UpdateDictionaryRequestSchema } from './dictionaries.type';
+import { publishEvent } from '../event_bus/event_bus.service';
+import type { DictionariesSyncMercureEvent, StateSyncMercureEvent } from '../event_bus/event_bus.type';
 import {
-  getUserDictionaries,
   createDictionary,
+  deleteDictionary,
+  getUserDictionaries,
   selectDictionary,
   updateDictionary,
-  deleteDictionary,
 } from './dictionaries.service';
-import { publishEvent } from '../event_bus/event_bus.service';
-import { StateSyncMercureEvent, DictionariesSyncMercureEvent } from '../event_bus/event_bus.type';
-import { prisma } from '../../prisma';
+import { CreateDictionaryRequestSchema, UpdateDictionaryRequestSchema } from './dictionaries.type';
 
 const router = Router();
 
@@ -62,7 +63,7 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
   const { id: userId } = getAuthUser(req);
   const dictId = parseInt(req.params.id as string, 10);
 
-  if (isNaN(dictId)) {
+  if (Number.isNaN(dictId)) {
     return res.status(400).json({ error: 'Invalid dictionary ID' });
   }
 
@@ -102,7 +103,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
   const { id: userId, username } = getAuthUser(req);
   const dictId = parseInt(req.params.id as string, 10);
 
-  if (isNaN(dictId)) {
+  if (Number.isNaN(dictId)) {
     return res.status(400).json({ error: 'Invalid dictionary ID' });
   }
 
@@ -124,8 +125,8 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     await publishEvent(username, syncEvent).catch((err) => console.error('Mercure publish error:', err));
 
     res.json({ dictionary: updated });
-  } catch (error: any) {
-    if (error.message === 'Dictionary not found') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Dictionary not found') {
       return res.status(404).json({ error: 'Dictionary not found' });
     }
     console.error('Update dictionary error:', error);
@@ -138,7 +139,7 @@ router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
   const { id: userId, username } = getAuthUser(req);
   const dictId = parseInt(req.params.id as string, 10);
 
-  if (isNaN(dictId)) {
+  if (Number.isNaN(dictId)) {
     return res.status(400).json({ error: 'Invalid dictionary ID' });
   }
 
@@ -155,8 +156,8 @@ router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
     await publishEvent(username, syncEvent).catch((err) => console.error('Mercure publish error:', err));
 
     res.json({ message: 'Dictionary deleted successfully' });
-  } catch (error: any) {
-    if (error.message === 'Dictionary not found') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Dictionary not found') {
       return res.status(404).json({ error: 'Dictionary not found' });
     }
     console.error('Delete dictionary error:', error);
@@ -169,7 +170,7 @@ router.post('/:id/select', authMiddleware, async (req: Request, res: Response) =
   const { id: userId, username } = getAuthUser(req);
   const dictId = parseInt(req.params.id as string, 10);
 
-  if (isNaN(dictId)) {
+  if (Number.isNaN(dictId)) {
     return res.status(400).json({ error: 'Invalid dictionary ID' });
   }
 
@@ -183,8 +184,8 @@ router.post('/:id/select', authMiddleware, async (req: Request, res: Response) =
       activeDictionary: {
         id: dict.id,
         name: dict.name,
-        targetLanguage: dict.targetLanguage,
-        baseLanguage: dict.baseLanguage,
+        targetLanguage: dict.targetLanguage as LanguageCode,
+        baseLanguage: dict.baseLanguage as LanguageCode,
       },
       currentWordId: null,
       currentWord: null,
@@ -197,8 +198,8 @@ router.post('/:id/select', authMiddleware, async (req: Request, res: Response) =
     await publishEvent(username, payload).catch((err) => console.error('Mercure publish error:', err));
 
     res.json({ message: 'Dictionary selected', activeDictionaryId: dict.id });
-  } catch (error: any) {
-    if (error.message === 'Dictionary not found') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Dictionary not found') {
       return res.status(404).json({ error: 'Dictionary not found' });
     }
     console.error('Select dictionary error:', error);

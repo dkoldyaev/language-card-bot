@@ -1,5 +1,5 @@
-import { MercureEvent } from './event_bus.type';
 import { env } from '../../core/env';
+import type { MercureEvent } from './event_bus.type';
 
 export async function publishEvent(username: string, payload: MercureEvent): Promise<void> {
   const MERCURE_URL = env.MERCURE_URL;

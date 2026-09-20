@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
@@ -39,7 +39,7 @@ router.delete('/:wordId', authMiddleware, async (req: Request<{ wordId: string }
   const { id: userId } = getAuthUser(req);
   const wordId = parseInt(req.params.wordId, 10);
 
-  if (isNaN(wordId)) {
+  if (Number.isNaN(wordId)) {
     return res.status(400).json({ error: 'Invalid wordId' });
   }
 

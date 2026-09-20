@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import { listPresets } from '../features/preset/preset.service';
 import { prisma } from '../prisma';
+import { LanguageCode } from '../types/language';
 
-function parseArgs() {
+function parseArgs(): {language: LanguageCode} {
   const args = process.argv.slice(2);
   let language: string | undefined;
 
@@ -15,7 +16,9 @@ function parseArgs() {
     }
   }
 
-  return { language };
+  if (!language) throw new Error('Language is required');
+
+  return { language: language as LanguageCode };
 }
 
 async function main() {

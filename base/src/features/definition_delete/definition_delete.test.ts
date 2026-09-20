@@ -1,20 +1,20 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
+import type { Definition, PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import app from '../../app';
+import { env } from '../../core/env';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
 
 vi.mock('../../prisma');
 
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Definition Delete Endpoint', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
 
   beforeEach(() => {
-    process.env.JWT_SECRET = JWT_SECRET;
     mockReset(prismaMock);
   });
 
@@ -64,7 +64,7 @@ describe('Definition Delete Endpoint', () => {
           userId: 2,
         }
       }
-    } as any);
+    } as unknown);
 
     const res = await request(app)
       .delete('/api/v1/definition_delete/1')
@@ -91,14 +91,14 @@ describe('Definition Delete Endpoint', () => {
           userId: 1,
         }
       }
-    } as any);
+    } as unknown);
 
     prismaMock.definition.delete.mockResolvedValue({
       id: 1,
       text: 'test definition',
       wordId: 1,
       createdAt: new Date(),
-    } as any);
+    } as Definition);
 
     const res = await request(app)
       .delete('/api/v1/definition_delete/1')

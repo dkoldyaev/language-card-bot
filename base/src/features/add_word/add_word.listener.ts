@@ -1,7 +1,7 @@
-import { appEvents, Events, WordsListAddedPayload } from '../../core/events';
-import { enqueueFetchDefinitionsBatch } from './add_word.queue';
+import { appEvents, Events, type WordsListAddedPayload } from '../../core/events';
 import { publishEvent } from '../event_bus/event_bus.service';
-import { DictionaryAddProcessingEvent } from '../event_bus/event_bus.type';
+import type { DictionaryAddProcessingEvent } from '../event_bus/event_bus.type';
+import { enqueueFetchDefinitionsBatch } from './add_word.queue';
 
 // 1. Trigger: Send Mercure event that words appeared in the dictionary
 appEvents.on(Events.WORDS_LIST_ADDED, async (payload: WordsListAddedPayload) => {

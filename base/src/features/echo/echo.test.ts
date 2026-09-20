@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import app from '../../app';
+import { env } from '../../core/env';
 import { publishEvent } from '../event_bus/event_bus.service';
 
 vi.mock('../event_bus/event_bus.service', () => ({
@@ -9,15 +10,9 @@ vi.mock('../event_bus/event_bus.service', () => ({
 }));
 
 describe('Echo Endpoint', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
-  const MERCURE_URL = process.env.MERCURE_URL || 'http://localhost:9090/.well-known/mercure';
+  const JWT_SECRET = env.JWT_SECRET;
 
   beforeEach(() => {
-    // Override env variables for tests
-    process.env.MERCURE_URL = MERCURE_URL;
-    process.env.MERCURE_JWT = 'test_mercure_jwt';
-    process.env.JWT_SECRET = JWT_SECRET;
-
     vi.mocked(publishEvent).mockResolvedValue();
   });
 

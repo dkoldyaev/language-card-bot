@@ -1,6 +1,7 @@
-import { ITranslator } from '../core/ITranslator';
 import { Credentials, Translator } from '@translated/lara';
 import { env } from '../core/env';
+import type { ITranslator } from '../core/ITranslator';
+import type { LanguageCode } from '../types/language';
 
 export class LaratranslateTranslator implements ITranslator {
   private lara: Translator;
@@ -13,7 +14,7 @@ export class LaratranslateTranslator implements ITranslator {
     this.lara = new Translator(credentials);
   }
 
-  async translate(texts: string[], sourceLang: string, targetLang: string): Promise<string[]> {
+  async translate(texts: string[], sourceLang: LanguageCode, targetLang: LanguageCode): Promise<string[]> {
     if (texts.length === 0) {
       return [];
     }

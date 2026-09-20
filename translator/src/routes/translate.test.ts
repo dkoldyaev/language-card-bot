@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
-import app from '../index';
-import { TranslatorFactory } from '../core/TranslatorFactory';
-import { ITranslator } from '../core/ITranslator';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { redisClient } from '../core/cache';
+import type { ITranslator } from '../core/ITranslator';
+import { TranslatorFactory } from '../core/TranslatorFactory';
+import app from '../index';
 
 // Mock the TranslatorFactory
 vi.mock('../core/TranslatorFactory', () => ({

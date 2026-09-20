@@ -1,32 +1,27 @@
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import {
   Alert,
   alpha,
   Box,
-  Button,
   Card,
   CardContent,
   Chip,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Typography,
   useTheme,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { isAxiosError } from 'axios';
+import { useEffect, useMemo, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
 import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
 import { useGuidelineStore } from '../../guideline';
-import type { PresetItem, WordDefinitionPresetItem } from '../../presets/types';
+import PresetCard from '../../presets/components/PresetCard';
+import type { PresetDefinitionItem, PresetItem, WordDefinitionPresetItem } from '../../presets/types';
 
 interface DictionaryPresetsProps {
   dictionary?: DictionaryItem;
@@ -45,7 +40,11 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [applyingId, setApplyingId] = useState<number | null>(null);
-  const [previewPreset, setPreviewPreset] = useState<PresetItem | null>(null);
+
+  const [selectedLevel, setSelectedLevel] = useState<string>('all');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+
+  const currentWords = useStore((state) => state.dictionary);
 
   const targetLang = dictionary?.targetLanguage;
 
@@ -77,7 +76,54 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
     return () => {
       isMounted = false;
     };
-  }, [targetLang]);
+  }, [targetLang, t]);
+
+  const { allTags, allLevels } = useMemo(() => {
+    const tags = new Set<string>();
+    const levels = new Set<string>();
+    presets.forEach(p => {
+      if (Array.isArray(p.body)) {
+        p.body.forEach((item: WordDefinitionPresetItem) => {
+          if (Array.isArray(item.definitions)) {
+            item.definitions.forEach((def: PresetDefinitionItem) => {
+              if (def && typeof def === 'object') {
+                if (Array.isArray(def.tags)) def.tags.forEach((t: string) => {tags.add(t.toLowerCase())});
+                if (Array.isArray(def.levels)) def.levels.forEach((l: string) => {levels.add(l.toUpperCase())});
+              }
+            });
+          }
+        });
+      }
+    });
+    return {
+      allTags: Array.from(tags).sort(),
+      allLevels: Array.from(levels).sort(),
+    };
+  }, [presets]);
+
+  const filteredPresets = useMemo(() => {
+    return presets.filter(p => {
+      const pTags = new Set<string>();
+      const pLevels = new Set<string>();
+      if (Array.isArray(p.body)) {
+        p.body.forEach((item: WordDefinitionPresetItem) => {
+          if (Array.isArray(item.definitions)) {
+            item.definitions.forEach((def: PresetDefinitionItem) => {
+              if (def && typeof def === 'object') {
+                if (Array.isArray(def.tags)) def.tags.forEach((t: string) => {pTags.add(t.toLowerCase())});
+                if (Array.isArray(def.levels)) def.levels.forEach((l: string) => {pLevels.add(l.toUpperCase())});
+              }
+            });
+          }
+        });
+      }
+
+      if (selectedLevel !== 'all' && !pLevels.has(selectedLevel.toUpperCase())) return false;
+      if (selectedTag !== 'all' && !pTags.has(selectedTag.toLowerCase())) return false;
+
+      return true;
+    });
+  }, [presets, selectedLevel, selectedTag]);
 
   const handleApply = async (preset: PresetItem) => {
     if (!dictionary) return;
@@ -88,20 +134,19 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
 
     if (!token) {
       try {
-        const currentWords = useStore.getState().dictionary;
         let wordCounter = currentWords.length > 0 ? Math.max(...currentWords.map((w) => w.id)) + 1 : 1;
         let defCounter = 1;
         const presetWords = Array.isArray(preset.body) ? preset.body : [];
         const baseLang = dictionary?.baseLanguage?.toLowerCase() || '';
-        const newWords: DictionaryWord[] = presetWords.map((item: any) => ({
+        const newWords: DictionaryWord[] = presetWords.map((item: WordDefinitionPresetItem) => ({
           id: wordCounter++,
           text: item.word,
-          definitions: (item.definitions || []).map((def: any) => {
+          definitions: (item.definitions || []).map((def: PresetDefinitionItem) => {
             const text = typeof def === 'string' ? def : (def?.text || '');
             const transText =
               typeof def === 'object' && def?.translations && baseLang
                 ? def.translations[baseLang] || null
-                : typeof def?.translation === 'string'
+                : typeof def === 'object' && typeof def?.translation === 'string'
                 ? def.translation
                 : null;
             return {
@@ -131,7 +176,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
           onPresetApplied(preset);
         }
         useGuidelineStore.getState().advanceStep('step3_select_preset');
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to apply preset locally:', err);
         setError(t('presets.failedApply'));
       } finally {
@@ -161,9 +206,10 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
         onPresetApplied(preset);
       }
       useGuidelineStore.getState().advanceStep('step3_select_preset');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to apply preset:', err);
-      setError(err.response?.data?.error || t('presets.failedApply'));
+      const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
+      setError(message || t('presets.failedApply'));
     } finally {
       setApplyingId(null);
     }
@@ -171,7 +217,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
 
   if (!dictionary) return null;
 
-  const words = (body: any): WordDefinitionPresetItem[] => {
+  const words = (body: PresetItem['body']): WordDefinitionPresetItem[] => {
     return Array.isArray(body) ? body : [];
   };
 
@@ -244,6 +290,42 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
           </Box>
         </Box>
 
+        {presets.length > 0 && (
+          <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel id="dict-filter-level-label">{t('presets.filterByLevel')}</InputLabel>
+              <Select
+                labelId="dict-filter-level-label"
+                value={selectedLevel}
+                label={t('presets.filterByLevel')}
+                onChange={(e) => setSelectedLevel(e.target.value)}
+                sx={{ borderRadius: 1 }}
+              >
+                <MenuItem value="all">{t('presets.allLevels')}</MenuItem>
+                {allLevels.map((lvl) => (
+                  <MenuItem key={lvl} value={lvl}>{lvl}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel id="dict-filter-tag-label">{t('presets.filterByTag')}</InputLabel>
+              <Select
+                labelId="dict-filter-tag-label"
+                value={selectedTag}
+                label={t('presets.filterByTag')}
+                onChange={(e) => setSelectedTag(e.target.value)}
+                sx={{ borderRadius: 1 }}
+              >
+                <MenuItem value="all">{t('presets.allTags')}</MenuItem>
+                {allTags.map((tag) => (
+                  <MenuItem key={tag} value={tag}>{tag}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        )}
+
         {/* Notifications */}
         {error && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setError(null)}>
@@ -290,220 +372,29 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
               gap: 2,
             }}
           >
-            {presets.map((preset) => {
+            {filteredPresets.map((preset) => {
               const presetWords = words(preset.body);
-              const previewWords = presetWords.slice(0, 4);
-              const remainingCount = presetWords.length - previewWords.length;
               const isApplying = applyingId === preset.id;
+              const isAlreadyInDictionary =
+                presetWords.length > 0 &&
+                presetWords.every((pw) =>
+                  currentWords.some((cw) => cw.text.toLowerCase() === pw.word.toLowerCase())
+                );
 
               return (
-                <Card
+                <PresetCard
                   key={preset.id}
-                  data-testid={`preset-card-${preset.id}`}
-                  sx={{
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    backgroundColor: 'background.paper',
-                    boxShadow: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    p: 2,
-                    transition: 'all 0.15s ease-in-out',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-                    },
-                  }}
-                >
-                  <Box sx={{ mb: 1.5 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.75 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1.25 }}>
-                        {preset.title}
-                      </Typography>
-                      <Chip
-                        label={t('dictionary.wordsCount', { count: presetWords.length })}
-                        size="small"
-                        sx={{
-                          height: 22,
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                          color: 'primary.main',
-                        }}
-                      />
-                    </Box>
-
-                    {preset.description && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          fontSize: '0.8rem',
-                          mb: 1,
-                          lineHeight: 1.35,
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {preset.description}
-                      </Typography>
-                    )}
-
-                    {/* Word Chips Preview */}
-                    <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 1 }}>
-                      {previewWords.map((item, idx) => (
-                        <Chip
-                          key={idx}
-                          label={item.word}
-                          size="small"
-                          variant="outlined"
-                          sx={{
-                            height: 22,
-                            fontSize: '0.72rem',
-                            borderColor: 'divider',
-                            backgroundColor: (th) => th.palette.mode === 'dark' ? alpha(th.palette.common.white, 0.04) : '#F9FAFB',
-                          }}
-                        />
-                      ))}
-                      {remainingCount > 0 && (
-                        <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center', ml: 0.5 }}>
-                          {t('presets.moreWords', { count: remainingCount })}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Box>
-
-                  {/* Actions */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      pt: 1.5,
-                      borderTop: '1px solid #F3F4F6',
-                      gap: 1,
-                    }}
-                  >
-                    <Button
-                      size="small"
-                      startIcon={<VisibilityRoundedIcon sx={{ fontSize: 16 }} />}
-                      onClick={() => setPreviewPreset(preset)}
-                      sx={{
-                        textTransform: 'none',
-                        color: 'text.secondary',
-                        fontSize: '0.8rem',
-                        '&:hover': { color: 'primary.main' },
-                      }}
-                    >
-                      {t('presets.previewWordsBtn')}
-                    </Button>
-
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={isApplying ? <CircularProgress size={16} color="inherit" /> : <AddRoundedIcon />}
-                      disabled={isApplying || applyingId !== null}
-                      onClick={() => handleApply(preset)}
-                      data-testid={`apply-preset-btn-${preset.id}`}
-                      data-tour="preset-apply-btn"
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 700,
-                        borderRadius: 2,
-                        px: 1.75,
-                      }}
-                    >
-                      {isApplying ? t('presets.addingToDeckBtn') : t('presets.addToDeckBtn')}
-                    </Button>
-                  </Box>
-                </Card>
+                  preset={preset}
+                  onAddToCurrentDictionary={handleApply}
+                  isAdding={isApplying}
+                  isAlreadyInDictionary={isAlreadyInDictionary}
+                />
               );
             })}
           </Box>
         )}
       </CardContent>
 
-      {/* Preset Preview Dialog */}
-      <Dialog
-        open={Boolean(previewPreset)}
-        onClose={() => setPreviewPreset(null)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>
-          {previewPreset?.title}
-          {previewPreset?.description && (
-            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5, fontStyle: 'italic' }}>
-              {previewPreset.description}
-            </Typography>
-          )}
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {t('presets.previewLangInfo', {
-              lang: previewPreset?.for_language?.toUpperCase() || '',
-              count: words(previewPreset?.body).length,
-            })}
-          </Typography>
-        </DialogTitle>
-        <DialogContent dividers sx={{ p: 0 }}>
-          <List sx={{ py: 0 }}>
-            {previewPreset &&
-              words(previewPreset.body).map((item, idx) => (
-                <Box key={idx}>
-                  <ListItem sx={{ py: 1.25, px: 3 }}>
-                    <ListItemText
-                      primary={
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                          {item.word}
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                          {item.definitions
-                            ?.map((d: any) => {
-                              if (typeof d === 'string') return d;
-                              if (d && typeof d === 'object' && typeof d.text === 'string') {
-                                const baseLang = dictionary?.baseLanguage?.toLowerCase() || '';
-                                const trans =
-                                  d.translations?.[baseLang] ||
-                                  (typeof d.translation === 'string' ? d.translation : '');
-                                return trans ? `${d.text} (${trans})` : d.text;
-                              }
-                              return '';
-                            })
-                            .filter(Boolean)
-                            .join('; ') || t('presets.noDefinitions')}
-                        </Typography>
-                      }
-                    />
-                  </ListItem>
-                  {idx < words(previewPreset.body).length - 1 && <Divider />}
-                </Box>
-              ))}
-          </List>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setPreviewPreset(null)} sx={{ textTransform: 'none' }}>
-            {t('presets.closeBtn')}
-          </Button>
-          {previewPreset && (
-            <Button
-              variant="contained"
-              startIcon={<AddRoundedIcon />}
-              onClick={() => {
-                const p = previewPreset;
-                setPreviewPreset(null);
-                handleApply(p);
-              }}
-              sx={{ textTransform: 'none', fontWeight: 700 }}
-            >
-              {t('presets.addThisPresetBtn')}
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
     </Card>
   );
 }

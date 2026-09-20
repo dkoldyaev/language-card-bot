@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { LanguageCode } from '../shared/i18n/types';
 
 export interface UserProfile {
   id: number;
@@ -12,15 +13,15 @@ export interface UserProfile {
 }
 
 export interface SettingsState {
-  baseLanguage: string;
-  targetLanguage: string;
+  baseLanguage: LanguageCode;
+  targetLanguage: LanguageCode;
 }
 
 export interface DictionaryItem {
   id: number;
   name: string;
-  targetLanguage: string;
-  baseLanguage: string;
+  targetLanguage: LanguageCode;
+  baseLanguage: LanguageCode;
   wordCount: number;
   isActive: boolean;
   createdAt?: string;
@@ -43,10 +44,48 @@ export interface DictionaryDefinition {
   presets?: PresetBadge[];
 }
 
+export interface UnnormalizedDefinitionText {
+  text?: string;
+  translations?: Record<string, string>;
+}
+
+export interface UnnormalizedDefinition {
+  id: number;
+  text: string | UnnormalizedDefinitionText;
+  translation?: DictionaryTranslation | string | null;
+  presets?: PresetBadge[];
+}
+
 export interface DictionaryWord {
   id: number;
   text: string;
   definitions: DictionaryDefinition[];
+  presets?: PresetBadge[];
+}
+
+export interface UnnormalizedWord {
+  id: number;
+  text: string;
+  definitions: UnnormalizedDefinition[];
+  presets?: PresetBadge[];
+}
+
+export interface AppSyncState {
+  currentWord?: { id: number; text?: string } | null;
+  currentDefinition?: {
+    id: number;
+    text: string;
+    translation: string | null;
+  } | null;
+  activeDictionaryId?: number | null;
+  mode?: string;
+  type?: string;
+}
+
+export interface DefinitionInput {
+  id: number;
+  text: string;
+  translation?: DictionaryTranslation;
   presets?: PresetBadge[];
 }
 
@@ -122,7 +161,7 @@ interface AppState {
   activeDictionaryId: number | null;
   selectedDictionaryId: number | null;
   setSelectedDictionaryId: (selectedDictionaryId: number | null) => void;
-  appState: any | null;
+  appState: AppSyncState | null;
   dictionary: DictionaryWord[];
   guestQuizAttempts: GuestQuizAttempt[];
   guestDictionaryWords: Record<number, DictionaryWord[]>;
@@ -151,13 +190,13 @@ interface AppState {
   addDictionary: (dictionary: DictionaryItem) => void;
   removeDictionary: (id: number) => void;
   updateDictionaryItem: (id: number, partial: Partial<DictionaryItem>) => void;
-  setAppState: (appState: any) => void;
+  setAppState: (appState: AppSyncState | null) => void;
   setDictionary: (dictionary: DictionaryWord[]) => void;
   addDictionaryWord: (word: DictionaryWord) => void;
   addDictionaryWords: (words: DictionaryWord[]) => void;
   removeDictionaryWord: (wordId: number) => void;
-  setDictionaryDefinitions: (wordId: number, definitions: { id: number; text: string }[], wordText?: string) => void;
-  setDictionaryDefinitionsBatch: (items: { wordId: number; word: string; definitions: { id: number; text: string; presets?: PresetBadge[] }[] }[]) => void;
+  setDictionaryDefinitions: (wordId: number, definitions: DefinitionInput[], wordText?: string) => void;
+  setDictionaryDefinitionsBatch: (items: { wordId: number; word: string; definitions: DefinitionInput[] }[]) => void;
   updateDictionaryDefinition: (wordId: number, definitionId: number, text: string) => void;
   updateDictionaryTranslation: (wordId: number, definitionId: number, text: string) => void;
   updateDictionaryTranslationsBatch: (words: { wordId: number; definitions: { id: number; translation: string }[] }[]) => void;
@@ -196,12 +235,12 @@ const initialState = {
   hasCompletedGuestOnboarding: false,
 };
 
-export const normalizeWordDefinitions = (word: DictionaryWord, baseLang?: string): DictionaryWord => {
+export const normalizeWordDefinitions = (word: UnnormalizedWord | DictionaryWord, baseLang?: string): DictionaryWord => {
   return {
     ...word,
-    definitions: (word.definitions || []).map((def: any) => {
-      let text = def.text;
-      let translation = def.translation;
+    definitions: (word.definitions || []).map((def) => {
+      let text: string | UnnormalizedDefinitionText = def.text;
+      let translation: DictionaryTranslation | string | null | undefined = def.translation;
       if (text && typeof text === 'object') {
         if (text.translations && !translation && baseLang) {
           const transStr = text.translations[baseLang];
@@ -216,14 +255,14 @@ export const normalizeWordDefinitions = (word: DictionaryWord, baseLang?: string
       }
       return {
         ...def,
-        text,
-        translation,
+        text: text as string,
+        translation: translation ?? null,
       };
     }),
   };
 };
 
-export const normalizeWords = (words: DictionaryWord[], baseLang?: string): DictionaryWord[] => {
+export const normalizeWords = (words: (UnnormalizedWord | DictionaryWord)[], baseLang?: string): DictionaryWord[] => {
   return (words || []).map((w) => normalizeWordDefinitions(w, baseLang));
 };
 
@@ -291,7 +330,7 @@ const useStore = create<AppState>()(
       })),
       setAppState: (appState) => set((state) => {
         let quizCard = state.quizCard;
-        if (appState && appState.currentWord && appState.currentDefinition) {
+        if (appState?.currentWord && appState.currentDefinition) {
           quizCard = {
             wordId: appState.currentWord.id,
             definition: {
@@ -313,28 +352,10 @@ const useStore = create<AppState>()(
         };
       }),
       setDictionary: (dictionary) => set((state) => {
-        const normalizedDictionary = (dictionary || []).map((word) => ({
-          ...word,
-          definitions: (word.definitions || []).map((def: any) => {
-            let text = def.text;
-            let translation = def.translation;
-            if (text && typeof text === 'object') {
-              if (text.translations && !translation) {
-                const baseLang = state.dictionaries.find(d => d.id === state.selectedDictionaryId)?.baseLanguage?.toLowerCase();
-                const transStr = baseLang ? text.translations[baseLang] : null;
-                if (transStr) {
-                  translation = { id: def.id, text: transStr };
-                }
-              }
-              text = text.text || '';
-            }
-            return {
-              ...def,
-              text,
-              translation,
-            };
-          }),
-        }));
+        const normalizedDictionary = (dictionary || []).map((word) => {
+          const dict = state.dictionaries.find(d => d.id === state.selectedDictionaryId);
+          return normalizeWordDefinitions(word, dict?.baseLanguage?.toLowerCase());
+        });
         const dictionaryWordIds = new Set(normalizedDictionary.map(w => w.id));
         const shouldResetQuiz = state.quizCard && !dictionaryWordIds.has(state.quizCard.wordId);
         const currentDictId = state.selectedDictionaryId ?? state.activeDictionaryId ?? state.dictionaries[0]?.id;
@@ -383,8 +404,10 @@ const useStore = create<AppState>()(
         const mappedDefs = definitions.map((d) => ({
           id: d.id,
           text: d.text,
-          translation: (d as any).translation ?? null,
-          presets: (d as any).presets ?? [],
+          translation: typeof d.translation === 'string'
+            ? { id: d.id, text: d.translation }
+            : d.translation ?? null,
+          presets: d.presets ?? [],
         }));
 
         if (!wordExists && wordText) {
@@ -438,8 +461,10 @@ const useStore = create<AppState>()(
             definitions: item.definitions.map((d) => ({
               id: d.id,
               text: d.text,
-              translation: (d as any).translation ?? null,
-              presets: (d as any).presets ?? [],
+              translation: typeof d.translation === 'string'
+                ? { id: d.id, text: d.translation }
+                : d.translation ?? null,
+              presets: d.presets ?? [],
             })),
             presets: [],
           }));
@@ -449,12 +474,14 @@ const useStore = create<AppState>()(
           if (!item) return word;
 
           const existingDefs = word.definitions || [];
-          const mergedDefs = [...existingDefs];
+          const mergedDefs: DictionaryDefinition[] = [...existingDefs];
           const mappedNewDefs = item.definitions.map((d) => ({
             id: d.id,
             text: d.text,
-            translation: (d as any).translation ?? null,
-            presets: (d as any).presets ?? [],
+            translation: typeof d.translation === 'string'
+              ? { id: d.id, text: d.translation }
+              : d.translation ?? null,
+            presets: d.presets ?? [],
           }));
 
           for (const nd of mappedNewDefs) {
@@ -584,6 +611,24 @@ const useStore = create<AppState>()(
       name: 'english-card-bot-storage',
       onRehydrateStorage: () => (state) => {
         if (state) {
+          if (state.settings) {
+            if (state.settings.baseLanguage?.includes('-')) {
+              state.settings.baseLanguage = state.settings.baseLanguage.split('-')[0] as LanguageCode;
+            }
+            if (state.settings.targetLanguage?.includes('-')) {
+              state.settings.targetLanguage = state.settings.targetLanguage.split('-')[0] as LanguageCode;
+            }
+          }
+          if (Array.isArray(state.dictionaries)) {
+            state.dictionaries.forEach(d => {
+              if (d.baseLanguage?.includes('-')) {
+                d.baseLanguage = d.baseLanguage.split('-')[0] as LanguageCode;
+              }
+              if (d.targetLanguage?.includes('-')) {
+                d.targetLanguage = d.targetLanguage.split('-')[0] as LanguageCode;
+              }
+            });
+          }
           if (Array.isArray(state.dictionary)) {
             state.dictionary = normalizeWords(state.dictionary);
           }

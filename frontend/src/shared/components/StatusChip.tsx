@@ -2,6 +2,13 @@ import { Chip, CircularProgress } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useTranslation } from '../i18n/I18nContext';
 
+type MercureWordItem = string | { word?: string };
+
+function wordMatches(item: MercureWordItem, word: string): boolean {
+  const value = typeof item === 'string' ? item : item.word;
+  return value?.toLowerCase() === word.toLowerCase();
+}
+
 export default function StatusChip({ word }: { word: string }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<string | undefined>();
@@ -19,14 +26,14 @@ export default function StatusChip({ word }: { word: string }) {
         }
       } else if (data.type === 'dictionary_add_processing') {
         const isProcessing = Array.isArray(data.words)
-          ? data.words.some((w: any) => (typeof w === 'string' ? w : w.word)?.toLowerCase() === word.toLowerCase())
+          ? data.words.some((w: MercureWordItem) => wordMatches(w, word))
           : false;
         if (isProcessing) {
           setStatus('processing');
         }
       } else if (data.type === 'dictionary_add_definitions_received') {
         const isReceived = Array.isArray(data.words)
-          ? data.words.some((w: any) => (typeof w === 'string' ? w : w.word)?.toLowerCase() === word.toLowerCase())
+          ? data.words.some((w: MercureWordItem) => wordMatches(w, word))
           : false;
         if (isReceived) {
           setStatus('definitions_received');

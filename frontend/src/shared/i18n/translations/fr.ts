@@ -190,6 +190,11 @@ const fr = {
   'presets.createPresetBtn': 'Créer un préréglage',
   'presets.filterByLang': 'Filtrer par langue :',
   'presets.allLanguages': 'Toutes les langues',
+  'presets.filterByLevel': 'Filtrer par niveau :',
+  'presets.allLevels': 'Tous les niveaux',
+  'presets.filterByTag': 'Filtrer par tag :',
+  'presets.allTags': 'Tous les tags',
+  'presets.alreadyAdded': 'Ajouté',
   'presets.noPresetsFound': 'Aucun préréglage trouvé',
   'presets.noPresetsAllDesc': 'Commencez par créer votre premier préréglage de vocabulaire.',
   'presets.noPresetsLangDesc': 'Aucun préréglage disponible pour {{lang}}.',
@@ -218,6 +223,13 @@ const fr = {
   'presets.presetSuccessCreated': 'Préréglage "{{title}}" créé avec succès.',
   'presets.presetSuccessUpdated': 'Préréglage "{{title}}" mis à jour avec succès.',
   'presets.presetSuccessDeleted': 'Préréglage "{{title}}" supprimé.',
+  'presets.addToDictionaryBtn': 'Ajouter au dictionnaire',
+  'presets.chooseDictionaryTitle': 'Ajouter au dictionnaire',
+  'presets.chooseDictionarySubtitle': 'Sélectionne un dictionnaire pour « {{preset}} »',
+  'presets.noCompatibleDictionaries': 'Aucun dictionnaire compatible',
+  'presets.createDictionaryHint': 'Crée d\'abord un dictionnaire {{lang}} pour ajouter ce preset',
+  'presets.addedSuccessDict': '« {{title}} » ajouté à « {{name}} » !',
+
 
   // Quiz
   'quiz.recallPracticeOverline': 'Pratique de rappel',

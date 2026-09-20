@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { calculateStreak, getDashboardStats, invalidateDashboardCache } from './dashboard.service';
+import type { PrismaClient, QuizAttempt, Word } from '@prisma/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
+import { calculateStreak, getDashboardStats, invalidateDashboardCache } from './dashboard.service';
 
 const { mockRedisClient, mockInvalidateKeysByPattern } = vi.hoisted(() => ({
   mockRedisClient: {
@@ -125,23 +125,23 @@ describe('getDashboardStats', () => {
       },
     ];
 
-    prismaMock.word.findMany.mockResolvedValue(mockWords as any);
+    prismaMock.word.findMany.mockResolvedValue(mockWords as Word);
 
     const now = new Date();
     // Attempts for user overall (allUserAttempts)
     prismaMock.quizAttempt.findMany
       .mockResolvedValueOnce([
-        { createdAt: now } as any,
+        { createdAt: now } as Word,
       ])
       // Attempts for dictionary
       .mockResolvedValueOnce([
         // word 101 (apple): 3 SUCCESS -> MASTERED
-        { id: 1, userId: 1, wordId: 101, result: 'SUCCESS', createdAt: now, word: mockWords[0] } as any,
-        { id: 2, userId: 1, wordId: 101, result: 'SUCCESS', createdAt: now, word: mockWords[0] } as any,
-        { id: 3, userId: 1, wordId: 101, result: 'SUCCESS', createdAt: now, word: mockWords[0] } as any,
+        { id: 1, userId: 1, wordId: 101, result: 'SUCCESS', createdAt: now, word: mockWords[0] } as QuizAttempt,
+        { id: 2, userId: 1, wordId: 101, result: 'SUCCESS', createdAt: now, word: mockWords[0] } as QuizAttempt,
+        { id: 3, userId: 1, wordId: 101, result: 'SUCCESS', createdAt: now, word: mockWords[0] } as unknown,
         // word 102 (banana): 1 INCORRECT, 1 SUCCESS -> LEARNING & NEEDS ATTENTION
-        { id: 4, userId: 1, wordId: 102, result: 'INCORRECT', createdAt: now, word: mockWords[1] } as any,
-        { id: 5, userId: 1, wordId: 102, result: 'SUCCESS', createdAt: now, word: mockWords[1] } as any,
+        { id: 4, userId: 1, wordId: 102, result: 'INCORRECT', createdAt: now, word: mockWords[1] } as unknown,
+        { id: 5, userId: 1, wordId: 102, result: 'SUCCESS', createdAt: now, word: mockWords[1] } as unknown,
         // word 103 (cherry): no attempts -> NEW
       ]);
 

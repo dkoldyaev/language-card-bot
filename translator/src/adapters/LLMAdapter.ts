@@ -1,5 +1,6 @@
-import { ITranslator } from '../core/ITranslator';
 import { env } from '../core/env';
+import type { ITranslator } from '../core/ITranslator';
+import type { LanguageCode } from '../types/language';
 
 export interface LLMAdapterOptions {
   provider?: 'mistral' | 'gemini' | 'mock';
@@ -22,7 +23,7 @@ export class LLMAdapter implements ITranslator {
     this.llmServiceUrl = url;
   }
 
-  async translate(texts: string[], sourceLang: string, targetLang: string): Promise<string[]> {
+  async translate(texts: string[], sourceLang: LanguageCode, targetLang: LanguageCode): Promise<string[]> {
     if (texts.length === 0) {
       return [];
     }

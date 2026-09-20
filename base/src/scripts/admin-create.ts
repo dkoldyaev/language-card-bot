@@ -23,7 +23,7 @@ async function main() {
     }
   }
 
-  if (!email || !email.trim()) {
+  if (!email?.trim()) {
     console.error('Error: Email is required.');
     console.log(`
 Usage:

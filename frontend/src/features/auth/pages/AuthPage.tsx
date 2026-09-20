@@ -2,7 +2,8 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import {
   Alert, Box, Button, Card, CardContent, CircularProgress, Typography,
 } from '@mui/material';
-import { GoogleLogin } from '@react-oauth/google';
+import { type CredentialResponse, GoogleLogin } from '@react-oauth/google';
+import { isAxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
@@ -12,10 +13,21 @@ import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/h
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
 import { AppButton, AppTextField, colorTokens, radiusTokens, spacingTokens } from '../../../shared/ui';
-import useStore from '../../../store/useStore';
+import useStore, { type UserProfile } from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 import { performGuestMigration } from '../api/migrate';
 import MergeGuestDataDialog from '../components/MergeGuestDataDialog';
+import type { LanguageCode } from '../../../shared/i18n';
+
+interface AuthUserData extends UserProfile {
+  isNewUser?: boolean;
+}
+
+interface AuthData {
+  token: string;
+  mercureToken?: string;
+  user: AuthUserData;
+}
 
 export default function Auth() {
   const { t, locale } = useTranslation();
@@ -27,8 +39,8 @@ export default function Auth() {
   const isRegisterRoute = location.pathname === '/register';
 
   const [username, setUsername] = useState('');
-  const [baseLanguage, setBaseLanguage] = useState(getInitialBaseLanguage(locale));
-  const [targetLanguage, setTargetLanguage] = useState('');
+  const [baseLanguage, setBaseLanguage] = useState<LanguageCode | null>(null);
+  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>(getInitialBaseLanguage(locale));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
@@ -39,7 +51,7 @@ export default function Auth() {
 
   // Guest merge dialog states
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
-  const [pendingAuthData, setPendingAuthData] = useState<{ token: string; mercureToken?: string; user: any } | null>(null);
+  const [pendingAuthData, setPendingAuthData] = useState<AuthData | null>(null);
   const [merging, setMerging] = useState(false);
 
   const token = useStore((state) => state.token);
@@ -54,13 +66,13 @@ export default function Auth() {
     }
   }, [token, navigate]);
 
-  const completeLogin = (authData: { token: string; mercureToken?: string; user: any }) => {
+  const completeLogin = (authData: AuthData) => {
     trackEvent('Sign In');
     setToken(authData.token);
     if (authData.mercureToken) setMercureToken(authData.mercureToken);
     setProfile({
       id: authData.user.id,
-      username: authData.user.username || authData.user.name || authData.user.email,
+      username: authData.user.username,
       email: authData.user.email,
       name: authData.user.name,
       picture: authData.user.picture,
@@ -90,7 +102,7 @@ export default function Auth() {
     setMergeDialogOpen(false);
   };
 
-  const handleChangeBaseLanguage = (language: string) => {
+  const handleChangeBaseLanguage = (language: LanguageCode) => {
     setBaseLanguage(language);
     saveBaseLanguage(language);
   };
@@ -98,12 +110,12 @@ export default function Auth() {
   useEffect(() => {
     setError(null);
     setRegistrationSuccess(false);
-  }, [location.pathname]);
+  }, []);
 
   // ==========================================
   // GOOGLE OAUTH HANDLERS
   // ==========================================
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     setError(null);
     setLoading(true);
 
@@ -126,9 +138,10 @@ export default function Auth() {
           completeLogin({ token, mercureToken, user });
         }
       }
-    } catch (err: any) {
-      console.error('Auth error', err.response?.data);
-      setError(err.response?.data?.error || t('auth.authFailed'));
+    } catch (err: unknown) {
+      console.error('Auth error', isAxiosError(err) ? err.response?.data : err);
+      const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
+      setError(message || t('auth.authFailed'));
     } finally {
       setLoading(false);
     }
@@ -172,7 +185,7 @@ export default function Auth() {
       setProfile(meResponse.data.user);
       trackEvent('Sign Up');
       navigate('/');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Profile completion error', err);
       setError(t('auth.profileSetupFailed'));
     } finally {
@@ -236,9 +249,10 @@ export default function Auth() {
         trackEvent('Sign Up');
         setRegistrationSuccess(true);
       }
-    } catch (err: any) {
-      console.error('Auth error', err.response?.data);
-      setError(err.response?.data?.error || t('auth.authFailed'));
+    } catch (err: unknown) {
+      console.error('Auth error', isAxiosError(err) ? err.response?.data : err);
+      const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
+      setError(message || t('auth.authFailed'));
     } finally {
       setLoading(false);
     }

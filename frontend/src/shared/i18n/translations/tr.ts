@@ -190,6 +190,11 @@ const tr = {
   'presets.createPresetBtn': 'Şablon Oluştur',
   'presets.filterByLang': 'Dile göre filtrele:',
   'presets.allLanguages': 'Tüm Diller',
+  'presets.filterByLevel': 'Seviyeye göre filtrele:',
+  'presets.allLevels': 'Tüm Seviyeler',
+  'presets.filterByTag': 'Etikete göre filtrele:',
+  'presets.allTags': 'Tüm Etiketler',
+  'presets.alreadyAdded': 'Eklendi',
   'presets.noPresetsFound': 'Şablon bulunamadı',
   'presets.noPresetsAllDesc': 'İlk kelime şablonunuzu oluşturarak başlayın.',
   'presets.noPresetsLangDesc': '{{lang}} için şablon bulunmuyor.',
@@ -218,6 +223,13 @@ const tr = {
   'presets.presetSuccessCreated': '"{{title}}" şablonu başarıyla oluşturuldu.',
   'presets.presetSuccessUpdated': '"{{title}}" şablonu güncellendi.',
   'presets.presetSuccessDeleted': '"{{title}}" şablonu silindi.',
+  'presets.addToDictionaryBtn': 'Sözlüğe ekle',
+  'presets.chooseDictionaryTitle': 'Sözlüğe ekle',
+  'presets.chooseDictionarySubtitle': '«{{preset}}» için bir sözlük seç',
+  'presets.noCompatibleDictionaries': 'Uyumlu sözlük yok',
+  'presets.createDictionaryHint': 'Bu şablonu eklemek için önce bir {{lang}} sözlüğü oluştur',
+  'presets.addedSuccessDict': '«{{title}}» «{{name}}» sözlüğüne eklendi!',
+
 
   // Quiz
   'quiz.recallPracticeOverline': 'Hatırlama Pratiği',

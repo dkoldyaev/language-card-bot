@@ -29,7 +29,8 @@ import {
 } from '../../../shared/ui';
 import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
-import type { PresetItem } from '../../presets/types';
+import type { PresetDefinitionItem, PresetItem, WordDefinitionPresetItem } from '../../presets/types';
+import type { LanguageCode } from '../../../shared/i18n';
 
 export default function OnboardingPage() {
   const { t, locale } = useTranslation();
@@ -43,8 +44,8 @@ export default function OnboardingPage() {
   const setHasCompletedGuestOnboarding = useStore((state) => state.setHasCompletedGuestOnboarding);
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [baseLanguage, setBaseLanguage] = useState(getInitialBaseLanguage(locale));
-  const [targetLanguage, setTargetLanguage] = useState(locale === 'en' ? 'es' : 'en');
+  const [baseLanguage, setBaseLanguage] = useState<LanguageCode>(getInitialBaseLanguage(locale));
+  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>(locale === 'en' ? 'es' : 'en');
   const [presets, setPresets] = useState<PresetItem[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<PresetItem | null>(null);
   const [loadingPresets, setLoadingPresets] = useState(false);
@@ -108,21 +109,21 @@ export default function OnboardingPage() {
     if (presetToApply && Array.isArray(presetToApply.body)) {
       let wordCounter = 1;
       let defCounter = 1;
-      words = presetToApply.body.map((item: any) => ({
+      words = presetToApply.body.map((item: WordDefinitionPresetItem) => ({
         id: wordCounter++,
         text: item.word,
-        definitions: (item.definitions || []).map((def: any) => {
+        definitions: (item.definitions || []).map((def: PresetDefinitionItem) => {
           const text = typeof def === 'string' ? def : (def?.text || '');
-          const translation =
+          const transText =
             typeof def === 'object' && def?.translations && baseLanguage
               ? def.translations[baseLanguage] || null
-              : typeof def?.translation === 'string'
+              : typeof def === 'object' && typeof def?.translation === 'string'
               ? def.translation
               : null;
           return {
             id: defCounter++,
             text,
-            translation,
+            translation: transText ? { id: defCounter, text: transText } : null,
             presets: [{ id: presetToApply.id, title: presetToApply.title }],
           };
         }),

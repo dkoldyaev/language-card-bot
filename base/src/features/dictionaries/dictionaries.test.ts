@@ -1,16 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
+import type { Dictionary, PrismaClient, UserState } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import app from '../../app';
+import { env } from '../../core/env';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
 
 vi.mock('../../prisma');
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Dictionaries API', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
   const userId = 42;
   const username = 'test_user';
   const token = jwt.sign({ id: userId, username }, JWT_SECRET, { expiresIn: '1h' });
@@ -32,7 +33,7 @@ describe('Dictionaries API', () => {
       currentDefinitionId: null,
       showVariants: false,
       showDefinitionTranslation: false,
-    } as any);
+    } as UserState);
 
     prismaMock.dictionary.findFirst.mockResolvedValue({
       id: 10,
@@ -51,7 +52,6 @@ describe('Dictionaries API', () => {
         baseLanguage: 'en',
         userId,
         createdAt: new Date(),
-        _count: { words: 5 },
       },
       {
         id: 11,
@@ -60,9 +60,8 @@ describe('Dictionaries API', () => {
         baseLanguage: 'de',
         userId,
         createdAt: new Date(),
-        _count: { words: 0 },
       },
-    ] as any);
+    ]);
 
     const res = await request(app)
       .get('/api/v1/dictionaries')
@@ -83,7 +82,7 @@ describe('Dictionaries API', () => {
       baseLanguage: 'en',
       userId,
       createdAt: new Date(),
-    } as any);
+    } as Dictionary);
 
     prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,
@@ -93,7 +92,7 @@ describe('Dictionaries API', () => {
       currentDefinitionId: null,
       showVariants: false,
       showDefinitionTranslation: false,
-    } as any);
+    } as UserState);
 
     prismaMock.dictionary.findFirst.mockResolvedValue({
       id: 10,
@@ -104,7 +103,7 @@ describe('Dictionaries API', () => {
       createdAt: new Date(),
     });
 
-    prismaMock.dictionary.findMany.mockResolvedValue([] as any);
+    prismaMock.dictionary.findMany.mockResolvedValue([]);
 
     const res = await request(app)
       .post('/api/v1/dictionaries')
@@ -139,7 +138,7 @@ describe('Dictionaries API', () => {
       currentDefinitionId: null,
       showVariants: false,
       showDefinitionTranslation: false,
-    } as any);
+    });
 
     const res = await request(app)
       .post('/api/v1/dictionaries/11/select')
@@ -159,8 +158,8 @@ describe('Dictionaries API', () => {
       createdAt: new Date(),
     });
 
-    prismaMock.dictionary.delete.mockResolvedValue({} as any);
-    prismaMock.dictionary.findMany.mockResolvedValue([] as any);
+    prismaMock.dictionary.delete.mockResolvedValue({} as Dictionary);
+    prismaMock.dictionary.findMany.mockResolvedValue([]);
     prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,
       userId,
@@ -169,7 +168,7 @@ describe('Dictionaries API', () => {
       currentDefinitionId: null,
       showVariants: false,
       showDefinitionTranslation: false,
-    } as any);
+    } as UserState);
 
     const res = await request(app)
       .delete('/api/v1/dictionaries/11')
@@ -196,7 +195,7 @@ describe('Dictionaries API', () => {
       baseLanguage: 'de',
       userId,
       createdAt: new Date(),
-    } as any);
+    } as Dictionary);
 
     prismaMock.dictionary.findMany.mockResolvedValue([
       {
@@ -206,9 +205,8 @@ describe('Dictionaries API', () => {
         baseLanguage: 'de',
         userId,
         createdAt: new Date(),
-        _count: { words: 0 },
       },
-    ] as any);
+    ]);
 
     prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,
@@ -218,7 +216,7 @@ describe('Dictionaries API', () => {
       currentDefinitionId: null,
       showVariants: false,
       showDefinitionTranslation: false,
-    } as any);
+    } as UserState);
 
     const res = await request(app)
       .patch('/api/v1/dictionaries/11')

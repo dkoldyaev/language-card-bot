@@ -175,7 +175,7 @@ export default function GuidelineController() {
       return;
     }
 
-    if ((currentStep as any) === 'step4_start_quiz') {
+    if (currentStep === 'step4_start_quiz') {
       advanceStep('step4_start_quiz');
       return;
     }
@@ -353,7 +353,7 @@ export default function GuidelineController() {
         focusCleanup();
       }
     };
-  }, [isActive, currentStep, isStepDismissed, t, advanceStep, closeGuideline]);
+  }, [isActive, currentStep, isStepDismissed, t, advanceStep, closeGuideline, location.pathname]);
 
   return null;
 }

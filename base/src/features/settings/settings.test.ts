@@ -1,11 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
+import type { PrismaClient, UserState } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import app from '../../app';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
 import { publishEvent } from '../event_bus/event_bus.service';
+import { env } from '../../core/env';
 
 vi.mock('../../prisma');
 vi.mock('../event_bus/event_bus.service', () => ({
@@ -15,8 +16,8 @@ vi.mock('../event_bus/event_bus.service', () => ({
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Settings Endpoint', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
-  const MERCURE_URL = process.env.MERCURE_URL || 'http://localhost:9090/.well-known/mercure';
+  const JWT_SECRET = env.JWT_SECRET;
+  const MERCURE_URL = 'http://localhost:9090/.well-known/mercure';
 
   beforeEach(async () => {
     process.env.MERCURE_URL = MERCURE_URL;
@@ -56,7 +57,7 @@ describe('Settings Endpoint', () => {
       id: 1,
       userId,
       activeDictionaryId: 10,
-    } as any);
+    } as UserState);
 
     prismaMock.dictionary.findFirst.mockResolvedValue({
       id: 10,
@@ -86,7 +87,7 @@ describe('Settings Endpoint', () => {
       id: 1,
       userId,
       activeDictionaryId: 10,
-    } as any);
+    } as UserState);
 
     prismaMock.dictionary.findFirst.mockResolvedValue({
       id: 10,

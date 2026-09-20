@@ -1,19 +1,22 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
+import { redisClient } from '../../core/cache';
+import { env } from '../../core/env';
 import { authMiddleware } from '../../middleware/auth';
 import { validateRequest } from '../../middleware/validate';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
 import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
-import { env } from '../../core/env';
-import { redisClient } from '../../core/cache';
 
 const router = Router();
 
+import type { Dictionary } from '@prisma/client';
+import { SUPPORTED_LANGUAGES } from '../../types/language';
+
 const DefineGuestSchema = z.object({
   word: z.string().min(1),
-  targetLanguage: z.string().min(1),
-  baseLanguage: z.string().min(1),
+  targetLanguage: z.enum(SUPPORTED_LANGUAGES),
+  baseLanguage: z.enum(SUPPORTED_LANGUAGES),
 });
 
 router.post('/define-guest', validateRequest(DefineGuestSchema), async (req: Request, res: Response) => {
@@ -103,9 +106,10 @@ router.post('/define-guest', validateRequest(DefineGuestSchema), async (req: Req
       word: word.trim().toLowerCase(),
       definitions: definitionsWithTranslations,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in define-guest:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: message });
   }
 });
 
@@ -115,8 +119,11 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
   const queryDictId = req.query.dictionaryId ? parseInt(req.query.dictionaryId as string, 10) : undefined;
 
   try {
-    let dict;
-    if (queryDictId && !isNaN(queryDictId)) {
+    let dict: Dictionary | null;
+    if (queryDictId && !Number.isNaN(queryDictId)) {
+      if (queryDictId > 2147483647) {
+        return res.status(404).json({ error: 'Dictionary not found' });
+      }
       dict = await prisma.dictionary.findFirst({
         where: { id: queryDictId, userId },
       });

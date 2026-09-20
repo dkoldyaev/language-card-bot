@@ -1,13 +1,13 @@
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import { alpha, Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import { useTranslation } from '../../../shared/i18n';
-import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
+import { type LanguageCode, SUPPORTED_LANGUAGES } from '../../../shared/i18n/types';
 
 interface ActiveDictionaryLanguagesFormProps {
-  targetLanguage: string;
-  baseLanguage: string;
-  onTargetLanguageChange: (value: string) => void;
-  onBaseLanguageChange: (value: string) => void;
+  targetLanguage: LanguageCode | null;
+  baseLanguage: LanguageCode | null;
+  onTargetLanguageChange: (value: LanguageCode) => void;
+  onBaseLanguageChange: (value: LanguageCode) => void;
   disabled?: boolean;
 }
 
@@ -53,7 +53,7 @@ export default function ActiveDictionaryLanguagesForm({
             labelId="target-language-label"
             value={targetLanguage}
             label={t('languages.targetLangLabel')}
-            onChange={(e) => onTargetLanguageChange(e.target.value)}
+            onChange={(e) => onTargetLanguageChange(e.target.value as LanguageCode)}
             disabled={disabled}
             inputProps={{ 'data-testid': 'learned-language-select' }}
             MenuProps={{
@@ -61,7 +61,7 @@ export default function ActiveDictionaryLanguagesForm({
               transitionDuration: 0,
             }}
           >
-            {SUPPORTED_LOCALES.map((lang) => (
+            {SUPPORTED_LANGUAGES.map((lang) => (
               <MenuItem key={lang} value={lang}>
                 {t(`languages.${lang}`)}
               </MenuItem>
@@ -75,7 +75,7 @@ export default function ActiveDictionaryLanguagesForm({
             labelId="base-language-label"
             value={baseLanguage}
             label={t('languages.nativeLangLabel')}
-            onChange={(e) => onBaseLanguageChange(e.target.value)}
+            onChange={(e) => onBaseLanguageChange(e.target.value as LanguageCode)}
             disabled={disabled}
             inputProps={{ 'data-testid': 'base-language-select' }}
             MenuProps={{
@@ -83,7 +83,7 @@ export default function ActiveDictionaryLanguagesForm({
               transitionDuration: 0,
             }}
           >
-            {SUPPORTED_LOCALES.map((lang) => (
+            {SUPPORTED_LANGUAGES.map((lang) => (
               <MenuItem key={lang} value={lang}>
                 {t(`languages.${lang}`)}
               </MenuItem>

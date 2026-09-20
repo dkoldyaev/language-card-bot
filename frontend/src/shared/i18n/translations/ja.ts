@@ -190,6 +190,11 @@ const ja = {
   'presets.createPresetBtn': 'プリセットを作成',
   'presets.filterByLang': '言語で絞り込み:',
   'presets.allLanguages': 'すべての言語',
+  'presets.filterByLevel': 'レベルで絞り込み:',
+  'presets.allLevels': 'すべてのレベル',
+  'presets.filterByTag': 'タグで絞り込み:',
+  'presets.allTags': 'すべてのタグ',
+  'presets.alreadyAdded': '追加済み',
   'presets.noPresetsFound': 'プリセットが見つかりません',
   'presets.noPresetsAllDesc': '最初の単語プリセットを作成してみましょう。',
   'presets.noPresetsLangDesc': '{{lang}} のプリセットはまだありません。',
@@ -218,6 +223,13 @@ const ja = {
   'presets.presetSuccessCreated': 'プリセット「{{title}}」を作成しました。',
   'presets.presetSuccessUpdated': 'プリセット「{{title}}」を更新しました。',
   'presets.presetSuccessDeleted': 'プリセット「{{title}}」を削除しました。',
+  'presets.addToDictionaryBtn': '辞書に追加',
+  'presets.chooseDictionaryTitle': '辞書に追加',
+  'presets.chooseDictionarySubtitle': '「{{preset}}」を追加する辞書を選択',
+  'presets.noCompatibleDictionaries': '互換性のある辞書がありません',
+  'presets.createDictionaryHint': 'このプリセットを追加するには、まず{{lang}}の辞書を作成してください',
+  'presets.addedSuccessDict': '「{{title}}」を「{{name}}」に追加しました！',
+
 
   // Quiz
   'quiz.recallPracticeOverline': '想起トレーニング',

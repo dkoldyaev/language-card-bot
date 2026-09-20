@@ -1,5 +1,5 @@
+import type { Definition, DefinitionTranslation, Word } from '@prisma/client';
 import { prisma } from '../../prisma';
-import { Word, Definition, DefinitionTranslation } from '@prisma/client';
 
 export type QuizCardData = {
   word: Word;

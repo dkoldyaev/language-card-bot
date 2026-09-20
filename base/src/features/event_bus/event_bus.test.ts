@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { publishEvent } from './event_bus.service';
-import { MercureEvent } from './event_bus.type';
+import type { MercureEvent } from './event_bus.type';
 
 vi.mock('../../core/env', () => ({
   env: {

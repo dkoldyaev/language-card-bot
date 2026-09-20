@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
+import type { Definition, PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import app from '../../app';
+import { env } from '../../core/env';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
 import { enqueueFetchTranslations } from '../add_word/add_word.queue';
 
 vi.mock('../../prisma');
@@ -15,7 +16,7 @@ vi.mock('../add_word/add_word.queue', () => ({
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('PUT /api/v1/definition_edit/:id', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
 
   beforeEach(() => {
     process.env.JWT_SECRET = JWT_SECRET;
@@ -73,7 +74,7 @@ describe('PUT /api/v1/definition_edit/:id', () => {
           userId: 99,
         }
       }
-    } as any);
+    } as unknown);
 
     const res = await request(app)
       .put('/api/v1/definition_edit/1')
@@ -119,8 +120,8 @@ describe('PUT /api/v1/definition_edit/:id', () => {
       createdAt: new Date()
     };
 
-    prismaMock.definition.findUnique.mockResolvedValue(mockDefinition as any);
-    prismaMock.definition.update.mockResolvedValue(updatedDefinition as any);
+    prismaMock.definition.findUnique.mockResolvedValue(mockDefinition as Definition);
+    prismaMock.definition.update.mockResolvedValue(updatedDefinition as Definition);
 
     const res = await request(app)
       .put('/api/v1/definition_edit/1')

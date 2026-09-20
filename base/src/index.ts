@@ -1,5 +1,6 @@
 import app from './app';
 import { env } from './core/env';
+
 const PORT = env.PORT;
 
 app.listen(PORT, () => {

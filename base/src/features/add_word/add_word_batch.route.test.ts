@@ -1,11 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
+import type { Dictionary, PrismaClient, Word } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import app from '../../app';
+import { env } from '../../core/env';
 import { appEvents, Events } from '../../core/events';
+import { prisma } from '../../prisma';
 import * as eventBusService from '../event_bus/event_bus.service';
 
 vi.mock('../../prisma');
@@ -16,7 +17,7 @@ vi.mock('../event_bus/event_bus.service', () => ({
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('POST /api/v1/add_word/batch', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
   const userId = 10;
   const username = 'testuser';
   const token = jwt.sign({ id: userId, username }, JWT_SECRET, { expiresIn: '1h' });
@@ -80,12 +81,12 @@ describe('POST /api/v1/add_word/batch', () => {
       targetLanguage: 'en',
       baseLanguage: 'ru',
       createdAt: new Date(),
-    } as any);
+    } as Dictionary);
 
     prismaMock.word.findMany.mockResolvedValue([]);
     prismaMock.word.createManyAndReturn.mockResolvedValue([
-      { id: 101, dictionaryId: 5, text: 'cat' } as any,
-      { id: 102, dictionaryId: 5, text: 'dog' } as any,
+      { id: 101, dictionaryId: 5, text: 'cat' } as Word,
+      { id: 102, dictionaryId: 5, text: 'dog' } as Word,
     ]);
 
     const res = await request(app)
@@ -135,15 +136,15 @@ describe('POST /api/v1/add_word/batch', () => {
       targetLanguage: 'en',
       baseLanguage: 'ru',
       createdAt: new Date(),
-    } as any);
+    } as Dictionary);
 
     // 'cat' exists in DB
     prismaMock.word.findMany.mockResolvedValue([
-      { id: 101, text: 'cat' } as any,
+      { id: 101, text: 'cat' } as Word,
     ]);
 
     prismaMock.word.createManyAndReturn.mockResolvedValue([
-      { id: 102, dictionaryId: 5, text: 'dog' } as any,
+      { id: 102, dictionaryId: 5, text: 'dog' } as Word,
     ]);
 
     // Batch contains 'cat' (in DB), 'dog' (new), and 'dog' again (duplicate within input batch)

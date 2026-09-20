@@ -1,4 +1,4 @@
-import { IPresetAdapter } from './preset_adapter.interface';
+import type { IPresetAdapter } from './preset_adapter.interface';
 import { WordDefinitionPresetAdapter } from './word_definition.adapter';
 
 export * from './preset_adapter.interface';

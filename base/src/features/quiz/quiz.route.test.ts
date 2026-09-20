@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
+import type { PrismaClient, UserState } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import app from '../../app';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
 import { publishEvent } from '../event_bus/event_bus.service';
 import * as quizService from './quiz.service';
+import { env } from '../../core/env';
 
 vi.mock('../../prisma');
 vi.mock('../event_bus/event_bus.service', () => ({
@@ -16,7 +17,7 @@ vi.mock('../event_bus/event_bus.service', () => ({
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Quiz Route', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
 
   beforeEach(() => {
     process.env.JWT_SECRET = JWT_SECRET;
@@ -32,7 +33,7 @@ describe('Quiz Route', () => {
       currentDefinitionId: null,
       showVariants: false,
       showDefinitionTranslation: false,
-    } as any);
+    } as UserState);
 
     prismaMock.dictionary.findFirst.mockResolvedValue({
       id: 5,
@@ -75,8 +76,8 @@ describe('Quiz Route', () => {
       }
     };
     
-    vi.spyOn(quizService, 'generateQuizCard').mockResolvedValue(mockCardData as any);
-    prismaMock.userState.update.mockResolvedValue({} as any);
+    vi.spyOn(quizService, 'generateQuizCard').mockResolvedValue(mockCardData as Awaited<ReturnType<typeof quizService.generateQuizCard>>);
+    prismaMock.userState.update.mockResolvedValue({} as UserState);
 
     const res = await request(app)
       .post('/api/v1/quiz/start')
@@ -109,7 +110,7 @@ describe('Quiz Route', () => {
   describe('POST /api/v1/quiz/variants', () => {
     it('should return 400 if user state is not QUIZ', async () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
-      prismaMock.userState.findUnique.mockResolvedValue({ currentWordId: null } as any);
+      prismaMock.userState.findUnique.mockResolvedValue({ currentWordId: null } as UserState);
 
       const res = await request(app)
         .post('/api/v1/quiz/variants')
@@ -126,12 +127,12 @@ describe('Quiz Route', () => {
         userId: 1,
         currentWordId: 10,
         activeDictionaryId: 5,
-      } as any);
+      } as UserState);
 
       vi.spyOn(quizService, 'getQuizVariants').mockResolvedValue([
         'w1', 'w2', 'w3', 'w4', 'w5'
       ]);
-      prismaMock.userState.update.mockResolvedValue({} as any);
+      prismaMock.userState.update.mockResolvedValue({} as UserState);
 
       const res = await request(app)
         .post('/api/v1/quiz/variants')
@@ -156,7 +157,7 @@ describe('Quiz Route', () => {
   describe('POST /api/v1/quiz/translate_definition', () => {
     it('should return 400 if user state is not QUIZ or no currentDefinitionId', async () => {
       const token = jwt.sign({ id: 1, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
-      prismaMock.userState.findUnique.mockResolvedValue({ currentDefinitionId: null } as any);
+      prismaMock.userState.findUnique.mockResolvedValue({ currentDefinitionId: null } as UserState);
 
       const res = await request(app)
         .post('/api/v1/quiz/translate_definition')
@@ -171,9 +172,9 @@ describe('Quiz Route', () => {
       
       prismaMock.userState.findUnique.mockResolvedValue({
         currentDefinitionId: 100
-      } as any);
+      } as UserState);
 
-      prismaMock.definition.findUnique.mockResolvedValue({ id: 100, translation: null } as any);
+      prismaMock.definition.findUnique.mockResolvedValue({ id: 100, translation: null } as UserState);
 
       const res = await request(app)
         .post('/api/v1/quiz/translate_definition')
@@ -188,14 +189,14 @@ describe('Quiz Route', () => {
       
       prismaMock.userState.findUnique.mockResolvedValue({
         currentDefinitionId: 100
-      } as any);
+      } as UserState);
 
       prismaMock.definition.findUnique.mockResolvedValue({
         id: 100,
         translation: { id: 1000, text: 'привет' }
-      } as any);
+      });
 
-      prismaMock.userState.update.mockResolvedValue({} as any);
+      prismaMock.userState.update.mockResolvedValue({} as UserState);
 
       const res = await request(app)
         .post('/api/v1/quiz/translate_definition')
@@ -222,12 +223,14 @@ describe('Quiz Route', () => {
       
       prismaMock.userState.findUnique.mockResolvedValue({
         currentWordId: 10
-      } as any);
+      } as UserState);
 
       prismaMock.word.findUnique.mockResolvedValue({
         id: 10,
-        text: 'apple'
-      } as any);
+        text: 'apple',
+        createdAt: new Date(),
+        dictionaryId: 0
+      });
 
       const res = await request(app)
         .post('/api/v1/quiz/answer')
@@ -252,14 +255,14 @@ describe('Quiz Route', () => {
       prismaMock.userState.findUnique.mockResolvedValue({
         currentWordId: 10,
         activeDictionaryId: 5,
-      } as any);
+      } as UserState);
 
       vi.spyOn(quizService, 'generateQuizCard').mockResolvedValue({
         word: { id: 20, text: 'banana' },
         definition: { id: 200, text: 'yellow fruit', translation: { text: 'банан' } }
-      } as any);
+      } as UserState);
 
-      prismaMock.userState.update.mockResolvedValue({} as any);
+      prismaMock.userState.update.mockResolvedValue({} as UserState);
 
       const res = await request(app)
         .post('/api/v1/quiz/next_card')
@@ -289,13 +292,13 @@ describe('Quiz Route', () => {
       prismaMock.userState.findUnique.mockResolvedValue({
         currentWordId: 10,
         currentDefinitionId: 100
-      } as any);
+      } as UserState);
 
       vi.spyOn(quizService, 'getNextDefinition').mockResolvedValue({
         id: 101, text: 'another fruit', translation: { text: 'другой фрукт' }
-      } as any);
+      } as UserState);
 
-      prismaMock.userState.update.mockResolvedValue({} as any);
+      prismaMock.userState.update.mockResolvedValue({} as UserState);
 
       const res = await request(app)
         .post('/api/v1/quiz/next_definition')

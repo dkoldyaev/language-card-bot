@@ -1,6 +1,6 @@
 import { prisma } from '../../prisma';
-import { MigrateGuestRequest } from './auth.type';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
+import type { MigrateGuestRequest } from './auth.type';
 
 export async function migrateGuestData(userId: number, payload: MigrateGuestRequest) {
   const result = await prisma.$transaction(async (tx) => {
@@ -88,7 +88,7 @@ export async function migrateGuestData(userId: number, payload: MigrateGuestRequ
             definitions: {
               create: word.definitions.map((def) => ({
                 text: def.text.trim(),
-                ...(def.translation && def.translation.trim()
+                ...(def.translation?.trim()
                   ? {
                       translation: {
                         create: { text: def.translation.trim() },
@@ -123,7 +123,7 @@ export async function migrateGuestData(userId: number, payload: MigrateGuestRequ
               },
             });
 
-            if (def.translation && def.translation.trim()) {
+            if (def.translation?.trim()) {
               await tx.definitionTranslation.create({
                 data: {
                   text: def.translation.trim(),
@@ -131,7 +131,7 @@ export async function migrateGuestData(userId: number, payload: MigrateGuestRequ
                 },
               });
             }
-          } else if (def.translation && def.translation.trim() && !existingDef.translation) {
+          } else if (def.translation?.trim() && !existingDef.translation) {
             await tx.definitionTranslation.create({
               data: {
                 text: def.translation.trim(),
@@ -175,7 +175,7 @@ export async function migrateGuestData(userId: number, payload: MigrateGuestRequ
           userId,
           wordId: matchedWord.id,
           result: attempt.result,
-          createdAt: isNaN(createdAtDate.getTime()) ? new Date() : createdAtDate,
+          createdAt: Number.isNaN(createdAtDate.getTime()) ? new Date() : createdAtDate,
         });
       }
     }

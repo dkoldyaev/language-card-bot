@@ -1,5 +1,6 @@
-import { IDefiner, DefinitionItem } from '../core/IDefiner';
 import { env } from '../core/env';
+import type { DefinitionItem, IDefiner } from '../core/IDefiner';
+import type { LanguageCode } from '../types/language';
 
 export interface LLMAdapterOptions {
   provider?: 'mistral' | 'gemini' | 'mock';
@@ -18,7 +19,7 @@ export class LLMAdapter implements IDefiner {
     this.llmServiceUrl = options.llmServiceUrl !== undefined ? options.llmServiceUrl : env.LLM_SERVICE_URL;
   }
 
-  async define(text: string, language: string): Promise<DefinitionItem[]> {
+  async define(text: string, language: LanguageCode): Promise<DefinitionItem[]> {
     const prompt = `Please provide a comprehensive and extensive list with the maximum possible number of distinct definitions and senses for the word or phrase "${text}" in the language "${language}".
 For each definition sense, you must provide:
 1. "text": The explanation of the meaning purely through description, context, and function.
@@ -81,23 +82,29 @@ CRITICAL REQUIREMENT: Under NO circumstances should the target word or phrase "$
       throw new Error(`LLM service error (${response.status}): ${errorText}`);
     }
 
-    const data = (await response.json()) as { data?: { definitions?: any[] } };
+    const data = (await response.json()) as { data?: { definitions?: unknown[] } };
 
     if (!data?.data || !Array.isArray(data.data.definitions)) {
       throw new Error('Unexpected response format from LLM service');
     }
 
     return data.data.definitions
-      .map((item: any): DefinitionItem => {
-        const textVal = typeof item === 'string' ? item : (item?.text ?? item?.definition ?? '');
-        const posVal = typeof item?.partOfSpeech === 'string' && item.partOfSpeech.trim().length > 0
-          ? item.partOfSpeech.trim()
+      .map((item: unknown): DefinitionItem => {
+        const record = typeof item === 'object' && item !== null
+          ? (item as Record<string, unknown>)
           : null;
-        const tagsVal = Array.isArray(item?.tags)
-          ? item.tags.map((t: any) => String(t).trim()).filter((t: string) => t.length > 0)
+        const textVal = typeof item === 'string'
+          ? item
+          : (record?.text ?? record?.definition ?? '');
+        const partOfSpeechRaw = record?.partOfSpeech;
+        const posVal = typeof partOfSpeechRaw === 'string' && partOfSpeechRaw.trim().length > 0
+          ? partOfSpeechRaw.trim()
+          : null;
+        const tagsVal = Array.isArray(record?.tags)
+          ? record.tags.map((t: unknown) => String(t).trim()).filter((t: string) => t.length > 0)
           : [];
-        const levelsVal = Array.isArray(item?.levels)
-          ? item.levels.map((l: any) => String(l).trim().toUpperCase()).filter((l: string) => l.length > 0)
+        const levelsVal = Array.isArray(record?.levels)
+          ? record.levels.map((l: unknown) => String(l).trim().toUpperCase()).filter((l: string) => l.length > 0)
           : [];
 
         return {

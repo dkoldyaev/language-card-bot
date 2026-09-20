@@ -9,7 +9,7 @@ import {
   Chip,
   Typography,
 } from '@mui/material';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import {
@@ -50,7 +50,7 @@ export default function Dashboard() {
   const targetDictId = activeDictionaryId ?? dictionaries[0]?.id;
   const activeDict = dictionaries.find((d) => d.id === targetDictId);
 
-  const loadStats = () => {
+  const loadStats = useCallback(() => {
     if (!token) {
       const stats = computeGuestDashboardStats(dictionary, guestAttempts);
       setDashboardStats(stats);
@@ -63,11 +63,11 @@ export default function Dashboard() {
       .catch((e) => {
         console.error('Failed to load dashboard stats:', e);
       });
-  };
+  }, [dictionary, guestAttempts, token, setDashboardStats, targetDictId]);
 
   useEffect(() => {
     loadStats();
-  }, [token, activeDictionaryId, totalWords, guestAttempts]);
+  }, [loadStats]);
 
   const hasQuizzes = (dashboardStats?.totalAttempts ?? 0) > 0;
   const isDeckEmpty = totalWords === 0;

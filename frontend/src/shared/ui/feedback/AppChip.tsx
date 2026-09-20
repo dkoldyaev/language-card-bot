@@ -63,7 +63,6 @@ export const AppChip: React.FC<AppChipProps> = ({
           color: '#FFFFFF',
           fontWeight: 700,
         };
-      case 'default':
       default:
         return {
           backgroundColor: (th: Theme) =>

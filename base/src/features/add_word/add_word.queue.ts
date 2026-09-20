@@ -1,6 +1,7 @@
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
 import { env } from '../../core/env';
+import type { LanguageCode } from '../../types/language';
 
 const redisUrl = env.REDIS_URL;
 export const queueConnection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
@@ -52,8 +53,8 @@ export async function enqueueFetchTranslations(
   username: string,
   wordId: number,
   wordText: string,
-  sourceLanguage?: string,
-  targetLanguage?: string
+  sourceLanguage?: LanguageCode,
+  targetLanguage?: LanguageCode
 ) {
   await dictionaryQueue.add('fetchTranslations', {
     definitions,

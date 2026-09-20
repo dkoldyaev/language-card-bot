@@ -1,7 +1,8 @@
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
+import { env } from '../../core/env';
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const redisUrl = env.REDIS_URL;
 export const queueConnection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 
 export const quizCleanupQueue = new Queue('quizCleanupQueue', { connection: queueConnection });

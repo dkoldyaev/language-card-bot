@@ -18,7 +18,7 @@ describe('OnboardingPage', () => {
       hasCompletedGuestOnboarding: false,
     });
     vi.clearAllMocks();
-    (apiClient.get as any).mockImplementation((url: string) => {
+    vi.mocked(apiClient.get).mockImplementation((url: string) => {
       if (url === '/settings/guest-policy') {
         return Promise.resolve({ data: { allowGuestAi: false, dailyLimit: 0 } });
       }

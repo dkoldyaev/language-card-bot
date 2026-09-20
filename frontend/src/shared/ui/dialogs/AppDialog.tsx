@@ -4,6 +4,7 @@ import {
   DialogContent,
   type DialogProps,
   DialogTitle,
+  type PaperProps,
 } from '@mui/material';
 import type React from 'react';
 import { radiusTokens } from '../tokens/radii';
@@ -27,6 +28,10 @@ export const AppDialog: React.FC<AppDialogProps> = ({
   slotProps,
   ...props
 }) => {
+  const paperSlot = slotProps?.paper;
+  const paperProps: Partial<PaperProps> =
+    paperSlot && typeof paperSlot === 'object' ? (paperSlot as Partial<PaperProps>) : {};
+
   return (
     <Dialog
       open={open}
@@ -35,11 +40,12 @@ export const AppDialog: React.FC<AppDialogProps> = ({
       fullWidth={fullWidth}
       slotProps={{
         paper: {
+          ...paperProps,
           sx: {
             borderRadius: `${radiusTokens.lg}px`,
             backgroundImage: 'none',
+            ...((paperProps.sx && typeof paperProps.sx === 'object') ? paperProps.sx : {}),
           },
-          ...(slotProps?.paper as any),
         },
       }}
       {...props}

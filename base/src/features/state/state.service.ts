@@ -1,5 +1,5 @@
+import type { UserState } from '@prisma/client';
 import { prisma } from '../../prisma';
-import { UserState } from '@prisma/client';
 
 export async function getUserState(userId: number): Promise<UserState | null> {
   return prisma.userState.findUnique({

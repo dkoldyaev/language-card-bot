@@ -14,9 +14,9 @@ function TestConsumer() {
       <span data-testid="current-locale">{locale}</span>
       <span data-testid="translated-title">{t('dashboard.readyTitle')}</span>
       <span data-testid="interpolated">{t('dashboard.welcomeUser', { name: 'Alex' })}</span>
-      <button onClick={() => setLocale('ru')}>Set RU</button>
-      <button onClick={() => setLocale('es')}>Set ES</button>
-      <button onClick={() => setLocale('de')}>Set DE</button>
+      <button type="button" onClick={() => setLocale('ru')}>Set RU</button>
+      <button type="button" onClick={() => setLocale('es')}>Set ES</button>
+      <button type="button" onClick={() => setLocale('de')}>Set DE</button>
     </div>
   );
 }

@@ -1,9 +1,10 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
-import { DefinitionEditRequestSchema } from './definition_edit.type';
-import { getAuthUser } from '../auth/auth.service';
+import type { LanguageCode } from '../../types/language';
 import { enqueueFetchTranslations } from '../add_word/add_word.queue';
+import { getAuthUser } from '../auth/auth.service';
+import { DefinitionEditRequestSchema } from './definition_edit.type';
 
 const router = Router();
 
@@ -17,7 +18,7 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
   const { id: userId, username } = getAuthUser(req);
   const definitionId = parseInt(req.params.id as string, 10);
 
-  if (isNaN(definitionId)) {
+  if (Number.isNaN(definitionId)) {
     return res.status(400).json({ error: 'Invalid definition ID' });
   }
 
@@ -53,8 +54,8 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
       username,
       definition.word.id,
       definition.word.text,
-      definition.word.dictionary.targetLanguage,
-      definition.word.dictionary.baseLanguage
+      definition.word.dictionary.targetLanguage as LanguageCode,
+      definition.word.dictionary.baseLanguage as LanguageCode
     );
 
     res.json({ message: 'Definition edited successfully' });

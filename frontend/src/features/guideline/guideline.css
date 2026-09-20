@@ -5,7 +5,7 @@
 .driver-active .MuiPopover-root *,
 .driver-active .MuiMenu-root,
 .driver-active .MuiMenu-root * {
-  pointer-events: auto !important;
+  pointer-events: auto;
 }
 
 :root {
@@ -58,13 +58,13 @@
 }
 
 .cardbot-tour-popover .driver-popover-next-btn {
-  background-color: #2453a6 !important;
-  color: #ffffff !important;
-  border: none !important;
+  background-color: #2453a6;
+  color: #ffffff;
+  border: none;
 }
 
 .cardbot-tour-popover .driver-popover-next-btn:hover {
-  background-color: #1b3e7d !important;
+  background-color: #1b3e7d;
   box-shadow: 0 2px 8px rgba(36, 83, 166, 0.35);
 }
 
@@ -91,21 +91,21 @@
 
 /* Arrow styling matching the popover background */
 .cardbot-tour-popover .driver-popover-arrow {
-  border-color: transparent !important;
+  border-color: transparent;
 }
 
 .cardbot-tour-popover .driver-popover-arrow-side-left {
-  border-left-color: var(--tour-popover-bg) !important;
+  border-left-color: var(--tour-popover-bg);
 }
 
 .cardbot-tour-popover .driver-popover-arrow-side-right {
-  border-right-color: var(--tour-popover-bg) !important;
+  border-right-color: var(--tour-popover-bg);
 }
 
 .cardbot-tour-popover .driver-popover-arrow-side-top {
-  border-top-color: var(--tour-popover-bg) !important;
+  border-top-color: var(--tour-popover-bg);
 }
 
 .cardbot-tour-popover .driver-popover-arrow-side-bottom {
-  border-bottom-color: var(--tour-popover-bg) !important;
+  border-bottom-color: var(--tour-popover-bg);
 }

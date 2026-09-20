@@ -1,4 +1,4 @@
-import { StateSyncMercureEvent } from '../event_bus/event_bus.type';
+import type { StateSyncMercureEvent } from '../event_bus/event_bus.type';
 
 export interface SyncResponse {
   message: string;

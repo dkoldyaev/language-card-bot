@@ -1,11 +1,11 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
-import { StateSyncMercureEvent } from '../event_bus/event_bus.type';
-import { publishEvent } from '../event_bus/event_bus.service';
-import { SyncResponse } from './state.type';
+import type { LanguageCode } from '../../types/language';
 import { getAuthUser } from '../auth/auth.service';
-import { getUserState } from './state.service';
+import { publishEvent } from '../event_bus/event_bus.service';
+import type { StateSyncMercureEvent } from '../event_bus/event_bus.type';
+import type { SyncResponse } from './state.type';
 
 const router = Router();
 
@@ -37,8 +37,8 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
       activeDictionary: dict ? {
         id: dict.id,
         name: dict.name,
-        targetLanguage: dict.targetLanguage,
-        baseLanguage: dict.baseLanguage,
+        targetLanguage: dict.targetLanguage as LanguageCode,
+        baseLanguage: dict.baseLanguage as LanguageCode,
       } : null,
       currentWordId: userState.currentWordId,
       currentWord: userState.currentWord ? { id: userState.currentWord.id, text: userState.currentWord.text } : undefined,

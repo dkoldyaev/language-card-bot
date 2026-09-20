@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as quizService from './quiz.service';
+import type { PrismaClient, Word } from '@prisma/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
+import * as quizService from './quiz.service';
 
 vi.mock('../../prisma');
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
@@ -46,7 +46,7 @@ describe('Quiz Service', () => {
       ]
     };
     
-    prismaMock.word.findUnique.mockResolvedValue(mockWord as any);
+    prismaMock.word.findUnique.mockResolvedValue(mockWord as Word);
 
     const result = await quizService.generateQuizCard(1, 10);
 
@@ -65,8 +65,8 @@ describe('Quiz Service', () => {
       { id: 5, text: 'w5' },
       { id: 6, text: 'w6' },
       { id: 7, text: 'w7' },
-    ] as any);
-    prismaMock.word.findUnique.mockResolvedValue({ text: 'correct_word' } as any);
+    ] as Word);
+    prismaMock.word.findUnique.mockResolvedValue({ text: 'correct_word' } as Word);
 
     const result = await quizService.getQuizVariants(1, 10, 10);
     
@@ -95,7 +95,7 @@ describe('Quiz Service', () => {
           { id: 100, text: 'd1' },
           { id: 101, text: 'd2' }
         ]
-      } as any);
+      } as Word);
 
       const result = await quizService.getNextDefinition(10, 100);
       expect(result?.id).toBe(101);

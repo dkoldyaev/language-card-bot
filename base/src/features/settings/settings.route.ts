@@ -1,15 +1,16 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
+import { env } from '../../core/env';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
-import { SettingsSyncMercureEvent } from '../event_bus/event_bus.type';
-import { publishEvent } from '../event_bus/event_bus.service';
+import type { LanguageCode } from '../../types/language';
 import { getAuthUser } from '../auth/auth.service';
 import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
-import { env } from '../../core/env';
+import { publishEvent } from '../event_bus/event_bus.service';
+import type { SettingsSyncMercureEvent } from '../event_bus/event_bus.type';
 
 const router = Router();
 
-router.get('/guest-policy', (req: Request, res: Response) => {
+router.get('/guest-policy', (_req: Request, res: Response) => {
   res.json({
     allowGuestAi: env.ALLOW_GUEST_AI_GENERATION === 'true',
     dailyLimit: parseInt(env.GUEST_AI_DAILY_LIMIT, 10),
@@ -53,8 +54,8 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       version: 'v1',
       type: 'settings_sync',
       settings: {
-        baseLanguage: updated.baseLanguage,
-        targetLanguage: updated.targetLanguage,
+        baseLanguage: updated.baseLanguage as LanguageCode,
+        targetLanguage: updated.targetLanguage as LanguageCode,
       },
     };
 

@@ -1,10 +1,11 @@
 import 'dotenv/config';
+import type { PresetDto } from '../features/preset/preset.type';
 import { generatePreset } from '../features/preset/preset_generator.service';
-import { PresetDto } from '../features/preset/preset.type';
 import { prisma } from '../prisma';
+import type { LanguageCode } from '../types/language';
 
 interface CliParams {
-  languages: string[];
+  languages: LanguageCode[];
   presetId?: number;
   wordCounts: number[];
   levels: string[];
@@ -51,7 +52,7 @@ Examples:
 
 function parseCliArgs(): CliParams {
   const args = process.argv.slice(2);
-  const rawLanguages: string[] = [];
+  const rawLanguages: LanguageCode[] = [];
   let presetId: number | undefined;
   const rawWordCounts: number[] = [];
   const rawLevels: string[] = [];
@@ -63,7 +64,7 @@ function parseCliArgs(): CliParams {
   const addLanguages = (val: string) => {
     val.split(',').forEach((s) => {
       const trimmed = s.trim().toLowerCase();
-      if (trimmed) rawLanguages.push(trimmed);
+      if (trimmed) rawLanguages.push(trimmed as LanguageCode);
     });
   };
 
@@ -184,7 +185,7 @@ function parseCliArgs(): CliParams {
 }
 
 interface Combination {
-  language: string;
+  language: LanguageCode;
   level?: string;
   theme?: string;
 }
@@ -247,7 +248,8 @@ async function main() {
       if (!usedWordsByLanguage.has(language)) {
         usedWordsByLanguage.set(language, new Set<string>());
       }
-      const usedWords = usedWordsByLanguage.get(language)!;
+      const usedWords = usedWordsByLanguage.get(language);
+      if (!usedWords) throw new Error(`Failed to get used words for language: ${language}`);
 
       for (let partIdx = 0; partIdx < params.wordCounts.length; partIdx++) {
         runNumber++;

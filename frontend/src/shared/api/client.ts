@@ -1,9 +1,14 @@
 import axios from 'axios';
-import useStore from '../../store/useStore';
+import useStore, { type DictionaryWord } from '../../store/useStore';
 import { trackEvent } from '../lib/analytics';
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+if (!apiBaseUrl) {
+  throw new Error('VITE_API_BASE_URL is required');
+}
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -43,18 +48,18 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error && error.isGuestAddWordMock) {
+    if (error?.isGuestAddWordMock) {
       return Promise.resolve({ data: { message: 'Guest mode: word addition disabled' } });
     }
 
-    if (error && error.isGuestDictionaryMock) {
+    if (error?.isGuestDictionaryMock) {
       const store = useStore.getState();
       const currentDictId = error.params?.dictionaryId ?? store.selectedDictionaryId ?? store.activeDictionaryId ?? store.dictionaries[0]?.id;
       const dictWords = (currentDictId && store.guestDictionaryWords[currentDictId]) || store.dictionary || [];
       return Promise.resolve({ data: { dictionary: dictWords } });
     }
 
-    if (error && error.isGuestDictionariesMock) {
+    if (error?.isGuestDictionariesMock) {
       const store = useStore.getState();
       const method = (error.method || 'get').toLowerCase();
 
@@ -125,14 +130,14 @@ apiClient.interceptors.response.use(
 
       return Promise.resolve({ data: {} });
     }
-    if (error && error.isOfflineMock) {
+    if (error?.isOfflineMock) {
       const store = useStore.getState();
       const dictionary = store.dictionary;
       
       if (!dictionary || dictionary.length === 0) return Promise.resolve({ data: {} });
 
       const getRandomWord = () => dictionary[Math.floor(Math.random() * dictionary.length)];
-      const getRandomDef = (word: any) => word.definitions[Math.floor(Math.random() * word.definitions.length)];
+      const getRandomDef = (word: DictionaryWord) => word.definitions[Math.floor(Math.random() * word.definitions.length)];
 
       const url = error.url;
       const data = typeof error.data === 'string' ? JSON.parse(error.data) : error.data;
@@ -141,8 +146,8 @@ apiClient.interceptors.response.use(
         const word = getRandomWord();
         if (word && word.definitions.length > 0) {
           const def = getRandomDef(word);
-          const defText = typeof def.text === 'string' ? def.text : def.text?.text || '';
-          const transText = typeof def.translation === 'string' ? def.translation : def.translation?.text || null;
+          const defText = def.text;
+          const transText = def.translation?.text ?? null;
           store.setQuizCard({ wordId: word.id, definition: { id: def.id, text: defText, translation: transText } });
         }
       } else if (url === '/quiz/answer') {
@@ -158,7 +163,7 @@ apiClient.interceptors.response.use(
         }
       } else if (url === '/quiz/translate_definition') {
         const card = store.quizCard;
-        if (card && card.definition.translation) {
+        if (card?.definition.translation) {
           store.setQuizTranslation(card.definition.translation);
         } else if (card) {
           store.setQuizTranslation("Translation not available offline");
@@ -169,8 +174,8 @@ apiClient.interceptors.response.use(
           const word = dictionary.find(w => w.id === card.wordId);
           if (word && word.definitions.length > 0) {
             const def = getRandomDef(word);
-            const defText = typeof def.text === 'string' ? def.text : def.text?.text || '';
-            const transText = typeof def.translation === 'string' ? def.translation : def.translation?.text || null;
+            const defText = def.text;
+            const transText = def.translation?.text || null;
             store.setQuizCard({ wordId: word.id, definition: { id: def.id, text: defText, translation: transText } });
           }
         }

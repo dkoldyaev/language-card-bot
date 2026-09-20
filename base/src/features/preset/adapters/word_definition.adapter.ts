@@ -1,10 +1,10 @@
-import { IPresetAdapter, PresetApplyContext, PresetAdapterResult } from './preset_adapter.interface';
-import { WordDefinitionPresetBodySchema } from '../preset.type';
-import { prisma } from '../../../prisma';
-import { publishEvent } from '../../event_bus/event_bus.service';
 import { appEvents, Events } from '../../../core/events';
+import { prisma } from '../../../prisma';
 import { getUserDictionaries } from '../../dictionaries/dictionaries.service';
-import { DictionariesSyncMercureEvent, DictionaryAddProcessingEvent, DictionaryAddProcessingItem } from '../../event_bus/event_bus.type';
+import { publishEvent } from '../../event_bus/event_bus.service';
+import type { DictionariesSyncMercureEvent, DictionaryAddProcessingEvent, DictionaryAddProcessingItem } from '../../event_bus/event_bus.type';
+import { WordDefinitionPresetBodySchema } from '../preset.type';
+import type { IPresetAdapter, PresetAdapterResult, PresetApplyContext } from './preset_adapter.interface';
 
 export class WordDefinitionPresetAdapter implements IPresetAdapter {
   readonly type = 'word-definition';
@@ -75,7 +75,7 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
           text: cw.text,
           definitions: [],
           presets: [{ id: preset.id }],
-        } as any);
+        } as unknown as (typeof existingWordsList)[0]);
 
         newWordsAdded.push({
           wordId: cw.id,
@@ -229,12 +229,15 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
       }
 
       for (const newDef of createdDefs) {
-        const word = Array.from(existingWordsMap.values()).find((w) => w.id === newDef.wordId)!;
+        const word = Array.from(existingWordsMap.values()).find((w) => w.id === newDef.wordId);
+        if (!word) {
+          throw new Error(`Word not found for definition ${newDef.id}`);
+        }
         word.definitions.push({
           id: newDef.id,
           text: newDef.text,
           presets: [{ id: preset.id }],
-        } as any);
+        } as unknown as (typeof existingWordsList)[0]['definitions'][0]);
 
         appEvents.emit(Events.DEFINITION_ADDED, {
           definitionId: newDef.id,

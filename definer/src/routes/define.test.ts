@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import request from 'supertest';
 import express from 'express';
-import { defineRouter } from './define';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DefinerFactory } from '../core/DefinerFactory';
-import { IDefiner } from '../core/IDefiner';
+import type { IDefiner } from '../core/IDefiner';
+import { defineRouter } from './define';
 
 // Mock the DefinerFactory
 vi.mock('../core/DefinerFactory', () => ({

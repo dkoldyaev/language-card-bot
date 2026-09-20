@@ -1,13 +1,15 @@
-import { Worker, Job } from 'bullmq';
+import { type Job, Worker } from 'bullmq';
 import IORedis from 'ioredis';
-import { prisma } from '../../prisma';
-import { enqueueFetchTranslations } from './add_word.queue';
-import { 
-  DictionaryAddDefinitionsReceivedEvent
-} from '../event_bus/event_bus.type';
-import { publishEvent } from '../event_bus/event_bus.service';
 import { env } from '../../core/env';
 import { appEvents, Events } from '../../core/events';
+import { prisma } from '../../prisma';
+import { publishEvent } from '../event_bus/event_bus.service';
+import type { 
+  DictionaryAddDefinitionsReceivedEvent
+} from '../event_bus/event_bus.type';
+import { enqueueFetchTranslations } from './add_word.queue';
+import { Dictionary } from '.prisma/client';
+import { LanguageCode } from '../../types/language';
 
 const redisUrl = env.REDIS_URL;
 export const workerConnection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
@@ -24,7 +26,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       include: { dictionary: true }
     });
 
-    if (!word || !word.dictionary) {
+    if (!word?.dictionary) {
       console.error(`Word or dictionary not found for wordId ${wordId}`);
       return;
     }
@@ -85,8 +87,8 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       username,
       wordId,
       wordText,
-      targetLanguage,
-      baseLanguage
+      baseLanguage as LanguageCode,
+      targetLanguage as LanguageCode,
     );
   } else if (job.name === 'fetchTranslations' || job.name === 'fetchTranslation') {
     const { definitions, definitionId, definitionText, username, wordId, sourceLanguage, targetLanguage } = job.data;
@@ -108,7 +110,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
         include: { dictionary: true }
       });
 
-      if (word && word.dictionary) {
+      if (word?.dictionary) {
         srcLang = word.dictionary.targetLanguage;
         tgtLang = word.dictionary.baseLanguage;
       }

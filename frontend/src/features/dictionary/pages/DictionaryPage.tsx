@@ -48,7 +48,13 @@ export default function DictionaryPage() {
       titleRef.current.innerText = currentDict.name;
     }
     setIsEditingTitle(false);
-  }, [currentDict?.id, currentDict?.name]);
+  }, [currentDict?.id, currentDict?.name, currentDict]);
+
+  useEffect(() => {
+    if (!loading && dictionaries.length === 0 && !createDialogOpen) {
+      setCreateDialogOpen(true);
+    }
+  }, [loading, dictionaries.length, createDialogOpen]);
 
   useEffect(() => {
     if (!currentDictId) {

@@ -1,22 +1,30 @@
+import type { Preset, Prisma } from '@prisma/client';
+import { invalidateKeysByPattern, redisClient } from '../../core/cache';
 import { prisma } from '../../prisma';
-import { CreatePresetInput, UpdatePresetInput, PresetDto } from './preset.type';
-import { getPresetAdapter } from './adapters';
-import { redisClient, invalidateKeysByPattern } from '../../core/cache';
+import type { LanguageCode } from '../../types/language';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
+import { getPresetAdapter } from './adapters';
+import type { CreatePresetInput, PresetDto, UpdatePresetInput } from './preset.type';
 
 const PRESETS_CACHE_TTL_SECONDS = 3600;
+
+type HttpError = Error & { statusCode: number };
+
+function createHttpError(message: string, statusCode: number): HttpError {
+  return Object.assign(new Error(message), { statusCode });
+}
 
 export async function invalidatePresetsCache(): Promise<void> {
   await invalidateKeysByPattern('presets:*');
 }
 
-export function formatPreset(preset: any): PresetDto {
+export function formatPreset(preset: Preset): PresetDto {
   return {
     id: preset.id,
     title: preset.title,
     description: preset.description ?? null,
-    for_language: preset.forLanguage,
-    forLanguage: preset.forLanguage,
+    for_language: preset.forLanguage as LanguageCode,
+    forLanguage: preset.forLanguage as LanguageCode,
     type: preset.type,
     body: preset.body,
     createdAt: preset.createdAt instanceof Date ? preset.createdAt.toISOString() : String(preset.createdAt),
@@ -24,7 +32,7 @@ export function formatPreset(preset: any): PresetDto {
   };
 }
 
-export async function listPresets(filters?: { forLanguage?: string }): Promise<PresetDto[]> {
+export async function listPresets(filters?: { forLanguage?: LanguageCode }): Promise<PresetDto[]> {
   const langKey = filters?.forLanguage ? filters.forLanguage.toLowerCase() : 'all';
   const cacheKey = `presets:list:${langKey}`;
   const cached = await redisClient.get(cacheKey);
@@ -70,7 +78,10 @@ export async function getPresetById(id: number): Promise<PresetDto | null> {
 }
 
 export async function createPreset(data: CreatePresetInput): Promise<PresetDto> {
-  const forLanguage = (data.for_language || data.forLanguage)!.toLowerCase();
+  const forLanguage = (data.for_language || data.forLanguage)?.toLowerCase();
+  if (!forLanguage) {
+    throw new Error('for_language or forLanguage is required');
+  }
   const type = data.type || 'word-definition';
 
   const preset = await prisma.preset.create({
@@ -79,7 +90,7 @@ export async function createPreset(data: CreatePresetInput): Promise<PresetDto> 
       description: data.description ?? null,
       forLanguage,
       type,
-      body: data.body as any,
+      body: data.body as Prisma.InputJsonValue,
     },
   });
 
@@ -89,7 +100,7 @@ export async function createPreset(data: CreatePresetInput): Promise<PresetDto> 
 }
 
 export async function updatePreset(id: number, data: UpdatePresetInput): Promise<PresetDto> {
-  const forLanguage = data.for_language || data.forLanguage ? (data.for_language || data.forLanguage)!.toLowerCase() : undefined;
+  const forLanguage = data.for_language || data.forLanguage ? (data.for_language || data.forLanguage)?.toLowerCase() : undefined;
 
   const preset = await prisma.preset.update({
     where: { id },
@@ -98,7 +109,7 @@ export async function updatePreset(id: number, data: UpdatePresetInput): Promise
       ...(data.description !== undefined && { description: data.description }),
       ...(forLanguage && { forLanguage }),
       ...(data.type && { type: data.type }),
-      ...(data.body !== undefined && { body: data.body as any }),
+      ...(data.body !== undefined && { body: data.body as Prisma.InputJsonValue }),
     },
   });
 
@@ -116,14 +127,16 @@ export async function deletePreset(id: number): Promise<void> {
 }
 
 export async function applyPreset(userId: number, username: string, dictionaryId: number, presetId: number) {
+  if (dictionaryId > 2147483647) {
+    throw createHttpError('Dictionary not found (invalid ID)', 404);
+  }
+
   const dictionary = await prisma.dictionary.findFirst({
     where: { id: dictionaryId, userId },
   });
 
   if (!dictionary) {
-    const error = new Error('Dictionary not found');
-    (error as any).statusCode = 404;
-    throw error;
+    throw createHttpError('Dictionary not found', 404);
   }
 
   const preset = await prisma.preset.findUnique({
@@ -131,17 +144,14 @@ export async function applyPreset(userId: number, username: string, dictionaryId
   });
 
   if (!preset) {
-    const error = new Error('Preset not found');
-    (error as any).statusCode = 404;
-    throw error;
+    throw createHttpError('Preset not found', 404);
   }
 
-  if (preset.forLanguage.toLowerCase() !== dictionary.targetLanguage.toLowerCase()) {
-    const error = new Error(
-      `Preset language (${preset.forLanguage}) does not match dictionary target language (${dictionary.targetLanguage})`
+  if (preset.forLanguage !== dictionary.targetLanguage) {
+    throw createHttpError(
+      `Preset language (${preset.forLanguage}) does not match dictionary target language (${dictionary.targetLanguage})`,
+      400
     );
-    (error as any).statusCode = 400;
-    throw error;
   }
 
   const adapter = getPresetAdapter(preset.type);

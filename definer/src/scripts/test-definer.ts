@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import dotenv from 'dotenv';
 
 // Load service-level .env first, then root .env if running from workspace
@@ -6,12 +6,13 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
 
 import { z } from 'zod';
-import { DefinerFactory } from '../core/DefinerFactory';
-import { LLMAdapter } from '../adapters/LLMAdapter';
 import { FreeDictionaryDefiner } from '../adapters/FreeDictionaryDefiner';
+import { LLMAdapter } from '../adapters/LLMAdapter';
 import { MockDefiner } from '../adapters/MockDefiner';
-import { DefinerAppType, DefinitionItem } from '../core/IDefiner';
+import { DefinerFactory } from '../core/DefinerFactory';
 import { env } from '../core/env';
+import type { DefinerAppType, DefinitionItem, IDefiner } from '../core/IDefiner';
+import type { LanguageCode } from '../types/language';
 
 function printUsage() {
   console.log(`
@@ -46,13 +47,13 @@ Examples:
 }
 
 interface ParsedArgs {
-  word?: string;
+  word: string;
   language?: string;
-  app?: DefinerAppType;
+  app: DefinerAppType;
   model?: string;
   provider?: 'mistral' | 'gemini' | 'mock';
   llmUrl?: string;
-  httpUrl?: string;
+  httpUrl: string;
   isJson: boolean;
 }
 
@@ -152,7 +153,7 @@ function parseArgs(): ParsedArgs {
 }
 
 async function runHttpTest(args: ParsedArgs): Promise<DefinitionItem[]> {
-  const url = args.httpUrl!;
+  const url = args.httpUrl;
   console.log(`📡 Sending HTTP POST to ${url}...`);
 
   const response = await fetch(url, {
@@ -179,7 +180,7 @@ async function runHttpTest(args: ParsedArgs): Promise<DefinitionItem[]> {
 }
 
 async function runDirectTest(args: ParsedArgs): Promise<DefinitionItem[]> {
-  let definer;
+  let definer: IDefiner;
 
   if (args.app === 'mock') {
     definer = new MockDefiner();
@@ -201,10 +202,10 @@ async function runDirectTest(args: ParsedArgs): Promise<DefinitionItem[]> {
       llmServiceUrl,
     });
   } else {
-    definer = DefinerFactory.getDefiner(args.app!);
+    definer = DefinerFactory.getDefiner(args.app);
   }
 
-  return await definer.define(args.word!, args.language!);
+  return await definer.define(args.word, args.language as LanguageCode);
 }
 
 async function main() {
@@ -252,9 +253,10 @@ async function main() {
     }
 
     console.log('');
-  } catch (error: any) {
+  } catch (error: unknown) {
     const elapsedMs = Date.now() - startTime;
-    console.error(`\n❌ Error after ${elapsedMs}ms:`, error.message || error);
+    const message = error instanceof Error ? error.message : error;
+    console.error(`\n❌ Error after ${elapsedMs}ms:`, message);
     process.exit(1);
   }
 }

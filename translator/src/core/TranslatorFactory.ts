@@ -1,9 +1,9 @@
-import { ITranslator, TranslatorAppType } from './ITranslator';
-import { MockTranslator } from '../adapters/MockTranslator';
 import { GoogleTranslator } from '../adapters/GoogleTranslator';
 import { LaratranslateTranslator } from '../adapters/LaratranslateTranslator';
 import { LLMAdapter } from '../adapters/LLMAdapter';
+import { MockTranslator } from '../adapters/MockTranslator';
 import { env } from './env';
+import type { ITranslator, TranslatorAppType } from './ITranslator';
 
 export class TranslatorFactory {
   static getTranslator(translatorApp: TranslatorAppType): ITranslator {

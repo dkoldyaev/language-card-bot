@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { useCallback, useEffect } from 'react';
 import useStore from '../../store/useStore';
 import api from '../api/client';
@@ -22,13 +23,10 @@ export function useOfflineSync() {
             text: action.text
           });
         }
-      } catch (error: any) {
-        // Handle collisions and non-existent entities gracefully
-        // 404 (Not Found) or 409 (Conflict) means we can ignore the offline action
-        if (error.response && [404, 409].includes(error.response.status)) {
+      } catch (error: unknown) {
+        if (isAxiosError(error) && error.response && [404, 409].includes(error.response.status)) {
           console.warn(`Collision or entity not found for action ${action.type}, discarding action.`);
         } else {
-          // In a real robust system, we might want to retry later, but for now we will just log it.
           console.error(`Failed to sync action ${action.type}`, error);
         }
       }

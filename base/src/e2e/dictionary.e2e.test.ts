@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import request from 'supertest';
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import app from '../app';
 import { prisma } from '../prisma';
-import { clearDatabase, setupTestUser, setupMercureListener, teardownMercureListener } from './helpers';
+import { clearDatabase, setupMercureListener, setupTestUser, type TestSetup, teardownMercureListener } from './helpers';
+
 describe('Dictionary E2E', () => {
   const testUsername = 'dict_user';
   let userToken: string;
-  let setup: { token: string; user: any; dictionary: any };
+  let setup: TestSetup;
   let reader: ReadableStreamDefaultReader<Uint8Array>;
-  let messages: any[] = [];
   let streamPromise: Promise<void>;
 
   beforeEach(async () => {
@@ -19,7 +19,6 @@ describe('Dictionary E2E', () => {
     
     const sse = await setupMercureListener(testUsername);
     reader = sse.reader;
-    messages = sse.messages;
     streamPromise = sse.streamPromise;
   });
 
@@ -33,24 +32,6 @@ describe('Dictionary E2E', () => {
 
 
   it('should fetch the dictionary', async () => {
-    // Add some dictionary data
-    const word = await prisma.word.create({
-      data: {
-        dictionaryId: setup.dictionary.id,
-        text: 'hello',
-        definitions: {
-          create: {
-            text: 'A greeting',
-            translation: {
-              create: {
-                text: 'Привет'
-              }
-            }
-          }
-        }
-      }
-    });
-
     const res = await request(app)
       .get('/api/v1/dictionary')
       .set('Authorization', `Bearer ${userToken}`);

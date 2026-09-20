@@ -6,7 +6,6 @@ import {
   Alert,
   alpha,
   Box,
-  Chip,
   FormControl,
   FormHelperText,
   InputLabel,
@@ -15,15 +14,16 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
+import { isAxiosError } from 'axios';
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
 import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
 import {
   AppButton,
   AppCard,
-  AppChip,
   AppDialog,
   AppIconButton,
   AppTextField,
@@ -35,20 +35,36 @@ import {
   radiusTokens,
   spacingTokens,
 } from '../../../shared/ui';
-import type { PresetItem } from '../types';
+import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
+import AddPresetToDictionaryDialog from '../components/AddPresetToDictionaryDialog';
+import PresetCard from '../components/PresetCard';
+import type { PresetDefinitionItem, PresetItem, WordDefinitionPresetItem } from '../types';
 
 export type { PresetItem };
 
 export default function PresetsPage() {
   const { t } = useTranslation();
+  const profile = useStore((state) => state.profile);
+  const isAdmin = Boolean(profile?.isAdmin || profile?.is_admin);
+  const dictionaries = useStore((state) => state.dictionaries);
+  const token = useStore((state) => state.token);
+  const setDictionary = useStore((state) => state.setDictionary);
+  const currentWords = useStore((state) => state.dictionary);
+  const updateDictionaryItem = useStore((state) => state.updateDictionaryItem);
 
   const [presets, setPresets] = useState<PresetItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Add-to-dictionary flow
+  const [addDialogPreset, setAddDialogPreset] = useState<PresetItem | null>(null);
+  const [addingToDictionaryId, setAddingToDictionaryId] = useState<number | null>(null);
+
   // Filter
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
+  const [selectedLevel, setSelectedLevel] = useState<string>('all');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
 
   // Create / Edit modal state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -66,29 +82,74 @@ export default function PresetsPage() {
   const [presetToDelete, setPresetToDelete] = useState<PresetItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchPresets = async () => {
+  const fetchPresets = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const res = await apiClient.get('/preset');
       setPresets(res.data.presets || []);
-    } catch (err: any) {
-      setError(err.response?.data?.error || t('presets.savePresetError'));
+    } catch (err: unknown) {
+      const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
+      setError(message || t('presets.savePresetError'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchPresets();
-  }, []);
+  }, [fetchPresets]);
+
+  const { allTags, allLevels } = useMemo(() => {
+    const tags = new Set<string>();
+    const levels = new Set<string>();
+    presets.forEach(p => {
+      if (Array.isArray(p.body)) {
+        p.body.forEach((item: WordDefinitionPresetItem) => {
+          if (Array.isArray(item.definitions)) {
+            item.definitions.forEach((def: PresetDefinitionItem) => {
+              if (def && typeof def === 'object') {
+                if (Array.isArray(def.tags)) def.tags.forEach((t: string) => {tags.add(t.toLowerCase())});
+                if (Array.isArray(def.levels)) def.levels.forEach((l: string) => {levels.add(l.toUpperCase())});
+              }
+            });
+          }
+        });
+      }
+    });
+    return {
+      allTags: Array.from(tags).sort(),
+      allLevels: Array.from(levels).sort(),
+    };
+  }, [presets]);
 
   const filteredPresets = useMemo(() => {
-    if (selectedLanguage === 'all') return presets;
-    return presets.filter(
-      (p) => (p.for_language || p.forLanguage)?.toLowerCase() === selectedLanguage.toLowerCase()
-    );
-  }, [presets, selectedLanguage]);
+    return presets.filter(p => {
+      if (selectedLanguage !== 'all') {
+        if ((p.for_language || p.forLanguage)?.toLowerCase() !== selectedLanguage.toLowerCase()) return false;
+      }
+      
+      const pTags = new Set<string>();
+      const pLevels = new Set<string>();
+      if (Array.isArray(p.body)) {
+        p.body.forEach((item: WordDefinitionPresetItem) => {
+          if (Array.isArray(item.definitions)) {
+            item.definitions.forEach((def: PresetDefinitionItem) => {
+              if (def && typeof def === 'object') {
+                if (Array.isArray(def.tags)) def.tags.forEach((t: string) => {pTags.add(t.toLowerCase())});
+                if (Array.isArray(def.levels)) def.levels.forEach((l: string) => {pLevels.add(l.toUpperCase())});
+              }
+            });
+          }
+        });
+      }
+
+      if (selectedLevel !== 'all' && !pLevels.has(selectedLevel.toUpperCase())) return false;
+      if (selectedTag !== 'all' && !pTags.has(selectedTag.toLowerCase())) return false;
+
+      return true;
+    });
+  }, [presets, selectedLanguage, selectedLevel, selectedTag]);
 
   const handleOpenCreate = () => {
     setEditingPreset(null);
@@ -121,13 +182,14 @@ export default function PresetsPage() {
       return;
     }
 
-    let parsedBody: any;
+    let parsedBody: WordDefinitionPresetItem[];
     try {
-      parsedBody = JSON.parse(formBody);
-      if (!Array.isArray(parsedBody)) {
+      const parsed: unknown = JSON.parse(formBody);
+      if (!Array.isArray(parsed)) {
         setFormError(t('presets.bodyArrayError'));
         return;
       }
+      parsedBody = parsed as WordDefinitionPresetItem[];
     } catch {
       setFormError(t('presets.bodyJsonError'));
       return;
@@ -155,8 +217,9 @@ export default function PresetsPage() {
         setSuccessMessage(t('presets.presetSuccessCreated', { title: formTitle }));
       }
       setDialogOpen(false);
-    } catch (err: any) {
-      setFormError(err.response?.data?.error || t('presets.savePresetError'));
+    } catch (err: unknown) {
+      const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
+      setFormError(message || t('presets.savePresetError'));
     } finally {
       setSaving(false);
     }
@@ -175,22 +238,85 @@ export default function PresetsPage() {
       setPresets((prev) => prev.filter((p) => p.id !== presetToDelete.id));
       setSuccessMessage(t('presets.presetSuccessDeleted', { title: presetToDelete.title }));
       setDeleteConfirmOpen(false);
-    } catch (err: any) {
-      setError(err.response?.data?.error || t('presets.deletePresetError'));
+    } catch (err: unknown) {
+      const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
+      setError(message || t('presets.deletePresetError'));
     } finally {
       setDeleting(false);
     }
-  };
-
-  const getWordCount = (body: any): number => {
-    if (Array.isArray(body)) return body.length;
-    return 0;
   };
 
   const getLangLabel = (code: string) => {
     const key = `languages.${code.toLowerCase()}`;
     const translated = t(key);
     return translated !== key ? translated : code.toUpperCase();
+  };
+
+  /** Проверяем, есть ли хоть один совместимый словарь */
+  const hasCompatibleDictionary = (preset: PresetItem) => {
+    const lang = (preset.for_language || preset.forLanguage || '').toLowerCase();
+    return dictionaries.some((d) => d.targetLanguage.toLowerCase() === lang);
+  };
+
+  const handleAddToDictionaryClick = (preset: PresetItem) => {
+    setAddDialogPreset(preset);
+  };
+
+  const handleSelectDictionary = async (preset: PresetItem, dictionary: DictionaryItem) => {
+    setAddingToDictionaryId(dictionary.id);
+
+    try {
+      if (!token) {
+        // Guest mode: add locally
+        let wordCounter =
+          currentWords.length > 0 ? Math.max(...currentWords.map((w) => w.id)) + 1 : 1;
+        let defCounter = 1;
+        const presetWords = Array.isArray(preset.body) ? preset.body : [];
+        const baseLang = dictionary.baseLanguage?.toLowerCase() || '';
+        const newWords: DictionaryWord[] = presetWords.map((item: WordDefinitionPresetItem) => ({
+          id: wordCounter++,
+          text: item.word,
+          definitions: (item.definitions || []).map((def: PresetDefinitionItem) => {
+            const text = typeof def === 'string' ? def : def?.text || '';
+            const transText =
+              typeof def === 'object' && def?.translations && baseLang
+                ? def.translations[baseLang] || null
+                : typeof def === 'object' && typeof def?.translation === 'string'
+                ? def.translation
+                : null;
+            return {
+              id: defCounter++,
+              text,
+              translation: transText ? { id: defCounter++, text: transText } : null,
+              presets: [{ id: preset.id, title: preset.title }],
+            };
+          }),
+          presets: [{ id: preset.id, title: preset.title }],
+        }));
+
+        const updatedWords = [...currentWords, ...newWords];
+        setDictionary(updatedWords);
+        updateDictionaryItem(dictionary.id, { wordCount: updatedWords.length });
+      } else {
+        await apiClient.post('/preset/apply_preset', {
+          presetId: preset.id,
+          dictionaryId: dictionary.id,
+        });
+      }
+
+      setSuccessMessage(
+        t('presets.addedSuccessDict', {
+          title: preset.title,
+          name: dictionary.name,
+        })
+      );
+      setAddDialogPreset(null);
+    } catch (err: unknown) {
+      const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
+      setError(message || t('presets.failedApply'));
+    } finally {
+      setAddingToDictionaryId(null);
+    }
   };
 
   return (
@@ -205,13 +331,15 @@ export default function PresetsPage() {
         }
         subtitle={t('presets.catalogDesc')}
         action={
-          <AppButton
-            variant="primary"
-            startIcon={<AddRoundedIcon />}
-            onClick={handleOpenCreate}
-          >
-            {t('presets.createPresetBtn')}
-          </AppButton>
+          isAdmin ? (
+            <AppButton
+              variant="primary"
+              startIcon={<AddRoundedIcon />}
+              onClick={handleOpenCreate}
+            >
+              {t('presets.createPresetBtn')}
+            </AppButton>
+          ) : undefined
         }
       />
 
@@ -229,31 +357,56 @@ export default function PresetsPage() {
 
       {/* Filter Bar */}
       <AppCard padding="compact" sx={{ mb: spacingTokens.section_vertical_gap }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800, minWidth: 100 }}>
-            {t('presets.filterByLang')}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: spacingTokens.element_group_gap, flexWrap: 'wrap' }}>
-            <Chip
-              label={t('presets.allLanguages')}
-              clickable
-              color={selectedLanguage === 'all' ? 'primary' : 'default'}
-              variant={selectedLanguage === 'all' ? 'filled' : 'outlined'}
-              onClick={() => setSelectedLanguage('all')}
-              sx={{ fontWeight: 700, borderRadius: `${radiusTokens.sm}px` }}
-            />
-            {SUPPORTED_LOCALES.map((lang) => (
-              <Chip
-                key={lang}
-                label={t(`languages.${lang}`)}
-                clickable
-                color={selectedLanguage === lang ? 'primary' : 'default'}
-                variant={selectedLanguage === lang ? 'filled' : 'outlined'}
-                onClick={() => setSelectedLanguage(lang)}
-                sx={{ fontWeight: 700, borderRadius: `${radiusTokens.sm}px` }}
-              />
-            ))}
-          </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+          <FormControl size="small">
+            <InputLabel id="filter-lang-label">{t('presets.filterByLang')}</InputLabel>
+            <Select
+              labelId="filter-lang-label"
+              value={selectedLanguage}
+              label={t('presets.filterByLang')}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              sx={{ borderRadius: `${radiusTokens.sm}px` }}
+            >
+              <MenuItem value="all">{t('presets.allLanguages')}</MenuItem>
+              {SUPPORTED_LOCALES.map((lang) => (
+                <MenuItem key={lang} value={lang}>
+                  {t(`languages.${lang}`)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small">
+            <InputLabel id="filter-level-label">{t('presets.filterByLevel')}</InputLabel>
+            <Select
+              labelId="filter-level-label"
+              value={selectedLevel}
+              label={t('presets.filterByLevel')}
+              onChange={(e) => setSelectedLevel(e.target.value)}
+              sx={{ borderRadius: `${radiusTokens.sm}px` }}
+            >
+              <MenuItem value="all">{t('presets.allLevels')}</MenuItem>
+              {allLevels.map((lvl) => (
+                <MenuItem key={lvl} value={lvl}>{lvl}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small">
+            <InputLabel id="filter-tag-label">{t('presets.filterByTag')}</InputLabel>
+            <Select
+              labelId="filter-tag-label"
+              value={selectedTag}
+              label={t('presets.filterByTag')}
+              onChange={(e) => setSelectedTag(e.target.value)}
+              sx={{ borderRadius: `${radiusTokens.sm}px` }}
+            >
+              <MenuItem value="all">{t('presets.allTags')}</MenuItem>
+              {allTags.map((tag) => (
+                <MenuItem key={tag} value={tag}>{tag}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
       </AppCard>
 
@@ -270,9 +423,11 @@ export default function PresetsPage() {
               : t('presets.noPresetsLangDesc', { lang: getLangLabel(selectedLanguage) })
           }
           action={
-            <AppButton variant="outline" startIcon={<AddRoundedIcon />} onClick={handleOpenCreate}>
-              {t('presets.createPresetBtn')}
-            </AppButton>
+            isAdmin ? (
+              <AppButton variant="outline" startIcon={<AddRoundedIcon />} onClick={handleOpenCreate}>
+                {t('presets.createPresetBtn')}
+              </AppButton>
+            ) : undefined
           }
           variant="dashed"
         />
@@ -289,91 +444,36 @@ export default function PresetsPage() {
           }}
         >
           {filteredPresets.map((preset) => {
-            const langCode = (preset.for_language || preset.forLanguage || '').toLowerCase();
-            const wordCount = getWordCount(preset.body);
+            const incompatible = !hasCompatibleDictionary(preset);
 
             return (
-              <AppCard
+              <PresetCard
                 key={preset.id}
-                variant="interactive"
-                padding="compact"
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  height: '100%',
-                }}
-              >
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                    <AppChip
-                      variant="lang"
-                      label={getLangLabel(langCode)}
-                    />
-                    <Chip
-                      label={preset.type}
-                      size="small"
-                      variant="outlined"
-                      sx={{ fontSize: '0.75rem', fontWeight: 600, borderRadius: `${radiusTokens.sm}px` }}
-                    />
-                  </Box>
-
-                  <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.3, mb: 0.5 }}>
-                    {preset.title}
-                  </Typography>
-
-                  {preset.description && (
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: 'text.secondary',
-                        mb: 1.25,
-                        fontSize: '0.85rem',
-                        lineHeight: 1.4,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {preset.description}
-                    </Typography>
-                  )}
-
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {t('presets.containsWords', { count: wordCount })}
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    pt: 1.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    borderTop: '1px solid',
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', gap: spacingTokens.micro_gap }}>
-                    <AppIconButton
-                      size="small"
-                      onClick={() => handleOpenEdit(preset)}
-                      tooltip={t('presets.editPresetTooltip')}
-                    >
-                      <EditRoundedIcon fontSize="small" />
-                    </AppIconButton>
-                    <AppIconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleOpenDelete(preset)}
-                      tooltip={t('presets.deletePresetTooltip')}
-                    >
-                      <DeleteOutlineRoundedIcon fontSize="small" />
-                    </AppIconButton>
-                  </Box>
-                </Box>
-              </AppCard>
+                preset={preset}
+                isIncompatible={incompatible}
+                onAddToDictionary={handleAddToDictionaryClick}
+                adminActions={
+                  isAdmin ? (
+                    <Box sx={{ display: 'flex', gap: spacingTokens.micro_gap }}>
+                      <AppIconButton
+                        size="small"
+                        onClick={() => handleOpenEdit(preset)}
+                        tooltip={t('presets.editPresetTooltip')}
+                      >
+                        <EditRoundedIcon fontSize="small" />
+                      </AppIconButton>
+                      <AppIconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleOpenDelete(preset)}
+                        tooltip={t('presets.deletePresetTooltip')}
+                      >
+                        <DeleteOutlineRoundedIcon fontSize="small" />
+                      </AppIconButton>
+                    </Box>
+                  ) : undefined
+                }
+              />
             );
           })}
         </Box>
@@ -490,7 +590,7 @@ export default function PresetsPage() {
                   '& .MuiInputBase-root': {
                     fontFamily: 'monospace',
                     fontSize: '0.875rem',
-                    backgroundColor: (th: any) =>
+                    backgroundColor: (th: Theme) =>
                       th.palette.mode === 'dark' ? alpha(th.palette.common.white, 0.04) : '#F9FAFB',
                   },
                 }}
@@ -512,6 +612,16 @@ export default function PresetsPage() {
         loading={deleting}
         onConfirm={handleDelete}
         onCancel={() => setDeleteConfirmOpen(false)}
+      />
+
+      {/* Add Preset to Dictionary Dialog */}
+      <AddPresetToDictionaryDialog
+        open={Boolean(addDialogPreset)}
+        preset={addDialogPreset}
+        dictionaries={dictionaries}
+        addingToDictionaryId={addingToDictionaryId}
+        onClose={() => setAddDialogPreset(null)}
+        onSelectDictionary={handleSelectDictionary}
       />
     </PageContainer>
   );

@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
@@ -8,7 +9,7 @@ import Auth from './AuthPage';
 
 vi.mock('@react-oauth/google', () => ({
   GoogleLogin: () => <div data-testid="google-login-button">Google Login</div>,
-  GoogleOAuthProvider: ({ children }: any) => <div>{children}</div>,
+  GoogleOAuthProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 describe('AuthPage with test-username provider', () => {

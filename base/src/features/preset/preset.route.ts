@@ -1,24 +1,25 @@
-import { Router, Request, Response } from 'express';
-import { authMiddleware } from '../../middleware/auth';
+import { type Request, type Response, Router } from 'express';
 import { adminMiddleware } from '../../middleware/admin';
+import { authMiddleware } from '../../middleware/auth';
 import { validateRequest } from '../../middleware/validate';
+import { type LanguageCode, SUPPORTED_LANGUAGES } from '../../types/language';
 import { getAuthUser } from '../auth/auth.service';
 import {
-  CreatePresetSchema,
-  CreatePresetInput,
-  UpdatePresetSchema,
-  UpdatePresetInput,
-  ApplyPresetSchema,
-  ApplyPresetInput,
-} from './preset.type';
-import {
-  listPresets,
-  getPresetById,
-  createPreset,
-  updatePreset,
-  deletePreset,
   applyPreset,
+  createPreset,
+  deletePreset,
+  getPresetById,
+  listPresets,
+  updatePreset,
 } from './preset.service';
+import {
+  type ApplyPresetInput,
+  ApplyPresetSchema,
+  type CreatePresetInput,
+  CreatePresetSchema,
+  type UpdatePresetInput,
+  UpdatePresetSchema,
+} from './preset.type';
 
 const router = Router();
 
@@ -29,7 +30,10 @@ const router = Router();
 // GET all presets (accessible publicly)
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const forLanguage = (req.query.for_language || req.query.forLanguage) as string | undefined;
+    const rawLang = (req.query.for_language || req.query.forLanguage) as string | undefined;
+    const forLanguage = rawLang && (SUPPORTED_LANGUAGES as readonly string[]).includes(rawLang)
+      ? (rawLang as LanguageCode)
+      : undefined;
     const presets = await listPresets(forLanguage ? { forLanguage } : undefined);
     res.json({ presets });
   } catch (error) {
@@ -39,7 +43,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // POST apply preset to dictionary (accessible to all authenticated users)
-router.post('/apply_preset', authMiddleware, validateRequest(ApplyPresetSchema), async (req: Request<{}, {}, ApplyPresetInput>, res: Response) => {
+router.post('/apply_preset', authMiddleware, validateRequest(ApplyPresetSchema), async (req: Request<{}, unknown, ApplyPresetInput>, res: Response) => {
   const { id: userId, username } = getAuthUser(req);
   const { dictionaryId, presetId } = req.body;
 
@@ -49,12 +53,16 @@ router.post('/apply_preset', authMiddleware, validateRequest(ApplyPresetSchema),
       message: 'Preset applied successfully',
       ...result,
     });
-  } catch (error: any) {
-    const statusCode = typeof error.statusCode === 'number' ? error.statusCode : 500;
+  } catch (error: unknown) {
+    const statusCode =
+      typeof error === 'object' && error !== null && 'statusCode' in error && typeof error.statusCode === 'number'
+        ? error.statusCode
+        : 500;
     if (statusCode >= 500) {
       console.error('Apply preset error:', error);
     }
-    res.status(statusCode).json({ error: error.message || 'Failed to apply preset' });
+    const message = error instanceof Error ? error.message : 'Failed to apply preset';
+    res.status(statusCode).json({ error: message });
   }
 });
 
@@ -74,12 +82,16 @@ router.post('/:id/apply', authMiddleware, async (req: Request, res: Response) =>
       message: 'Preset applied successfully',
       ...result,
     });
-  } catch (error: any) {
-    const statusCode = typeof error.statusCode === 'number' ? error.statusCode : 500;
+  } catch (error: unknown) {
+    const statusCode =
+      typeof error === 'object' && error !== null && 'statusCode' in error && typeof error.statusCode === 'number'
+        ? error.statusCode
+        : 500;
     if (statusCode >= 500) {
       console.error('Apply preset error:', error);
     }
-    res.status(statusCode).json({ error: error.message || 'Failed to apply preset' });
+    const message = error instanceof Error ? error.message : 'Failed to apply preset';
+    res.status(statusCode).json({ error: message });
   }
 });
 
@@ -103,18 +115,19 @@ router.get('/:id', async (req: Request, res: Response) => {
 // ==========================================
 
 // POST create preset (Admin only)
-router.post('/', authMiddleware, adminMiddleware, validateRequest(CreatePresetSchema), async (req: Request<{}, {}, CreatePresetInput>, res: Response) => {
+router.post('/', authMiddleware, adminMiddleware, validateRequest(CreatePresetSchema), async (req: Request<unknown, unknown, CreatePresetInput>, res: Response) => {
   try {
     const preset = await createPreset(req.body);
     res.status(201).json({ preset });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create preset error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: message });
   }
 });
 
 // PUT update preset (Admin only)
-router.put('/:id', authMiddleware, adminMiddleware, validateRequest(UpdatePresetSchema), async (req: Request<{ id: string }, {}, UpdatePresetInput>, res: Response) => {
+router.put('/:id', authMiddleware, adminMiddleware, validateRequest(UpdatePresetSchema), async (req: Request<{ id: string }, unknown, UpdatePresetInput>, res: Response) => {
   const id = parseInt(req.params.id, 10);
   try {
     const existing = await getPresetById(id);
@@ -124,14 +137,15 @@ router.put('/:id', authMiddleware, adminMiddleware, validateRequest(UpdatePreset
 
     const preset = await updatePreset(id, req.body);
     res.json({ preset });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update preset error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: message });
   }
 });
 
 // PATCH update preset (Admin only)
-router.patch('/:id', authMiddleware, adminMiddleware, validateRequest(UpdatePresetSchema), async (req: Request<{ id: string }, {}, UpdatePresetInput>, res: Response) => {
+router.patch('/:id', authMiddleware, adminMiddleware, validateRequest(UpdatePresetSchema), async (req: Request<{ id: string }, unknown, UpdatePresetInput>, res: Response) => {
   const id = parseInt(req.params.id, 10);
   try {
     const existing = await getPresetById(id);
@@ -141,9 +155,10 @@ router.patch('/:id', authMiddleware, adminMiddleware, validateRequest(UpdatePres
 
     const preset = await updatePreset(id, req.body);
     res.json({ preset });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Patch preset error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: message });
   }
 });
 

@@ -1,10 +1,12 @@
+import type { Preset, Prisma } from '@prisma/client';
 import { env } from '../../core/env';
 import { prisma } from '../../prisma';
+import { type LanguageCode, SUPPORTED_LANGUAGES } from '../../types/language';
 import { formatPreset, invalidatePresetsCache } from './preset.service';
-import { PresetDto, AVAILABLE_LANGUAGES, AvailableLanguage } from './preset.type';
+import type { PresetDto } from './preset.type';
 
 export interface GeneratePresetOptions {
-  language: string;
+  language: LanguageCode;
   presetId?: number;
   wordsCount?: number;
   levels?: string[];
@@ -16,7 +18,15 @@ export interface GeneratePresetOptions {
   onProgress?: (message: string) => void;
 }
 
-export async function callLlmGenerate(prompt: string, jsonFormat: any): Promise<any> {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+export async function callLlmGenerate(prompt: string, jsonFormat: unknown): Promise<unknown> {
   let response: Response;
   try {
     response = await fetch(env.LLM_API_URL, {
@@ -29,9 +39,9 @@ export async function callLlmGenerate(prompt: string, jsonFormat: any): Promise<
         jsonFormat,
       }),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     throw new Error(
-      `Failed to connect to LLM service at ${env.LLM_API_URL}: ${err.message}. Please verify that the LLM service is running and accessible.`
+      `Failed to connect to LLM service at ${env.LLM_API_URL}: ${getErrorMessage(err)}. Please verify that the LLM service is running and accessible.`
     );
   }
 
@@ -40,7 +50,7 @@ export async function callLlmGenerate(prompt: string, jsonFormat: any): Promise<
     throw new Error(`LLM API error (${response.status}): ${errorText}`);
   }
 
-  const json = (await response.json()) as { data?: any; error?: string; message?: string };
+  const json = (await response.json()) as { data?: unknown; error?: string; message?: string };
   if (json.error) {
     throw new Error(`LLM API returned error: ${json.message || json.error}`);
   }
@@ -59,9 +69,9 @@ export async function fetchDefinitionsFromDefiner(text: string, language: string
         definerApp: env.DEFINER_APP_TYPE,
       }),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     throw new Error(
-      `Failed to connect to Definer service at ${env.DEFINER_API_URL}: ${err.message}. Please verify that the Definer service is running and accessible.`
+      `Failed to connect to Definer service at ${env.DEFINER_API_URL}: ${getErrorMessage(err)}. Please verify that the Definer service is running and accessible.`
     );
   }
 
@@ -77,8 +87,8 @@ export async function fetchDefinitionsFromDefiner(text: string, language: string
 
 export async function fetchTranslationsFromTranslator(options: {
   texts: string[];
-  sourceLanguage: string;
-  targetLanguage: string;
+  sourceLanguage: LanguageCode;
+  targetLanguage: LanguageCode;
 }): Promise<string[]> {
   const { texts, sourceLanguage, targetLanguage } = options;
   if (texts.length === 0) return [];
@@ -95,9 +105,9 @@ export async function fetchTranslationsFromTranslator(options: {
         translatorApp: env.TRANSLATOR_APP_TYPE,
       }),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     throw new Error(
-      `Failed to connect to Translator service at ${env.TRANSLATOR_API_URL}: ${err.message}. Please verify that the Translator service is running and accessible.`
+      `Failed to connect to Translator service at ${env.TRANSLATOR_API_URL}: ${getErrorMessage(err)}. Please verify that the Translator service is running and accessible.`
     );
   }
 
@@ -156,10 +166,10 @@ export async function fetchWordsFromLLM(options: {
   };
 
   const data = await callLlmGenerate(prompt, jsonFormat);
-  const words = Array.isArray(data?.words) ? data.words : [];
+  const words = isRecord(data) && Array.isArray(data.words) ? data.words : [];
 
   return words
-    .map((w: any) => String(w).trim().toLowerCase())
+    .map((w: unknown) => String(w).trim().toLowerCase())
     .filter((w: string) => w.length > 0);
 }
 
@@ -228,24 +238,27 @@ export async function filterDefinitionsBatchWithLLM(
 
   const data = await callLlmGenerate(prompt, jsonFormat);
 
-  let rawResults: any[] = [];
-  if (Array.isArray(data?.results)) {
+  let rawResults: unknown[] = [];
+  if (isRecord(data) && Array.isArray(data.results)) {
     rawResults = data.results;
-  } else if (Array.isArray(data?.filteredDefinitions) && validItems.length === 1) {
+  } else if (isRecord(data) && Array.isArray(data.filteredDefinitions) && validItems.length === 1) {
     rawResults = [{ word: validItems[0].word, filteredDefinitions: data.filteredDefinitions }];
-  } else if (Array.isArray(data?.definitions) && validItems.length === 1) {
+  } else if (isRecord(data) && Array.isArray(data.definitions) && validItems.length === 1) {
     rawResults = [{ word: validItems[0].word, filteredDefinitions: data.definitions }];
   }
 
   const resultMap = new Map<string, string[]>();
   for (const res of rawResults) {
-    if (res && typeof res.word === 'string') {
+    if (isRecord(res) && typeof res.word === 'string') {
       const defs = Array.isArray(res.filteredDefinitions)
         ? res.filteredDefinitions
         : Array.isArray(res.definitions)
         ? res.definitions
         : [];
-      resultMap.set(res.word.trim().toLowerCase(), defs);
+      resultMap.set(
+        res.word.trim().toLowerCase(),
+        defs.map((d) => String(d ?? ''))
+      );
     }
   }
 
@@ -253,7 +266,7 @@ export async function filterDefinitionsBatchWithLLM(
     const rawDefs = resultMap.get(item.word.trim().toLowerCase()) ?? [];
 
     const filteredDefinitions = rawDefs
-      .map((d: any) => String(d ?? '').trim())
+      .map((d: unknown) => String(d ?? '').trim())
       .filter((d: string) => {
         if (d.length === 0) return false;
         // Ensure the definition is not just "***" or "***." or "A ***" with no descriptive content
@@ -292,7 +305,7 @@ export async function filterDefinitionsWithLLM(options: {
 
 export async function generatePreset(options: GeneratePresetOptions): Promise<PresetDto> {
   const log = options.onProgress || (() => {});
-  const language = options.language.trim().toLowerCase();
+  const language = options.language;
   const theme = options.theme?.trim();
 
   const wordsCount = options.wordsCount && options.wordsCount > 0 ? options.wordsCount : 100;
@@ -319,13 +332,13 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
       ? options.translationLanguages
           .map((l) => l.trim().toLowerCase())
           .filter((l) => l.length > 0 && l !== language)
-      : (AVAILABLE_LANGUAGES as readonly string[]).filter((l) => l !== language);
+      : (SUPPORTED_LANGUAGES as readonly string[]).filter((l) => l !== language);
   const targetLanguages = Array.from(new Set(rawTargetLanguages));
 
   // If presetId is specified, verify it exists and load existing words & definitions
-  let existingPreset: any = null;
+  let existingPreset: Preset | null = null;
   const existingWordMap = new Map<string, Set<string>>(); // lowercase word -> Set of lowercase definitions
-  let existingBodyList: PresetWordItem[] = [];
+  const existingBodyList: PresetWordItem[] = [];
 
   if (options.presetId) {
     existingPreset = await prisma.preset.findUnique({
@@ -343,8 +356,9 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
     }
 
     if (Array.isArray(existingPreset.body)) {
-      for (const item of existingPreset.body) {
-        if (item && typeof item === 'object' && typeof item.word === 'string') {
+      for (const rawItem of existingPreset.body) {
+        const item = rawItem;
+        if (isRecord(item) && typeof item.word === 'string') {
           const w = item.word.trim().toLowerCase();
           const defs: PresetDefItem[] = [];
           if (Array.isArray(item.definitions)) {
@@ -352,10 +366,10 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
               if (typeof d === 'string') {
                 const text = d.trim();
                 if (text) defs.push({ text, translations: {} });
-              } else if (d && typeof d === 'object' && typeof d.text === 'string') {
+              } else if (isRecord(d) && typeof d.text === 'string') {
                 const text = d.text.trim();
                 const translations: Record<string, string> = {};
-                if (d.translations && typeof d.translations === 'object') {
+                if (isRecord(d.translations)) {
                   for (const [k, v] of Object.entries(d.translations)) {
                     if (typeof v === 'string') translations[k] = v;
                   }
@@ -570,11 +584,11 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
           const translations = await fetchTranslationsFromTranslator({
             texts: missingList,
             sourceLanguage: language,
-            targetLanguage: targetLang,
+            targetLanguage: targetLang as LanguageCode,
           });
 
           const transMap = new Map<string, string>();
-          missingList.forEach((text, i) => transMap.set(text, translations[i] || ''));
+          missingList.forEach((text, i) => {transMap.set(text, translations[i] || '')});
 
           for (const item of existingBodyList) {
             for (const def of item.definitions) {
@@ -590,7 +604,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
     const updated = await prisma.preset.update({
       where: { id: options.presetId },
       data: {
-        body: existingBodyList as any,
+        body: existingBodyList as unknown as Prisma.InputJsonValue,
       },
     });
 
@@ -603,7 +617,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
 
     const allUniqueDefTexts = Array.from(
       new Set(
-        Array.from(runCollectedWords.values()).flatMap((defs) => defs)
+        Array.from(runCollectedWords.values()).flat()
       )
     ).filter((t) => t.length > 0);
 
@@ -622,7 +636,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
         const translatedList = await fetchTranslationsFromTranslator({
           texts: allUniqueDefTexts,
           sourceLanguage: language,
-          targetLanguage: targetLang,
+          targetLanguage: targetLang as LanguageCode,
         });
 
         const langMap = translationsByLang.get(targetLang)!;
@@ -663,7 +677,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
         description,
         forLanguage: language,
         type: 'word-definition',
-        body: newBody as any,
+        body: newBody as unknown as Prisma.InputJsonValue,
       },
     });
 

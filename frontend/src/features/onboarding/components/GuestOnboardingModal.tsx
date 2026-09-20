@@ -20,11 +20,11 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
-import { useTranslation } from '../../../shared/i18n';
+import { SUPPORTED_LANGUAGES, useTranslation, type LanguageCode } from '../../../shared/i18n';
 import { getInitialBaseLanguage } from '../../../shared/i18n/helpers';
 import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
-import type { PresetItem } from '../../presets/types';
+import type { PresetDefinitionItem, PresetItem, WordDefinitionPresetItem } from '../../presets/types';
 
 interface GuestOnboardingModalProps {
   open: boolean;
@@ -34,8 +34,8 @@ interface GuestOnboardingModalProps {
 export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingModalProps) {
   const { t, locale } = useTranslation();
   const [step, setStep] = useState<1 | 2>(1);
-  const [baseLanguage, setBaseLanguage] = useState(getInitialBaseLanguage(locale));
-  const [targetLanguage, setTargetLanguage] = useState(locale === 'en' ? 'es' : 'en');
+  const [baseLanguage, setBaseLanguage] = useState<LanguageCode>(getInitialBaseLanguage(locale));
+  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>(SUPPORTED_LANGUAGES.filter(l => l !== locale)[0]);
   const [presets, setPresets] = useState<PresetItem[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<PresetItem | null>(null);
   const [loadingPresets, setLoadingPresets] = useState(false);
@@ -101,21 +101,21 @@ export default function GuestOnboardingModal({ open, onClose }: GuestOnboardingM
     if (presetToApply && Array.isArray(presetToApply.body)) {
       let wordCounter = 1;
       let defCounter = 1;
-      words = presetToApply.body.map((item: any) => ({
+      words = presetToApply.body.map((item: WordDefinitionPresetItem) => ({
         id: wordCounter++,
         text: item.word,
-        definitions: (item.definitions || []).map((def: any) => {
+        definitions: (item.definitions || []).map((def: PresetDefinitionItem) => {
           const text = typeof def === 'string' ? def : (def?.text || '');
-          const translation =
+          const transText =
             typeof def === 'object' && def?.translations && baseLanguage
               ? def.translations[baseLanguage] || null
-              : typeof def?.translation === 'string'
+              : typeof def === 'object' && typeof def?.translation === 'string'
               ? def.translation
               : null;
           return {
             id: defCounter++,
             text,
-            translation,
+            translation: transText ? { id: defCounter, text: transText } : null,
             presets: [{ id: presetToApply.id, title: presetToApply.title }],
           };
         }),

@@ -1,5 +1,6 @@
 import { prisma } from '../../prisma';
-import { CreateDictionaryRequest, UpdateDictionaryRequest, DictionaryItemDto } from './dictionaries.type';
+import type { LanguageCode } from '../../types/language';
+import type { CreateDictionaryRequest, DictionaryItemDto, UpdateDictionaryRequest } from './dictionaries.type';
 
 export async function ensureActiveDictionary(userId: number) {
   let userState = await prisma.userState.findUnique({
@@ -60,8 +61,8 @@ export async function getUserDictionaries(userId: number): Promise<{ dictionarie
   const dictionaries: DictionaryItemDto[] = list.map((d) => ({
     id: d.id,
     name: d.name,
-    targetLanguage: d.targetLanguage,
-    baseLanguage: d.baseLanguage,
+    targetLanguage: d.targetLanguage as LanguageCode,
+    baseLanguage: d.baseLanguage as LanguageCode,
     wordCount: d._count.words,
     isActive: d.id === activeDictionaryId,
     createdAt: d.createdAt.toISOString(),
@@ -96,8 +97,8 @@ export async function createDictionary(userId: number, data: CreateDictionaryReq
   return {
     id: created.id,
     name: created.name,
-    targetLanguage: created.targetLanguage,
-    baseLanguage: created.baseLanguage,
+    targetLanguage: created.targetLanguage as LanguageCode,
+    baseLanguage: created.baseLanguage as LanguageCode,
     wordCount: 0,
     isActive: isFirst,
     createdAt: created.createdAt.toISOString(),

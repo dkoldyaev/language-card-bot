@@ -1,5 +1,5 @@
-import { ILLMProvider, GenerateOptions } from '../core/ILLMProvider';
 import { env } from '../core/env';
+import type { GenerateOptions, ILLMProvider } from '../core/ILLMProvider';
 
 export class MockProvider implements ILLMProvider {
   private timeout: number;
@@ -8,7 +8,7 @@ export class MockProvider implements ILLMProvider {
     this.timeout = parseInt(env.MOCK_TIMEOUT || '0', 10);
   }
 
-  async generate(options: GenerateOptions): Promise<any> {
+  async generate(options: GenerateOptions): Promise<unknown> {
     if (this.timeout > 0) {
       await new Promise((resolve) => setTimeout(resolve, this.timeout));
     }
@@ -35,7 +35,7 @@ export class MockProvider implements ILLMProvider {
           const parsed = JSON.parse(match[0]);
           if (Array.isArray(parsed) && parsed.length > 0) {
             return {
-              filteredDefinitions: parsed.map((d: any) => maskFn(String(d))),
+              filteredDefinitions: parsed.map((d: unknown) => maskFn(String(d))),
             };
           }
         } catch {
@@ -57,7 +57,7 @@ export class MockProvider implements ILLMProvider {
       const excludedMatch = options.prompt.match(/exclude:[^.\n]+/i) || options.prompt.match(/not include any of the following words:\s*([^.\n]+)/i);
       const excluded = new Set<string>();
       if (excludedMatch) {
-        excludedMatch[1].split(',').map(w => w.trim().toLowerCase()).forEach(w => excluded.add(w));
+        excludedMatch[1].split(',').map(w => w.trim().toLowerCase()).forEach(w => {excluded.add(w)});
       }
 
       const defaultWords = [
@@ -97,7 +97,7 @@ export class MockProvider implements ILLMProvider {
           const parsed = JSON.parse(match[1]);
           if (Array.isArray(parsed)) {
             return {
-              translations: parsed.map((t: any) => `[Mock LLM: ${options.model}] ${String(t)}`),
+              translations: parsed.map((t: unknown) => `[Mock LLM: ${options.model}] ${String(t)}`),
             };
           }
         } catch {

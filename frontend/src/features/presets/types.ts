@@ -2,6 +2,8 @@ export interface PresetDefinitionObject {
   text: string;
   translation?: string;
   translations?: Record<string, string>;
+  tags?: string[];
+  levels?: string[];
 }
 
 export type PresetDefinitionItem = string | PresetDefinitionObject;
@@ -18,7 +20,7 @@ export interface PresetItem {
   for_language: string;
   forLanguage?: string;
   type: string;
-  body: WordDefinitionPresetItem[] | any;
+  body: WordDefinitionPresetItem[];
   createdAt: string;
   updatedAt: string;
 }

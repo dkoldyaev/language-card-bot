@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import request from 'supertest';
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import app from '../app';
 import { prisma } from '../prisma';
-import { clearDatabase, setupTestUser, setupAdminUser, setupMercureListener, teardownMercureListener } from './helpers';
+import type { TMessage } from '../types/message';
+import { clearDatabase, setupAdminUser, setupMercureListener, setupTestUser, type TestSetup, teardownMercureListener } from './helpers';
 
 describe('Presets E2E', () => {
   const regularUsername = 'e2e_regular_user';
@@ -10,11 +11,11 @@ describe('Presets E2E', () => {
 
   let regularUserToken: string;
   let adminUserToken: string;
-  let regularSetup: { token: string; user: any; dictionary: any };
-  let adminSetup: { token: string; user: any; dictionary: any };
+  let regularSetup: TestSetup;
+  let adminSetup: TestSetup;
 
   let reader: ReadableStreamDefaultReader<Uint8Array>;
-  let messages: any[] = [];
+  let messages: TMessage[] = [];
   let streamPromise: Promise<void>;
 
   beforeEach(async () => {
@@ -79,7 +80,7 @@ describe('Presets E2E', () => {
       where: { id: createRes.body.preset.id },
     });
     expect(presetInDb).not.toBeNull();
-    expect(presetInDb!.title).toBe('English Starter Pack');
+    expect(presetInDb?.title).toBe('English Starter Pack');
   });
 
   it('should allow regular users to list and view presets', async () => {
@@ -264,13 +265,16 @@ describe('Presets E2E', () => {
     });
 
     expect(updatedWord).not.toBeNull();
+    if (!updatedWord) {
+      throw new Error('updatedWord is null');
+    }
     // Word is linked to preset
-    expect(updatedWord!.presets).toHaveLength(1);
-    expect(updatedWord!.presets[0].id).toBe(preset.id);
+    expect(updatedWord?.presets).toHaveLength(1);
+    expect(updatedWord?.presets[0].id).toBe(preset.id);
 
     // Both existing and new definitions are linked to preset
-    expect(updatedWord!.definitions).toHaveLength(2);
-    for (const def of updatedWord!.definitions) {
+    expect(updatedWord?.definitions).toHaveLength(2);
+    for (const def of updatedWord.definitions) {
       expect(def.presets.some((p) => p.id === preset.id)).toBe(true);
     }
   });

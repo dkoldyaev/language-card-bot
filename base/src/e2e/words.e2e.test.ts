@@ -1,15 +1,16 @@
-import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest';
 import request from 'supertest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import app from '../app';
 import { prisma } from '../prisma';
-import { clearDatabase, setupTestUser, setupMercureListener, teardownMercureListener } from './helpers';
+import type { TMessage } from '../types/message';
+import { clearDatabase, setupMercureListener, setupTestUser, type TestSetup, teardownMercureListener } from './helpers';
 
 describe('Words E2E', () => {
   const testUsername = 'words_user';
   let userToken: string;
-  let setup: { token: string; user: any; dictionary: any };
+  let setup: TestSetup;
   let reader: ReadableStreamDefaultReader<Uint8Array>;
-  let messages: any[] = [];
+  let messages: TMessage[] = [];
   let streamPromise: Promise<void>;
 
   beforeEach(async () => {
@@ -104,10 +105,11 @@ describe('Words E2E', () => {
       },
     });
 
-    expect(createdWord).toBeDefined();
-    expect(createdWord?.text).toBe('apple');
-    expect(createdWord?.definitions.length).toBe(2);
-    expect(createdWord?.definitions[0].translation?.text).toBe('mocked_translation');
+    expect(createdWord).not.toBeNullable();
+    if (!createdWord) throw new Error('Word not found');
+    expect(createdWord.text).toBe('apple');
+    expect(createdWord.definitions.length).toBe(2);
+    expect(createdWord.definitions[0].translation?.text).toBe('mocked_translation');
 
     // 3. Duplicate word check
     const duplicateAddRes = await request(app)
@@ -170,7 +172,7 @@ describe('Words E2E', () => {
 
     // 4. Delete word
     const deleteRes = await request(app)
-      .delete(`/api/v1/word_delete/${createdWord!.id}`)
+      .delete(`/api/v1/word_delete/${createdWord.id}`)
       .set('Authorization', `Bearer ${userToken}`);
 
     expect(deleteRes).toMatchObject({
@@ -179,7 +181,7 @@ describe('Words E2E', () => {
     });
 
     const deletedWord = await prisma.word.findUnique({
-      where: { id: createdWord!.id }
+      where: { id: createdWord.id }
     });
     expect(deletedWord).toBeNull();
 

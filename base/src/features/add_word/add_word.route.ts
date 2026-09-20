@@ -1,18 +1,18 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
+import { appEvents, Events } from '../../core/events';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
-import { AddWordRequest, AddWordResponse } from './add_word.type';
-import { DictionaryAddDuplicateEvent } from '../event_bus/event_bus.type';
-import { publishEvent } from '../event_bus/event_bus.service';
-import { appEvents, Events } from '../../core/events';
 import { getAuthUser } from '../auth/auth.service';
-import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
+import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
+import { publishEvent } from '../event_bus/event_bus.service';
+import type { DictionaryAddDuplicateEvent } from '../event_bus/event_bus.type';
+import type { AddWordRequest, AddWordResponse } from './add_word.type';
 
 const router = Router();
 
-router.post('/', authMiddleware, async (req: Request<{}, {}, AddWordRequest>, res: Response<AddWordResponse | { error: string }>) => {
-  const { word, dictionaryId } = req.body;
+router.post('/', authMiddleware, async (req: Request, res: Response) => {
+  const { word, dictionaryId } = req.body as AddWordRequest;
 
   if (!word || typeof word !== 'string' || word.trim() === '') {
     return res.status(400).json({ error: 'Word is required' });

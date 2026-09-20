@@ -1,3 +1,4 @@
+import type { LanguageCode } from '../../types/language';
 
 export type MercureVersion = 'v1';
 
@@ -9,7 +10,7 @@ export interface BaseMercureEvent {
 export interface StateSyncMercureEvent extends BaseMercureEvent {
   type: 'state_sync';
   activeDictionaryId?: number | null;
-  activeDictionary?: { id: number; name: string; targetLanguage: string; baseLanguage: string } | null;
+  activeDictionary?: { id: number; name: string; targetLanguage: LanguageCode; baseLanguage: LanguageCode } | null;
   currentWordId?: number | null;
   currentWord?: { id: number; text: string } | null;
   showVariants?: boolean;
@@ -30,8 +31,8 @@ export interface EchoMercureEvent extends BaseMercureEvent {
 export interface SettingsSyncMercureEvent extends BaseMercureEvent {
   type: 'settings_sync';
   settings: {
-    baseLanguage: string;
-    targetLanguage: string;
+    baseLanguage: LanguageCode;
+    targetLanguage: LanguageCode;
   };
 }
 
@@ -40,8 +41,8 @@ export interface DictionariesSyncMercureEvent extends BaseMercureEvent {
   dictionaries: {
     id: number;
     name: string;
-    targetLanguage: string;
-    baseLanguage: string;
+    targetLanguage: LanguageCode;
+    baseLanguage: LanguageCode;
     wordCount?: number;
     isActive?: boolean;
   }[];

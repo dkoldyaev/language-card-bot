@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import dotenv from 'dotenv';
 
 // Load service-level .env first, then root .env if running from workspace
@@ -6,13 +6,14 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
 
 import { z } from 'zod';
-import { TranslatorFactory } from '../core/TranslatorFactory';
-import { LLMAdapter } from '../adapters/LLMAdapter';
 import { GoogleTranslator } from '../adapters/GoogleTranslator';
 import { LaratranslateTranslator } from '../adapters/LaratranslateTranslator';
+import { LLMAdapter } from '../adapters/LLMAdapter';
 import { MockTranslator } from '../adapters/MockTranslator';
-import { TranslatorAppType } from '../core/ITranslator';
 import { env } from '../core/env';
+import type { ITranslator, TranslatorAppType } from '../core/ITranslator';
+import { TranslatorFactory } from '../core/TranslatorFactory';
+import type { LanguageCode } from '../types/language';
 
 function printUsage() {
   console.log(`
@@ -170,7 +171,10 @@ function parseArgs(): ParsedArgs {
 }
 
 async function runHttpTest(args: ParsedArgs): Promise<string[]> {
-  const url = args.httpUrl!;
+  const url = args.httpUrl;
+  if (!url) {
+    throw new Error('HTTP URL is not defined');
+  }
   console.log(`📡 Sending HTTP POST to ${url}...`);
 
   const response = await fetch(url, {
@@ -198,7 +202,7 @@ async function runHttpTest(args: ParsedArgs): Promise<string[]> {
 }
 
 async function runDirectTest(args: ParsedArgs): Promise<string[]> {
-  let translator;
+  let translator: ITranslator;
 
   if (args.app === 'mock') {
     translator = new MockTranslator();
@@ -225,7 +229,7 @@ async function runDirectTest(args: ParsedArgs): Promise<string[]> {
     translator = TranslatorFactory.getTranslator(args.app);
   }
 
-  return await translator.translate(args.texts, args.sourceLanguage, args.targetLanguage);
+  return await translator.translate(args.texts, args.sourceLanguage as LanguageCode, args.targetLanguage as LanguageCode);
 }
 
 async function main() {
@@ -268,9 +272,9 @@ async function main() {
       console.log(`  ${idx + 1}. "\x1b[33m${text}\x1b[0m"`);
       console.log(`     ↳ "\x1b[32m${translated}\x1b[0m"\n`);
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const elapsedMs = Date.now() - startTime;
-    console.error(`\n❌ Error after ${elapsedMs}ms:`, error.message || error);
+    console.error(`\n❌ Error after ${elapsedMs}ms:`, error instanceof Error ? error.message : error);
     process.exit(1);
   }
 }

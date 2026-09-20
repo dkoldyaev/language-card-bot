@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { type Prisma, PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { env } from './core/env';
 
@@ -25,8 +25,7 @@ export const prisma = new PrismaClient({
 });
 
 if (isLoggingEnabled) {
-  // @ts-ignore
-  prisma.$on('query', (e: any) => {
+  prisma.$on('query', (e: Prisma.QueryEvent) => {
     console.log(`[DB QUERY] [${e.duration}ms] ${e.query} -- params: ${e.params}`);
   });
 }

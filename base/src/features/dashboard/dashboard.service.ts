@@ -1,6 +1,6 @@
+import { invalidateKeysByPattern, redisClient } from '../../core/cache';
 import { prisma } from '../../prisma';
 import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
-import { redisClient, invalidateKeysByPattern } from '../../core/cache';
 
 const DASHBOARD_CACHE_TTL_SECONDS = 300;
 

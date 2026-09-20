@@ -1,7 +1,7 @@
-import { ILLMProvider, LLMProviderType } from './ILLMProvider';
-import { MistralProvider } from '../providers/MistralProvider';
 import { GeminiProvider } from '../providers/GeminiProvider';
+import { MistralProvider } from '../providers/MistralProvider';
 import { MockProvider } from '../providers/MockProvider';
+import type { ILLMProvider, LLMProviderType } from './ILLMProvider';
 
 export class LLMProviderFactory {
   static getProvider(provider: LLMProviderType): ILLMProvider {

@@ -28,7 +28,6 @@ export const AppCard: React.FC<AppCardProps> = ({
         return spacingTokens.block_inner_padding_compact;
       case 'spacious':
         return spacingTokens.block_inner_padding_spacious;
-      case 'normal':
       default:
         return spacingTokens.block_inner_padding_normal;
     }
@@ -72,7 +71,6 @@ export const AppCard: React.FC<AppCardProps> = ({
           borderColor: 'divider',
           boxShadow: 'none',
         };
-      case 'surface':
       default:
         return {
           backgroundColor: 'background.paper',

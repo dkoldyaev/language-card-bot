@@ -1,10 +1,10 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
+import { appEvents, Events } from '../../core/events';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
-import { DefinitionAddRequestSchema } from './definition_add.type';
 import { getAuthUser } from '../auth/auth.service';
-import { appEvents, Events } from '../../core/events';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
+import { DefinitionAddRequestSchema } from './definition_add.type';
 
 const router = Router();
 

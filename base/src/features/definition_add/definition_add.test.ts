@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import app from '../../app';
+import type { PrismaClient, Word } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import app from '../../app';
+import { env } from '../../core/env';
 import { prisma } from '../../prisma';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
-import { PrismaClient } from '@prisma/client';
 import { enqueueFetchTranslations } from '../add_word/add_word.queue';
 
 vi.mock('../../prisma');
@@ -15,7 +16,7 @@ vi.mock('../add_word/add_word.queue', () => ({
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('POST /api/v1/definition_add', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+  const JWT_SECRET = env.JWT_SECRET;
 
   beforeEach(() => {
     process.env.JWT_SECRET = JWT_SECRET;
@@ -80,8 +81,8 @@ describe('POST /api/v1/definition_add', () => {
       createdAt: new Date()
     };
 
-    prismaMock.word.findFirst.mockResolvedValue(mockWord as any);
-    prismaMock.definition.create.mockResolvedValue(newDef as any);
+    prismaMock.word.findFirst.mockResolvedValue(mockWord as Word);
+    prismaMock.definition.create.mockResolvedValue(newDef as Word);
 
     const res = await request(app)
       .post('/api/v1/definition_add')

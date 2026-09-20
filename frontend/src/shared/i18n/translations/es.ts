@@ -190,6 +190,11 @@ const es = {
   'presets.createPresetBtn': 'Crear preajuste',
   'presets.filterByLang': 'Filtrar por idioma:',
   'presets.allLanguages': 'Todos los idiomas',
+  'presets.filterByLevel': 'Filtrar por nivel:',
+  'presets.allLevels': 'Todos los niveles',
+  'presets.filterByTag': 'Filtrar por etiqueta:',
+  'presets.allTags': 'Todas las etiquetas',
+  'presets.alreadyAdded': 'Añadido',
   'presets.noPresetsFound': 'No se encontraron preajustes',
   'presets.noPresetsAllDesc': 'Comienza creando tu primer preajuste de vocabulario.',
   'presets.noPresetsLangDesc': 'No hay preajustes disponibles para {{lang}}.',
@@ -218,6 +223,13 @@ const es = {
   'presets.presetSuccessCreated': 'Preajuste "{{title}}" creado con éxito.',
   'presets.presetSuccessUpdated': 'Preajuste "{{title}}" actualizado con éxito.',
   'presets.presetSuccessDeleted': 'Preajuste "{{title}}" eliminado.',
+  'presets.addToDictionaryBtn': 'Agregar al diccionario',
+  'presets.chooseDictionaryTitle': 'Agregar al diccionario',
+  'presets.chooseDictionarySubtitle': 'Selecciona un diccionario para «{{preset}}»',
+  'presets.noCompatibleDictionaries': 'No hay diccionarios compatibles',
+  'presets.createDictionaryHint': 'Crea primero un diccionario de {{lang}} para agregar este preset',
+  'presets.addedSuccessDict': '«{{title}}» agregado a «{{name}}».',
+
 
   // Quiz
   'quiz.recallPracticeOverline': 'Práctica de memoria',

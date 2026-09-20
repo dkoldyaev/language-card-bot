@@ -1,14 +1,14 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { validateRequest } from '../../middleware/validate';
-import { EchoMercureEvent } from '../event_bus/event_bus.type';
-import { publishEvent } from '../event_bus/event_bus.service';
-import { EchoRequestSchema, EchoRequest, EchoResponse } from './echo.type';
 import { getAuthUser } from '../auth/auth.service';
+import { publishEvent } from '../event_bus/event_bus.service';
+import type { EchoMercureEvent } from '../event_bus/event_bus.type';
+import { EchoRequestSchema, type EchoResponse } from './echo.type';
 
 const router = Router();
 
-router.post('/echo', authMiddleware, validateRequest(EchoRequestSchema), async (req: Request<{}, {}, EchoRequest>, res: Response<EchoResponse | { error: string }>) => {
+router.post('/echo', authMiddleware, validateRequest(EchoRequestSchema), async (req: Request, res: Response<EchoResponse | { error: string }>) => {
 
   
   const { username } = getAuthUser(req);

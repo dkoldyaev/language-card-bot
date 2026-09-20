@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ILLMProvider, GenerateOptions } from '../core/ILLMProvider';
 import { env } from '../core/env';
+import type { GenerateOptions, ILLMProvider } from '../core/ILLMProvider';
 
 export class GeminiProvider implements ILLMProvider {
   private genAI: GoogleGenerativeAI;
@@ -13,7 +13,7 @@ export class GeminiProvider implements ILLMProvider {
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
-  async generate(options: GenerateOptions): Promise<any> {
+  async generate(options: GenerateOptions): Promise<unknown> {
     const formatStr = typeof options.jsonFormat === 'string' 
       ? options.jsonFormat 
       : JSON.stringify(options.jsonFormat, null, 2);
@@ -37,8 +37,9 @@ export class GeminiProvider implements ILLMProvider {
     const cleanContent = responseText.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
     try {
       return JSON.parse(cleanContent);
-    } catch (err: any) {
-      throw new Error(`Failed to parse Gemini response as JSON: ${err.message}. Content: ${cleanContent}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`Failed to parse Gemini response as JSON: ${message}. Content: ${cleanContent}`);
     }
   }
 }

@@ -1,10 +1,22 @@
+import type { Dictionary, User, UserState } from '@prisma/client';
 import request from 'supertest';
 import app from '../app';
-import { prisma } from '../prisma';
-
+import { env } from '../core/env';
 import { dictionaryQueue } from '../features/add_word/add_word.queue';
-
 import { ensureActiveDictionary } from '../features/dictionaries/dictionaries.service';
+import { prisma } from '../prisma';
+import type { TMessage } from '../types/message';
+
+export type TestUserWithRelations = User & {
+  state: UserState | null;
+  dictionaries: Dictionary[];
+};
+
+export interface TestSetup {
+  token: string;
+  user: TestUserWithRelations;
+  dictionary: Dictionary;
+}
 
 export async function clearDatabase() {
   const deletePresets = prisma.preset.deleteMany();
@@ -13,10 +25,10 @@ export async function clearDatabase() {
   await dictionaryQueue.obliterate({ force: true });
 }
 
-export async function setupAdminUser(username: string): Promise<{ token: string, user: any, dictionary: any }> {
+export async function setupAdminUser(username: string): Promise<TestSetup> {
   const data = await setupTestUser(username);
   await prisma.user.update({
-    where: { id: data.user.id },
+    where: { id: data.user!.id },
     data: { isAdmin: true },
   });
   const loginRes = await request(app).post('/api/v1/auth/login').send({ username });
@@ -24,10 +36,13 @@ export async function setupAdminUser(username: string): Promise<{ token: string,
     where: { id: data.user.id },
     include: { state: true, dictionaries: true },
   });
+  if (!user) {
+    throw new Error(`Failed to find test admin user ${username} after registration`);
+  }
   return { token: loginRes.body.token, user, dictionary: data.dictionary };
 }
 
-export async function setupTestUser(username: string): Promise<{ token: string, user: any, dictionary: any }> {
+export async function setupTestUser(username: string): Promise<TestSetup> {
   await request(app).post('/api/v1/auth/register').send({ username });
   const loginRes = await request(app).post('/api/v1/auth/login').send({ username });
   if (!loginRes.body?.token) {
@@ -45,20 +60,27 @@ export async function setupTestUser(username: string): Promise<{ token: string, 
     include: { state: true, dictionaries: true }
   });
   
-  const dictionary = await ensureActiveDictionary(userInDb!.id);
+  if (!userInDb) {
+    throw new Error(`Failed to find test user ${username} after registration`);
+  }
+
+  const dictionary = await ensureActiveDictionary(userInDb.id);
   const refreshedUser = await prisma.user.findUnique({
-    where: { id: userInDb!.id },
+    where: { id: userInDb.id },
     include: { state: true, dictionaries: true }
   });
+  if (!refreshedUser) {
+    throw new Error(`Failed to find test user ${username} after registration`);
+  }
   
   return { token: loginRes.body.token, user: refreshedUser, dictionary };
 }
 
-export async function setupMercureListener(username: string): Promise<{ reader: ReadableStreamDefaultReader<Uint8Array>, messages: any[], streamPromise: Promise<void> }> {
-  const messages: any[] = [];
-  const subscriberToken = process.env.MERCURE_JWT;
-  const mercureUrl = process.env.MERCURE_URL!;
-  const topic = `${process.env.BASE_DOMAIN}/v1/users/${username}`;
+export async function setupMercureListener(username: string): Promise<{ reader: ReadableStreamDefaultReader<Uint8Array>, messages: TMessage[], streamPromise: Promise<void> }> {
+  const messages: TMessage[] = [];
+  const subscriberToken = env.MERCURE_JWT;
+  const mercureUrl = env.MERCURE_URL;
+  const topic = `${env.BASE_DOMAIN}/v1/users/${username}`;
   const url = new URL(mercureUrl);
   url.searchParams.append('topic', topic);
 
@@ -74,7 +96,10 @@ export async function setupMercureListener(username: string): Promise<{ reader: 
     throw new Error(`SSE fetch failed: ${esRes.status}`);
   }
   
-  const reader = esRes.body!.getReader();
+  const reader = esRes.body?.getReader();
+  if (!reader) {
+    throw new Error('SSE response body is not readable');
+  }
   const decoder = new TextDecoder();
 
   const readStream = async () => {
@@ -86,11 +111,11 @@ export async function setupMercureListener(username: string): Promise<{ reader: 
         const lines = chunk.split('\n');
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            messages.push(JSON.parse(line.substring(6)));
+            messages.push(JSON.parse(line.substring(6)) as TMessage);
           }
         }
       }
-    } catch (e) {
+    } catch (_e) {
       // Ignore read errors from cancellation
     }
   };

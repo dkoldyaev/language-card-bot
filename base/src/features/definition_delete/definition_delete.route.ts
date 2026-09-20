@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
@@ -10,7 +10,7 @@ router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
   const { id: userId } = getAuthUser(req);
   const definitionId = parseInt(req.params.id as string, 10);
 
-  if (isNaN(definitionId)) {
+  if (Number.isNaN(definitionId)) {
     return res.status(400).json({ error: 'Invalid definition ID' });
   }
 

@@ -7,6 +7,7 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  type PaperProps,
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
@@ -15,6 +16,7 @@ import { useTranslation } from '../i18n';
 import type { LocaleInfo, SupportedLocale } from '../i18n/types';
 import { radiusTokens } from '../ui';
 
+type MenuPaperSlotProps = PaperProps & { 'data-testid'?: string };
 interface LocaleSwitcherProps {
   variant?: 'outlined' | 'text';
   size?: 'small' | 'medium';
@@ -95,7 +97,7 @@ export default function LocaleSwitcher({
               mt: 0.75,
               maxHeight: 380,
             },
-          } as any,
+          } as MenuPaperSlotProps,
         }}
       >
         {locales.map((item: LocaleInfo) => {

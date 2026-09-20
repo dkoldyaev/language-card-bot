@@ -1,3 +1,5 @@
+import type { LanguageCode } from '../types/language';
+
 export type DefinerAppType = 'mistral' | 'gemini' | 'mock' | 'freedictionary' | 'llm';
 
 export interface DefinitionItem {
@@ -8,6 +10,6 @@ export interface DefinitionItem {
 }
 
 export interface IDefiner {
-  define(text: string, language: string): Promise<DefinitionItem[]>;
+  define(text: string, language: LanguageCode): Promise<DefinitionItem[]>;
 }
 

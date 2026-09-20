@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../prisma';
+import type { NextFunction, Request, Response } from 'express';
 import { getAuthUser } from '../features/auth/auth.service';
+import { prisma } from '../prisma';
 
 export const adminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -10,12 +10,12 @@ export const adminMiddleware = async (req: Request, res: Response, next: NextFun
       select: { id: true, isAdmin: true },
     });
 
-    if (!user || !user.isAdmin) {
+    if (!user?.isAdmin) {
       return res.status(403).json({ error: 'Forbidden: Admin access required' });
     }
 
     next();
-  } catch (error) {
+  } catch (_error) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 };

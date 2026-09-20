@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import request from 'supertest';
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import app from '../app';
 import { prisma } from '../prisma';
-import { clearDatabase, setupTestUser, setupMercureListener, teardownMercureListener } from './helpers';
+import type { TMessage } from '../types/message';
+import { clearDatabase, setupMercureListener, setupTestUser, teardownMercureListener } from './helpers';
 
 describe('State Sync E2E', () => {
   const testUsername = 'state_sync_user';
@@ -10,7 +11,7 @@ describe('State Sync E2E', () => {
   let userId: number;
   let dictionaryId: number;
   let reader: ReadableStreamDefaultReader<Uint8Array>;
-  let messages: any[] = [];
+  let messages: TMessage[] = [];
   let streamPromise: Promise<void>;
 
   beforeEach(async () => {

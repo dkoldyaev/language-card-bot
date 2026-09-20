@@ -190,6 +190,11 @@ const pt = {
   'presets.createPresetBtn': 'Criar modelo',
   'presets.filterByLang': 'Filtrar por idioma:',
   'presets.allLanguages': 'Todos os idiomas',
+  'presets.filterByLevel': 'Filtrar por nível:',
+  'presets.allLevels': 'Todos os níveis',
+  'presets.filterByTag': 'Filtrar por tag:',
+  'presets.allTags': 'Todas as tags',
+  'presets.alreadyAdded': 'Adicionado',
   'presets.noPresetsFound': 'Nenhum modelo encontrado',
   'presets.noPresetsAllDesc': 'Comece criando seu primeiro modelo de vocabulário.',
   'presets.noPresetsLangDesc': 'Nenhum modelo disponível para {{lang}}.',
@@ -218,6 +223,13 @@ const pt = {
   'presets.presetSuccessCreated': 'Modelo "{{title}}" criado com sucesso.',
   'presets.presetSuccessUpdated': 'Modelo "{{title}}" atualizado com sucesso.',
   'presets.presetSuccessDeleted': 'Modelo "{{title}}" excluído.',
+  'presets.addToDictionaryBtn': 'Adicionar ao dicionário',
+  'presets.chooseDictionaryTitle': 'Adicionar ao dicionário',
+  'presets.chooseDictionarySubtitle': 'Selecione um dicionário para «{{preset}}»',
+  'presets.noCompatibleDictionaries': 'Nenhum dicionário compatível',
+  'presets.createDictionaryHint': 'Crie primeiro um dicionário de {{lang}} para adicionar este modelo',
+  'presets.addedSuccessDict': '«{{title}}» adicionado a «{{name}}»!',
+
 
   // Quiz
   'quiz.recallPracticeOverline': 'Prática de recordação',

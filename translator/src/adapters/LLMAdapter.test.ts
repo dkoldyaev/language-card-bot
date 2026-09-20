@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LLMAdapter } from './LLMAdapter';
 
 describe('LLMAdapter', () => {
@@ -32,7 +32,8 @@ describe('LLMAdapter', () => {
 
     expect(result).toEqual(['Кот', 'Собака']);
     expect(fetch).toHaveBeenCalledTimes(1);
-    const calledBody = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as any).body);
+    const requestInit = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+    const calledBody = JSON.parse(String(requestInit.body));
     expect(calledBody.prompt).toContain('"Cat"');
     expect(calledBody.prompt).toContain('"Dog"');
     expect(calledBody.jsonFormat.properties.translations.type).toBe('array');

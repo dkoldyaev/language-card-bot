@@ -9,18 +9,21 @@ import {
   FormControl,
   InputLabel,
   MenuItem,
+  type PaperProps,
   Select,
   Typography,
 } from '@mui/material';
+import { isAxiosError } from 'axios';
 import { type FormEvent, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
 import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
-import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';
+import { type LanguageCode, SUPPORTED_LANGUAGES } from '../../../shared/i18n/types';
 import { AppButton, AppTextField, radiusTokens, spacingTokens } from '../../../shared/ui';
 import useStore, { type DictionaryItem } from '../../../store/useStore';
 import { useGuidelineStore } from '../../guideline';
 
+type DialogPaperSlotProps = PaperProps & { 'data-testid'?: string };
 interface CreateDictionaryDialogProps {
   open: boolean;
   onClose: () => void;
@@ -30,8 +33,8 @@ interface CreateDictionaryDialogProps {
 export default function CreateDictionaryDialog({ open, onClose, onCreated }: CreateDictionaryDialogProps) {
   const { t, locale } = useTranslation();
   const [name, setName] = useState('');
-  const [targetLanguage, setTargetLanguage] = useState('');
-  const [baseLanguage, setBaseLanguage] = useState(() => getInitialBaseLanguage(locale));
+  const [targetLanguage, setTargetLanguage] = useState<LanguageCode | ''>('');
+  const [baseLanguage, setBaseLanguage] = useState<LanguageCode | ''>(() => getInitialBaseLanguage(locale) as LanguageCode);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +46,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
   const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
   const setDictionary = useStore((state) => state.setDictionary);
 
-  const handleBaseLanguageChange = (newBase: string) => {
+  const handleBaseLanguageChange = (newBase: LanguageCode) => {
     setBaseLanguage(newBase);
     saveBaseLanguage(newBase);
   };
@@ -72,8 +75,8 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
         newDict = {
           id: dictId,
           name: name.trim().length > 0 ? name.trim() : defaultName,
-          targetLanguage: targetLanguage.toLowerCase(),
-          baseLanguage: baseLanguage.toLowerCase(),
+          targetLanguage: targetLanguage,
+          baseLanguage: baseLanguage,
           wordCount: 0,
           isActive: isFirst,
           createdAt: new Date().toISOString(),
@@ -105,9 +108,12 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
       }
 
       handleClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to create dictionary:', err);
-      setError(err?.response?.data?.message || err?.response?.data?.error || t('dialogs.createDeckError'));
+      const message = isAxiosError<{ message?: string; error?: string }>(err)
+        ? err.response?.data?.message || err.response?.data?.error
+        : undefined;
+      setError(message || t('dialogs.createDeckError'));
     } finally {
       setSubmitting(false);
     }
@@ -154,7 +160,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
             borderRadius: `${radiusTokens.lg}px`,
             p: 1,
           },
-        } as any,
+        } as DialogPaperSlotProps,
       }}
     >
       <DialogTitle sx={{ pb: 1, pt: 2, px: 3 }}>
@@ -199,11 +205,11 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
               labelId="target-language-label"
               value={targetLanguage}
               label={t('dialogs.targetLangLabel')}
-              onChange={(e) => setTargetLanguage(e.target.value)}
+              onChange={(e) => setTargetLanguage(e.target.value as LanguageCode)}
               inputProps={{ 'data-testid': 'dialog-target-language-select' }}
               sx={{ borderRadius: `${radiusTokens.md}px` }}
             >
-              {SUPPORTED_LOCALES.map((langCode) => (
+              {SUPPORTED_LANGUAGES.map((langCode) => (
                 <MenuItem key={langCode} value={langCode}>
                   {t(`languages.${langCode}`)}
                 </MenuItem>
@@ -217,11 +223,11 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
               labelId="base-language-label"
               value={baseLanguage}
               label={t('dialogs.nativeLangLabel')}
-              onChange={(e) => handleBaseLanguageChange(e.target.value)}
+              onChange={(e) => handleBaseLanguageChange(e.target.value as LanguageCode)}
               inputProps={{ 'data-testid': 'dialog-native-language-select' }}
               sx={{ borderRadius: `${radiusTokens.md}px` }}
             >
-              {SUPPORTED_LOCALES.map((langCode) => (
+              {SUPPORTED_LANGUAGES.map((langCode) => (
                 <MenuItem key={langCode} value={langCode}>
                   {t(`languages.${langCode}`)}
                 </MenuItem>
