@@ -1,11 +1,11 @@
-import type { PrismaClient, Word } from '@prisma/client';
+import type { Dictionary, PrismaClient, Word } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type mockDeep, mockReset } from 'vitest-mock-extended';
+import { env } from '../../core/env';
 import app from '../../app';
 import { prisma } from '../../prisma';
-import { env } from '../../core/env';
 
 vi.mock('../../prisma');
 
@@ -59,7 +59,15 @@ describe('Word Delete Endpoint', () => {
       text: 'hello',
       dictionaryId: 2,
       createdAt: new Date(),
-    });
+      dictionary: {
+        id: 2,
+        userId: 999,  // Different user
+        name: 'Other Dictionary',
+        targetLanguage: 'en',
+        baseLanguage: 'ru',
+        createdAt: new Date(),
+      },
+    } satisfies Word & { dictionary: Dictionary });
 
     const res = await request(app)
       .delete('/api/v1/word_delete/99')
@@ -77,7 +85,15 @@ describe('Word Delete Endpoint', () => {
       text: 'hello',
       dictionaryId: 1,
       createdAt: new Date(),
-    });
+      dictionary: {
+        id: 1,
+        userId: 1,  // Same user
+        name: 'My Dictionary',
+        targetLanguage: 'en',
+        baseLanguage: 'ru',
+        createdAt: new Date(),
+      },
+    } satisfies Word & { dictionary: Dictionary });
 
     prismaMock.word.delete.mockResolvedValue({
       id: 99,

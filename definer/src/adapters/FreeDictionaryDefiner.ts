@@ -69,6 +69,10 @@ export class FreeDictionaryDefiner implements IDefiner {
         levels: [],
       })));
 
+      if (definitions.length === 0) {
+        return [];
+      }
+
       // FreeDictionary API definitions are provided in English.
       // If the requested language is not English, translate them in a batch using the Translator service.
       const normalizedLang = language.trim().toLowerCase();

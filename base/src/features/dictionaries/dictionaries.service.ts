@@ -9,6 +9,14 @@ export async function ensureActiveDictionary(userId: number) {
   });
 
   if (!userState) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    
+    if (!user) {
+      throw new Error(`User with id ${userId} not found. The JWT token may be invalid or the user was deleted.`);
+    }
+    
     userState = await prisma.userState.create({
       data: { userId },
       include: { activeDictionary: true },

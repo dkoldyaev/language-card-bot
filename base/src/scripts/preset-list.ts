@@ -3,22 +3,20 @@ import { listPresets } from '../features/preset/preset.service';
 import { prisma } from '../prisma';
 import { LanguageCode } from '../types/language';
 
-function parseArgs(): {language: LanguageCode} {
+function parseArgs(): { language: LanguageCode | undefined } {
   const args = process.argv.slice(2);
-  let language: string | undefined;
+  let language: LanguageCode | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg.startsWith('--language=')) {
-      language = arg.split('=')[1];
+      language = arg.split('=')[1] as LanguageCode;
     } else if (arg === '--language' || arg === '-l') {
-      language = args[++i];
+      language = args[++i] as LanguageCode;
     }
   }
 
-  if (!language) throw new Error('Language is required');
-
-  return { language: language as LanguageCode };
+  return { language };
 }
 
 async function main() {

@@ -58,7 +58,7 @@ describe('Preset Feature API', () => {
           body: [{ word: 'hola', definitions: ['hello'] }],
           createdAt: new Date('2026-01-01'),
           updatedAt: new Date('2026-01-01'),
-        } as unknown,
+        },
       ]);
 
       const res = await request(app).get('/api/v1/preset');

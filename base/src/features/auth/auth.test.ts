@@ -14,28 +14,25 @@ vi.mock('google-auth-library', () => {
   };
 });
 
-vi.mock('../../core/env', () => {
-  const jwtSecret = env.JWT_SECRET;
-  return {
-    env: {
-      DATABASE_URL: 'postgresql://test@localhost:5432/test',
-      JWT_SECRET: jwtSecret,
-      PORT: '3001',
-      MERCURE_URL: 'http://localhost:9090/.well-known/mercure',
-      MERCURE_JWT: 'test_jwt',
-      MERCURE_JWT_KEY: 'test_key',
-      TRANSLATOR_API_URL: 'http://localhost:3002/api/v1/translate',
-      DEFINER_API_URL: 'http://localhost:3003/api/v1/define',
-      DEFINER_APP_TYPE: 'freedictionary',
-      TRANSLATOR_APP_TYPE: 'laratranslate',
-      BASE_DOMAIN: 'http://localhost',
-      REDIS_URL: 'redis://localhost:6379',
-      CORS_ORIGIN: 'http://localhost:5173',
-      GOOGLE_CLIENT_ID: 'mock_google_client_id',
-      ENABLE_TEST_AUTH: 'true',
-    }
-  };
-});
+vi.mock('../../core/env', () => ({
+  env: {
+    DATABASE_URL: 'postgresql://test@localhost:5432/test',
+    JWT_SECRET: 'test-secret-key',
+    PORT: '3001',
+    MERCURE_URL: 'http://localhost:9090/.well-known/mercure',
+    MERCURE_JWT: 'test_jwt',
+    MERCURE_JWT_KEY: 'test_key',
+    TRANSLATOR_API_URL: 'http://localhost:3002/api/v1/translate',
+    DEFINER_API_URL: 'http://localhost:3003/api/v1/define',
+    DEFINER_APP_TYPE: 'freedictionary',
+    TRANSLATOR_APP_TYPE: 'laratranslate',
+    BASE_DOMAIN: 'http://localhost',
+    REDIS_URL: 'redis://localhost:6379',
+    CORS_ORIGIN: 'http://localhost:5173',
+    GOOGLE_CLIENT_ID: 'mock_google_client_id',
+    ENABLE_TEST_AUTH: 'true',
+  }
+}));
 
 import type { Account, PrismaClient, User } from '@prisma/client';
 import { type mockDeep, mockReset } from 'vitest-mock-extended';
@@ -105,7 +102,16 @@ describe('Auth Endpoints', () => {
         userId: 2,
         provider: 'google',
         providerAccountId: 'google_456',
-      });
+        user: {
+          id: 2,
+          email: 'existing@example.com',
+          name: 'Existing User',
+          picture: 'http://example.com/pic2.jpg',
+          username: 'existing_user',
+          isAdmin: false,
+          createdAt: new Date(),
+        },
+      } satisfies Account & { user: User });
 
       const res = await request(app)
         .post('/api/v1/auth/google')
@@ -170,7 +176,16 @@ describe('Auth Endpoints', () => {
         userId: 10,
         provider: 'test-username',
         providerAccountId: 'tester',
-      });
+        user: {
+          id: 10,
+          email: 'tester@test.local',
+          name: 'tester',
+          username: 'tester',
+          picture: null,
+          isAdmin: false,
+          createdAt: new Date(),
+        },
+      } satisfies Account & { user: User });
 
       const res = await request(app)
         .post('/api/v1/auth/login')

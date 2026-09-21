@@ -52,6 +52,7 @@ describe('Dictionaries API', () => {
         baseLanguage: 'en',
         userId,
         createdAt: new Date(),
+        _count: { words: 0 },
       },
       {
         id: 11,
@@ -60,8 +61,9 @@ describe('Dictionaries API', () => {
         baseLanguage: 'de',
         userId,
         createdAt: new Date(),
+        _count: { words: 0 },
       },
-    ]);
+    ] satisfies Array<Dictionary & { _count: { words: number } }>);
 
     const res = await request(app)
       .get('/api/v1/dictionaries')
@@ -205,8 +207,9 @@ describe('Dictionaries API', () => {
         baseLanguage: 'de',
         userId,
         createdAt: new Date(),
+        _count: { words: 0 },
       },
-    ]);
+    ] satisfies Array<Dictionary & { _count: { words: number } }>);
 
     prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,

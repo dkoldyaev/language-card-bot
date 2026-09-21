@@ -2,34 +2,31 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../core/env', () => {
-  const jwtSecret = env.JWT_SECRET;
-  return {
-    env: {
-      DATABASE_URL: 'postgresql://test@localhost:5432/test',
-      JWT_SECRET: jwtSecret,
-      PORT: '3001',
-      MERCURE_URL: 'http://localhost:9090/.well-known/mercure',
-      MERCURE_JWT: 'test_jwt',
-      MERCURE_JWT_KEY: 'test_key',
-      TRANSLATOR_API_URL: 'http://localhost:3002/api/v1/translate',
-      DEFINER_API_URL: 'http://localhost:3003/api/v1/define',
-      DEFINER_APP_TYPE: 'freedictionary',
-      TRANSLATOR_APP_TYPE: 'laratranslate',
-      BASE_DOMAIN: 'http://localhost',
-      REDIS_URL: 'redis://localhost:6379',
-      CORS_ORIGIN: 'http://localhost:5173',
-      GOOGLE_CLIENT_ID: 'mock_google_client_id',
-      ENABLE_TEST_AUTH: 'true',
-      ENABLE_DB_LOGGING: 'false',
-      ALLOW_GUEST_AI_GENERATION: 'false',
-      GUEST_AI_DAILY_LIMIT: '10',
-      LLM_API_URL: 'http://localhost:3003/api/v1/generate',
-      LLM_PROVIDER: 'mock',
-      LLM_MODEL: 'mock',
-    }
-  };
-});
+vi.mock('../../core/env', () => ({
+  env: {
+    DATABASE_URL: 'postgresql://test@localhost:5432/test',
+    JWT_SECRET: 'test-secret-key',
+    PORT: '3001',
+    MERCURE_URL: 'http://localhost:9090/.well-known/mercure',
+    MERCURE_JWT: 'test_jwt',
+    MERCURE_JWT_KEY: 'test_key',
+    TRANSLATOR_API_URL: 'http://localhost:3002/api/v1/translate',
+    DEFINER_API_URL: 'http://localhost:3003/api/v1/define',
+    DEFINER_APP_TYPE: 'freedictionary',
+    TRANSLATOR_APP_TYPE: 'laratranslate',
+    BASE_DOMAIN: 'http://localhost',
+    REDIS_URL: 'redis://localhost:6379',
+    CORS_ORIGIN: 'http://localhost:5173',
+    GOOGLE_CLIENT_ID: 'mock_google_client_id',
+    ENABLE_TEST_AUTH: 'true',
+    ENABLE_DB_LOGGING: 'false',
+    ALLOW_GUEST_AI_GENERATION: 'false',
+    GUEST_AI_DAILY_LIMIT: '10',
+    LLM_API_URL: 'http://localhost:3003/api/v1/generate',
+    LLM_PROVIDER: 'mock',
+    LLM_MODEL: 'mock',
+  }
+}));
 
 import type { PrismaClient } from '@prisma/client';
 import { type mockDeep, mockReset } from 'vitest-mock-extended';

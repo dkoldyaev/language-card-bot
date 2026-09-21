@@ -20,6 +20,7 @@
     "users:make-regular": "npm run --prefix base users:make-regular --",
     "preset:list": "npm run --prefix base preset:list --",
     "preset:create": "npm run --prefix base preset:create --",
+    "preset:remove": "npm run --prefix base preset:remove --",
     "definer:cli": "npm run --prefix definer test:cli --",
     "translator:cli": "npm run --prefix translator test:cli --",
     "llm:cli": "npm run --prefix llm test:cli --",
