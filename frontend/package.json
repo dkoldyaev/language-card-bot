@@ -12,7 +12,8 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:watch": "playwright test --watch"
+    "test:e2e:watch": "playwright test --watch",
+    "test:ts": "tsc --noEmit"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
