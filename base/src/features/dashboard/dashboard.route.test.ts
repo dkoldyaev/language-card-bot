@@ -10,6 +10,15 @@ import { prisma } from '../../prisma';
 vi.mock('../../prisma');
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
+vi.mock('../../core/cache', () => ({
+  redisClient: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+  },
+  invalidateKeysByPattern: vi.fn(),
+}));
+
 describe('Dashboard Route', () => {
   const JWT_SECRET = env.JWT_SECRET;
 
@@ -54,8 +63,10 @@ describe('Dashboard Route', () => {
     prismaMock.quizAttempt.findMany.mockResolvedValue([]);
 
     const res = await request(app)
-      .get('/api/v1/dashboard/stats')
+      .get('/api/v1/dashboard/stats?dictionaryId=5')
       .set('Authorization', `Bearer ${token}`);
+    
+    console.log(res.status, res.text);
 
     expect(res.status).toBe(200);
     expect(res.body.stats).toBeDefined();

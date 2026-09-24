@@ -639,6 +639,21 @@ const useStore = create<AppState>()(
               }
             }
           }
+          if (state.token) {
+            // Self-heal: if we have a token, we shouldn't have any stale guest IDs
+            const GUEST_ID_THRESHOLD = 1000000000;
+            if (state.activeDictionaryId && state.activeDictionaryId > GUEST_ID_THRESHOLD) {
+              state.activeDictionaryId = null;
+            }
+            if (state.selectedDictionaryId && state.selectedDictionaryId > GUEST_ID_THRESHOLD) {
+              state.selectedDictionaryId = null;
+            }
+            if (Array.isArray(state.dictionaries)) {
+              state.dictionaries = state.dictionaries.filter(d => d.id < GUEST_ID_THRESHOLD);
+            }
+            state.guestDictionaryWords = {};
+            state.guestQuizAttempts = [];
+          }
         }
       },
     }

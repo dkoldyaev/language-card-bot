@@ -3,8 +3,8 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type mockDeep, mockReset } from 'vitest-mock-extended';
-import { env } from '../../core/env';
 import app from '../../app';
+import { env } from '../../core/env';
 import { prisma } from '../../prisma';
 
 vi.mock('../../prisma');

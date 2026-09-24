@@ -10,22 +10,33 @@ export default function QuizPage() {
   const quizCard = useStore((state) => state.quizCard);
   const dictionary = useStore((state) => state.dictionary);
   const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (dictionary.length > 0 && !quizCard && !starting) {
+    if (dictionary.length > 0 && !quizCard && !starting && !startError) {
       setStarting(true);
       trackEvent('Quiz Started');
-      apiClient.post('/quiz/start')
+      const dictionaryId = useStore.getState().activeDictionaryId;
+      apiClient.post('/quiz/start', { dictionaryId })
         .catch((error) => {
           console.error('Failed to auto-start quiz:', error);
+          setStartError(error.response?.data?.error || 'Failed to start quiz');
         })
         .finally(() => {
           setStarting(false);
         });
     }
-  }, [dictionary.length, quizCard, starting]);
+  }, [dictionary.length, quizCard, starting, startError]);
 
   if (dictionary.length === 0) {
+    return (
+      <PageContainer size="default">
+        <QuizEmptyState />
+      </PageContainer>
+    );
+  }
+
+  if (startError) {
     return (
       <PageContainer size="default">
         <QuizEmptyState />

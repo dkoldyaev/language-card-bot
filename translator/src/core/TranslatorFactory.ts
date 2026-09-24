@@ -5,8 +5,8 @@ import { MockTranslator } from '../adapters/MockTranslator';
 import { env } from './env';
 import type { ITranslator, TranslatorAppType } from './ITranslator';
 
-export class TranslatorFactory {
-  static getTranslator(translatorApp: TranslatorAppType): ITranslator {
+export const TranslatorFactory = {
+  getTranslator(translatorApp: TranslatorAppType): ITranslator {
     switch (translatorApp) {
       case 'googletranslate':
         return new GoogleTranslator();
@@ -27,5 +27,5 @@ export class TranslatorFactory {
         // Default to mock if unknown at runtime
         return new MockTranslator();
     }
-  }
-}
+  },
+};

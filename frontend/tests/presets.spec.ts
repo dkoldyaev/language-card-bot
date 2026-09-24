@@ -17,7 +17,7 @@ test.describe('Presets & Admin Flow', () => {
     await login(page, regularUsername);
 
     // Verify "Presets" link is not present in navigation
-    await expect(page.locator('text=Presets')).not.toBeVisible();
+    await expect(page.getByRole('link', { name: 'Presets' })).not.toBeVisible();
 
     // Try direct navigation to /presets -> redirected away to /
     await page.goto('/presets');
@@ -41,7 +41,7 @@ test.describe('Presets & Admin Flow', () => {
     await expect(page.getByText('Presets Catalog')).toBeVisible();
 
     // Open Create Preset modal
-    await page.getByRole('button', { name: 'Create Preset' }).click();
+    await page.getByRole('button', { name: 'Create Preset' }).first().click();
     await expect(page.getByText('Create New Preset')).toBeVisible();
 
     // Fill form
@@ -61,7 +61,7 @@ test.describe('Presets & Admin Flow', () => {
 
     // Navigate to dictionary to verify that the preset is listed under Available Presets and can be applied
     await page.goto('/dictionary');
-    await expect(page.locator('text=Vocabulary Deck')).toBeVisible();
+    await expect(page.getByText('Vocabulary Deck', { exact: true })).toBeVisible();
 
     const presetsSection = page.getByTestId('dictionary-presets-section');
     await expect(presetsSection).toBeVisible();
@@ -86,7 +86,7 @@ test.describe('Presets & Admin Flow', () => {
 
     // Navigate to dictionary page
     await page.goto('/dictionary');
-    await expect(page.locator('text=Vocabulary Deck')).toBeVisible();
+    await expect(page.getByText('Vocabulary Deck', { exact: true })).toBeVisible();
 
     // Verify "Available Presets" section is rendered
     const presetsSection = page.getByTestId('dictionary-presets-section');

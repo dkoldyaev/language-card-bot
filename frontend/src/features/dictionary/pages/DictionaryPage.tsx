@@ -57,18 +57,19 @@ export default function DictionaryPage() {
   }, [loading, dictionaries.length, createDialogOpen]);
 
   useEffect(() => {
-    if (!currentDictId) {
+    const fetchId = currentDict?.id;
+    if (!fetchId) {
       setLoading(false);
       return;
     }
     if (!token) {
       setLoading(false);
-      const dictWords = useStore.getState().guestDictionaryWords[currentDictId] || [];
+      const dictWords = useStore.getState().guestDictionaryWords[fetchId] || [];
       setDictionary(dictWords);
       return;
     }
     setLoading(true);
-    apiClient.get('/dictionary', { params: { dictionaryId: currentDictId } })
+    apiClient.get('/dictionary', { params: { dictionaryId: fetchId } })
       .then((res) => {
         if (res.data.dictionary) {
           setDictionary(res.data.dictionary);
@@ -76,7 +77,7 @@ export default function DictionaryPage() {
       })
       .catch((error) => console.error('Failed to load dictionary:', error))
       .finally(() => setLoading(false));
-  }, [setDictionary, currentDictId, token]);
+  }, [setDictionary, currentDict?.id, token]);
 
   const handleSelectDictionary = (dictId: number) => {
     setSelectedDictionaryId(dictId);

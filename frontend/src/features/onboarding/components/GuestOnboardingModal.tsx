@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
-import { SUPPORTED_LANGUAGES, useTranslation, type LanguageCode } from '../../../shared/i18n';
+import { type LanguageCode, SUPPORTED_LANGUAGES, useTranslation } from '../../../shared/i18n';
 import { getInitialBaseLanguage } from '../../../shared/i18n/helpers';
 import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';

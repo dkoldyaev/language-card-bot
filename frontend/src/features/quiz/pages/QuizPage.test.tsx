@@ -42,7 +42,7 @@ describe('Quiz', () => {
     render(<Quiz />);
 
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/start');
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/start', { dictionaryId: null });
   });
 
   it('renders card when quizCard is set', () => {
@@ -79,7 +79,7 @@ describe('Quiz', () => {
     const submitBtn = screen.getByRole('button', { name: /Submit/i });
     await user.click(submitBtn);
 
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'apple' });
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'apple', dictionaryId: null });
     
     await waitFor(() => {
       expect(input).toHaveValue('');
@@ -128,7 +128,7 @@ describe('Quiz', () => {
     const activeTranslateBtn = screen.getByRole('button', { name: /Translate definition/i });
     expect(activeTranslateBtn).not.toBeDisabled();
     await user.click(activeTranslateBtn);
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/translate_definition');
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/translate_definition', { dictionaryId: null });
   });
 
   it('handles next definition request', async () => {
@@ -143,7 +143,7 @@ describe('Quiz', () => {
     
     const nextDefBtn = screen.getByRole('button', { name: /Another definition/i });
     await user.click(nextDefBtn);
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/next_definition');
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/next_definition', { dictionaryId: null });
   });
 
   it('handles variants request and display', async () => {
@@ -163,7 +163,7 @@ describe('Quiz', () => {
     const variantBtn = screen.getByRole('button', { name: 'pear' });
     await user.click(variantBtn);
     
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'pear' });
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'pear', dictionaryId: null });
   });
 
   it('handles next card request', async () => {
@@ -178,6 +178,6 @@ describe('Quiz', () => {
     
     const nextCardBtn = screen.getByRole('button', { name: /Next card/i });
     await user.click(nextCardBtn);
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/next_card');
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/next_card', { dictionaryId: null });
   });
 });

@@ -127,7 +127,8 @@ export class WordDefinitionPresetAdapter implements IPresetAdapter {
 
     for (const item of items) {
       const wordText = item.word.trim().toLowerCase();
-      const word = existingWordsMap.get(wordText)!;
+      const word = existingWordsMap.get(wordText);
+      if (!word) continue;
 
       for (const def of item.definitions) {
         let defText = '';

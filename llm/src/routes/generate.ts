@@ -12,7 +12,7 @@ const GenerateRequestSchema = z.object({
   model: z.string().min(1, 'Model is required'),
   jsonFormat: z.union([
     z.string().min(1, 'jsonFormat description is required'),
-    z.record(z.string(), z.any()),
+    z.record(z.string(), z.unknown()),
   ]),
 });
 

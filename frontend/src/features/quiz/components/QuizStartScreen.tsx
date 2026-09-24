@@ -23,7 +23,7 @@ export default function QuizStartScreen() {
     try {
       trackEvent('Quiz Started');
       useGuidelineStore.getState().advanceStep('step4_start_quiz');
-      await apiClient.post('/quiz/start');
+      await apiClient.post('/quiz/start', { dictionaryId: activeDictionaryId });
     } catch (error) {
       console.error('Failed to start quiz:', error);
       alert(t('quiz.failedStart'));

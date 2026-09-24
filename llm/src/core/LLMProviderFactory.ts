@@ -3,8 +3,8 @@ import { MistralProvider } from '../providers/MistralProvider';
 import { MockProvider } from '../providers/MockProvider';
 import type { ILLMProvider, LLMProviderType } from './ILLMProvider';
 
-export class LLMProviderFactory {
-  static getProvider(provider: LLMProviderType): ILLMProvider {
+export const LLMProviderFactory = {
+  getProvider(provider: LLMProviderType): ILLMProvider {
     switch (provider) {
       case 'mistral':
         return new MistralProvider();
@@ -15,5 +15,5 @@ export class LLMProviderFactory {
       default:
         return new MockProvider();
     }
-  }
-}
+  },
+};

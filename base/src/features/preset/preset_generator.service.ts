@@ -5,6 +5,22 @@ import { type LanguageCode, SUPPORTED_LANGUAGES } from '../../types/language';
 import { formatPreset, invalidatePresetsCache } from './preset.service';
 import type { PresetDto } from './preset.type';
 
+interface LlmApiResponse {
+  data?: unknown;
+  error?: string;
+  message?: string;
+}
+
+interface DefinerApiResponse {
+  definitions?: Array<string | { text: string }>;
+  error?: string;
+}
+
+interface TranslatorApiResponse {
+  translations?: string[];
+  error?: string;
+}
+
 export interface GeneratePresetOptions {
   language: LanguageCode;
   presetId?: number;
@@ -50,7 +66,7 @@ export async function callLlmGenerate(prompt: string, jsonFormat: unknown): Prom
     throw new Error(`LLM API error (${response.status}): ${errorText}`);
   }
 
-  const json = (await response.json()) as { data?: unknown; error?: string; message?: string };
+  const json = (await response.json()) as LlmApiResponse;
   if (json.error) {
     throw new Error(`LLM API returned error: ${json.message || json.error}`);
   }
@@ -80,7 +96,7 @@ export async function fetchDefinitionsFromDefiner(text: string, language: string
     throw new Error(`Definer API error (${response.status}): ${errorText}`);
   }
 
-  const json = (await response.json()) as { definitions?: Array<string | { text: string }>; error?: string };
+  const json = (await response.json()) as DefinerApiResponse;
   const rawDefs = json.definitions || [];
   return rawDefs.map((d) => (typeof d === 'string' ? d : d.text));
 }
@@ -116,7 +132,7 @@ export async function fetchTranslationsFromTranslator(options: {
     throw new Error(`Translator API error (${response.status}): ${errorText}`);
   }
 
-  const json = (await response.json()) as { translations?: string[]; error?: string };
+  const json = (await response.json()) as TranslatorApiResponse;
   if (!Array.isArray(json.translations) || json.translations.length !== texts.length) {
     throw new Error(
       `Translator API returned mismatched translations count: expected ${texts.length}, got ${json.translations?.length}`
@@ -331,9 +347,9 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
     options.translationLanguages && options.translationLanguages.length > 0
       ? options.translationLanguages
           .map((l) => l.trim().toLowerCase())
-          .filter((l) => l.length > 0 && l !== language)
-      : (SUPPORTED_LANGUAGES as readonly string[]).filter((l) => l !== language);
-  const targetLanguages = Array.from(new Set(rawTargetLanguages));
+          .filter((l): l is LanguageCode => l.length > 0 && l !== language && (SUPPORTED_LANGUAGES as readonly string[]).includes(l))
+      : (SUPPORTED_LANGUAGES as readonly LanguageCode[]).filter((l) => l !== language);
+  const targetLanguages: LanguageCode[] = Array.from(new Set(rawTargetLanguages));
 
   // If presetId is specified, verify it exists and load existing words & definitions
   let existingPreset: Preset | null = null;
@@ -480,7 +496,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
 
           // 5 & 6. If presetId was given and word already in preset, check for new definitions
           if (options.presetId && existingWordMap.has(normalizedWord)) {
-            const existingDefsSet = existingWordMap.get(normalizedWord)!;
+            const existingDefsSet = existingWordMap.get(normalizedWord) ?? new Set<string>();
             const newDefs = filteredDefs.filter((d) => !existingDefsSet.has(d.trim().toLowerCase()));
 
             if (newDefs.length === 0) {
@@ -521,7 +537,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
     // Merge level words into runCollectedWords
     for (const [word, defs] of levelCollectedWords.entries()) {
       if (runCollectedWords.has(word)) {
-        const existing = runCollectedWords.get(word)!;
+        const existing = runCollectedWords.get(word) ?? [];
         const existingSet = new Set(existing.map((d) => d.toLowerCase()));
         for (const d of defs) {
           if (!existingSet.has(d.toLowerCase())) {
@@ -584,7 +600,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
           const translations = await fetchTranslationsFromTranslator({
             texts: missingList,
             sourceLanguage: language,
-            targetLanguage: targetLang as LanguageCode,
+            targetLanguage: targetLang,
           });
 
           const transMap = new Map<string, string>();
@@ -593,7 +609,7 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
           for (const item of existingBodyList) {
             for (const def of item.definitions) {
               if (!def.translations[targetLang] && transMap.has(def.text)) {
-                def.translations[targetLang] = transMap.get(def.text)!;
+                def.translations[targetLang] = transMap.get(def.text) ?? '';
               }
             }
           }
@@ -636,12 +652,12 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
         const translatedList = await fetchTranslationsFromTranslator({
           texts: allUniqueDefTexts,
           sourceLanguage: language,
-          targetLanguage: targetLang as LanguageCode,
+          targetLanguage: targetLang,
         });
 
-        const langMap = translationsByLang.get(targetLang)!;
+        const langMap = translationsByLang.get(targetLang) ?? new Map<string, string>();
         allUniqueDefTexts.forEach((text, idx) => {
-          langMap.set(text, translatedList[idx] || '');
+          langMap.set(text, translatedList[idx] ?? '');
         });
       }
     }

@@ -4,10 +4,10 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type mockDeep, mockReset } from 'vitest-mock-extended';
 import app from '../../app';
+import { env } from '../../core/env';
 import { appEvents, Events } from '../../core/events';
 import { prisma } from '../../prisma';
 import { publishEvent } from '../event_bus/event_bus.service';
-import { env } from '../../core/env';
 
 const { mockRedisClient, mockInvalidateKeysByPattern } = vi.hoisted(() => ({
   mockRedisClient: {

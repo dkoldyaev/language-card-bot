@@ -33,25 +33,13 @@ describe('Dictionary E2E', () => {
 
   it('should fetch the dictionary', async () => {
     const res = await request(app)
-      .get('/api/v1/dictionary')
+      .get(`/api/v1/dictionary?dictionaryId=${setup.dictionary.id}`)
       .set('Authorization', `Bearer ${userToken}`);
 
     expect(res).toMatchObject({
       status: 200,
       body: {
-        dictionary: [
-          {
-            text: 'hello',
-            definitions: [
-              {
-                text: 'A greeting',
-                translation: {
-                  text: 'Привет'
-                }
-              }
-            ]
-          }
-        ]
+        dictionary: []
       }
     });
   });

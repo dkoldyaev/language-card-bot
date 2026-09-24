@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export const SUPPORTED_LANGUAGES = [
   'en',
   'ru',
@@ -11,4 +13,6 @@ export const SUPPORTED_LANGUAGES = [
   'tr',
 ] as const;
 
-export type LanguageCode = typeof SUPPORTED_LANGUAGES[number];
+export const LanguageCodeSchema = z.enum(SUPPORTED_LANGUAGES);
+
+export type LanguageCode = z.infer<typeof LanguageCodeSchema>;

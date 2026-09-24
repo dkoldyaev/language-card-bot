@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { env } from '../core/env';
 import type { ITranslator } from '../core/ITranslator';
 import type { LanguageCode } from '../types/language';
@@ -62,12 +63,13 @@ export class LLMAdapter implements ITranslator {
       throw new Error(`LLM service error (${response.status}): ${errorText}`);
     }
 
-    const data = (await response.json()) as {
-      data?: {
-        translations?: string[];
-        translatedTexts?: string[];
-      };
-    };
+    const responseSchema = z.object({
+      data: z.object({
+        translations: z.array(z.string()).optional(),
+        translatedTexts: z.array(z.string()).optional()
+      }).optional()
+    });
+    const data = responseSchema.parse(await response.json());
 
     const result = data?.data?.translations ?? data?.data?.translatedTexts;
 

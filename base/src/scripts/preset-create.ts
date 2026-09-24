@@ -2,7 +2,7 @@ import 'dotenv/config';
 import type { PresetDto } from '../features/preset/preset.type';
 import { generatePreset } from '../features/preset/preset_generator.service';
 import { prisma } from '../prisma';
-import type { LanguageCode } from '../types/language';
+import { type LanguageCode, LanguageCodeSchema } from '../types/language';
 
 interface CliParams {
   languages: LanguageCode[];
@@ -64,7 +64,7 @@ function parseCliArgs(): CliParams {
   const addLanguages = (val: string) => {
     val.split(',').forEach((s) => {
       const trimmed = s.trim().toLowerCase();
-      if (trimmed) rawLanguages.push(trimmed as LanguageCode);
+      if (trimmed) rawLanguages.push(LanguageCodeSchema.parse(trimmed));
     });
   };
 

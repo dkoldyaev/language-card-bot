@@ -1,45 +1,34 @@
 import { type Request, type Response, Router } from 'express';
 import { appEvents, Events } from '../../core/events';
 import { authMiddleware } from '../../middleware/auth';
+import { validateRequest } from '../../middleware/validate';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
-import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
 import { publishEvent } from '../event_bus/event_bus.service';
 import type { DictionaryAddDuplicateEvent } from '../event_bus/event_bus.type';
-import type { AddWordRequest, AddWordResponse } from './add_word.type';
+import { type AddWordRequest, AddWordSchema } from './add_word.type';
 
 const router = Router();
 
-router.post('/', authMiddleware, async (req: Request, res: Response) => {
-  const { word, dictionaryId } = req.body as AddWordRequest;
+router.post('/', authMiddleware, validateRequest(AddWordSchema), async (req: Request<unknown, unknown, AddWordRequest>, res: Response) => {
+  const { word, dictionaryId } = req.body;
 
-  if (!word || typeof word !== 'string' || word.trim() === '') {
-    return res.status(400).json({ error: 'Word is required' });
-  }
-
-  const wordText = word.trim().toLowerCase();
-  const { id: userId, username } = getAuthUser(req);
+  const wordText = word.toLowerCase();
+  const { id: userId, username } = getAuthUser(req as unknown as Request);
 
   try {
-    let targetDictionaryId = dictionaryId;
-
-    if (targetDictionaryId) {
-      const dict = await prisma.dictionary.findFirst({
-        where: { id: targetDictionaryId, userId },
-      });
-      if (!dict) {
-        return res.status(404).json({ error: 'Dictionary not found' });
-      }
-    } else {
-      const activeDict = await ensureActiveDictionary(userId);
-      targetDictionaryId = activeDict.id;
+    const dict = await prisma.dictionary.findFirst({
+      where: { id: dictionaryId, userId },
+    });
+    if (!dict) {
+      return res.status(404).json({ error: 'Dictionary not found' });
     }
 
     const existingWord = await prisma.word.findUnique({
       where: {
         dictionaryId_text: {
-          dictionaryId: targetDictionaryId,
+          dictionaryId: dictionaryId,
           text: wordText,
         },
       },
@@ -62,19 +51,19 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
     const newWord = await prisma.word.create({
       data: {
-        dictionaryId: targetDictionaryId,
+        dictionaryId: dictionaryId,
         text: wordText,
       },
     });
 
-    await invalidateDashboardCache(userId, targetDictionaryId);
+    await invalidateDashboardCache(userId, dictionaryId);
 
     res.json({ message: 'Word added successfully' });
 
     appEvents.emit(Events.WORDS_LIST_ADDED, {
       userId,
       username,
-      dictionaryId: targetDictionaryId,
+      dictionaryId: dictionaryId,
       words: [
         {
           wordId: newWord.id,

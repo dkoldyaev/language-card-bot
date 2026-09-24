@@ -6,7 +6,6 @@ import { authMiddleware } from '../../middleware/auth';
 import { validateRequest } from '../../middleware/validate';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
-import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
 
 const router = Router();
 
@@ -114,24 +113,27 @@ router.post('/define-guest', validateRequest(DefineGuestSchema), async (req: Req
 });
 
 
-router.get('/', authMiddleware, async (req: Request, res: Response) => {
+router.get('/', authMiddleware, async (req: Request<Record<string, never>, unknown, unknown, { dictionaryId: string }>, res: Response) => {
   const { id: userId } = getAuthUser(req);
-  const queryDictId = req.query.dictionaryId ? parseInt(req.query.dictionaryId as string, 10) : undefined;
+  const rawDictId = req.query.dictionaryId;
+
+  if (!rawDictId) {
+    return res.status(400).json({ error: 'dictionaryId query parameter is required' });
+  }
+
+  const queryDictId = parseInt(rawDictId, 10);
+
+  if (Number.isNaN(queryDictId)) {
+    return res.status(400).json({ error: 'dictionaryId must be a valid number' });
+  }
 
   try {
-    let dict: Dictionary | null;
-    if (queryDictId && !Number.isNaN(queryDictId)) {
-      if (queryDictId > 2147483647) {
-        return res.status(404).json({ error: 'Dictionary not found' });
-      }
-      dict = await prisma.dictionary.findFirst({
-        where: { id: queryDictId, userId },
-      });
-      if (!dict) {
-        return res.status(404).json({ error: 'Dictionary not found' });
-      }
-    } else {
-      dict = await ensureActiveDictionary(userId);
+    const dict = await prisma.dictionary.findFirst({
+      where: { id: queryDictId, userId },
+    });
+
+    if (!dict) {
+      return res.status(404).json({ error: 'Dictionary not found' });
     }
 
     const dictionary = await prisma.word.findMany({

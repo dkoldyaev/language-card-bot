@@ -3,7 +3,7 @@ import request from 'supertest';
 import app from '../app';
 import { env } from '../core/env';
 import { dictionaryQueue } from '../features/add_word/add_word.queue';
-import { ensureActiveDictionary } from '../features/dictionaries/dictionaries.service';
+
 import { prisma } from '../prisma';
 import type { TMessage } from '../types/message';
 
@@ -28,7 +28,7 @@ export async function clearDatabase() {
 export async function setupAdminUser(username: string): Promise<TestSetup> {
   const data = await setupTestUser(username);
   await prisma.user.update({
-    where: { id: data.user!.id },
+    where: { id: data.user?.id },
     data: { isAdmin: true },
   });
   const loginRes = await request(app).post('/api/v1/auth/login').send({ username });
@@ -64,7 +64,20 @@ export async function setupTestUser(username: string): Promise<TestSetup> {
     throw new Error(`Failed to find test user ${username} after registration`);
   }
 
-  const dictionary = await ensureActiveDictionary(userInDb.id);
+  const dictionary = await prisma.dictionary.create({
+    data: {
+      userId: userInDb.id,
+      name: 'EN (RU)',
+      targetLanguage: 'en',
+      baseLanguage: 'ru',
+    }
+  });
+
+  await prisma.userState.upsert({
+    where: { userId: userInDb.id },
+    update: { activeDictionaryId: dictionary.id },
+    create: { userId: userInDb.id, activeDictionaryId: dictionary.id }
+  });
   const refreshedUser = await prisma.user.findUnique({
     where: { id: userInDb.id },
     include: { state: true, dictionaries: true }

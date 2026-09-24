@@ -21,6 +21,7 @@ export default function Layout() {
   const setAppState = useStore((state) => state.setAppState);
   const setDictionaries = useStore((state) => state.setDictionaries);
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
+  const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
   const setProfile = useStore((state) => state.setProfile);
   const isOffline = useStore((state) => state.isOffline);
 
@@ -37,20 +38,42 @@ export default function Layout() {
       .then((res) => {
         if (res.data.dictionaries) {
           setDictionaries(res.data.dictionaries);
-          if (res.data.activeDictionaryId) {
-            setActiveDictionaryId(res.data.activeDictionaryId);
+          const nextActiveId = res.data.activeDictionaryId;
+          
+          if (nextActiveId) {
+            setActiveDictionaryId(nextActiveId);
+            
+            // Fetch the actual dictionary words now that we know the correct ID
+            apiClient.get('/dictionary', { params: { dictionaryId: nextActiveId } })
+              .then((dictRes) => {
+                if (dictRes.data.dictionary) {
+                  setDictionary(dictRes.data.dictionary);
+                }
+              })
+              .catch((err) => console.error('Failed to load dictionary:', err));
+              
+          } else if (res.data.dictionaries.length === 0) {
+            // Self-heal: if backend has no dictionaries, clear the local fake ones
+            setActiveDictionaryId(null);
+            setSelectedDictionaryId(null);
+            setDictionary([]);
           }
         }
       })
-      .catch((error) => console.error('Failed to load dictionaries:', error));
-
-    apiClient.get('/dictionary')
-      .then((res) => {
-        if (res.data.dictionary) {
-          setDictionary(res.data.dictionary);
+      .catch((error) => {
+        console.error('Failed to load dictionaries:', error);
+        // Fallback for offline mode or network errors
+        const currentDictId = useStore.getState().activeDictionaryId;
+        if (currentDictId) {
+          apiClient.get('/dictionary', { params: { dictionaryId: currentDictId } })
+          .then((dictRes) => {
+            if (dictRes.data.dictionary) {
+              setDictionary(dictRes.data.dictionary);
+            }
+          })
+          .catch((err) => console.error('Failed to load dictionary fallback:', err));
         }
-      })
-      .catch((error) => console.error('Failed to load dictionary:', error));
+      });
 
     apiClient.get('/settings')
       .then((res) => {

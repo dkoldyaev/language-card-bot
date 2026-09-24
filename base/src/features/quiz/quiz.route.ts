@@ -1,21 +1,38 @@
 import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
+import { validateRequest } from '../../middleware/validate';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
-import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
 import { publishEvent } from '../event_bus/event_bus.service';
 import type { QuizAnswerEvaluationMercureEvent, QuizCardMercureEvent, QuizDefinitionTranslationMercureEvent, QuizVariantsMercureEvent } from '../event_bus/event_bus.type';
 import { evaluateSuggestion } from './evaluation.service';
 import { generateQuizCard, getNextDefinition, getQuizVariants } from './quiz.service';
+import { 
+  QuizStartSchema, type QuizStartRequest,
+  QuizVariantsSchema, type QuizVariantsRequest,
+  QuizAnswerSchema, type QuizAnswerRequest,
+  QuizNextCardSchema, type QuizNextCardRequest,
+  QuizNextDefinitionSchema, type QuizNextDefinitionRequest,
+  QuizTranslateDefinitionSchema, type QuizTranslateDefinitionRequest
+} from './quiz.type';
 
 const router = Router();
 
-router.post('/start', authMiddleware, async (req: Request, res: Response) => {
+router.post('/start', authMiddleware, validateRequest(QuizStartSchema), async (req: Request<Record<string, string>, any, QuizStartRequest>, res: Response) => {
   const user = getAuthUser(req);
   
   try {
-    const dict = await ensureActiveDictionary(user.id);
+    const { dictionaryId } = req.body;
+    
+    const dict = await prisma.dictionary.findFirst({
+      where: { id: dictionaryId, userId: user.id }
+    });
+
+    if (!dict) {
+      return res.status(404).json({ error: 'Dictionary not found' });
+    }
+
     const cardData = await generateQuizCard(user.id, dict.id);
     
     if (!cardData) {
@@ -53,7 +70,7 @@ router.post('/start', authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-router.post('/variants', authMiddleware, async (req: Request, res: Response) => {
+router.post('/variants', authMiddleware, validateRequest(QuizVariantsSchema), async (req: Request<Record<string, string>, any, QuizVariantsRequest>, res: Response) => {
   const user = getAuthUser(req);
   
   try {
@@ -63,8 +80,8 @@ router.post('/variants', authMiddleware, async (req: Request, res: Response) => 
       return res.status(400).json({ error: 'Quiz not active or current word not set' });
     }
 
-    const dictId = userState.activeDictionaryId || (await ensureActiveDictionary(user.id)).id;
-    const variants = await getQuizVariants(user.id, dictId, userState.currentWordId);
+    const { dictionaryId } = req.body;
+    const variants = await getQuizVariants(user.id, dictionaryId, userState.currentWordId);
 
     await prisma.userState.update({
       where: { userId: user.id },
@@ -86,8 +103,9 @@ router.post('/variants', authMiddleware, async (req: Request, res: Response) => 
   }
 });
 
-router.post('/translate_definition', authMiddleware, async (req: Request, res: Response) => {
+router.post('/translate_definition', authMiddleware, validateRequest(QuizTranslateDefinitionSchema), async (req: Request<Record<string, string>, any, QuizTranslateDefinitionRequest>, res: Response) => {
   const user = getAuthUser(req);
+  const { dictionaryId } = req.body;
 
   try {
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
@@ -125,14 +143,9 @@ router.post('/translate_definition', authMiddleware, async (req: Request, res: R
   }
 });
 
-router.post('/answer', authMiddleware, async (req: Request, res: Response) => {
+router.post('/answer', authMiddleware, validateRequest(QuizAnswerSchema), async (req: Request<Record<string, string>, any, QuizAnswerRequest>, res: Response) => {
   const user = getAuthUser(req);
-  const { suggestion } = req.body;
-
-  if (typeof suggestion !== 'string' || !suggestion.trim()) {
-    return res.status(400).json({ error: 'Suggestion must be a non-empty string' });
-  }
-
+  const { suggestion, dictionaryId } = req.body;
   try {
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
 
@@ -176,17 +189,17 @@ router.post('/answer', authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-router.post('/next_card', authMiddleware, async (req: Request, res: Response) => {
+router.post('/next_card', authMiddleware, validateRequest(QuizNextCardSchema), async (req: Request<Record<string, string>, any, QuizNextCardRequest>, res: Response) => {
   const user = getAuthUser(req);
   
   try {
+    const { dictionaryId } = req.body;
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
     if (!userState) {
       return res.status(400).json({ error: 'Quiz not active' });
     }
 
-    const dictId = userState.activeDictionaryId || (await ensureActiveDictionary(user.id)).id;
-    const cardData = await generateQuizCard(user.id, dictId, userState.currentWordId || undefined);
+    const cardData = await generateQuizCard(user.id, dictionaryId, userState.currentWordId || undefined);
     
     if (!cardData) {
       return res.status(400).json({ error: 'Not enough words to pick a new card' });
@@ -195,7 +208,7 @@ router.post('/next_card', authMiddleware, async (req: Request, res: Response) =>
     await prisma.userState.update({
       where: { userId: user.id },
       data: {
-        activeDictionaryId: dictId,
+        activeDictionaryId: dictionaryId,
         showVariants: false,
         showDefinitionTranslation: false,
         currentDefinitionId: cardData.definition.id,
@@ -222,8 +235,9 @@ router.post('/next_card', authMiddleware, async (req: Request, res: Response) =>
   }
 });
 
-router.post('/next_definition', authMiddleware, async (req: Request, res: Response) => {
+router.post('/next_definition', authMiddleware, validateRequest(QuizNextDefinitionSchema), async (req: Request<Record<string, string>, any, QuizNextDefinitionRequest>, res: Response) => {
   const user = getAuthUser(req);
+  const { dictionaryId } = req.body;
 
   try {
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });

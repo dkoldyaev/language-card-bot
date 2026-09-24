@@ -4,14 +4,13 @@ import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
-import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
 import { publishEvent } from '../event_bus/event_bus.service';
 import type { DictionaryAddDuplicateEvent } from '../event_bus/event_bus.type';
 import type { AddWordBatchRequest, AddWordBatchResponse } from './add_word.type';
 
 const router = Router();
 
-router.post('/', authMiddleware, async (req: Request<{}, unknown, AddWordBatchRequest>, res: Response<AddWordBatchResponse | { error: string }>) => {
+router.post('/', authMiddleware, async (req: Request<Record<string, never>, unknown, AddWordBatchRequest>, res: Response<AddWordBatchResponse | { error: string }>) => {
   const { words, dictionaryId } = req.body;
 
   if (!Array.isArray(words) || words.length === 0) {
@@ -30,24 +29,16 @@ router.post('/', authMiddleware, async (req: Request<{}, unknown, AddWordBatchRe
   const { id: userId, username } = getAuthUser(req);
 
   try {
-    let targetDictionaryId: number;
-
-    if (dictionaryId !== undefined && dictionaryId !== null) {
-      const dict = await prisma.dictionary.findFirst({
-        where: { id: dictionaryId, userId },
-      });
-      if (!dict) {
-        return res.status(404).json({ error: 'Dictionary not found' });
-      }
-      targetDictionaryId = dict.id;
-    } else {
-      const activeDict = await ensureActiveDictionary(userId);
-      targetDictionaryId = activeDict.id;
+    const dict = await prisma.dictionary.findFirst({
+      where: { id: dictionaryId, userId },
+    });
+    if (!dict) {
+      return res.status(404).json({ error: 'Dictionary not found' });
     }
 
     const existingWordsInDb = await prisma.word.findMany({
       where: {
-        dictionaryId: targetDictionaryId,
+        dictionaryId: dictionaryId,
         text: { in: cleanedWords },
       },
       select: {
@@ -84,7 +75,7 @@ router.post('/', authMiddleware, async (req: Request<{}, unknown, AddWordBatchRe
     if (wordsToCreate.length > 0) {
       createdWords = await prisma.word.createManyAndReturn({
         data: wordsToCreate.map((text) => ({
-          dictionaryId: targetDictionaryId,
+          dictionaryId: dictionaryId,
           text,
         })),
         select: {
@@ -97,12 +88,12 @@ router.post('/', authMiddleware, async (req: Request<{}, unknown, AddWordBatchRe
     }
 
     if (createdWords.length > 0) {
-      await invalidateDashboardCache(userId, targetDictionaryId);
+      await invalidateDashboardCache(userId, dictionaryId);
 
       appEvents.emit(Events.WORDS_LIST_ADDED, {
         userId,
         username,
-        dictionaryId: targetDictionaryId,
+        dictionaryId: dictionaryId,
         words: createdWords.map((createdWord) => ({
           wordId: createdWord.id,
           wordText: createdWord.text,

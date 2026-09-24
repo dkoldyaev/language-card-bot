@@ -1,6 +1,5 @@
 import { invalidateKeysByPattern, redisClient } from '../../core/cache';
 import { prisma } from '../../prisma';
-import { ensureActiveDictionary } from '../dictionaries/dictionaries.service';
 
 const DASHBOARD_CACHE_TTL_SECONDS = 300;
 
@@ -89,11 +88,12 @@ export function calculateStreak(dates: Date[], now: Date = new Date()): number {
   return streak;
 }
 
-export async function getDashboardStats(userId: number, targetDictionaryId?: number): Promise<DashboardStats> {
-  const dict = targetDictionaryId
-    ? (await prisma.dictionary.findFirst({ where: { id: targetDictionaryId, userId } })) ||
-      (await ensureActiveDictionary(userId))
-    : await ensureActiveDictionary(userId);
+export async function getDashboardStats(userId: number, dictionaryId: number): Promise<DashboardStats> {
+  const dict = await prisma.dictionary.findFirst({ where: { id: dictionaryId, userId } });
+  
+  if (!dict) {
+    throw new Error('Dictionary not found');
+  }
 
   const cacheKey = `dashboard:stats:${userId}:${dict.id}`;
   const cached = await redisClient.get(cacheKey);

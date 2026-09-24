@@ -25,6 +25,7 @@ describe('i18n infrastructure', () => {
   beforeEach(() => {
     // Clear cookies
     document.cookie.split(';').forEach((c) => {
+      // biome-ignore lint/suspicious/noDocumentCookie: required for test cleanup
       document.cookie = c.replace(/^ +/, '').replace(/=.*/, `=;expires=${new Date(0).toUTCString()};path=/`);
     });
   });

@@ -4,10 +4,10 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type mockDeep, mockReset } from 'vitest-mock-extended';
 import app from '../../app';
+import { env } from '../../core/env';
 import { prisma } from '../../prisma';
 import { publishEvent } from '../event_bus/event_bus.service';
 import * as quizService from './quiz.service';
-import { env } from '../../core/env';
 
 vi.mock('../../prisma');
 vi.mock('../event_bus/event_bus.service', () => ({
@@ -56,6 +56,7 @@ describe('Quiz Route', () => {
 
     const res = await request(app)
       .post('/api/v1/quiz/start')
+      .send({ dictionaryId: 5 })
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(400);
@@ -81,6 +82,7 @@ describe('Quiz Route', () => {
 
     const res = await request(app)
       .post('/api/v1/quiz/start')
+      .send({ dictionaryId: 5 })
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
@@ -114,6 +116,7 @@ describe('Quiz Route', () => {
 
       const res = await request(app)
         .post('/api/v1/quiz/variants')
+        .send({ dictionaryId: 5 })
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(400);
@@ -136,6 +139,7 @@ describe('Quiz Route', () => {
 
       const res = await request(app)
         .post('/api/v1/quiz/variants')
+        .send({ dictionaryId: 5 })
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);
@@ -161,6 +165,7 @@ describe('Quiz Route', () => {
 
       const res = await request(app)
         .post('/api/v1/quiz/translate_definition')
+        .send({ dictionaryId: 5 })
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(400);
@@ -178,6 +183,7 @@ describe('Quiz Route', () => {
 
       const res = await request(app)
         .post('/api/v1/quiz/translate_definition')
+        .send({ dictionaryId: 5 })
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(404);
@@ -200,6 +206,7 @@ describe('Quiz Route', () => {
 
       const res = await request(app)
         .post('/api/v1/quiz/translate_definition')
+        .send({ dictionaryId: 5 })
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);
@@ -235,7 +242,7 @@ describe('Quiz Route', () => {
       const res = await request(app)
         .post('/api/v1/quiz/answer')
         .set('Authorization', `Bearer ${token}`)
-        .send({ suggestion: 'apple' });
+        .send({ suggestion: 'apple', dictionaryId: 5 });
 
       expect(res.status).toBe(200);
       expect(res.body.evaluation.result).toBe('SUCCESS');
@@ -266,6 +273,7 @@ describe('Quiz Route', () => {
 
       const res = await request(app)
         .post('/api/v1/quiz/next_card')
+        .send({ dictionaryId: 5 })
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);
@@ -302,6 +310,7 @@ describe('Quiz Route', () => {
 
       const res = await request(app)
         .post('/api/v1/quiz/next_definition')
+        .send({ dictionaryId: 5 })
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);

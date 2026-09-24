@@ -6,9 +6,9 @@ import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 
 const router = Router();
 
-router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
+router.delete('/:id', authMiddleware, async (req: Request<{ id: string }>, res: Response) => {
   const { id: userId } = getAuthUser(req);
-  const definitionId = parseInt(req.params.id as string, 10);
+  const definitionId = parseInt(req.params.id, 10);
 
   if (Number.isNaN(definitionId)) {
     return res.status(400).json({ error: 'Invalid definition ID' });

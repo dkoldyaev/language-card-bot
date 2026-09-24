@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { env } from '../core/env';
 import type { DefinitionItem, IDefiner } from '../core/IDefiner';
 import type { LanguageCode } from '../types/language';
@@ -82,7 +83,13 @@ CRITICAL REQUIREMENT: Under NO circumstances should the target word or phrase "$
       throw new Error(`LLM service error (${response.status}): ${errorText}`);
     }
 
-    const data = (await response.json()) as { data?: { definitions?: unknown[] } };
+    const responseSchema = z.object({
+      data: z.object({
+        definitions: z.array(z.unknown()).optional()
+      }).optional()
+    });
+
+    const data = responseSchema.parse(await response.json());
 
     if (!data?.data || !Array.isArray(data.data.definitions)) {
       throw new Error('Unexpected response format from LLM service');

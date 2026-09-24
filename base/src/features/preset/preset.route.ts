@@ -2,7 +2,7 @@ import { type Request, type Response, Router } from 'express';
 import { adminMiddleware } from '../../middleware/admin';
 import { authMiddleware } from '../../middleware/auth';
 import { validateRequest } from '../../middleware/validate';
-import { type LanguageCode, SUPPORTED_LANGUAGES } from '../../types/language';
+import { LanguageCodeSchema } from '../../types/language';
 import { getAuthUser } from '../auth/auth.service';
 import {
   applyPreset,
@@ -30,10 +30,9 @@ const router = Router();
 // GET all presets (accessible publicly)
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const rawLang = (req.query.for_language || req.query.forLanguage) as string | undefined;
-    const forLanguage = rawLang && (SUPPORTED_LANGUAGES as readonly string[]).includes(rawLang)
-      ? (rawLang as LanguageCode)
-      : undefined;
+    const rawLang = req.query.for_language || req.query.forLanguage;
+    const langParse = LanguageCodeSchema.safeParse(rawLang);
+    const forLanguage = langParse.success ? langParse.data : undefined;
     const presets = await listPresets(forLanguage ? { forLanguage } : undefined);
     res.json({ presets });
   } catch (error) {
@@ -43,7 +42,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // POST apply preset to dictionary (accessible to all authenticated users)
-router.post('/apply_preset', authMiddleware, validateRequest(ApplyPresetSchema), async (req: Request<{}, unknown, ApplyPresetInput>, res: Response) => {
+router.post('/apply_preset', authMiddleware, validateRequest(ApplyPresetSchema), async (req: Request<Record<string, never>, unknown, ApplyPresetInput>, res: Response) => {
   const { id: userId, username } = getAuthUser(req);
   const { dictionaryId, presetId } = req.body;
 

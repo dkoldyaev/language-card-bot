@@ -62,8 +62,12 @@ export default function Sidebar() {
     { path: '/', label: t('nav.dashboard'), icon: <HomeRoundedIcon /> },
     { path: '/dictionary', label: t('nav.dictionary'), icon: <MenuBookRoundedIcon /> },
     { path: '/quiz', label: t('nav.quiz'), icon: <SchoolRoundedIcon /> },
-    { path: '/presets', label: t('nav.presets'), icon: <AutoAwesomeRoundedIcon /> },
   ];
+  
+  const isAdmin = Boolean(profile?.isAdmin || profile?.is_admin);
+  if (token && isAdmin) {
+    navItems.push({ path: '/presets', label: t('nav.presets'), icon: <AutoAwesomeRoundedIcon /> });
+  }
 
   const hasWords = dictionary.length > 0;
   const currentNavItems = navItems;

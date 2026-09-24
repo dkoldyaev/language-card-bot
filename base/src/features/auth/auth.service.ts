@@ -8,11 +8,16 @@ export interface AuthUser {
 }
 
 export function getAuthUser(req: Request): AuthUser {
-  const user = (req as unknown as { user: AuthUser }).user;
+  const user = req.user;
 
   if (!user) {
     throw new Error('User not authenticated');
   }
-  
-  return { ...user, username: user.username || user.name || user.email } as AuthUser;
+
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username || user.name || user.email,
+    name: user.name,
+  };
 }

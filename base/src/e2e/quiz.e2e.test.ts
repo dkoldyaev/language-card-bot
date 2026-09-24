@@ -39,7 +39,8 @@ describe('Quiz E2E', () => {
   it('should fail to start quiz if dictionary is empty', async () => {
     const res = await request(app)
       .post('/api/v1/quiz/start')
-      .set('Authorization', `Bearer ${userToken}`);
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ dictionaryId });
 
     expect(res).toMatchObject({
       status: 400,
@@ -73,7 +74,8 @@ describe('Quiz E2E', () => {
 
     const res = await request(app)
       .post('/api/v1/quiz/start')
-      .set('Authorization', `Bearer ${userToken}`);
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ dictionaryId });
 
     expect(res).toMatchObject({
       status: 200,
@@ -118,7 +120,8 @@ describe('Quiz E2E', () => {
 
     const res = await request(app)
       .post('/api/v1/quiz/variants')
-      .set('Authorization', `Bearer ${userToken}`);
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ dictionaryId });
 
     expect(res.status).toBe(200);
     expect(res.body.variants.length).toBeGreaterThan(0);
@@ -154,7 +157,8 @@ describe('Quiz E2E', () => {
 
     const res = await request(app)
       .post('/api/v1/quiz/translate_definition')
-      .set('Authorization', `Bearer ${userToken}`);
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ dictionaryId });
 
     expect(res.status).toBe(200);
     expect(res.body.translation).toBe('яблоко');
@@ -180,7 +184,7 @@ describe('Quiz E2E', () => {
       const res = await request(app)
         .post('/api/v1/quiz/answer')
         .set('Authorization', `Bearer ${userToken}`)
-        .send({ suggestion });
+        .send({ suggestion, dictionaryId });
       
       expect(res.status).toBe(200);
       expect(res.body.evaluation.result).toBe(expectedResult);
@@ -210,7 +214,8 @@ describe('Quiz E2E', () => {
 
     const res = await request(app)
       .post('/api/v1/quiz/next_card')
-      .set('Authorization', `Bearer ${userToken}`);
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ dictionaryId });
 
     expect(res.status).toBe(200);
     expect(res.body.card.type).toBe('quiz_card');
@@ -242,7 +247,8 @@ describe('Quiz E2E', () => {
 
     const res = await request(app)
       .post('/api/v1/quiz/next_definition')
-      .set('Authorization', `Bearer ${userToken}`);
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ dictionaryId });
 
     expect(res.status).toBe(200);
     expect(res.body.card.type).toBe('quiz_card');

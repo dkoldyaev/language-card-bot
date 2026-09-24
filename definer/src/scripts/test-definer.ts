@@ -12,7 +12,7 @@ import { MockDefiner } from '../adapters/MockDefiner';
 import { DefinerFactory } from '../core/DefinerFactory';
 import { env } from '../core/env';
 import type { DefinerAppType, DefinitionItem, IDefiner } from '../core/IDefiner';
-import type { LanguageCode } from '../types/language';
+import { type LanguageCode, LanguageCodeSchema } from '../types/language';
 
 function printUsage() {
   console.log(`
@@ -48,12 +48,12 @@ Examples:
 
 interface ParsedArgs {
   word: string;
-  language?: string;
+  language: LanguageCode;
   app: DefinerAppType;
   model?: string;
   provider?: 'mistral' | 'gemini' | 'mock';
   llmUrl?: string;
-  httpUrl: string;
+  httpUrl?: string;
   isJson: boolean;
 }
 
@@ -118,7 +118,7 @@ function parseArgs(): ParsedArgs {
 
   const schema = z.object({
     word: z.string().min(1, 'Word/phrase to define is required (pass as argument or via --word/-w)'),
-    language: z.string().min(1, 'Language is required (pass via --lang/-l or DEFINER_LANGUAGE in .env)'),
+    language: LanguageCodeSchema,
     app: z.enum(validApps, {
       message: `Invalid app type "${resolvedApp}". Must be one of: ${validApps.join(', ')}`,
     }),
@@ -149,11 +149,14 @@ function parseArgs(): ParsedArgs {
     process.exit(1);
   }
 
-  return parsed.data as ParsedArgs;
+  return parsed.data;
 }
 
 async function runHttpTest(args: ParsedArgs): Promise<DefinitionItem[]> {
   const url = args.httpUrl;
+  if (!url) {
+    throw new Error('HTTP URL is not defined');
+  }
   console.log(`📡 Sending HTTP POST to ${url}...`);
 
   const response = await fetch(url, {
@@ -171,7 +174,12 @@ async function runHttpTest(args: ParsedArgs): Promise<DefinitionItem[]> {
     throw new Error(`Definer HTTP service error (${response.status}): ${errorText}`);
   }
 
-  const json = (await response.json()) as { definitions?: DefinitionItem[] };
+  const schema = z.object({ definitions: z.array(z.any()).optional() });
+  const jsonParse = schema.safeParse(await response.json());
+  if (!jsonParse.success) {
+    throw new Error(`Invalid response format from Definer HTTP service: ${jsonParse.error.message}`);
+  }
+  const json = jsonParse.data;
   if (!json.definitions || !Array.isArray(json.definitions)) {
     throw new Error(`Unexpected response format from Definer HTTP service: ${JSON.stringify(json)}`);
   }
@@ -205,7 +213,7 @@ async function runDirectTest(args: ParsedArgs): Promise<DefinitionItem[]> {
     definer = DefinerFactory.getDefiner(args.app);
   }
 
-  return await definer.define(args.word, args.language as LanguageCode);
+  return await definer.define(args.word, args.language);
 }
 
 async function main() {

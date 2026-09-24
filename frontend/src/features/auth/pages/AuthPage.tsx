@@ -9,6 +9,7 @@ import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import LocaleSwitcher from '../../../shared/components/LocaleSwitcher';
 import ThemeSwitcher from '../../../shared/components/ThemeSwitcher';
+import type { LanguageCode } from '../../../shared/i18n';
 import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
@@ -17,7 +18,6 @@ import useStore, { type UserProfile } from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 import { performGuestMigration } from '../api/migrate';
 import MergeGuestDataDialog from '../components/MergeGuestDataDialog';
-import type { LanguageCode } from '../../../shared/i18n';
 
 interface AuthUserData extends UserProfile {
   isNewUser?: boolean;
@@ -161,12 +161,7 @@ export default function Auth() {
 
     setLoading(true);
     try {
-      await apiClient.post('/settings', {
-        baseLanguage,
-        targetLanguage,
-      }, {
-        headers: { Authorization: `Bearer ${tempToken}` },
-      });
+
 
       // Migrate any guest data to the newly created user
       const hasGuestData = useStore.getState().dictionary.length > 0 || useStore.getState().guestQuizAttempts.length > 0;
@@ -229,12 +224,7 @@ export default function Auth() {
         const response = await apiClient.post('/auth/register', { username: username.trim() });
         const { token } = response.data;
 
-        await apiClient.post('/settings', {
-          baseLanguage,
-          targetLanguage,
-        }, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+
 
         // Migrate any guest data to the newly created user
         const hasGuestData = useStore.getState().dictionary.length > 0 || useStore.getState().guestQuizAttempts.length > 0;

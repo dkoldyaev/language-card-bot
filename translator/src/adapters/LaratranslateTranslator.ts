@@ -1,4 +1,5 @@
 import { Credentials, Translator } from '@translated/lara';
+import { z } from 'zod';
 import { env } from '../core/env';
 import type { ITranslator } from '../core/ITranslator';
 import type { LanguageCode } from '../types/language';
@@ -21,7 +22,7 @@ export class LaratranslateTranslator implements ITranslator {
 
     try {
       const res = await this.lara.translate(texts, sourceLang, targetLang);
-      return res.translation as string[];
+      return z.array(z.string()).parse(res.translation);
     } catch (error) {
       console.error('Error translating with Laratranslate API:', error);
       throw error;

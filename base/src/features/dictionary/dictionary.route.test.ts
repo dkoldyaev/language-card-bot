@@ -78,7 +78,7 @@ describe('Dictionary Fetch Endpoint', () => {
     prismaMock.word.findMany.mockResolvedValue(mockWords as Word);
 
     const res = await request(app)
-      .get('/api/v1/dictionary')
+      .get('/api/v1/dictionary?dictionaryId=10')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);

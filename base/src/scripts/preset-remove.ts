@@ -1,8 +1,7 @@
 import 'dotenv/config';
-import type { PresetDto } from '../features/preset/preset.type';
-import { generatePreset } from '../features/preset/preset_generator.service';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '../prisma';
-import type { LanguageCode } from '../types/language';
+import { type LanguageCode, LanguageCodeSchema } from '../types/language';
 
 interface CliParams {
   languages?: LanguageCode[];
@@ -41,14 +40,14 @@ Examples:
 function parseCliArgs(): CliParams {
   const args = process.argv.slice(2);
   const rawLanguages: LanguageCode[] = [];
-  let presetIds: number[] = [];
+  const presetIds: number[] = [];
   const rawLevels: string[] = [];
   let dryRun = false;
 
   const addLanguages = (val: string) => {
     val.split(',').forEach((s) => {
       const trimmed = s.trim().toLowerCase();
-      if (trimmed) rawLanguages.push(trimmed as LanguageCode);
+      if (trimmed) rawLanguages.push(LanguageCodeSchema.parse(trimmed));
     });
   };
 
@@ -111,7 +110,7 @@ async function main() {
   const params = parseCliArgs();
 
   try {
-    const whereClause: any = {
+    const whereClause: Prisma.PresetWhereInput = {
       ...(params.languages?.length ? {forLanguage: {
         in: params.languages,
       }} : {}),

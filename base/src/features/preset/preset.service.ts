@@ -1,7 +1,7 @@
-import type { Preset, Prisma } from '@prisma/client';
+import { type Preset, Prisma } from '@prisma/client';
 import { invalidateKeysByPattern, redisClient } from '../../core/cache';
 import { prisma } from '../../prisma';
-import type { LanguageCode } from '../../types/language';
+import { type LanguageCode, LanguageCodeSchema } from '../../types/language';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 import { getPresetAdapter } from './adapters';
 import type { CreatePresetInput, PresetDto, UpdatePresetInput } from './preset.type';
@@ -23,8 +23,8 @@ export function formatPreset(preset: Preset): PresetDto {
     id: preset.id,
     title: preset.title,
     description: preset.description ?? null,
-    for_language: preset.forLanguage as LanguageCode,
-    forLanguage: preset.forLanguage as LanguageCode,
+    for_language: LanguageCodeSchema.parse(preset.forLanguage),
+    forLanguage: LanguageCodeSchema.parse(preset.forLanguage),
     type: preset.type,
     body: preset.body,
     createdAt: preset.createdAt instanceof Date ? preset.createdAt.toISOString() : String(preset.createdAt),
@@ -90,7 +90,7 @@ export async function createPreset(data: CreatePresetInput): Promise<PresetDto> 
       description: data.description ?? null,
       forLanguage,
       type,
-      body: data.body as Prisma.InputJsonValue,
+      body: data.body ?? Prisma.JsonNull,
     },
   });
 
@@ -109,7 +109,7 @@ export async function updatePreset(id: number, data: UpdatePresetInput): Promise
       ...(data.description !== undefined && { description: data.description }),
       ...(forLanguage && { forLanguage }),
       ...(data.type && { type: data.type }),
-      ...(data.body !== undefined && { body: data.body as Prisma.InputJsonValue }),
+      ...(data.body !== undefined && { body: data.body ?? Prisma.JsonNull }),
     },
   });
 
@@ -127,10 +127,6 @@ export async function deletePreset(id: number): Promise<void> {
 }
 
 export async function applyPreset(userId: number, username: string, dictionaryId: number, presetId: number) {
-  if (dictionaryId > 2147483647) {
-    throw createHttpError('Dictionary not found (invalid ID)', 404);
-  }
-
   const dictionary = await prisma.dictionary.findFirst({
     where: { id: dictionaryId, userId },
   });

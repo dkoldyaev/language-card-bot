@@ -1,15 +1,29 @@
+
 import { type Job, Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import { env } from '../../core/env';
 import { appEvents, Events } from '../../core/events';
 import { prisma } from '../../prisma';
+import { type LanguageCode, SUPPORTED_LANGUAGES } from '../../types/language';
 import { publishEvent } from '../event_bus/event_bus.service';
-import type { 
+import type {
   DictionaryAddDefinitionsReceivedEvent
 } from '../event_bus/event_bus.type';
 import { enqueueFetchTranslations } from './add_word.queue';
-import { Dictionary } from '.prisma/client';
-import { LanguageCode } from '../../types/language';
+
+interface DefinerWorkerResponse {
+  definitions: Array<string | { text: string }>;
+}
+
+interface TranslatorWorkerResponse {
+  translations: string[];
+}
+
+function toLanguageCode(lang: string): LanguageCode | undefined {
+  return (SUPPORTED_LANGUAGES as readonly string[]).includes(lang)
+    ? (lang as LanguageCode)
+    : undefined;
+}
 
 const redisUrl = env.REDIS_URL;
 export const workerConnection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
@@ -48,7 +62,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       throw new Error(`Definer API error: ${await definerRes.text()}`);
     }
 
-    const definerData = (await definerRes.json()) as { definitions: Array<string | { text: string }> };
+    const definerData = (await definerRes.json()) as DefinerWorkerResponse;
     const definitions = definerData.definitions;
 
     if (!definitions || definitions.length === 0) {
@@ -68,7 +82,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
     });
 
     // 3. Send "definitions received" event
-    await publishEvent(username, {
+    const definitionsReceivedEvent: DictionaryAddDefinitionsReceivedEvent = {
       version: 'v1',
       type: 'dictionary_add_definitions_received',
       words: [
@@ -78,7 +92,8 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
           definitions: createdDefinitions.map(d => ({ id: d.id, text: d.text }))
         }
       ]
-    } as DictionaryAddDefinitionsReceivedEvent);
+    };
+    await publishEvent(username, definitionsReceivedEvent);
 
     // 4. Enqueue translation job for all definitions of this word
     await enqueueFetchTranslations(
@@ -87,8 +102,8 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       username,
       wordId,
       wordText,
-      baseLanguage as LanguageCode,
-      targetLanguage as LanguageCode,
+      toLanguageCode(baseLanguage),
+      toLanguageCode(targetLanguage),
     );
   } else if (job.name === 'fetchTranslations' || job.name === 'fetchTranslation') {
     const { definitions, definitionId, definitionText, username, wordId, sourceLanguage, targetLanguage } = job.data;
@@ -135,7 +150,7 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       throw new Error(`Translator API error for word ${wordId}: ${await translatorRes.text()}`);
     }
 
-    const translatorData = (await translatorRes.json()) as { translations: string[] };
+    const translatorData = (await translatorRes.json()) as TranslatorWorkerResponse;
     const translatedTexts = translatorData.translations;
 
     if (!Array.isArray(translatedTexts) || translatedTexts.length !== defsToTranslate.length) {

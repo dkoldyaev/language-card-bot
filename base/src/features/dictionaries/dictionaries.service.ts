@@ -1,60 +1,10 @@
 import { prisma } from '../../prisma';
-import type { LanguageCode } from '../../types/language';
+import { LanguageCodeSchema } from '../../types/language';
 import type { CreateDictionaryRequest, DictionaryItemDto, UpdateDictionaryRequest } from './dictionaries.type';
 
-export async function ensureActiveDictionary(userId: number) {
-  let userState = await prisma.userState.findUnique({
-    where: { userId },
-    include: { activeDictionary: true },
-  });
-
-  if (!userState) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-    
-    if (!user) {
-      throw new Error(`User with id ${userId} not found. The JWT token may be invalid or the user was deleted.`);
-    }
-    
-    userState = await prisma.userState.create({
-      data: { userId },
-      include: { activeDictionary: true },
-    });
-  }
-
-  if (userState.activeDictionary && userState.activeDictionary.userId === userId) {
-    return userState.activeDictionary;
-  }
-
-  // Look for any existing dictionary for user
-  let dict = await prisma.dictionary.findFirst({
-    where: { userId },
-    orderBy: { id: 'asc' },
-  });
-
-  if (!dict) {
-    dict = await prisma.dictionary.create({
-      data: {
-        userId,
-        name: 'EN (RU)',
-        targetLanguage: 'en',
-        baseLanguage: 'ru',
-      },
-    });
-  }
-
-  await prisma.userState.update({
-    where: { userId },
-    data: { activeDictionaryId: dict.id },
-  });
-
-  return dict;
-}
-
 export async function getUserDictionaries(userId: number): Promise<{ dictionaries: DictionaryItemDto[]; activeDictionaryId: number | null }> {
-  const activeDict = await ensureActiveDictionary(userId);
-  const activeDictionaryId = activeDict?.id ?? null;
+  const userState = await prisma.userState.findUnique({ where: { userId } });
+  const activeDictionaryId = userState?.activeDictionaryId ?? null;
 
   const list = await prisma.dictionary.findMany({
     where: { userId },
@@ -69,8 +19,8 @@ export async function getUserDictionaries(userId: number): Promise<{ dictionarie
   const dictionaries: DictionaryItemDto[] = list.map((d) => ({
     id: d.id,
     name: d.name,
-    targetLanguage: d.targetLanguage as LanguageCode,
-    baseLanguage: d.baseLanguage as LanguageCode,
+    targetLanguage: LanguageCodeSchema.parse(d.targetLanguage),
+    baseLanguage: LanguageCodeSchema.parse(d.baseLanguage),
     wordCount: d._count.words,
     isActive: d.id === activeDictionaryId,
     createdAt: d.createdAt.toISOString(),
@@ -105,8 +55,8 @@ export async function createDictionary(userId: number, data: CreateDictionaryReq
   return {
     id: created.id,
     name: created.name,
-    targetLanguage: created.targetLanguage as LanguageCode,
-    baseLanguage: created.baseLanguage as LanguageCode,
+    targetLanguage: LanguageCodeSchema.parse(created.targetLanguage),
+    baseLanguage: LanguageCodeSchema.parse(created.baseLanguage),
     wordCount: 0,
     isActive: isFirst,
     createdAt: created.createdAt.toISOString(),

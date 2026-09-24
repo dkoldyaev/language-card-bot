@@ -33,10 +33,7 @@ describe('Definitions E2E', () => {
     });
     wordId = word.id;
 
-    // Initialize user settings to prevent background worker failures
-    await request(app)
-      .get('/api/v1/settings')
-      .set('Authorization', `Bearer ${userToken}`);
+
   });
 
   afterEach(async () => {

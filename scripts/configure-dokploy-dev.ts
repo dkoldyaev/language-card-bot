@@ -1,6 +1,32 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+interface DokployProject {
+  name: string;
+  environments: DokployEnvironment[];
+}
+
+interface DokployEnvironment {
+  name: string;
+  compose: DokployCompose[];
+}
+
+interface DokployCompose {
+  name: string;
+  composeId: string;
+}
+
+interface DokployDomain {
+  domainId: string;
+  host: string;
+  path?: string;
+}
+
+interface DokployContainer {
+  name: string;
+  containerId: string;
+}
+
 // 1. Read environment variables from .env
 function loadEnv() {
   const envPath = path.resolve(process.cwd(), '.env');
@@ -38,7 +64,7 @@ if (!DOKPLOY_API_KEY) {
 
 const DEV_DOMAIN = 'dev.languagecards.194-163-164-255.sslip.io';
 
-async function trpcCall<T = any>(endpoint: string, method: 'GET' | 'POST', data?: any): Promise<T> {
+async function trpcCall<T = unknown>(endpoint: string, method: 'GET' | 'POST', data?: unknown): Promise<T> {
   let url = `${DOKPLOY_URL}/api/trpc/${endpoint}`;
   const headers: Record<string, string> = {
     'x-api-key': DOKPLOY_API_KEY!,
@@ -101,18 +127,18 @@ async function main() {
 
   // 1. Find language-cards > dev > app compose
   console.log('Fetching projects to locate dev compose service...');
-  const projects = await trpcCall('project.all', 'GET');
-  const project = projects.find((p: any) => p.name === 'language-cards');
+  const projects = await trpcCall<DokployProject[]>('project.all', 'GET');
+  const project = projects.find((p) => p.name === 'language-cards');
   if (!project) {
     throw new Error('Project "language-cards" not found on Dokploy');
   }
 
-  const devEnv = project.environments.find((e: any) => e.name === 'dev');
+  const devEnv = project.environments.find((e) => e.name === 'dev');
   if (!devEnv) {
     throw new Error('Environment "dev" not found in project "language-cards"');
   }
 
-  const compose = devEnv.compose.find((c: any) => c.name === 'app');
+  const compose = devEnv.compose.find((c) => c.name === 'app');
   if (!compose) {
     throw new Error('Compose service "app" not found in dev environment');
   }
@@ -121,7 +147,7 @@ async function main() {
   console.log(`✓ Found dev compose: "${compose.name}" (ID: ${composeId})`);
 
   // 2. Fetch current compose details
-  const composeDetails = await trpcCall('compose.one', 'GET', { composeId });
+  const composeDetails = await trpcCall<any>('compose.one', 'GET', { composeId });
   console.log('composeDetails:', {
     composeId: composeDetails.composeId,
     composePath: composeDetails.composePath,
@@ -168,7 +194,7 @@ async function main() {
 
   // 4. Configure Domains
   console.log('\nConfiguring Traefik domain routes...');
-  const existingDomains = await trpcCall('domain.byComposeId', 'GET', { composeId });
+  const existingDomains = await trpcCall<DokployDomain[]>('domain.byComposeId', 'GET', { composeId });
   console.log(`Found ${existingDomains.length} existing domain(s) for this compose.`);
 
   const requiredRoutes = [
@@ -194,7 +220,7 @@ async function main() {
 
   for (const route of requiredRoutes) {
     const existing = existingDomains.find(
-      (d: any) => d.host === DEV_DOMAIN && (d.path === route.path || (!d.path && route.path === '/'))
+      (d) => d.host === DEV_DOMAIN && (d.path === route.path || (!d.path && route.path === '/'))
     );
 
     if (existing) {
@@ -214,7 +240,7 @@ async function main() {
       console.log(`✓ Domain updated: ${existing.domainId}`);
     } else {
       console.log(`Creating new domain route for ${route.description} (${route.path} -> ${route.serviceName}:${route.port})...`);
-      const newDomain = await trpcCall('domain.create', 'POST', {
+      const newDomain = await trpcCall<{ domainId: string }>('domain.create', 'POST', {
         composeId,
         domainType: 'compose',
         host: DEV_DOMAIN,
@@ -232,7 +258,7 @@ async function main() {
   // 5. Check if redeploy requested via argument
   if (process.argv.includes('--deploy')) {
     console.log('\nTriggering redeploy on Dokploy...');
-    const deployment = await trpcCall('compose.redeploy', 'POST', {
+    const deployment = await trpcCall<{ deploymentId: string }>('compose.redeploy', 'POST', {
       composeId,
     });
     console.log(`✓ Deployment triggered: ${deployment?.deploymentId || 'OK'}`);
@@ -245,8 +271,9 @@ async function main() {
     try {
       const feRes = await fetch(`https://${DEV_DOMAIN}/`);
       console.log(`Frontend (https://${DEV_DOMAIN}/): ${feRes.status} ${feRes.statusText}`);
-    } catch (err: any) {
-      console.error(`❌ Frontend check failed: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`❌ Frontend check failed: ${msg}`);
     }
 
     // B. Check Mercure CORS preflight
@@ -262,8 +289,9 @@ async function main() {
       const acao = corsRes.headers.get('access-control-allow-origin');
       const acac = corsRes.headers.get('access-control-allow-credentials');
       console.log(`Mercure OPTIONS preflight: ${corsRes.status}, ACAO: ${acao}, ACAC: ${acac}`);
-    } catch (err: any) {
-      console.error(`❌ Mercure CORS preflight check failed: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`❌ Mercure CORS preflight check failed: ${msg}`);
     }
 
     // C. Test Backend Auth & State Sync (Mercure publish)
@@ -296,12 +324,13 @@ async function main() {
       }
       console.log(`✓ State sync succeeded: ${syncData.message}`);
       console.log('✓ Backend API and Mercure publishEvent verified successfully!');
-    } catch (err: any) {
-      console.error(`❌ Backend / Mercure publish check failed: ${err.message}`);
-      const containers = await trpcCall('docker.getContainersByAppNameMatch', 'GET', { appName: composeDetails.appName });
-      const appC = containers.find((c: any) => c.name.endsWith('-app-1') || c.name.includes('-app-1'));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`❌ Backend / Mercure publish check failed: ${msg}`);
+      const containers = await trpcCall<DokployContainer[]>('docker.getContainersByAppNameMatch', 'GET', { appName: composeDetails.appName });
+      const appC = containers.find((c) => c.name.endsWith('-app-1') || c.name.includes('-app-1'));
       if (appC) {
-        const appLogs = await trpcCall('compose.readLogs', 'GET', { composeId, containerId: appC.containerId });
+        const appLogs = await trpcCall<string>('compose.readLogs', 'GET', { composeId, containerId: appC.containerId });
         console.log(`\n--- ACTUAL APP CONTAINER LOGS (${appC.name}) ---`);
         console.log(appLogs.split('\n').slice(-30).join('\n'));
       }

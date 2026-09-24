@@ -1,7 +1,7 @@
 import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
-import type { LanguageCode } from '../../types/language';
+import { LanguageCodeSchema } from '../../types/language';
 import { getAuthUser } from '../auth/auth.service';
 import { publishEvent } from '../event_bus/event_bus.service';
 import type { DictionariesSyncMercureEvent, StateSyncMercureEvent } from '../event_bus/event_bus.type';
@@ -59,9 +59,9 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // GET single dictionary
-router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
+router.get('/:id', authMiddleware, async (req: Request<{ id: string }>, res: Response) => {
   const { id: userId } = getAuthUser(req);
-  const dictId = parseInt(req.params.id as string, 10);
+  const dictId = parseInt(req.params.id, 10);
 
   if (Number.isNaN(dictId)) {
     return res.status(400).json({ error: 'Invalid dictionary ID' });
@@ -99,9 +99,9 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // PATCH update dictionary
-router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
+router.patch('/:id', authMiddleware, async (req: Request<{ id: string }>, res: Response) => {
   const { id: userId, username } = getAuthUser(req);
-  const dictId = parseInt(req.params.id as string, 10);
+  const dictId = parseInt(req.params.id, 10);
 
   if (Number.isNaN(dictId)) {
     return res.status(400).json({ error: 'Invalid dictionary ID' });
@@ -135,9 +135,9 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // DELETE dictionary
-router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
+router.delete('/:id', authMiddleware, async (req: Request<{ id: string }>, res: Response) => {
   const { id: userId, username } = getAuthUser(req);
-  const dictId = parseInt(req.params.id as string, 10);
+  const dictId = parseInt(req.params.id, 10);
 
   if (Number.isNaN(dictId)) {
     return res.status(400).json({ error: 'Invalid dictionary ID' });
@@ -166,9 +166,9 @@ router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // POST select active dictionary
-router.post('/:id/select', authMiddleware, async (req: Request, res: Response) => {
+router.post('/:id/select', authMiddleware, async (req: Request<{ id: string }>, res: Response) => {
   const { id: userId, username } = getAuthUser(req);
-  const dictId = parseInt(req.params.id as string, 10);
+  const dictId = parseInt(req.params.id, 10);
 
   if (Number.isNaN(dictId)) {
     return res.status(400).json({ error: 'Invalid dictionary ID' });
@@ -184,8 +184,8 @@ router.post('/:id/select', authMiddleware, async (req: Request, res: Response) =
       activeDictionary: {
         id: dict.id,
         name: dict.name,
-        targetLanguage: dict.targetLanguage as LanguageCode,
-        baseLanguage: dict.baseLanguage as LanguageCode,
+        targetLanguage: LanguageCodeSchema.parse(dict.targetLanguage),
+        baseLanguage: LanguageCodeSchema.parse(dict.baseLanguage),
       },
       currentWordId: null,
       currentWord: null,

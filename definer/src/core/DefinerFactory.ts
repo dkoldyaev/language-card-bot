@@ -4,8 +4,8 @@ import { MockDefiner } from '../adapters/MockDefiner';
 import { env } from './env';
 import type { DefinerAppType, IDefiner } from './IDefiner';
 
-export class DefinerFactory {
-  static getDefiner(definerApp: DefinerAppType): IDefiner {
+export const DefinerFactory = {
+  getDefiner(definerApp: DefinerAppType): IDefiner {
     switch (definerApp) {
       case 'mistral':
         return new LLMAdapter({ provider: 'mistral', model: env.LLM_MODEL });
@@ -20,5 +20,5 @@ export class DefinerFactory {
       default:
         return new MockDefiner();
     }
-  }
-}
+  },
+};

@@ -51,7 +51,7 @@ describe('event_bus.service', () => {
     const searchParams = new URLSearchParams(bodyStr);
     
     expect(searchParams.get('topic')).toBe(`${BASE_DOMAIN}/v1/users/test_user`);
-    expect(JSON.parse(searchParams.get('data')!)).toEqual(payload);
+    expect(JSON.parse(searchParams.get('data') ?? '')).toEqual(payload);
   });
 
   it('should throw an error if Mercure responds with not ok', async () => {

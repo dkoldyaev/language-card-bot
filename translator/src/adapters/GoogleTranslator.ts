@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { env } from '../core/env';
 import type { ITranslator } from '../core/ITranslator';
 import type { LanguageCode } from '../types/language';
@@ -35,9 +36,14 @@ export class GoogleTranslator implements ITranslator {
         throw new Error(`Google Translate API error: ${response.status} ${errorData}`);
       }
 
-      const data = (await response.json()) as {
-        data: { translations: Array<{ translatedText: string }> };
-      };
+      const responseSchema = z.object({
+        data: z.object({
+          translations: z.array(z.object({
+            translatedText: z.string()
+          }))
+        })
+      });
+      const data = responseSchema.parse(await response.json());
       return data.data.translations.map((item) => item.translatedText);
     } catch (error) {
       console.error('Error translating with Google API:', error);

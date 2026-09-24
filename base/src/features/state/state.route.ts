@@ -1,7 +1,7 @@
 import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
-import type { LanguageCode } from '../../types/language';
+import { LanguageCodeSchema } from '../../types/language';
 import { getAuthUser } from '../auth/auth.service';
 import { publishEvent } from '../event_bus/event_bus.service';
 import type { StateSyncMercureEvent } from '../event_bus/event_bus.type';
@@ -37,8 +37,8 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
       activeDictionary: dict ? {
         id: dict.id,
         name: dict.name,
-        targetLanguage: dict.targetLanguage as LanguageCode,
-        baseLanguage: dict.baseLanguage as LanguageCode,
+        targetLanguage: LanguageCodeSchema.parse(dict.targetLanguage),
+        baseLanguage: LanguageCodeSchema.parse(dict.baseLanguage),
       } : null,
       currentWordId: userState.currentWordId,
       currentWord: userState.currentWord ? { id: userState.currentWord.id, text: userState.currentWord.text } : undefined,

@@ -18,6 +18,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import LocaleSwitcher from '../../../shared/components/LocaleSwitcher';
 import ThemeSwitcher from '../../../shared/components/ThemeSwitcher';
+import type { LanguageCode } from '../../../shared/i18n';
 import { getInitialBaseLanguage } from '../../../shared/i18n/helpers';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { hasExistingLocalStorage } from '../../../shared/lib/storage';
@@ -30,7 +31,6 @@ import {
 import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 import type { PresetDefinitionItem, PresetItem, WordDefinitionPresetItem } from '../../presets/types';
-import type { LanguageCode } from '../../../shared/i18n';
 
 export default function OnboardingPage() {
   const { t, locale } = useTranslation();

@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { env } from '../core/env';
 import type { DefinitionItem, IDefiner } from '../core/IDefiner';
 import type { LanguageCode } from '../types/language';
@@ -95,7 +96,10 @@ export class FreeDictionaryDefiner implements IDefiner {
           throw new Error(`Failed to translate definitions via Translator service: ${transResponse.status} ${errorText}`);
         }
 
-        const transData = (await transResponse.json()) as { translations?: string[] };
+        const transResponseSchema = z.object({
+          translations: z.array(z.string()).optional()
+        });
+        const transData = transResponseSchema.parse(await transResponse.json());
         if (transData?.translations && Array.isArray(transData.translations)) {
           transData.translations.forEach((translatedText, idx) => {
             if (definitions[idx] && typeof translatedText === 'string') {
@@ -164,11 +168,17 @@ For each definition, provide a list of tags for this definition.`;
         throw new Error(`Failed to determine definition levels via LLM service: ${llmResponse.status} ${errorText}`);
       }
 
-      const llmData = (await llmResponse.json()) as {
-        data?: {
-          levelsByIndex?: Array<{ index?: number; levels?: string[], tags?: string[] }>;
-        };
-      };
+      const llmResponseSchema = z.object({
+        data: z.object({
+          levelsByIndex: z.array(z.object({
+            index: z.number().optional(),
+            levels: z.array(z.string()).optional(),
+            tags: z.array(z.string()).optional(),
+          })).optional()
+        }).optional()
+      });
+
+      const llmData = llmResponseSchema.parse(await llmResponse.json());
 
       const levelsMap = new Map<number, {levels:string[], tags: string[]}>();
       if (Array.isArray(llmData?.data?.levelsByIndex)) {

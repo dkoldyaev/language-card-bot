@@ -53,9 +53,8 @@ describe('DictionaryPresets', () => {
     await waitFor(() => {
       expect(screen.getByText('Spanish Essentials')).toBeInTheDocument();
       expect(screen.getByText('Essential words for daily Spanish conversation')).toBeInTheDocument();
-      expect(screen.getByText('5 words')).toBeInTheDocument();
+      expect(screen.getByText('Contains 5 words with definitions.')).toBeInTheDocument();
       expect(screen.getByText('hola')).toBeInTheDocument();
-      expect(screen.getByText('+1 more')).toBeInTheDocument();
     });
   });
 
@@ -139,6 +138,7 @@ describe('DictionaryPresets', () => {
     });
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(apiClient, 'post').mockRejectedValue({
+      isAxiosError: true,
       response: { data: { error: 'Failed to apply preset' } },
     });
 

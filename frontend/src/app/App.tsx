@@ -9,26 +9,26 @@ import { useMercure } from '../shared/api/useMercure';
 import Layout from '../shared/components/Layout';
 import { useOfflineSync } from '../shared/hooks/useOfflineSync';
 
-// import useStore from '../store/useStore';
+import useStore from '../store/useStore';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Allow anonymous guest access to explore the app and play quiz
   return <>{children}</>;
 }
 
-// function AdminRoute({ children }: { children: React.ReactNode }) {
-//   const token = useStore((state) => state.token);
-//   const profile = useStore((state) => state.profile);
-//   const isAdmin = Boolean(profile?.isAdmin || profile?.is_admin);
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const token = useStore((state) => state.token);
+  const profile = useStore((state) => state.profile);
+  const isAdmin = Boolean(profile?.isAdmin || profile?.is_admin);
 
-//   if (!token) {
-//     return <Navigate to="/" replace />;
-//   }
-//   if (!isAdmin) {
-//     return <Navigate to="/" replace />;
-//   }
-//   return <>{children}</>;
-// }
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
 
 function App() {
   useMercure();
@@ -50,7 +50,7 @@ function App() {
           <Route path="quiz" element={<Quiz />} />
           <Route
             path="presets"
-            element={<Presets />}
+            element={<AdminRoute><Presets /></AdminRoute>}
           />
         </Route>
       </Routes>

@@ -13,7 +13,7 @@ import { MockTranslator } from '../adapters/MockTranslator';
 import { env } from '../core/env';
 import type { ITranslator, TranslatorAppType } from '../core/ITranslator';
 import { TranslatorFactory } from '../core/TranslatorFactory';
-import type { LanguageCode } from '../types/language';
+import { type LanguageCode, LanguageCodeSchema } from '../types/language';
 
 function printUsage() {
   console.log(`
@@ -50,8 +50,8 @@ Examples:
 
 interface ParsedArgs {
   texts: string[];
-  sourceLanguage: string;
-  targetLanguage: string;
+  sourceLanguage: LanguageCode;
+  targetLanguage: LanguageCode;
   app: TranslatorAppType;
   model?: string;
   provider?: 'mistral' | 'gemini' | 'mock';
@@ -134,8 +134,8 @@ function parseArgs(): ParsedArgs {
 
   const schema = z.object({
     texts: z.array(z.string().min(1)).min(1, 'At least one text to translate is required (pass via --text/-t or arguments)'),
-    sourceLanguage: z.string().min(1, 'Source language is required (pass via --from/-s or TRANSLATOR_SOURCE_LANG in .env)'),
-    targetLanguage: z.string().min(1, 'Target language is required (pass via --to/-l or TRANSLATOR_TARGET_LANG in .env)'),
+    sourceLanguage: LanguageCodeSchema,
+    targetLanguage: LanguageCodeSchema,
     app: z.enum(validApps, {
       message: `Invalid app type "${resolvedApp}". Must be one of: ${validApps.join(', ')}`,
     }),
@@ -167,7 +167,7 @@ function parseArgs(): ParsedArgs {
     process.exit(1);
   }
 
-  return parsed.data as ParsedArgs;
+  return parsed.data;
 }
 
 async function runHttpTest(args: ParsedArgs): Promise<string[]> {
@@ -193,7 +193,12 @@ async function runHttpTest(args: ParsedArgs): Promise<string[]> {
     throw new Error(`Translator HTTP service error (${response.status}): ${errorText}`);
   }
 
-  const json = (await response.json()) as { translations?: string[] };
+  const schema = z.object({ translations: z.array(z.any()).optional() });
+  const jsonParse = schema.safeParse(await response.json());
+  if (!jsonParse.success) {
+    throw new Error(`Invalid response format from Translator HTTP service: ${jsonParse.error.message}`);
+  }
+  const json = jsonParse.data;
   if (!json.translations || !Array.isArray(json.translations)) {
     throw new Error(`Unexpected response format from Translator HTTP service: ${JSON.stringify(json)}`);
   }
@@ -229,7 +234,7 @@ async function runDirectTest(args: ParsedArgs): Promise<string[]> {
     translator = TranslatorFactory.getTranslator(args.app);
   }
 
-  return await translator.translate(args.texts, args.sourceLanguage as LanguageCode, args.targetLanguage as LanguageCode);
+  return await translator.translate(args.texts, args.sourceLanguage, args.targetLanguage);
 }
 
 async function main() {

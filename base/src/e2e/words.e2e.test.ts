@@ -24,10 +24,7 @@ describe('Words E2E', () => {
     messages = sse.messages;
     streamPromise = sse.streamPromise;
 
-    // Initialize user settings which are required for translations
-    await request(app)
-      .get('/api/v1/settings')
-      .set('Authorization', `Bearer ${userToken}`);
+
   });
 
   afterEach(async () => {
@@ -70,7 +67,7 @@ describe('Words E2E', () => {
     const addWordSuccessRes = await request(app)
       .post('/api/v1/add_word')
       .set('Authorization', `Bearer ${userToken}`)
-      .send({ word: 'apple' });
+      .send({ word: 'apple', dictionaryId: setup.dictionary.id });
 
     expect(addWordSuccessRes).toMatchObject({
       status: 200,
@@ -115,7 +112,7 @@ describe('Words E2E', () => {
     const duplicateAddRes = await request(app)
       .post('/api/v1/add_word')
       .set('Authorization', `Bearer ${userToken}`)
-      .send({ word: 'Apple ' });
+      .send({ word: 'Apple ', dictionaryId: setup.dictionary.id });
 
     expect(duplicateAddRes).toMatchObject({
       status: 200,

@@ -6,7 +6,7 @@ import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 
 const router = Router();
 
-router.post('/bulk', authMiddleware, async (req: Request<{}, {}, { wordIds: number[] }>, res: Response) => {
+router.post('/bulk', authMiddleware, async (req: Request<Record<string, never>, Record<string, never>, { wordIds: number[] }>, res: Response) => {
   const { id: userId } = getAuthUser(req);
   const { wordIds } = req.body;
 

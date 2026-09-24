@@ -27,7 +27,8 @@ import useStore from '../../../store/useStore';
 
 const handleTranslateDefinition = async () => {
   try {
-    await apiClient.post('/quiz/translate_definition');
+    const dictionaryId = useStore.getState().activeDictionaryId;
+    await apiClient.post('/quiz/translate_definition', { dictionaryId });
   } catch (error) {
     console.error('Failed to translate definition:', error);
   }
@@ -35,7 +36,8 @@ const handleTranslateDefinition = async () => {
 
 const handleNextDefinition = async () => {
   try {
-    await apiClient.post('/quiz/next_definition');
+    const dictionaryId = useStore.getState().activeDictionaryId;
+    await apiClient.post('/quiz/next_definition', { dictionaryId });
   } catch (error) {
     console.error('Failed to get next definition:', error);
   }
@@ -43,7 +45,8 @@ const handleNextDefinition = async () => {
 
 const handleVariants = async () => {
   try {
-    await apiClient.post('/quiz/variants');
+    const dictionaryId = useStore.getState().activeDictionaryId;
+    await apiClient.post('/quiz/variants', { dictionaryId });
   } catch (error) {
     console.error('Failed to get variants:', error);
   }
@@ -51,7 +54,8 @@ const handleVariants = async () => {
 
 const handleNextCard = async () => {
   try {
-    await apiClient.post('/quiz/next_card');
+    const dictionaryId = useStore.getState().activeDictionaryId;
+    await apiClient.post('/quiz/next_card', { dictionaryId });
   } catch (error) {
     console.error('Failed to get next card:', error);
   }
@@ -80,7 +84,8 @@ export default function QuizPlayground() {
     setSubmitting(true);
     try {
       trackEvent('Card Answered');
-      const res = await apiClient.post('/quiz/answer', { suggestion });
+      const dictionaryId = useStore.getState().activeDictionaryId;
+      const res = await apiClient.post('/quiz/answer', { suggestion, dictionaryId });
       if (res.data?.evaluation) {
         useStore.getState().setQuizEvaluation({
           result: res.data.evaluation.result,
@@ -106,7 +111,7 @@ export default function QuizPlayground() {
 
   useEffect(() => {
     setSuggestion('');
-  }, []);
+  }, [quizCard]);
 
   if (!quizCard) return null;
 
@@ -302,7 +307,8 @@ export default function QuizPlayground() {
                   onClick={() => {
                     setSuggestion(variant);
                     trackEvent('Card Answered');
-                    apiClient.post('/quiz/answer', { suggestion: variant })
+                    const dictionaryId = useStore.getState().activeDictionaryId;
+                    apiClient.post('/quiz/answer', { suggestion: variant, dictionaryId })
                       .then((res) => {
                         if (res.data?.evaluation) {
                           useStore.getState().setQuizEvaluation({

@@ -19,12 +19,16 @@ export async function login(page: Page, username: string) {
   await page.getByLabel(/Username|Login/i).fill(username);
   await page.click('button:has-text("Log in")');
   await expect(page).toHaveURL('/');
+  
+  // Wait for the dashboard stats API call to complete so dictionaries are populated in the store
+  await page.waitForResponse(response => response.url().includes('/stats') && response.status() === 200, { timeout: 10000 }).catch(() => {});
+  
   await page.evaluate(() => localStorage.setItem('cardbot_guideline_completed', 'true'));
 }
 
 export async function addWordsToDictionary(page: Page, words: string[]) {
   await page.goto('/dictionary');
-  await expect(page.locator('text=Vocabulary Deck')).toBeVisible();
+  await expect(page.getByText('Vocabulary Deck', { exact: true })).toBeVisible();
   
   const text = words.join('\n');
   await page.fill('textarea', text);

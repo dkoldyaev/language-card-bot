@@ -8,7 +8,7 @@ import { DefinitionEditRequestSchema } from './definition_edit.type';
 
 const router = Router();
 
-router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
+router.put('/:id', authMiddleware, async (req: Request<{ id: string }>, res: Response) => {
   const parseResult = DefinitionEditRequestSchema.safeParse(req.body);
   if (!parseResult.success) {
     return res.status(400).json({ error: 'Invalid request body' });
@@ -16,7 +16,7 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
 
   const { text } = parseResult.data;
   const { id: userId, username } = getAuthUser(req);
-  const definitionId = parseInt(req.params.id as string, 10);
+  const definitionId = parseInt(req.params.id, 10);
 
   if (Number.isNaN(definitionId)) {
     return res.status(400).json({ error: 'Invalid definition ID' });

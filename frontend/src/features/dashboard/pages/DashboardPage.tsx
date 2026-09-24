@@ -56,6 +56,8 @@ export default function Dashboard() {
       setDashboardStats(stats);
       return;
     }
+    if (!targetDictId || !activeDict) return;
+
     fetchDashboardStats(targetDictId)
       .then((stats) => {
         setDashboardStats(stats);
@@ -63,7 +65,7 @@ export default function Dashboard() {
       .catch((e) => {
         console.error('Failed to load dashboard stats:', e);
       });
-  }, [dictionary, guestAttempts, token, setDashboardStats, targetDictId]);
+  }, [dictionary, guestAttempts, token, setDashboardStats, targetDictId, activeDict]);
 
   useEffect(() => {
     loadStats();

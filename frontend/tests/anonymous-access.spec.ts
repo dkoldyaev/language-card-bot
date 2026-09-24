@@ -13,8 +13,25 @@ test.describe('Anonymous (Guest) Access Flow', () => {
 
   test('full guest journey: onboarding, presets, local quiz, second visit persistence, and account migration', async ({
     page,
+    request,
   }, testInfo) => {
     test.setTimeout(90000);
+
+    // Seed a preset to ensure one exists
+    const adminUsername = `admin_${Date.now()}_${testInfo.workerIndex}`;
+    await register(page, adminUsername, 'en', 'es');
+    await login(page, adminUsername);
+    const presetsNav = page.locator('nav').getByText('Presets');
+    await presetsNav.click();
+    await page.getByRole('button', { name: 'Create Preset' }).first().click();
+    const presetTitle = `Preset ES ${Date.now()}`;
+    await page.getByPlaceholder('e.g. 50 Essential Spanish Verbs').fill(presetTitle);
+    await page.getByRole('button', { name: 'Create Preset', exact: true }).click();
+    await expect(page.locator('.MuiCard-root').filter({ hasText: presetTitle })).toBeVisible();
+
+    // Logout so we become a guest again
+    await page.locator('button, [role="button"]').filter({ hasText: /Sign out|Logout/i }).first().click();
+    await expect(page).toHaveURL('/');
 
     // 1. Visit root with empty storage as first-time guest
     await page.goto('/');

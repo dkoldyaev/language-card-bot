@@ -299,7 +299,7 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
 // MIGRATE GUEST DATA
 // ==========================================
 
-router.post('/migrate-guest', authMiddleware, validateRequest(MigrateGuestRequestSchema), async (req: Request<{}, unknown, MigrateGuestRequest>, res: Response) => {
+router.post('/migrate-guest', authMiddleware, validateRequest(MigrateGuestRequestSchema), async (req: Request<Record<string, never>, unknown, MigrateGuestRequest>, res: Response) => {
   const { id: userId } = getAuthUser(req);
   try {
     const result = await migrateGuestData(userId, req.body);

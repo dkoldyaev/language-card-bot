@@ -51,7 +51,7 @@ export default function ActiveDictionaryLanguagesForm({
           <InputLabel id="target-language-label">{t('languages.targetLangLabel')}</InputLabel>
           <Select
             labelId="target-language-label"
-            value={targetLanguage}
+            value={targetLanguage || ''}
             label={t('languages.targetLangLabel')}
             onChange={(e) => onTargetLanguageChange(e.target.value as LanguageCode)}
             disabled={disabled}
@@ -73,7 +73,7 @@ export default function ActiveDictionaryLanguagesForm({
           <InputLabel id="base-language-label">{t('languages.nativeLangLabel')}</InputLabel>
           <Select
             labelId="base-language-label"
-            value={baseLanguage}
+            value={baseLanguage || ''}
             label={t('languages.nativeLangLabel')}
             onChange={(e) => onBaseLanguageChange(e.target.value as LanguageCode)}
             disabled={disabled}
