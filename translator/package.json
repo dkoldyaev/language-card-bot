@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
-    "test": "vitest run",
-    "test:cli": "tsx src/scripts/test-translator.ts",
     "cli": "tsx src/scripts/test-translator.ts",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "npm run test:ts && vitest run",
+    "test:cli": "tsx src/scripts/test-translator.ts",
     "test:ts": "tsc --noEmit"
   },
   "keywords": [],

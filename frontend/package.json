@@ -4,16 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "tsc -b && vite build",
+    "dev": "vite",
     "lint": "npx biome check src",
     "preview": "vite preview",
-    "test": "npm run test:unit && npm run test:e2e",
-    "test:unit": "vitest run",
-    "test:unit:watch": "vitest",
+    "test": "npm run test:ts && npm run test:unit && npm run test:e2e",
     "test:e2e": "playwright test",
     "test:e2e:watch": "playwright test --watch",
-    "test:ts": "tsc --noEmit"
+    "test:ts": "tsc --noEmit",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
