@@ -2,12 +2,12 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import { alpha, Box, Typography } from '@mui/material';
 import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
-import { AppButton, AppCard, AppTextField, radiusTokens, spacingTokens } from '../../../shared/ui';
+import { AppButton, AppCard, AppTextField, spacingTokens } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
+import { addGuestWordsLocally } from '../lib/guestDictionaryService';
 
 interface AddWordFormProps {
   dictionaryId?: number;
@@ -27,13 +27,18 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
   const targetDict = dictionaries.find((d) => d.id === targetDictId);
 
   const handleSubmitWords = async () => {
-    if (!token) return;
     const words = wordsText.split('\n').map((w) => w.trim()).filter(Boolean);
     if (words.length === 0) return;
 
     setSubmitting(true);
     try {
-      await apiClient.post('/add_word/batch', { words, dictionaryId: targetDictId });
+      if (!token) {
+        if (targetDict) {
+          await addGuestWordsLocally(words, targetDict);
+        }
+      } else {
+        await apiClient.post('/add_word/batch', { words, dictionaryId: targetDictId });
+      }
       trackEvent('Word Added');
       setWordsText('');
     } catch (error) {
@@ -75,60 +80,28 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
         </Box>
       </Box>
 
-      {!token ? (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-            p: 2,
-            borderRadius: `${radiusTokens.md}px`,
-            backgroundColor: (th) =>
-              th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.08) : '#F4F7FB',
-            border: '1px solid',
-            borderColor: 'divider',
-            flexWrap: 'wrap',
-          }}
-        >
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-            {t('dictionary.addWordsAuthNotice')}
-          </Typography>
-          <AppButton
-            component={RouterLink}
-            to="/login"
-            size="small"
-            variant="primary"
-          >
-            {t('auth.loginTitle')}
-          </AppButton>
-        </Box>
-      ) : (
-        <>
-          <AppTextField
-            label={t('dictionary.wordsToAddLabel')}
-            multiline
-            rows={4}
-            fullWidth
-            value={wordsText}
-            onChange={(e) => setWordsText(e.target.value)}
-            placeholder={t('dictionary.placeholderWords')}
-            disabled={submitting}
-            helperText={t('dictionary.helperText')}
-            sx={{ mb: spacingTokens.element_group_gap * 2 }}
-          />
+      <AppTextField
+        label={t('dictionary.wordsToAddLabel')}
+        multiline
+        rows={4}
+        fullWidth
+        value={wordsText}
+        onChange={(e) => setWordsText(e.target.value)}
+        placeholder={t('dictionary.placeholderWords')}
+        disabled={submitting}
+        helperText={t('dictionary.helperText')}
+        sx={{ mb: spacingTokens.element_group_gap * 2 }}
+      />
 
-          <AppButton
-            variant="primary"
-            disabled={!wordsText.trim() || submitting}
-            loading={submitting}
-            onClick={handleSubmitWords}
-            endIcon={<SendRoundedIcon />}
-          >
-            {submitting ? t('dictionary.submittingBtn') : t('dictionary.submitWordsBtn')}
-          </AppButton>
-        </>
-      )}
+      <AppButton
+        variant="primary"
+        disabled={!wordsText.trim() || submitting}
+        loading={submitting}
+        onClick={handleSubmitWords}
+        endIcon={<SendRoundedIcon />}
+      >
+        {submitting ? t('dictionary.submittingBtn') : t('dictionary.submitWordsBtn')}
+      </AppButton>
     </AppCard>
   );
 }

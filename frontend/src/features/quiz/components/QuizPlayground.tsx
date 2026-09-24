@@ -109,6 +109,7 @@ export default function QuizPlayground() {
     }
   }, [quizEvaluation?.result]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Clear suggestion when card changes
   useEffect(() => {
     setSuggestion('');
   }, [quizCard]);
