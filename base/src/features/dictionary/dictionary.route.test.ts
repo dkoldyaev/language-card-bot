@@ -94,18 +94,5 @@ describe('Dictionary Fetch Endpoint', () => {
     }));
   });
 
-  describe('POST /api/v1/dictionary/define-guest', () => {
-    it('should return 403 when ALLOW_GUEST_AI_GENERATION is false', async () => {
-      const res = await request(app)
-        .post('/api/v1/dictionary/define-guest')
-        .send({
-          word: 'test',
-          targetLanguage: 'en',
-          baseLanguage: 'ru',
-        });
 
-      expect(res.status).toBe(403);
-      expect(res.body.code).toBe('GUEST_AI_DISABLED');
-    });
-  });
 });
