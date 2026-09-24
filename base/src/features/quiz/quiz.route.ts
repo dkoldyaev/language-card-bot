@@ -8,13 +8,13 @@ import { publishEvent } from '../event_bus/event_bus.service';
 import type { QuizAnswerEvaluationMercureEvent, QuizCardMercureEvent, QuizDefinitionTranslationMercureEvent, QuizVariantsMercureEvent } from '../event_bus/event_bus.type';
 import { evaluateSuggestion } from './evaluation.service';
 import { generateQuizCard, getNextDefinition, getQuizVariants } from './quiz.service';
-import { 
-  QuizStartSchema, type QuizStartRequest,
-  QuizVariantsSchema, type QuizVariantsRequest,
-  QuizAnswerSchema, type QuizAnswerRequest,
-  QuizNextCardSchema, type QuizNextCardRequest,
-  QuizNextDefinitionSchema, type QuizNextDefinitionRequest,
-  QuizTranslateDefinitionSchema, type QuizTranslateDefinitionRequest
+import { type QuizAnswerRequest,
+  QuizAnswerSchema, type QuizNextCardRequest,
+  QuizNextCardSchema, type QuizNextDefinitionRequest,
+  QuizNextDefinitionSchema, type QuizStartRequest,
+  QuizStartSchema, type QuizTranslateDefinitionRequest, 
+  QuizTranslateDefinitionSchema, type QuizVariantsRequest,
+  QuizVariantsSchema 
 } from './quiz.type';
 
 const router = Router();
@@ -105,7 +105,6 @@ router.post('/variants', authMiddleware, validateRequest(QuizVariantsSchema), as
 
 router.post('/translate_definition', authMiddleware, validateRequest(QuizTranslateDefinitionSchema), async (req: Request<Record<string, string>, any, QuizTranslateDefinitionRequest>, res: Response) => {
   const user = getAuthUser(req);
-  const { dictionaryId } = req.body;
 
   try {
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
@@ -145,7 +144,7 @@ router.post('/translate_definition', authMiddleware, validateRequest(QuizTransla
 
 router.post('/answer', authMiddleware, validateRequest(QuizAnswerSchema), async (req: Request<Record<string, string>, any, QuizAnswerRequest>, res: Response) => {
   const user = getAuthUser(req);
-  const { suggestion, dictionaryId } = req.body;
+  const { suggestion } = req.body;
   try {
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
 
@@ -237,7 +236,6 @@ router.post('/next_card', authMiddleware, validateRequest(QuizNextCardSchema), a
 
 router.post('/next_definition', authMiddleware, validateRequest(QuizNextDefinitionSchema), async (req: Request<Record<string, string>, any, QuizNextDefinitionRequest>, res: Response) => {
   const user = getAuthUser(req);
-  const { dictionaryId } = req.body;
 
   try {
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });

@@ -1,15 +1,10 @@
 import { type Request, type Response, Router } from 'express';
-import { z } from 'zod';
-import { redisClient } from '../../core/cache';
-import { env } from '../../core/env';
 import { authMiddleware } from '../../middleware/auth';
-import { validateRequest } from '../../middleware/validate';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
 
 const router = Router();
 
-import type { Dictionary } from '@prisma/client';
 
 router.get('/', authMiddleware, async (req: Request<Record<string, never>, unknown, unknown, { dictionaryId: string }>, res: Response) => {
   const { id: userId } = getAuthUser(req);

@@ -3,7 +3,7 @@ import { authMiddleware } from '../../middleware/auth';
 import { validateRequest } from '../../middleware/validate';
 import { getAuthUser } from '../auth/auth.service';
 import { getDashboardStats } from './dashboard.service';
-import { DashboardStatsQuerySchema, type DashboardStatsQuery } from './dashboard.type';
+import { type DashboardStatsQuery, DashboardStatsQuerySchema } from './dashboard.type';
 
 const router = Router();
 

@@ -1,5 +1,4 @@
-import type { PrismaClient, UserState } from '@prisma/client';
-import jwt from 'jsonwebtoken';
+import type { PrismaClient, } from '@prisma/client';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type mockDeep, mockReset } from 'vitest-mock-extended';
