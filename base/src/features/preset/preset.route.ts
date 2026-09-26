@@ -11,6 +11,7 @@ import {
   getPresetById,
   listPresets,
   updatePreset,
+  invalidatePresetsCache,
 } from './preset.service';
 import {
   type ApplyPresetInput,
@@ -112,6 +113,17 @@ router.get('/:id', async (req: Request, res: Response) => {
 // ==========================================
 // 2. ADMIN-ONLY ROUTES
 // ==========================================
+
+// POST clear presets cache (Admin only)
+router.post('/clear_cache', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    await invalidatePresetsCache();
+    res.json({ message: 'Presets cache cleared successfully' });
+  } catch (error) {
+    console.error('Clear presets cache error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // POST create preset (Admin only)
 router.post('/', authMiddleware, adminMiddleware, validateRequest(CreatePresetSchema), async (req: Request<unknown, unknown, CreatePresetInput>, res: Response) => {

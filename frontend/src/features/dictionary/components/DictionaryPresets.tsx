@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   FormControl,
   InputLabel,
   MenuItem,
@@ -15,7 +14,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { isAxiosError } from 'axios';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
 import useStore, { type DictionaryItem, type DictionaryWord } from '../../../store/useStore';
@@ -35,8 +34,6 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
   const setDictionary = useStore((state) => state.setDictionary);
   const updateDictionaryItem = useStore((state) => state.updateDictionaryItem);
 
-  const [presets, setPresets] = useState<PresetItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [applyingId, setApplyingId] = useState<number | null>(null);
@@ -45,38 +42,14 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
   const [selectedTag, setSelectedTag] = useState<string>('all');
 
   const currentWords = useStore((state) => state.dictionary);
+  const storePresets = useStore((state) => state.presets);
 
   const targetLang = dictionary?.targetLanguage;
 
-  useEffect(() => {
-    if (!targetLang) {
-      setPresets([]);
-      return;
-    }
-
-    let isMounted = true;
-    setLoading(true);
-    setError(null);
-
-    apiClient
-      .get('/preset', { params: { for_language: targetLang } })
-      .then((res) => {
-        if (!isMounted) return;
-        setPresets(res.data.presets || []);
-      })
-      .catch((err) => {
-        if (!isMounted) return;
-        console.error('Failed to load presets for dictionary:', err);
-        setError(t('presets.failedApply'));
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [targetLang, t]);
+  const presets = useMemo(() => {
+    if (!targetLang) return [];
+    return storePresets.filter((p: PresetItem) => (p.for_language || p.forLanguage)?.toLowerCase() === targetLang.toLowerCase());
+  }, [storePresets, targetLang]);
 
   const { allTags, allLevels } = useMemo(() => {
     const tags = new Set<string>();
@@ -274,7 +247,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
                     color: 'primary.main',
                   }}
                 />
-                {!loading && presets.length > 0 && (
+                {presets.length > 0 && (
                   <Chip
                     label={t('presets.readyBadge', { count: presets.length })}
                     size="small"
@@ -339,14 +312,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
         )}
 
         {/* Presets Content */}
-        {loading ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 2 }}>
-            <CircularProgress size={20} />
-            <Typography variant="body2" color="text.secondary">
-              {t('presets.checkingPresets', { lang: dictionary.targetLanguage.toUpperCase() })}
-            </Typography>
-          </Box>
-        ) : presets.length === 0 ? (
+        {presets.length === 0 ? (
           <Box
             sx={{
               p: 2.5,

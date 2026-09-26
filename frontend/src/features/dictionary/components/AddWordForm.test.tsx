@@ -16,7 +16,6 @@ describe('AddWordForm', () => {
         { id: 2, name: 'Spanish Deck', targetLanguage: 'es', baseLanguage: 'ru', wordCount: 0, isActive: false },
       ],
       activeDictionaryId: 1,
-      selectedDictionaryId: 2,
     });
   });
 

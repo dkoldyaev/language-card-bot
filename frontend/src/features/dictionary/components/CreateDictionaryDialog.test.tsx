@@ -165,6 +165,5 @@ describe('CreateDictionaryDialog - native language defaults and cookie persisten
     expect(storeState.dictionaries[0].baseLanguage).toBe('en');
     expect(storeState.dictionaries[0].isActive).toBe(true);
     expect(storeState.activeDictionaryId).toBe(storeState.dictionaries[0].id);
-    expect(storeState.selectedDictionaryId).toBe(storeState.dictionaries[0].id);
   });
 });

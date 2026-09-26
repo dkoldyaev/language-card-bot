@@ -19,11 +19,11 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
   const [submitting, setSubmitting] = useState(false);
 
   const token = useStore((state) => state.token);
-  const selectedDictionaryId = useStore((state) => state.selectedDictionaryId);
+
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const dictionaries = useStore((state) => state.dictionaries);
 
-  const targetDictId = dictionaryId ?? selectedDictionaryId ?? activeDictionaryId ?? dictionaries[0]?.id;
+  const targetDictId = dictionaryId ?? activeDictionaryId;
   const targetDict = dictionaries.find((d) => d.id === targetDictId);
 
   const handleSubmitWords = async () => {

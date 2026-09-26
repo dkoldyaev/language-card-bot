@@ -84,10 +84,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
-      const activeDict = translations[locale] || translations.en;
-      const fallbackDict = translations.en;
+      const activeDict = translations[locale];
+      if (!activeDict) {
+        throw new Error(`Translations for locale "${locale}" are missing.`);
+      }
 
-      let template = activeDict[key] ?? fallbackDict[key] ?? key;
+      let template = activeDict[key];
+      if (template === undefined) {
+        throw new Error(`Missing translation key: "${key}" for locale "${locale}"`);
+      }
 
       if (params) {
         for (const [paramKey, value] of Object.entries(params)) {
@@ -101,7 +106,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   );
 
   const locales = useMemo(() => SUPPORTED_LOCALES.map((code) => LOCALES_INFO[code]), []);
-  const currentLocaleInfo = useMemo(() => LOCALES_INFO[locale] || LOCALES_INFO.en, [locale]);
+  const currentLocaleInfo = useMemo(() => {
+    const info = LOCALES_INFO[locale];
+    if (!info) {
+      throw new Error(`Locale info missing for locale "${locale}"`);
+    }
+    return info;
+  }, [locale]);
 
   const value = useMemo(
     () => ({
@@ -118,7 +129,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 }
 
 const defaultT = (key: string, params?: Record<string, string | number>) => {
-  let text = translations.en[key] || key;
+  let text = translations.en[key];
+  if (text === undefined) {
+    throw new Error(`Missing translation key: "${key}" in default locale "en"`);
+  }
   if (params) {
     Object.entries(params).forEach(([paramKey, paramValue]) => {
       text = text.replace(new RegExp(`{{${paramKey}}}`, 'g'), String(paramValue));

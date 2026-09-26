@@ -93,6 +93,10 @@ export const AppButton: React.FC<AppButtonProps> = ({
           '&:hover': {
             backgroundColor: 'primary.dark',
           },
+          '&.Mui-disabled': {
+            backgroundColor: 'primary.light',
+            color: 'rgba(255, 255, 255, 0.7)',
+          },
         };
     }
   };

@@ -23,7 +23,7 @@ import WordList from '../components/WordList';
 
 export default function DictionaryPage() {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(true);
+  const loading = useStore((state) => state.isDictionaryLoading);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isSavingTitle, setIsSavingTitle] = useState(false);
@@ -33,15 +33,13 @@ export default function DictionaryPage() {
   const token = useStore((state) => state.token);
   const setDictionary = useStore((state) => state.setDictionary);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
-  const selectedDictionaryId = useStore((state) => state.selectedDictionaryId);
-  const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
+  const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
   const dictionaries = useStore((state) => state.dictionaries);
   const setDictionaries = useStore((state) => state.setDictionaries);
   const removeDictionary = useStore((state) => state.removeDictionary);
   const updateDictionaryItem = useStore((state) => state.updateDictionaryItem);
 
-  const currentDictId = selectedDictionaryId ?? activeDictionaryId ?? dictionaries[0]?.id ?? null;
-  const currentDict = dictionaries.find((d) => d.id === currentDictId) || dictionaries[0];
+  const currentDict = dictionaries.find((d) => d.id === activeDictionaryId);
 
   useEffect(() => {
     if (titleRef.current && currentDict) {
@@ -56,34 +54,18 @@ export default function DictionaryPage() {
     }
   }, [loading, dictionaries.length, createDialogOpen]);
 
-  useEffect(() => {
-    const fetchId = currentDict?.id;
-    if (!fetchId) {
-      setLoading(false);
-      return;
-    }
+  const handleSelectDictionary = async (dictId: number) => {
     if (!token) {
-      setLoading(false);
-      const dictWords = useStore.getState().guestDictionaryWords[fetchId] || [];
-      setDictionary(dictWords);
-      return;
-    }
-    setLoading(true);
-    apiClient.get('/dictionary', { params: { dictionaryId: fetchId } })
-      .then((res) => {
-        if (res.data.dictionary) {
-          setDictionary(res.data.dictionary);
-        }
-      })
-      .catch((error) => console.error('Failed to load dictionary:', error))
-      .finally(() => setLoading(false));
-  }, [setDictionary, currentDict?.id, token]);
-
-  const handleSelectDictionary = (dictId: number) => {
-    setSelectedDictionaryId(dictId);
-    if (!token) {
+      setActiveDictionaryId(dictId);
       const dictWords = useStore.getState().guestDictionaryWords[dictId] || [];
       setDictionary(dictWords);
+      return;
+    }
+    
+    try {
+      await apiClient.post(`/dictionaries/${dictId}/select`);
+    } catch (error) {
+      console.error('Failed to select dictionary:', error);
     }
   };
 
@@ -280,7 +262,6 @@ export default function DictionaryPage() {
       {dictionaries.length > 0 && (
         <DictionarySwitcher
           dictionaries={dictionaries}
-          selectedDictionaryId={currentDictId}
           activeDictionaryId={activeDictionaryId}
           onSelectDictionary={handleSelectDictionary}
           onOpenCreateDialog={() => setCreateDialogOpen(true)}
@@ -292,7 +273,7 @@ export default function DictionaryPage() {
         <DictionaryPresets dictionary={currentDict} />
       )}
 
-      <AddWordForm dictionaryId={currentDictId ?? undefined} />
+      <AddWordForm dictionaryId={activeDictionaryId ?? undefined} />
       
       <WordList loading={loading} />
 
@@ -300,7 +281,7 @@ export default function DictionaryPage() {
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
         onCreated={(newDict) => {
-          setSelectedDictionaryId(newDict.id);
+          handleSelectDictionary(newDict.id);
         }}
       />
     </PageContainer>

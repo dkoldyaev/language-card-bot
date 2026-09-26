@@ -22,13 +22,11 @@ if (!root) {
 }
 
 createRoot(root).render(
-  <StrictMode>
-    <I18nProvider>
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <AppThemeProvider>
-          <App />
-        </AppThemeProvider>
-      </GoogleOAuthProvider>
-    </I18nProvider>
-  </StrictMode>,
+  <I18nProvider>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AppThemeProvider>
+        <App />
+      </AppThemeProvider>
+    </GoogleOAuthProvider>
+  </I18nProvider>,
 )

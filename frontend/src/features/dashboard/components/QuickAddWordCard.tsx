@@ -24,10 +24,10 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
 
   const token = useStore((state) => state.token);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
-  const selectedDictionaryId = useStore((state) => state.selectedDictionaryId);
+
   const dictionaries = useStore((state) => state.dictionaries);
 
-  const targetDictId = selectedDictionaryId ?? activeDictionaryId ?? dictionaries[0]?.id;
+  const targetDictId = activeDictionaryId;
   const targetDict = dictionaries.find((d) => d.id === targetDictId);
 
   const handleAdd = async (e?: React.FormEvent) => {
@@ -133,7 +133,7 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
           </Button>
         </Box>
       ) : (
-        <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', gap: spacingTokens.element_group_gap }}>
+        <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', gap: spacingTokens.element_group_gap, alignItems: 'stretch' }}>
           <AppTextField
             size="small"
             fullWidth
@@ -141,6 +141,7 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
             value={wordText}
             onChange={(e) => setWordText(e.target.value)}
             disabled={submitting}
+            sx={{height: '100%'}}
           />
           <AppButton
             type="submit"

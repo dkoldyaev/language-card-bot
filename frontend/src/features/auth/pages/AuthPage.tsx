@@ -13,7 +13,7 @@ import type { LanguageCode } from '../../../shared/i18n';
 import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
-import { AppButton, AppTextField, colorTokens, radiusTokens, spacingTokens } from '../../../shared/ui';
+import { AppButton, AppTextField, radiusTokens, spacingTokens } from '../../../shared/ui';
 import useStore, { type UserProfile } from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 import { performGuestMigration } from '../api/migrate';
@@ -215,12 +215,6 @@ export default function Auth() {
         }
       } else {
         // Registration
-        if (!baseLanguage || !targetLanguage) {
-          setError(t('auth.selectBothLanguages'));
-          setLoading(false);
-          return;
-        }
-
         const response = await apiClient.post('/auth/register', { username: username.trim() });
         const { token } = response.data;
 
@@ -274,35 +268,8 @@ export default function Auth() {
           </Box>
         </Box>
 
-        <Card sx={{ overflow: 'hidden' }}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '0.86fr 1.14fr' } }}>
-            <Box
-              sx={{
-                display: { xs: 'none', md: 'flex' },
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                minHeight: 520,
-                p: 5,
-                backgroundColor: (th) =>
-                  th.palette.mode === 'dark' ? colorTokens.hero.darkBg : colorTokens.hero.lightBg,
-                color: '#FFFFFF',
-              }}
-            >
-              <Typography variant="overline" sx={{ color: colorTokens.hero.accent, fontWeight: 800 }}>
-                {t('auth.heroOverline')}
-              </Typography>
-              <Box>
-                <Typography variant="h2" sx={{ color: '#FFFFFF', fontSize: '2.75rem', maxWidth: 330, fontWeight: 850 }}>
-                  {t('auth.heroTitle')}
-                </Typography>
-                <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 2, maxWidth: 315 }}>
-                  {t('auth.heroDesc')}
-                </Typography>
-              </Box>
-              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.52)' }}>
-                {t('auth.heroFooter')}
-              </Typography>
-            </Box>
+        <Card sx={{ overflow: 'hidden', maxWidth: 480, mx: 'auto' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
 
             <CardContent sx={{ p: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: { xs: 420, md: 520 } }}>
               {isTestAuth ? (
@@ -349,16 +316,6 @@ export default function Auth() {
                         autoComplete="username"
                         autoFocus
                       />
-
-                      {isRegisterRoute && (
-                        <ActiveDictionaryLanguagesForm
-                          targetLanguage={targetLanguage}
-                          baseLanguage={baseLanguage}
-                          onTargetLanguageChange={setTargetLanguage}
-                          onBaseLanguageChange={handleChangeBaseLanguage}
-                          disabled={loading}
-                        />
-                      )}
 
                       <AppButton
                         type="submit"

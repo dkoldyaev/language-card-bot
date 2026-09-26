@@ -159,9 +159,9 @@ interface AppState {
   settings: SettingsState | null;
   dictionaries: DictionaryItem[];
   activeDictionaryId: number | null;
-  selectedDictionaryId: number | null;
-  setSelectedDictionaryId: (selectedDictionaryId: number | null) => void;
+
   appState: AppSyncState | null;
+  isDictionaryLoading: boolean;
   dictionary: DictionaryWord[];
   guestQuizAttempts: GuestQuizAttempt[];
   guestDictionaryWords: Record<number, DictionaryWord[]>;
@@ -191,6 +191,7 @@ interface AppState {
   removeDictionary: (id: number) => void;
   updateDictionaryItem: (id: number, partial: Partial<DictionaryItem>) => void;
   setAppState: (appState: AppSyncState | null) => void;
+  setIsDictionaryLoading: (isLoading: boolean) => void;
   setDictionary: (dictionary: DictionaryWord[]) => void;
   addDictionaryWord: (word: DictionaryWord) => void;
   addDictionaryWords: (words: DictionaryWord[]) => void;
@@ -208,6 +209,8 @@ interface AppState {
   setQuizVariants: (variants: string[] | null) => void;
   hasSeenOnboarding: boolean;
   setHasSeenOnboarding: (hasSeen: boolean) => void;
+  presets: any[]; // Type should be PresetItem[] but we don't have it imported here. It's fine for now, or we can use any[]
+  setPresets: (presets: any[]) => void;
   reset: () => void;
 }
 
@@ -220,8 +223,9 @@ const initialState = {
   settings: null,
   dictionaries: [] as DictionaryItem[],
   activeDictionaryId: null as number | null,
-  selectedDictionaryId: null as number | null,
+
   appState: null,
+  isDictionaryLoading: true,
   dictionary: [] as DictionaryWord[],
   guestQuizAttempts: [] as GuestQuizAttempt[],
   guestDictionaryWords: {} as Record<number, DictionaryWord[]>,
@@ -230,6 +234,7 @@ const initialState = {
   quizTranslation: null,
   quizVariants: null,
   dashboardStats: null,
+  presets: [] as any[], // Using any[] temporarily, will be typed below
   themeMode: 'light' as 'light' | 'dark' | 'system',
   hasSeenOnboarding: false,
   hasCompletedGuestOnboarding: false,
@@ -298,18 +303,7 @@ const useStore = create<AppState>()(
           isActive: d.id === activeDictionaryId
         }))
       })),
-      setSelectedDictionaryId: (selectedDictionaryId) => set((state) => {
-        if (!state.token && selectedDictionaryId) {
-          const dict = state.dictionaries.find(d => d.id === selectedDictionaryId);
-          const baseLang = dict?.baseLanguage?.toLowerCase();
-          const dictWords = normalizeWords(state.guestDictionaryWords[selectedDictionaryId] || [], baseLang);
-          return {
-            selectedDictionaryId,
-            dictionary: dictWords,
-          };
-        }
-        return { selectedDictionaryId };
-      }),
+
       addDictionary: (dict) => set((state) => ({
         dictionaries: state.dictionaries.some(d => d.id === dict.id)
           ? state.dictionaries.map(d => d.id === dict.id ? dict : d)
@@ -322,7 +316,6 @@ const useStore = create<AppState>()(
           dictionaries: state.dictionaries.filter(d => d.id !== id),
           guestDictionaryWords: updatedGuestWords,
           activeDictionaryId: state.activeDictionaryId === id ? null : state.activeDictionaryId,
-          selectedDictionaryId: state.selectedDictionaryId === id ? null : state.selectedDictionaryId,
         };
       }),
       updateDictionaryItem: (id, partial) => set((state) => ({
@@ -351,14 +344,15 @@ const useStore = create<AppState>()(
           }))
         };
       }),
+      setIsDictionaryLoading: (isDictionaryLoading) => set({ isDictionaryLoading }),
       setDictionary: (dictionary) => set((state) => {
-        const normalizedDictionary = (dictionary || []).map((word) => {
-          const dict = state.dictionaries.find(d => d.id === state.selectedDictionaryId);
-          return normalizeWordDefinitions(word, dict?.baseLanguage?.toLowerCase());
-        });
+        const dict = state.dictionaries.find(d => d.id === state.activeDictionaryId);
+        const normalizedDictionary = (dictionary || []).map((word) => normalizeWordDefinitions(word, dict?.baseLanguage?.toLowerCase()));
+        
         const dictionaryWordIds = new Set(normalizedDictionary.map(w => w.id));
         const shouldResetQuiz = state.quizCard && !dictionaryWordIds.has(state.quizCard.wordId);
-        const currentDictId = state.selectedDictionaryId ?? state.activeDictionaryId ?? state.dictionaries[0]?.id;
+        
+        const currentDictId = state.activeDictionaryId;
         const updatedGuestWords = (!state.token && currentDictId)
           ? { ...state.guestDictionaryWords, [currentDictId]: normalizedDictionary }
           : state.guestDictionaryWords;
@@ -373,15 +367,16 @@ const useStore = create<AppState>()(
       setQuizTranslation: (translation) => set({ quizTranslation: translation }),
       setQuizVariants: (variants) => set({ quizVariants: variants }),
       setDashboardStats: (dashboardStats) => set({ dashboardStats }),
+      setPresets: (presets) => set({ presets }),
       addDictionaryWord: (word) => set((state) => {
-        const dict = state.dictionaries.find(d => d.id === state.selectedDictionaryId) ?? state.dictionaries[0];
+        const dict = state.dictionaries.find(d => d.id === state.activeDictionaryId);
         const normalized = normalizeWordDefinitions(word, dict?.baseLanguage?.toLowerCase());
         const exists = state.dictionary.some(w => w.id === normalized.id || w.text.toLowerCase() === normalized.text.toLowerCase());
         if (exists) return state;
         return { dictionary: [normalized, ...state.dictionary] };
       }),
       addDictionaryWords: (words) => set((state) => {
-        const dict = state.dictionaries.find(d => d.id === state.selectedDictionaryId) ?? state.dictionaries[0];
+        const dict = state.dictionaries.find(d => d.id === state.activeDictionaryId);
         const normalized = normalizeWords(words, dict?.baseLanguage?.toLowerCase());
         const existingIds = new Set(state.dictionary.map(w => w.id));
         const existingTexts = new Set(state.dictionary.map(w => w.text.toLowerCase()));
@@ -596,7 +591,6 @@ const useStore = create<AppState>()(
         dictionary: [],
         dictionaries: [],
         activeDictionaryId: null,
-        selectedDictionaryId: null,
         dashboardStats: null,
         quizCard: null,
         quizEvaluation: null,
@@ -645,9 +639,7 @@ const useStore = create<AppState>()(
             if (state.activeDictionaryId && state.activeDictionaryId > GUEST_ID_THRESHOLD) {
               state.activeDictionaryId = null;
             }
-            if (state.selectedDictionaryId && state.selectedDictionaryId > GUEST_ID_THRESHOLD) {
-              state.selectedDictionaryId = null;
-            }
+
             if (Array.isArray(state.dictionaries)) {
               state.dictionaries = state.dictionaries.filter(d => d.id < GUEST_ID_THRESHOLD);
             }

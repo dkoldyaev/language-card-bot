@@ -43,7 +43,6 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const addDictionary = useStore((state) => state.addDictionary);
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
-  const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
   const setDictionary = useStore((state) => state.setDictionary);
 
   const handleBaseLanguageChange = (newBase: LanguageCode) => {
@@ -93,10 +92,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
       }
 
       addDictionary(newDict);
-      if (newDict.isActive) {
-        setActiveDictionaryId(newDict.id);
-      }
-      setSelectedDictionaryId(newDict.id);
+      setActiveDictionaryId(newDict.id);
       setDictionary([]);
 
       if (onCreated) {

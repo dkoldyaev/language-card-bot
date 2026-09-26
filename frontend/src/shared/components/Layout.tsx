@@ -24,6 +24,36 @@ export default function Layout() {
   const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
   const setProfile = useStore((state) => state.setProfile);
   const isOffline = useStore((state) => state.isOffline);
+  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
+  const setIsDictionaryLoading = useStore((state) => state.setIsDictionaryLoading);
+
+  // Centralized dictionary fetcher: whenever the active dictionary changes (via `/dictionaries`, `/state/sync`, or Mercure), fetch its words.
+  useEffect(() => {
+    if (!token || !activeDictionaryId) {
+      if (!token) setIsDictionaryLoading(false);
+      return;
+    }
+    
+    setIsDictionaryLoading(true);
+    apiClient.get('/dictionary', { params: { dictionaryId: activeDictionaryId } })
+      .then((res) => {
+        if (res.data.dictionary) {
+          setDictionary(res.data.dictionary);
+        }
+      })
+      .catch((err) => console.error('Failed to load active dictionary:', err))
+      .finally(() => setIsDictionaryLoading(false));
+
+    // Also fetch presets for this dictionary's language
+    const activeDict = useStore.getState().dictionaries.find(d => d.id === activeDictionaryId);
+    if (activeDict) {
+      apiClient.get('/preset', { params: { for_language: activeDict.targetLanguage } })
+        .then((res) => {
+          useStore.getState().setPresets(res.data.presets || []);
+        })
+        .catch((err) => console.error('Failed to load presets:', err));
+    }
+  }, [token, activeDictionaryId, setDictionary, setIsDictionaryLoading]);
 
   useEffect(() => {
     if (!token) return;
@@ -42,37 +72,17 @@ export default function Layout() {
           
           if (nextActiveId) {
             setActiveDictionaryId(nextActiveId);
-            
-            // Fetch the actual dictionary words now that we know the correct ID
-            apiClient.get('/dictionary', { params: { dictionaryId: nextActiveId } })
-              .then((dictRes) => {
-                if (dictRes.data.dictionary) {
-                  setDictionary(dictRes.data.dictionary);
-                }
-              })
-              .catch((err) => console.error('Failed to load dictionary:', err));
-              
           } else if (res.data.dictionaries.length === 0) {
             // Self-heal: if backend has no dictionaries, clear the local fake ones
             setActiveDictionaryId(null);
-            setSelectedDictionaryId(null);
             setDictionary([]);
+            setIsDictionaryLoading(false);
           }
         }
       })
       .catch((error) => {
         console.error('Failed to load dictionaries:', error);
-        // Fallback for offline mode or network errors
-        const currentDictId = useStore.getState().activeDictionaryId;
-        if (currentDictId) {
-          apiClient.get('/dictionary', { params: { dictionaryId: currentDictId } })
-          .then((dictRes) => {
-            if (dictRes.data.dictionary) {
-              setDictionary(dictRes.data.dictionary);
-            }
-          })
-          .catch((err) => console.error('Failed to load dictionary fallback:', err));
-        }
+        setIsDictionaryLoading(false);
       });
 
     apiClient.get('/settings')
@@ -125,7 +135,7 @@ export default function Layout() {
               <Box component="img" src="/favicon.svg" alt="" sx={{ width: 28, height: 28 }} />
               <Typography sx={{ fontWeight: 800, letterSpacing: '-0.035em' }}>CardBot</Typography>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: spacingTokens.element_group_gap }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: spacingTokens.element_group_gap, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               <ThemeSwitcher />
               <DictionarySelector />
               <LocaleSwitcher />
@@ -144,6 +154,7 @@ export default function Layout() {
               justifyContent: 'flex-end',
               alignItems: 'center',
               gap: spacingTokens.element_group_gap * 1.5,
+              flexWrap: 'wrap',
             }}
           >
             <ThemeSwitcher />

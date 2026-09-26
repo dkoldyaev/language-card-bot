@@ -1,5 +1,5 @@
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded';
 import {
@@ -50,26 +50,48 @@ export default function Dashboard() {
   const targetDictId = activeDictionaryId ?? dictionaries[0]?.id;
   const activeDict = dictionaries.find((d) => d.id === targetDictId);
 
-  const loadStats = useCallback(() => {
+  const loadGuestStats = useCallback(() => {
     if (!token) {
       const stats = computeGuestDashboardStats(dictionary, guestAttempts);
       setDashboardStats(stats);
-      return;
     }
-    if (!targetDictId || !activeDict) return;
+  }, [dictionary, guestAttempts, token, setDashboardStats]);
 
-    fetchDashboardStats(targetDictId)
+  const loadAuthStats = useCallback((signal?: AbortSignal) => {
+    if (!token || !targetDictId) return;
+
+    fetchDashboardStats(targetDictId, signal)
       .then((stats) => {
         setDashboardStats(stats);
       })
-      .catch((e) => {
+      .catch((e: any) => {
+        if (e.name === 'CanceledError') return;
         console.error('Failed to load dashboard stats:', e);
       });
-  }, [dictionary, guestAttempts, token, setDashboardStats, targetDictId, activeDict]);
+  }, [token, targetDictId, setDashboardStats]);
+
+  const loadStats = useCallback(() => {
+    if (token) {
+      loadAuthStats();
+    } else {
+      loadGuestStats();
+    }
+  }, [token, loadAuthStats, loadGuestStats]);
 
   useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+    if (!token) {
+      loadGuestStats();
+    }
+  }, [token, loadGuestStats]);
+
+  useEffect(() => {
+    if (!token) return;
+    const controller = new AbortController();
+    loadAuthStats(controller.signal);
+    return () => {
+      controller.abort();
+    };
+  }, [token, loadAuthStats]);
 
   const hasQuizzes = (dashboardStats?.totalAttempts ?? 0) > 0;
   const isDeckEmpty = totalWords === 0;
@@ -99,15 +121,15 @@ export default function Dashboard() {
             }}
           >
             <AppCard variant="hero" padding="spacious">
-              <Typography variant="overline" sx={{ color: colorTokens.hero.accent, fontWeight: 800 }}>
+              <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 800 }}>
                 {t('dashboard.readyOverline')}
               </Typography>
-              <Typography variant="h4" sx={{ color: '#FFFFFF', mt: 0.5, mb: 1, fontWeight: 800 }}>
+              <Typography variant="h4" sx={{ color: 'text.primary', mt: 0.5, mb: 1, fontWeight: 800 }}>
                 {t('dashboard.readyTitle')}
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ color: colorTokens.hero.mutedText, maxWidth: 460, mb: spacingTokens.section_header_gap * 1.5 }}
+                sx={{ color: 'text.secondary', maxWidth: 460, mb: spacingTokens.section_header_gap * 1.5 }}
               >
                 {t('dashboard.readyEmptyDesc')}
               </Typography>
@@ -125,64 +147,7 @@ export default function Dashboard() {
             <QuickAddWordCard onWordAdded={loadStats} />
           </Box>
 
-          {/* 3 Step Guidance Card */}
-          <AppCard padding="compact">
-            <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: spacingTokens.element_group_gap * 2 }}>
-              {t('dashboard.onboardingTitle')}
-            </Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <CheckCircleRoundedIcon sx={{ color: colorTokens.learningStatus.mastered.color, flexShrink: 0 }} />
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {t('dashboard.step1', { name: activeDict?.name || 'Default' })}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    backgroundColor: alpha(colorTokens.brand.blue, 0.1),
-                    color: 'primary.main',
-                    display: 'grid',
-                    placeItems: 'center',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  2
-                </Box>
-                <Typography variant="body2" color="text.secondary">
-                  {t('dashboard.step2')}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    backgroundColor: (th) =>
-                      th.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
-                    color: (th) =>
-                      th.palette.mode === 'dark' ? 'text.secondary' : '#64748B',
-                    display: 'grid',
-                    placeItems: 'center',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  3
-                </Box>
-                <Typography variant="body2" color="text.secondary">
-                  {t('dashboard.step3')}
-                </Typography>
-              </Box>
-            </Box>
-          </AppCard>
+
 
           {/* Starter Presets Section */}
           {activeDict && (
@@ -205,13 +170,13 @@ export default function Dashboard() {
             }}
           >
             <AppCard variant="hero" padding="spacious">
-              <Typography variant="overline" sx={{ color: colorTokens.hero.accent, fontWeight: 800 }}>
+              <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 800 }}>
                 {t('dashboard.readyHeroTitle')}
               </Typography>
               <Typography
                 variant="h3"
                 sx={{
-                  color: '#FFFFFF',
+                  color: 'text.primary',
                   mt: 0.5,
                   mb: 1,
                   fontSize: { xs: '1.8rem', sm: '2.2rem' },
@@ -222,7 +187,7 @@ export default function Dashboard() {
               </Typography>
               <Typography
                 variant="body1"
-                sx={{ color: alpha('#FFFFFF', 0.8), maxWidth: 480, mb: spacingTokens.section_header_gap * 1.5 }}
+                sx={{ color: 'text.secondary', maxWidth: 480, mb: spacingTokens.section_header_gap * 1.5 }}
               >
                 {t('dashboard.readyHeroDesc', { count: totalWords })}
               </Typography>
@@ -337,13 +302,13 @@ export default function Dashboard() {
               }}
             >
               <Box>
-                <Typography variant="overline" sx={{ color: colorTokens.hero.accent, fontWeight: 800 }}>
+                <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 800 }}>
                   {t('dashboard.reviewDeck')}
                 </Typography>
-                <Typography variant="h4" sx={{ color: '#FFFFFF', fontWeight: 800, mt: 0.2 }}>
+                <Typography variant="h4" sx={{ color: 'text.primary', fontWeight: 800, mt: 0.2 }}>
                   {t('dashboard.readyTitle')}
                 </Typography>
-                <Typography variant="body2" sx={{ color: colorTokens.hero.mutedText, mt: 0.5 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
                   {t('dashboard.readyDesc')}
                 </Typography>
               </Box>
@@ -353,7 +318,6 @@ export default function Dashboard() {
                   <AppButton
                     variant="outline"
                     onClick={() => navigate('/quiz')}
-                    sx={{ color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.3)' }}
                   >
                     {t('dashboard.practiceMistakesBtn')}
                   </AppButton>

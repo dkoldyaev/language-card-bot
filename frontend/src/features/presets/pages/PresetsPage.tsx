@@ -82,23 +82,29 @@ export default function PresetsPage() {
   const [presetToDelete, setPresetToDelete] = useState<PresetItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchPresets = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await apiClient.get('/preset');
-      setPresets(res.data.presets || []);
-    } catch (err: unknown) {
-      const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
-      setError(message || t('presets.savePresetError'));
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
-
   useEffect(() => {
+    const controller = new AbortController();
+    
+    const fetchPresets = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await apiClient.get('/preset', { signal: controller.signal });
+        setPresets(res.data.presets || []);
+      } catch (err: unknown) {
+        if (isAxiosError(err) && err.name === 'CanceledError') return;
+        const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
+        setError(message || t('presets.savePresetError'));
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
     fetchPresets();
-  }, [fetchPresets]);
+    return () => controller.abort();
+  }, [t]);
 
   const { allTags, allLevels } = useMemo(() => {
     const tags = new Set<string>();

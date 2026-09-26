@@ -24,7 +24,6 @@ describe('DictionaryPage', () => {
         { id: 2, name: 'Spanish Deck', targetLanguage: 'es', baseLanguage: 'ru', wordCount: 0, isActive: false },
       ],
       activeDictionaryId: 1,
-      selectedDictionaryId: 1,
       dictionary: [
         { id: 101, text: 'apple', definitions: [] },
       ],
@@ -43,9 +42,7 @@ describe('DictionaryPage', () => {
     renderPage();
 
     expect(screen.getByRole('heading', { level: 1, name: 'English Deck' })).toBeInTheDocument();
-    expect(apiClient.get).toHaveBeenCalledWith('/dictionary', {
-      params: { dictionaryId: 1 },
-    });
+
   });
 
   it('switches working dictionary without altering active learning language', async () => {
@@ -65,15 +62,12 @@ describe('DictionaryPage', () => {
     const spanishBtn = screen.getByText('Spanish Deck');
     await user.click(spanishBtn);
 
-    // Should fetch words for dictionary 2
-    expect(getSpy).toHaveBeenCalledWith('/dictionary', {
-      params: { dictionaryId: 2 },
-    });
+    // Should NOT fetch words directly
+    expect(getSpy).not.toHaveBeenCalledWith('/dictionary', expect.anything());
 
-    // CRITICAL: activeDictionaryId must NOT change and /select must NOT be called
+    // CRITICAL: activeDictionaryId must NOT change directly, and /select MUST be called
     expect(useStore.getState().activeDictionaryId).toBe(1);
-    expect(useStore.getState().selectedDictionaryId).toBe(2);
-    expect(postSpy).not.toHaveBeenCalledWith(expect.stringContaining('/select'), expect.anything());
+    expect(postSpy).toHaveBeenCalledWith(expect.stringContaining('/select'));
   });
 
   it('toggles edit mode when pencil icon is clicked and saves new name', async () => {
@@ -144,7 +138,6 @@ describe('DictionaryPage', () => {
         { id: 1, name: 'Guest English Deck', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true },
       ],
       activeDictionaryId: 1,
-      selectedDictionaryId: 1,
       dictionary: [
         { id: 101, text: 'guest_word', definitions: [] },
       ],

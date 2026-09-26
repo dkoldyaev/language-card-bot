@@ -54,7 +54,7 @@ apiClient.interceptors.response.use(
 
     if (error?.isGuestDictionaryMock) {
       const store = useStore.getState();
-      const currentDictId = error.params?.dictionaryId ?? store.selectedDictionaryId ?? store.activeDictionaryId ?? store.dictionaries[0]?.id;
+      const currentDictId = error.params?.dictionaryId ?? store.activeDictionaryId;
       const dictWords = (currentDictId && store.guestDictionaryWords[currentDictId]) || store.dictionary || [];
       return Promise.resolve({ data: { dictionary: dictWords } });
     }

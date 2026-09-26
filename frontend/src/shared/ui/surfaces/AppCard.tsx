@@ -1,6 +1,5 @@
 import { Card, CardContent, type CardProps, type Theme } from '@mui/material';
 import type React from 'react';
-import { colorTokens } from '../tokens/colors';
 import { radiusTokens } from '../tokens/radii';
 import { spacingTokens } from '../tokens/spacing';
 
@@ -37,11 +36,13 @@ export const AppCard: React.FC<AppCardProps> = ({
     switch (variant) {
       case 'hero':
         return {
-          backgroundColor: (th: Theme) =>
-            th.palette.mode === 'dark' ? colorTokens.hero.darkBg : colorTokens.hero.lightBg,
-          color: colorTokens.hero.text,
-          border: 'none',
-          boxShadow: '0 18px 38px rgba(23, 32, 51, 0.16)',
+          backgroundColor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: (th: Theme) =>
+            th.palette.mode === 'dark'
+              ? '0 12px 32px rgba(0, 0, 0, 0.3)'
+              : '0 12px 30px rgba(23, 32, 51, 0.08)',
         };
       case 'interactive':
         return {

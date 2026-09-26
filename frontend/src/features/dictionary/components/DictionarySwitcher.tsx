@@ -14,7 +14,7 @@ import type { DictionaryItem } from '../../../store/useStore';
 
 interface DictionarySwitcherProps {
   dictionaries: DictionaryItem[];
-  selectedDictionaryId: number | null;
+
   activeDictionaryId: number | null;
   onSelectDictionary: (dictId: number) => void;
   onOpenCreateDialog: () => void;
@@ -23,7 +23,6 @@ interface DictionarySwitcherProps {
 
 export default function DictionarySwitcher({
   dictionaries,
-  selectedDictionaryId,
   activeDictionaryId,
   onSelectDictionary,
   onOpenCreateDialog,
@@ -51,8 +50,8 @@ export default function DictionarySwitcher({
         }}
       >
         {dictionaries.map((dict) => {
-          const isSelected = dict.id === selectedDictionaryId;
-          const isActiveDeck = dict.id === activeDictionaryId;
+          const isSelected = dict.id === activeDictionaryId;
+          const isActiveDeck = isSelected;
 
           return (
             <Box

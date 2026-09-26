@@ -14,7 +14,6 @@ describe('DictionarySwitcher', () => {
     render(
       <DictionarySwitcher
         dictionaries={mockDictionaries}
-        selectedDictionaryId={1}
         activeDictionaryId={1}
         onSelectDictionary={vi.fn()}
         onOpenCreateDialog={vi.fn()}
@@ -36,7 +35,6 @@ describe('DictionarySwitcher', () => {
     render(
       <DictionarySwitcher
         dictionaries={mockDictionaries}
-        selectedDictionaryId={1}
         activeDictionaryId={1}
         onSelectDictionary={onSelect}
         onOpenCreateDialog={vi.fn()}
@@ -54,7 +52,6 @@ describe('DictionarySwitcher', () => {
     render(
       <DictionarySwitcher
         dictionaries={mockDictionaries}
-        selectedDictionaryId={1}
         activeDictionaryId={1}
         onSelectDictionary={vi.fn()}
         onOpenCreateDialog={onOpen}
@@ -72,7 +69,6 @@ describe('DictionarySwitcher', () => {
     render(
       <DictionarySwitcher
         dictionaries={mockDictionaries}
-        selectedDictionaryId={1}
         activeDictionaryId={1}
         onSelectDictionary={vi.fn()}
         onOpenCreateDialog={vi.fn()}

@@ -51,6 +51,7 @@ export default function QuizEmptyState() {
                 color: colorTokens.brand.ink,
                 backgroundColor: colorTokens.hero.accent,
                 borderRadius: '50%',
+                flexShrink: 0,
               }}
             >
               <LockOutlinedIcon sx={{ fontSize: 28 }} />
@@ -87,6 +88,7 @@ export default function QuizEmptyState() {
                       borderRadius: '50%',
                       color: 'primary.main',
                       backgroundColor: alpha(colorTokens.brand.blue, 0.12),
+                      flexShrink: 0,
                     }}
                   >
                     <CheckRoundedIcon sx={{ fontSize: 15 }} />
