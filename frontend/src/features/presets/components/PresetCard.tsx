@@ -177,6 +177,7 @@ export default function PresetCard({
           {/* Title */}
           <Typography
             variant="subtitle1"
+            component="h4"
             sx={{ fontWeight: 800, lineHeight: 1.25, mb: preset.description ? 0.5 : 1 }}
           >
             {preset.title}

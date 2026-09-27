@@ -233,7 +233,7 @@ export default function DictionaryPresets({ dictionary, onPresetApplied }: Dicti
             </Box>
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 700 }}>
                   {t('presets.availablePresetsTitle')}
                 </Typography>
                 <Chip

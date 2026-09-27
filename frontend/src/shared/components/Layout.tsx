@@ -1,7 +1,6 @@
 import { Alert, alpha, Box, Button, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
-import { GuidelineController } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import { useTranslation } from '../i18n/I18nContext';
@@ -10,6 +9,10 @@ import DictionarySelector from './DictionarySelector';
 import LocaleSwitcher from './LocaleSwitcher';
 import Sidebar from './Sidebar';
 import ThemeSwitcher from './ThemeSwitcher';
+
+const GuidelineController = lazy(
+  () => import('../../features/guideline/components/GuidelineController')
+);
 
 export default function Layout() {
   const theme = useTheme();
@@ -21,7 +24,6 @@ export default function Layout() {
   const setAppState = useStore((state) => state.setAppState);
   const setDictionaries = useStore((state) => state.setDictionaries);
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
-  const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
   const setProfile = useStore((state) => state.setProfile);
   const isOffline = useStore((state) => state.isOffline);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
@@ -100,11 +102,13 @@ export default function Layout() {
         }
       })
       .catch((error) => console.error('Failed to sync state:', error));
-  }, [token, setDictionary, setSettings, setAppState, setDictionaries, setActiveDictionaryId, setProfile, setSelectedDictionaryId]);
+  }, [token, setDictionary, setSettings, setAppState, setDictionaries, setActiveDictionaryId, setProfile, setIsDictionaryLoading]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
-      <GuidelineController />
+      <Suspense fallback={null}>
+        <GuidelineController />
+      </Suspense>
       <Sidebar />
       <Box
         component="main"

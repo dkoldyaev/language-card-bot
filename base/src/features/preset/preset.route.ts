@@ -9,9 +9,9 @@ import {
   createPreset,
   deletePreset,
   getPresetById,
+  invalidatePresetsCache,
   listPresets,
   updatePreset,
-  invalidatePresetsCache,
 } from './preset.service';
 import {
   type ApplyPresetInput,
@@ -115,7 +115,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 // ==========================================
 
 // POST clear presets cache (Admin only)
-router.post('/clear_cache', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+router.post('/clear_cache', authMiddleware, adminMiddleware, async (_req: Request, res: Response) => {
   try {
     await invalidatePresetsCache();
     res.json({ message: 'Presets cache cleared successfully' });

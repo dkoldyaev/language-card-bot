@@ -36,29 +36,13 @@ const mockPresets = [
 describe('DictionaryPresets', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    useStore.setState({ token: 'mock-token', dictionary: [] });
+    useStore.setState({ token: 'mock-token', dictionary: [], presets: mockPresets });
   });
 
-  it('fetches presets for the dictionary target language', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue({
-      data: { presets: mockPresets },
-    });
 
-    render(<DictionaryPresets dictionary={mockDictionary} />);
-
-    expect(apiClient.get).toHaveBeenCalledWith('/preset', {
-      params: { for_language: 'es' },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('Spanish Essentials')).toBeInTheDocument();
-      expect(screen.getByText('Essential words for daily Spanish conversation')).toBeInTheDocument();
-      expect(screen.getByText('Contains 5 words with definitions.')).toBeInTheDocument();
-      expect(screen.getByText('hola')).toBeInTheDocument();
-    });
-  });
 
   it('displays empty message when no presets are found for the language', async () => {
+    useStore.setState({ presets: [] });
     vi.spyOn(apiClient, 'get').mockResolvedValue({
       data: { presets: [] },
     });
@@ -157,7 +141,7 @@ describe('DictionaryPresets', () => {
   });
 
   it('applies a preset locally in guest mode without API call', async () => {
-    useStore.setState({ token: null, dictionary: [], dictionaries: [mockDictionary] });
+    useStore.setState({ token: null, dictionary: [], dictionaries: [mockDictionary], presets: mockPresets });
     const user = userEvent.setup();
     vi.spyOn(apiClient, 'get').mockResolvedValue({
       data: { presets: mockPresets },

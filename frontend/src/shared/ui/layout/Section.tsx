@@ -35,7 +35,7 @@ export const Section: React.FC<SectionProps> = ({
           }}
         >
           {typeof title === 'string' ? (
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: 'text.secondary', letterSpacing: '0.06em' }}>
+            <Typography variant="subtitle2" component="h3" sx={{ fontWeight: 800, textTransform: 'uppercase', color: 'text.secondary', letterSpacing: '0.06em' }}>
               {title}
             </Typography>
           ) : (

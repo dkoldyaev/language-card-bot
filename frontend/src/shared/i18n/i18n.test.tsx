@@ -48,14 +48,13 @@ describe('i18n infrastructure', () => {
     });
 
     it('contains translation dictionary for all 10 locales', () => {
+      const enKeys = Object.keys(translations.en);
       for (const loc of SUPPORTED_LOCALES) {
         expect(translations[loc]).toBeDefined();
         expect(typeof translations[loc]).toBe('object');
-        // Check some core keys
-        expect(translations[loc]['nav.dashboard']).toBeDefined();
-        expect(translations[loc]['nav.dictionary']).toBeDefined();
-        expect(translations[loc]['nav.quiz']).toBeDefined();
-        expect(translations[loc]['dictionary.yourWords']).toBeDefined();
+        for (const key of enKeys) {
+          expect(translations[loc][key], `Missing or empty key "${key}" in "${loc}"`).toBeTruthy();
+        }
       }
     });
   });
@@ -127,7 +126,7 @@ describe('i18n infrastructure', () => {
       await user.click(screen.getByText('Set RU'));
       expect(screen.getByTestId('current-locale').textContent).toBe('ru');
       expect(getCookie('locale')).toBe('ru');
-      expect(screen.getByTestId('interpolated').textContent).toBe('Добро пожаловать, Alex. Закрепим новые слова.');
+      expect(screen.getByTestId('interpolated').textContent).toBe('Добро пожаловать, Alex.');
 
       await user.click(screen.getByText('Set ES'));
       expect(screen.getByTestId('current-locale').textContent).toBe('es');

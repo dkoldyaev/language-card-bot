@@ -38,7 +38,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
           <Typography sx={{ color: '#FFFFFF', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.04em' }}>
             CardBot
           </Typography>
-          <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.58), display: 'block', mt: 0.2 }}>
+          <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.8), display: 'block', mt: 0.2 }}>
             {t('nav.brandSubtitle')}
           </Typography>
         </Box>
@@ -238,12 +238,12 @@ export default function Sidebar() {
       </Box>
 
       <Box sx={{ px: spacingTokens.block_inner_padding_compact.sm, pb: 1 }}>
-        <Typography variant="overline" sx={{ color: alpha('#FFFFFF', 0.42), fontSize: '0.64rem' }}>
+        <Typography variant="overline" sx={{ color: alpha('#FFFFFF', 0.78), fontSize: '0.64rem' }}>
           {t('nav.workspace')}
         </Typography>
       </Box>
 
-      <List sx={{ px: spacingTokens.element_group_gap * 1.5, pt: 0, flexGrow: 1 }}>
+      <List component="div" sx={{ px: spacingTokens.element_group_gap * 1.5, pt: 0, flexGrow: 1 }}>
         {currentNavItems.map((item) => {
           const isActive = location.pathname === item.path;
           const isDisabled = item.path === '/quiz' && !hasWords;
@@ -265,7 +265,7 @@ export default function Sidebar() {
                 mb: spacingTokens.element_group_gap,
                 px: spacingTokens.element_group_gap * 1.5,
                 borderRadius: `${radiusTokens.md}px`,
-                color: isDisabled ? alpha('#FFFFFF', 0.28) : isActive ? '#FFFFFF' : alpha('#FFFFFF', 0.65),
+                color: isDisabled ? alpha('#FFFFFF', 0.38) : isActive ? '#FFFFFF' : alpha('#FFFFFF', 0.88),
                 backgroundColor: isActive ? alpha('#FFFFFF', 0.12) : 'transparent',
                 cursor: isDisabled ? 'not-allowed' : 'pointer',
                 '&:hover': {
@@ -306,7 +306,7 @@ export default function Sidebar() {
           <>
             {profile && (
               <Box sx={{ px: 1.25, pb: 1.5 }}>
-                <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.5), display: 'block', mb: 0.25 }}>
+                <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.78), display: 'block', mb: 0.25 }}>
                   {t('nav.learningAs')}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#FFFFFF', fontWeight: 800 }} noWrap>
@@ -320,7 +320,7 @@ export default function Sidebar() {
                 minHeight: 44,
                 borderRadius: `${radiusTokens.md}px`,
                 px: spacingTokens.element_group_gap * 1.5,
-                color: alpha('#FFFFFF', 0.7),
+                color: alpha('#FFFFFF', 0.88),
                 '&:hover': {
                   color: '#FFFFFF',
                   backgroundColor: alpha('#FFFFFF', 0.075),

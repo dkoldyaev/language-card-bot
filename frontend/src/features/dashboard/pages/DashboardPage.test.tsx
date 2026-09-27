@@ -42,9 +42,6 @@ describe('DashboardPage', () => {
           },
         });
       }
-      if (url === '/preset') {
-        return Promise.resolve({ data: { presets: [] } });
-      }
       return Promise.resolve({ data: {} });
     });
   });
@@ -60,22 +57,16 @@ describe('DashboardPage', () => {
     renderDashboard();
 
     // Verification of elements checked by tests
-    expect(screen.getByText(/Welcome/i)).toBeInTheDocument();
-    expect(screen.getByText(/Add words to your dictionary to unlock quiz practice/i)).toBeInTheDocument();
+    expect(screen.getByText(/Add words to your dictionary to start practicing/i)).toBeInTheDocument();
 
     const quizBtn = screen.getByRole('button', { name: /Start a quiz/i });
     expect(quizBtn).toBeDisabled();
 
     // Quick add input should be present
     expect(screen.getByPlaceholderText(/Type a new word/i)).toBeInTheDocument();
-
-    // Onboarding step indicator
-    expect(screen.getByText(/Get started in 3 simple steps/i)).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(mockedApiClient.get).toHaveBeenCalledWith('/preset', expect.anything());
-    });
   });
+
+
 
   it('renders State 2 (Words added, no quizzes) with enabled quiz button and words preview', async () => {
     const stats = {

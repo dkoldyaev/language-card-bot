@@ -17,7 +17,7 @@ import {
 import type { Theme } from '@mui/material/styles';
 import { isAxiosError } from 'axios';
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
 import { SUPPORTED_LOCALES } from '../../../shared/i18n/types';

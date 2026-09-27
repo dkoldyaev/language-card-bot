@@ -124,7 +124,7 @@ export default function Dashboard() {
               <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 800 }}>
                 {t('dashboard.readyOverline')}
               </Typography>
-              <Typography variant="h4" sx={{ color: 'text.primary', mt: 0.5, mb: 1, fontWeight: 800 }}>
+              <Typography variant="h4" component="h2" sx={{ color: 'text.primary', mt: 0.5, mb: 1, fontWeight: 800 }}>
                 {t('dashboard.readyTitle')}
               </Typography>
               <Typography
@@ -175,6 +175,7 @@ export default function Dashboard() {
               </Typography>
               <Typography
                 variant="h3"
+                component="h2"
                 sx={{
                   color: 'text.primary',
                   mt: 0.5,
@@ -305,7 +306,7 @@ export default function Dashboard() {
                 <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 800 }}>
                   {t('dashboard.reviewDeck')}
                 </Typography>
-                <Typography variant="h4" sx={{ color: 'text.primary', fontWeight: 800, mt: 0.2 }}>
+                <Typography variant="h4" component="h2" sx={{ color: 'text.primary', fontWeight: 800, mt: 0.2 }}>
                   {t('dashboard.readyTitle')}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>

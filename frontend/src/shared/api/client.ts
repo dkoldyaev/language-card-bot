@@ -79,7 +79,6 @@ apiClient.interceptors.response.use(
           if (match) {
             const id = Number(match[1]);
             store.setActiveDictionaryId(id);
-            store.setSelectedDictionaryId(id);
             const dictWords = store.guestDictionaryWords[id] || [];
             store.setDictionary(dictWords);
           }
@@ -102,7 +101,6 @@ apiClient.interceptors.response.use(
         if (newDict.isActive) {
           store.setActiveDictionaryId(newDict.id);
         }
-        store.setSelectedDictionaryId(newDict.id);
         store.setDictionary([]);
         return Promise.resolve({ data: { dictionary: newDict } });
       }

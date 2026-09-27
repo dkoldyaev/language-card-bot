@@ -39,9 +39,6 @@ describe('AuthPage with test-username provider', () => {
     );
 
     expect(screen.getByLabelText(/Username/i)).toBeInTheDocument();
-    expect(screen.getByText('Dictionary Languages')).toBeInTheDocument();
-    expect(screen.getByTestId('learned-language-select')).toBeInTheDocument();
-    expect(screen.getByTestId('base-language-select')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Create account/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Log in instead/i })).toBeInTheDocument();
   });

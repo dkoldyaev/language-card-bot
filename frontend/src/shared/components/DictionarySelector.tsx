@@ -31,7 +31,6 @@ export default function DictionarySelector() {
   const dictionaries = useStore((state) => state.dictionaries);
   const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
-  const setSelectedDictionaryId = useStore((state) => state.setSelectedDictionaryId);
   const setDictionary = useStore((state) => state.setDictionary);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -60,7 +59,6 @@ export default function DictionarySelector() {
 
     if (!token) {
       setActiveDictionaryId(dictId);
-      setSelectedDictionaryId(dictId);
       const dictWords = useStore.getState().guestDictionaryWords[dictId] || [];
       setDictionary(dictWords);
       return;
@@ -69,7 +67,6 @@ export default function DictionarySelector() {
     try {
       await apiClient.post(`/dictionaries/${dictId}/select`);
       setActiveDictionaryId(dictId);
-      setSelectedDictionaryId(dictId);
 
       // Fetch words for newly selected dictionary
       const res = await apiClient.get('/dictionary');
@@ -87,7 +84,6 @@ export default function DictionarySelector() {
         onClick={handleOpenMenu}
         variant="outlined"
         size="small"
-        aria-label={t('dictionary.selectDictionary')}
         data-testid="dictionary-selector-button"
         data-tour="dictionary-selector"
         endIcon={<KeyboardArrowDownRoundedIcon fontSize="small" />}

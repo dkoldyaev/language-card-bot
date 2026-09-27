@@ -26,8 +26,8 @@ describe('AddWordForm', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Add words to Spanish Deck')).toBeInTheDocument();
-    expect(screen.getByText(/Target language: ES/i)).toBeInTheDocument();
+    expect(screen.getByText('Add words to English Deck')).toBeInTheDocument();
+    expect(screen.getByText(/Target language: EN/i)).toBeInTheDocument();
   });
 
   it('submits words with the target dictionaryId when authenticated', async () => {
@@ -49,19 +49,27 @@ describe('AddWordForm', () => {
     expect(postSpy).toHaveBeenCalledTimes(1);
     expect(postSpy).toHaveBeenCalledWith('/add_word/batch', {
       words: ['hola', 'adios'],
-      dictionaryId: 2,
+      dictionaryId: 1,
     });
   });
 
-  it('displays auth notice and hides input when not logged in', () => {
+  it('submits words locally when not logged in', async () => {
     useStore.setState({ token: null });
+    const user = userEvent.setup();
+    const postSpy = vi.spyOn(apiClient, 'post');
+
     render(
       <MemoryRouter>
         <AddWordForm />
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Sign in to add new words/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/Words to add/i)).not.toBeInTheDocument();
+    const input = screen.getByLabelText(/Words to add/i);
+    await user.type(input, 'guestword');
+    
+    const submitBtn = screen.getByRole('button', { name: /Submit Words/i });
+    await user.click(submitBtn);
+
+    expect(postSpy).not.toHaveBeenCalled();
   });
 });

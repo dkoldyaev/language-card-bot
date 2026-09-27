@@ -2,7 +2,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import {
   Alert, Box, Button, Card, CardContent, CircularProgress, Typography,
 } from '@mui/material';
-import { type CredentialResponse, GoogleLogin } from '@react-oauth/google';
+import { type CredentialResponse, GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { isAxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
@@ -29,7 +29,9 @@ interface AuthData {
   user: AuthUserData;
 }
 
-export default function Auth() {
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+function AuthContent() {
   const { t, locale } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -438,5 +440,13 @@ export default function Auth() {
         loading={merging}
       />
     </Box>
+  );
+}
+
+export default function Auth() {
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthContent />
+    </GoogleOAuthProvider>
   );
 }

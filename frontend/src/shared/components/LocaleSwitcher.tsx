@@ -51,7 +51,7 @@ export default function LocaleSwitcher({
         onClick={handleOpen}
         variant={variant}
         size={size}
-        aria-label="Change language"
+        aria-label={`Change language (${currentLocaleInfo.code.toUpperCase()})`}
         data-testid="locale-switcher-button"
         data-tour="locale-switcher"
         endIcon={<KeyboardArrowDownRoundedIcon fontSize="small" />}

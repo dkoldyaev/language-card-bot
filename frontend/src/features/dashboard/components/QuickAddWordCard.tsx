@@ -71,7 +71,7 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
           <AddRoundedIcon fontSize="small" />
         </Box>
         <Box>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+          <Typography variant="subtitle2" component="h3" sx={{ fontWeight: 800 }}>
             {t('dashboard.quickAddTitle')}
           </Typography>
           {targetDict && (

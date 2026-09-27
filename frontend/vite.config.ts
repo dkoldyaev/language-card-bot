@@ -67,6 +67,7 @@ export default defineConfig({
       },
     },
     preview: {
+      host: true,
       port: Number(process.env.FRONTEND_PORT),
       allowedHosts: allowedHosts ? [...allowedHosts] : undefined,
     },
