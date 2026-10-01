@@ -41,6 +41,7 @@ router.get('/', authMiddleware, async (req: Request<Record<string, never>, unkno
         definitions: {
           include: {
             translation: true,
+            images: true,
             presets: {
               select: {
                 id: true,

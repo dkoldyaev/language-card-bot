@@ -17,6 +17,20 @@ export class MockProvider implements ILLMProvider {
       ? options.jsonFormat 
       : JSON.stringify(options.jsonFormat);
 
+    // If schema specifies keywords, return extracted keywords
+    if (formatStr.includes('keywords')) {
+      const match = options.prompt.match(/"([^"]+)"/);
+      const text = match ? match[1] : options.prompt;
+      const tokens = text
+        .replace(/[^\p{L}\p{N}\s]/gu, '')
+        .split(/\s+/)
+        .filter((w) => w.length > 3)
+        .slice(0, 3);
+      return {
+        keywords: tokens.length > 0 ? tokens : ['image', 'card'],
+      };
+    }
+
     // If schema specifies filteredDefinitions, return filtered definitions
     if (formatStr.includes('filteredDefinitions')) {
       const wordMatch = options.prompt.match(/Target word:\s*"([^"]+)"/i) || options.prompt.match(/word\s+"([^"]+)"/i);

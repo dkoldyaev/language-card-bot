@@ -6,7 +6,8 @@ export const appEvents = new EventEmitter();
 export const Events = {
   WORDS_LIST_ADDED: 'words_list_added',
   DEFINITION_ADDED: 'definition_added',
-  TRANSLATION_ADDED: 'translation_added'
+  TRANSLATION_ADDED: 'translation_added',
+  IMAGE_ADDED: 'image_added'
 } as const;
 
 export interface AddedWordItem {
@@ -44,4 +45,15 @@ export interface TranslationAddedPayload {
   username: string;
   wordId: number;
   definitions: TranslationAddedDefinitionItem[];
+}
+
+export interface ImageAddedDefinitionItem {
+  id: number;
+  images: { id: number; url: string; source: string }[];
+}
+
+export interface ImageAddedPayload {
+  username?: string;
+  wordId?: number;
+  definitions: ImageAddedDefinitionItem[];
 }

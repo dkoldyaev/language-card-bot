@@ -22,6 +22,8 @@ import './features/add_word/add_word.listener';
 import './features/definition_add/definition_add.listener';
 import './features/definition_translate_edit/definition_translate.listener';
 import './features/quiz/quiz_cleanup.worker';
+import './features/image/image.worker';
+import './features/image/image.listener';
 
 import { env } from './core/env';
 

@@ -127,7 +127,20 @@ export interface QuizCleanupMercureEvent extends BaseMercureEvent {
   type: 'quiz_cleanup';
 }
 
+
+export interface DefinitionImagesLoadedDefinitionItem {
+  id: number;
+  images: { id: number; url: string; source: string }[];
+}
+
+export interface DefinitionImagesLoadedEvent extends BaseMercureEvent {
+  type: 'definition_images_loaded';
+  wordId?: number;
+  definitions: DefinitionImagesLoadedDefinitionItem[];
+}
+
 export type MercureEvent = 
+  | DefinitionImagesLoadedEvent
   | StateSyncMercureEvent 
   | EchoMercureEvent 
   | SettingsSyncMercureEvent
