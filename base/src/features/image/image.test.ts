@@ -397,6 +397,17 @@ describe('Image Feature Service', () => {
       const keywords = await extractKeywordsFromDefinition(russianDefinition);
 
       expect(capturedBody.prompt).toContain('Regardless of what language the definition is in, all extracted keywords MUST be in English');
+      expect(capturedBody.jsonFormat).toEqual({
+        type: 'object',
+        properties: {
+          keywords: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'List of keywords in English for image search',
+          },
+        },
+        required: ['keywords'],
+      });
       expect(capturedBody.prompt).toContain(russianDefinition);
       expect(keywords.every((k) => isEnglishWord(k))).toBe(true);
       expect(keywords).toEqual(['apple', 'fruit']);

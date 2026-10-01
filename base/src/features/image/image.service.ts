@@ -100,8 +100,7 @@ CRITICAL INSTRUCTIONS:
 - The target word and definition may be written in any language (English, Russian, Spanish, German, French, etc.).
 - Regardless of the language, all extracted keywords MUST be in English.
 - The FIRST keyword MUST ALWAYS be the target word itself in English (translate the target word to English if it is in another language).
-- Followed by 2 to 3 concise English visual keywords from the definition.
-- Output format: { "keywords": ["target_word_in_english", "keyword1", "keyword2"] }`
+- Followed by 2 to 3 concise English visual keywords from the definition.`
     : `Extract 2 to 3 concise, visually descriptive keywords in English for image search from the following definition:
 "${definitionText}"
 
@@ -110,7 +109,17 @@ CRITICAL INSTRUCTIONS:
 - Regardless of what language the definition is in, all extracted keywords MUST be in English.
 - Translate any non-English concepts into English search keywords (ASCII English letters only: a-z).
 - Never return keywords in the original non-English language.`;
-  const jsonFormat = { keywords: ['keyword1', 'keyword2', 'keyword3'] };
+  const jsonFormat = {
+    type: 'object',
+    properties: {
+      keywords: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'List of keywords in English for image search',
+      },
+    },
+    required: ['keywords'],
+  };
 
   const response = await fetch(env.LLM_API_URL, {
     method: 'POST',
