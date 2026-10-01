@@ -3,13 +3,17 @@ import type { IImageGenerator } from '../core/IImageGenerator';
 
 interface WikimediaImageInfo {
   url: string;
-  thumburl?: string;
   descriptionurl?: string;
+  descriptionshorturl?: string;
+  thumburl?: string;
+  thumbwidth?: number;
+  thumbheight?: number;
 }
 
 interface WikimediaPage {
-  pageid: number;
-  title: string;
+  pageid?: number;
+  ns?: number;
+  title?: string;
   imageinfo?: WikimediaImageInfo[];
 }
 
@@ -35,9 +39,11 @@ export class WikimediaImageAdapter implements IImageGenerator {
 
   private async fetchSingle(keywords: string[]): Promise<string> {
     const query = keywords.map((k) => k.trim()).filter((k) => k.length > 0).join(' ');
-    const searchQuery = query.length > 0 ? query : 'nature';
+    if (query.length === 0) {
+      return '';
+    }
 
-    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(searchQuery)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json`;
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json`;
 
     const response = await fetch(url, {
       headers: {
@@ -66,6 +72,6 @@ export class WikimediaImageAdapter implements IImageGenerator {
       }
     }
 
-    return `https://mockimage.tw/photo/640x480/cccccc/333333/${encodeURIComponent(searchQuery)}`;
+    return '';
   }
 }

@@ -106,6 +106,17 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       toLanguageCode(baseLanguage),
       toLanguageCode(targetLanguage),
     );
+
+    // 5. Enqueue image generation jobs for all definitions of this word
+    await enqueueFetchImages(
+      createdDefinitions.map((d) => ({
+        definitionId: d.id,
+        definitionText: d.text,
+        username,
+        wordId,
+        wordText,
+      }))
+    );
   } else if (job.name === 'fetchTranslations' || job.name === 'fetchTranslation') {
     const { definitions, definitionId, definitionText, username, wordId, sourceLanguage, targetLanguage } = job.data;
 

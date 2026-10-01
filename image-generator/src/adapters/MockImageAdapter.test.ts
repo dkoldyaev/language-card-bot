@@ -10,16 +10,14 @@ describe('MockImageAdapter', () => {
     ]);
 
     expect(result).toHaveLength(2);
-    expect(result[0]).toContain('https://mockimage.tw/photo/640x480/282c34/61dafb/');
-    expect(result[0]).toContain(encodeURIComponent('car part air filter'));
-    expect(result[1]).toContain(encodeURIComponent('cat pet'));
+    expect(result[0]).toBe('https://mockimage.tw/photo/640x480/282c34/61dafb/car%20part%20air%20filter');
+    expect(result[1]).toBe('https://mockimage.tw/photo/640x480/282c34/61dafb/cat%20pet');
   });
 
-  it('handles empty keywords group by using fallback label', async () => {
+  it('returns empty string for empty keywords group without fallback', async () => {
     const adapter = new MockImageAdapter();
     const result = await adapter.generate([[]]);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]).toContain('image');
+    expect(result).toEqual(['']);
   });
 });

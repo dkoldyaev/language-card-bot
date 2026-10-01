@@ -14,8 +14,6 @@ const envSchema = z.object({
   ]),
   CACHE_URL: z.string(),
   MOCK_TIMEOUT: z.string().optional(),
-  MOCK_IMAGE_WIDTH: z.string().optional(),
-  MOCK_IMAGE_HEIGHT: z.string().optional(),
   UNSPLASH_ACCESS_KEY: z.string().optional(),
   PEXELS_API_KEY: z.string().optional(),
   PIXABAY_API_KEY: z.string().optional(),

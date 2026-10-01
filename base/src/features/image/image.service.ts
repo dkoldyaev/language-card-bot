@@ -17,7 +17,7 @@ export function sanitizeKeywords(rawKeywords: unknown, fallbackText: string): st
       .filter((k) => k.length > 0 && isEnglishWord(k));
   } else if (typeof rawKeywords === 'string') {
     keywords = rawKeywords
-      .split(/[,\s]+/)
+      .split(/[,s]+/)
       .map((k) => k.trim().toLowerCase())
       .filter((k) => k.length > 0 && isEnglishWord(k));
   }
@@ -31,11 +31,7 @@ export function sanitizeKeywords(rawKeywords: unknown, fallbackText: string): st
       .slice(0, 3);
   }
 
-  if (keywords.length === 0) {
-    keywords = ['object'];
-  }
-
-  // Ensure 2-3 keywords
+  // Strictly return empty array if no valid keywords exist, no silent fallback
   return keywords.slice(0, 3);
 }
 
@@ -76,7 +72,7 @@ export async function ensureEnglishKeywords(
     return validEnglish.slice(0, 3);
   }
 
-  // Fallback: extract English ASCII tokens from fallbackText
+  // Extract English ASCII tokens from fallbackText
   const englishTokens = fallbackText
     .replace(/[^a-zA-Z0-9\s]/g, '')
     .split(/\s+/)
@@ -88,7 +84,7 @@ export async function ensureEnglishKeywords(
     return englishTokens;
   }
 
-  return ['object'];
+  return [];
 }
 
 export async function extractKeywordsFromDefinition(definitionText: string, wordText?: string): Promise<string[]> {
@@ -170,7 +166,7 @@ export async function fetchImagesFromGenerator(keywords: string[]): Promise<stri
   }
 
   const urls = (await response.json()) as string[];
-  return Array.isArray(urls) ? urls : [];
+  return Array.isArray(urls) ? urls.filter((url) => typeof url === 'string' && url.trim().length > 0) : [];
 }
 
 export async function attachExistingImagesToDefinition(
@@ -212,39 +208,23 @@ export async function attachImagesToDefinition(
       continue;
     }
 
-    const existingImage = await prisma.image.findFirst({
+    const image = await prisma.image.upsert({
       where: { url },
-      include: { definitions: true },
-    });
-
-    if (existingImage) {
-      const isAlreadyConnected = Array.isArray(existingImage.definitions) && existingImage.definitions.some((d) => d.id === definitionId);
-      if (!isAlreadyConnected) {
-        const updated = await prisma.image.update({
-          where: { id: existingImage.id },
-          data: {
-            definitions: {
-              connect: { id: definitionId },
-            },
-          },
-        });
-        attachedImages.push(updated);
-      } else {
-        attachedImages.push(existingImage);
-      }
-    } else {
-      const created = await prisma.image.create({
-        data: {
-          url,
-          source: env.IMAGE_GENERATOR_PROVIDER,
-          text: normalizedText,
-          definitions: {
-            connect: { id: definitionId },
-          },
+      update: {
+        definitions: {
+          connect: { id: definitionId },
         },
-      });
-      attachedImages.push(created);
-    }
+      },
+      create: {
+        url,
+        source: env.IMAGE_GENERATOR_PROVIDER,
+        text: normalizedText,
+        definitions: {
+          connect: { id: definitionId },
+        },
+      },
+    });
+    attachedImages.push(image);
   }
 
   return attachedImages;
@@ -271,6 +251,9 @@ export async function processDefinitionImage(
 
   // 2. Extract keywords with the target word guaranteed to be first
   const keywords = await extractKeywordsFromDefinition(definitionText, targetWord);
+  if (keywords.length === 0) {
+    return [];
+  }
   const normalizedText = normalizeKeywordsText(keywords);
   const rawJoinedText = keywords.join(' ');
 
@@ -312,6 +295,13 @@ export async function getImagesForDefinitionText(
 ): Promise<DefinitionImagesResult> {
   // 1. Extract keywords with the target word guaranteed to be first
   const keywords = await extractKeywordsFromDefinition(definitionText, wordText);
+  if (keywords.length === 0) {
+    return {
+      keywords: [],
+      fromDb: false,
+      images: [],
+    };
+  }
   const normalizedText = normalizeKeywordsText(keywords);
   const rawJoinedText = keywords.join(' ');
 

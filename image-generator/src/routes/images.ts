@@ -68,13 +68,23 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
       const generatedBatch = await generator.generate(uncachedKeywordGroups);
 
       const pipeline = redisClient.pipeline();
+      let hasKeysToCache = false;
+
       generatedBatch.forEach((imageUrl, i) => {
         const originalIndex = uncachedIndices[i];
         finalImages[originalIndex] = imageUrl;
-        const cacheKey = cacheKeys[originalIndex];
-        pipeline.set(cacheKey, imageUrl, 'EX', CACHE_TTL_SECONDS);
+
+        // Strictly cache only valid, non-empty URLs
+        if (imageUrl && imageUrl.trim().length > 0) {
+          const cacheKey = cacheKeys[originalIndex];
+          pipeline.set(cacheKey, imageUrl, 'EX', CACHE_TTL_SECONDS);
+          hasKeysToCache = true;
+        }
       });
-      await pipeline.exec();
+
+      if (hasKeysToCache) {
+        await pipeline.exec();
+      }
     }
 
     res.json(finalImages);

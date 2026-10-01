@@ -30,12 +30,13 @@ export class PixabayImageAdapter implements IImageGenerator {
 
   private async fetchSingle(keywords: string[]): Promise<string> {
     const rawQuery = keywords.map((k) => k.trim()).filter((k) => k.length > 0).join(' ');
-    // Pixabay max q length is 100 characters
     const query = rawQuery.slice(0, 100);
-    const searchQuery = query.length > 0 ? query : 'nature';
+    if (query.length === 0) {
+      return '';
+    }
 
     // Pixabay minimum per_page is 3
-    const url = `https://pixabay.com/api/?key=${encodeURIComponent(this.apiKey)}&q=${encodeURIComponent(searchQuery)}&image_type=photo&per_page=3`;
+    const url = `https://pixabay.com/api/?key=${encodeURIComponent(this.apiKey)}&q=${encodeURIComponent(query)}&image_type=photo&per_page=3`;
 
     const response = await fetch(url);
 
@@ -55,6 +56,6 @@ export class PixabayImageAdapter implements IImageGenerator {
       return firstHit.largeImageURL;
     }
 
-    return `https://mockimage.tw/photo/640x480/cccccc/333333/${encodeURIComponent(searchQuery)}`;
+    return '';
   }
 }

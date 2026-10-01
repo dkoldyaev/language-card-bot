@@ -14,6 +14,31 @@ describe('POST /api/v1/images', () => {
     vi.restoreAllMocks();
   });
 
+  it('does not cache empty or failed image URLs in redis', async () => {
+    vi.spyOn(redisClient, 'mget').mockResolvedValue([null] as unknown as string[]);
+    const mockPipeline = {
+      set: vi.fn().mockReturnThis(),
+      exec: vi.fn().mockResolvedValue([]),
+    };
+    vi.spyOn(redisClient, 'pipeline').mockReturnValue(mockPipeline as unknown as ReturnType<typeof redisClient.pipeline>);
+
+    const mockGenerator = {
+      generate: vi.fn().mockResolvedValue(['']),
+    };
+    vi.spyOn(ImageGeneratorFactory, 'getGenerator').mockReturnValue(mockGenerator as any);
+
+    const res = await request(app)
+      .post('/api/v1/images')
+      .send({
+        keywords: [['nonexistentword']],
+        provider: 'mock',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(['']);
+    expect(mockPipeline.set).not.toHaveBeenCalled();
+  });
+
   describe('buildCacheKey', () => {
     it('creates canonical, sorted, lowercase cache keys', () => {
       const key1 = buildCacheKey('mock', ['Pet', 'Cat']);

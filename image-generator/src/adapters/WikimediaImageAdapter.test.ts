@@ -38,7 +38,7 @@ describe('WikimediaImageAdapter', () => {
     expect(result).toEqual(['https://thumb.wikimedia.org/wikipedia/commons/thumb/test.jpg']);
   });
 
-  it('returns placeholder URL if Wikimedia Commons returns no pages', async () => {
+  it('returns empty string if Wikimedia Commons returns no pages without fallback', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ query: { pages: {} } }),
@@ -47,7 +47,17 @@ describe('WikimediaImageAdapter', () => {
     const adapter = new WikimediaImageAdapter();
     const result = await adapter.generate([['qwertyunknown']]);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]).toContain('https://mockimage.tw/photo/640x480/');
+    expect(result).toEqual(['']);
+  });
+
+  it('returns empty string without querying API if keywords are empty', async () => {
+    const fetchSpy = vi.fn();
+    global.fetch = fetchSpy;
+
+    const adapter = new WikimediaImageAdapter();
+    const result = await adapter.generate([['   ']]);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(result).toEqual(['']);
   });
 });

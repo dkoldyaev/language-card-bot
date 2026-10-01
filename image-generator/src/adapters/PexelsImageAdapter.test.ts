@@ -34,7 +34,7 @@ describe('PexelsImageAdapter', () => {
     expect(result).toEqual(['https://images.pexels.com/photos/123/medium.jpg']);
   });
 
-  it('returns placeholder URL if Pexels returns empty photos', async () => {
+  it('returns empty string if Pexels returns empty photos without fallback', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ photos: [] }),
@@ -43,8 +43,18 @@ describe('PexelsImageAdapter', () => {
     const adapter = new PexelsImageAdapter();
     const result = await adapter.generate([['randomunknownxyz']]);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]).toContain('https://mockimage.tw/photo/640x480/');
+    expect(result).toEqual(['']);
+  });
+
+  it('returns empty string without querying API if keywords are empty', async () => {
+    const fetchSpy = vi.fn();
+    global.fetch = fetchSpy;
+
+    const adapter = new PexelsImageAdapter();
+    const result = await adapter.generate([['   ', '']]);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(result).toEqual(['']);
   });
 
   it('throws an error if Pexels API returns non-ok response', async () => {

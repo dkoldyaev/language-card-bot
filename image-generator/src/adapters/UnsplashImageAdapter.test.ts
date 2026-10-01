@@ -34,7 +34,7 @@ describe('UnsplashImageAdapter', () => {
     expect(result).toEqual(['https://images.unsplash.com/photo-test-regular']);
   });
 
-  it('returns placeholder URL if Unsplash returns no results', async () => {
+  it('returns empty string if Unsplash returns no results without fallback', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ results: [] }),
@@ -43,8 +43,18 @@ describe('UnsplashImageAdapter', () => {
     const adapter = new UnsplashImageAdapter();
     const result = await adapter.generate([['nonexistentkeyword123']]);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]).toContain('https://mockimage.tw/photo/640x480/');
+    expect(result).toEqual(['']);
+  });
+
+  it('returns empty string without querying API if keywords are empty', async () => {
+    const fetchSpy = vi.fn();
+    global.fetch = fetchSpy;
+
+    const adapter = new UnsplashImageAdapter();
+    const result = await adapter.generate([['   ']]);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(result).toEqual(['']);
   });
 
   it('throws an error if Unsplash API returns non-ok response', async () => {

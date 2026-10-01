@@ -152,13 +152,13 @@ model QuizAttempt {
 
 model Image {
   id          Int          @id @default(autoincrement())
-  url         String
+  url         String       @unique
   source      String
   text        String
   createdAt   DateTime     @default(now())
 
   definitions Definition[]
 
+  @@index([text])
   @@index([url])
-  @@index([source])
 }

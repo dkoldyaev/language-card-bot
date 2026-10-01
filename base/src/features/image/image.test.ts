@@ -35,6 +35,23 @@ describe('Image Feature Service', () => {
       const result = sanitizeKeywords([], 'electronic computer processor');
       expect(result).toEqual(['electronic', 'computer', 'processor']);
     });
+
+    it('returns empty array when sanitization yields no valid English tokens', () => {
+      const result = sanitizeKeywords([], 'съедобный плод яблони');
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('ensureEnglishKeywords', () => {
+    it('returns empty array when no valid English tokens exist without fallback to object', async () => {
+      const result = await ensureEnglishKeywords(['яблоко'], 'съедобный плод');
+      expect(result).toEqual([]);
+    });
+
+    it('preserves valid English keywords', async () => {
+      const result = await ensureEnglishKeywords(['apple', 'tree'], 'some text');
+      expect(result).toEqual(['apple', 'tree']);
+    });
   });
 
   describe('normalizeKeywordsText', () => {
@@ -52,42 +69,68 @@ describe('Image Feature Service', () => {
         ok: true,
         json: async () => ({
           data: {
-            keywords: ['engine', 'vehicle', 'wheel'],
+            keywords: ['car part', 'air', 'filter'],
           },
         }),
       } as unknown as Response);
 
-      const keywords = await extractKeywordsFromDefinition('a wheeled motor vehicle used for transportation');
-      expect(keywords).toEqual(['engine', 'vehicle', 'wheel']);
+      const keywords = await extractKeywordsFromDefinition('a device for filtering air entering an engine');
+
       expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(keywords).toEqual(['car part', 'air', 'filter']);
     });
 
-    it('throws error if LLM API fails', async () => {
+    it('handles LLM error response by throwing an exception', async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 500,
-        text: async () => 'Internal Error',
+        text: async () => 'Internal Server Error',
       } as unknown as Response);
 
-      await expect(extractKeywordsFromDefinition('a test')).rejects.toThrow('LLM API error (500)');
+      await expect(
+        extractKeywordsFromDefinition('any definition')
+      ).rejects.toThrow('LLM API error (500)');
     });
   });
 
   describe('fetchImagesFromGenerator', () => {
-    it('calls image-generator service with keywords array', async () => {
+    it('calls image-generator service and returns URLs', async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ['https://images.site.com/photo-1.jpg'],
       } as unknown as Response);
 
-      const urls = await fetchImagesFromGenerator(['car', 'auto']);
-      expect(urls).toEqual(['https://images.site.com/photo-1.jpg']);
+      const urls = await fetchImagesFromGenerator(['car', 'filter']);
+
       expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(urls).toEqual(['https://images.site.com/photo-1.jpg']);
+    });
+
+    it('filters out empty or non-string URLs from generator response', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ['', 'https://images.site.com/photo-1.jpg', '   '],
+      } as unknown as Response);
+
+      const urls = await fetchImagesFromGenerator(['car']);
+      expect(urls).toEqual(['https://images.site.com/photo-1.jpg']);
+    });
+
+    it('throws error when image-generator returns non-ok status', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+        text: async () => 'Service Unavailable',
+      } as unknown as Response);
+
+      await expect(
+        fetchImagesFromGenerator(['car'])
+      ).rejects.toThrow('Image Generator API error (503)');
     });
   });
 
   describe('attachExistingImagesToDefinition', () => {
-    it('connects all existing images to the definition m2m', async () => {
+    it('connects all existing images to the definition if not already connected', async () => {
       const existingImages = [
         {
           id: 1,
@@ -105,18 +148,18 @@ describe('Image Feature Service', () => {
         },
       ];
 
-      vi.spyOn(prisma.image, 'update').mockImplementation(async ({ where, data }: any) => ({
-        id: where.id,
-        url: where.id === 1 ? 'https://images.site.com/car-1.jpg' : 'https://images.site.com/car-2.jpg',
+      const updateSpy = vi.spyOn(prisma.image, 'update').mockImplementation(async (args: any) => ({
+        id: args.where.id,
+        url: 'url',
         source: 'mock',
         text: 'auto car',
-      }));
+      }) as any);
 
       const attached = await attachExistingImagesToDefinition(20, existingImages);
 
       expect(attached).toHaveLength(2);
-      expect(prisma.image.update).toHaveBeenCalledTimes(2);
-      expect(prisma.image.update).toHaveBeenCalledWith({
+      expect(updateSpy).toHaveBeenCalledTimes(2);
+      expect(updateSpy).toHaveBeenCalledWith({
         where: { id: 1 },
         data: {
           definitions: {
@@ -124,7 +167,7 @@ describe('Image Feature Service', () => {
           },
         },
       });
-      expect(prisma.image.update).toHaveBeenCalledWith({
+      expect(updateSpy).toHaveBeenCalledWith({
         where: { id: 2 },
         data: {
           definitions: {
@@ -154,7 +197,7 @@ describe('Image Feature Service', () => {
   });
 
   describe('attachImagesToDefinition', () => {
-    it('creates and attaches image to definition in prisma', async () => {
+    it('atomically upserts and attaches image to definition in prisma', async () => {
       const mockImage = {
         id: 1,
         url: 'https://images.site.com/photo-1.jpg',
@@ -163,15 +206,20 @@ describe('Image Feature Service', () => {
         createdAt: new Date(),
       };
 
-      vi.spyOn(prisma.image, 'findFirst').mockResolvedValue(null);
-      vi.spyOn(prisma.image, 'create').mockResolvedValue(mockImage as any);
+      const upsertSpy = vi.spyOn(prisma.image, 'upsert').mockResolvedValue(mockImage as any);
 
       const result = await attachImagesToDefinition(10, ['https://images.site.com/photo-1.jpg'], ['car', 'auto']);
 
       expect(result).toHaveLength(1);
       expect(result[0].url).toBe('https://images.site.com/photo-1.jpg');
-      expect(prisma.image.create).toHaveBeenCalledWith({
-        data: {
+      expect(upsertSpy).toHaveBeenCalledWith({
+        where: { url: 'https://images.site.com/photo-1.jpg' },
+        update: {
+          definitions: {
+            connect: { id: 10 },
+          },
+        },
+        create: {
           url: 'https://images.site.com/photo-1.jpg',
           source: expect.any(String),
           text: 'auto car',
@@ -182,7 +230,7 @@ describe('Image Feature Service', () => {
       });
     });
 
-    it('connects existing image without duplicating', async () => {
+    it('connects existing image without duplicating via atomic upsert', async () => {
       const existingImage = {
         id: 5,
         url: 'https://images.site.com/photo-1.jpg',
@@ -192,20 +240,34 @@ describe('Image Feature Service', () => {
         createdAt: new Date(),
       };
 
-      vi.spyOn(prisma.image, 'findFirst').mockResolvedValue(existingImage as any);
-      vi.spyOn(prisma.image, 'update').mockResolvedValue(existingImage as any);
+      const upsertSpy = vi.spyOn(prisma.image, 'upsert').mockResolvedValue(existingImage as any);
 
       const result = await attachImagesToDefinition(12, ['https://images.site.com/photo-1.jpg'], ['car', 'auto']);
 
       expect(result).toHaveLength(1);
-      expect(prisma.image.update).toHaveBeenCalledWith({
-        where: { id: 5 },
-        data: {
+      expect(upsertSpy).toHaveBeenCalledWith({
+        where: { url: 'https://images.site.com/photo-1.jpg' },
+        update: {
+          definitions: {
+            connect: { id: 12 },
+          },
+        },
+        create: {
+          url: 'https://images.site.com/photo-1.jpg',
+          source: expect.any(String),
+          text: 'auto car',
           definitions: {
             connect: { id: 12 },
           },
         },
       });
+    });
+
+    it('ignores invalid or empty URLs without calling upsert', async () => {
+      const upsertSpy = vi.spyOn(prisma.image, 'upsert');
+      const attached = await attachImagesToDefinition(10, ['', 'invalid-url', '   '], ['car', 'auto']);
+      expect(attached).toHaveLength(0);
+      expect(upsertSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -238,16 +300,16 @@ describe('Image Feature Service', () => {
         },
       ];
 
+      vi.spyOn(prisma.definition, 'findUnique').mockResolvedValue(null);
       vi.spyOn(prisma.image, 'findMany').mockResolvedValue(existingImages as any);
-      const updateSpy = vi.spyOn(prisma.image, 'update').mockImplementation(async ({ where }: any) => ({
-        id: where.id,
-        url: `https://existing.site/car${where.id}.jpg`,
+      const updateSpy = vi.spyOn(prisma.image, 'update').mockImplementation(async (args: any) => ({
+        id: args.where.id,
+        url: 'url',
         source: 'mock',
         text: 'auto car',
-      }));
+      }) as any);
 
-      // Call for second definition (definitionId = 2)
-      const results = await processDefinitionImage(2, 'a motor vehicle with four wheels');
+      const results = await processDefinitionImage(2, 'a road vehicle with four wheels');
 
       // 1. LLM was called once for keyword extraction
       expect(global.fetch).toHaveBeenCalledTimes(1);
@@ -304,9 +366,9 @@ describe('Image Feature Service', () => {
           json: async () => ['https://images.site.com/plane.jpg'],
         } as unknown as Response);
 
+      vi.spyOn(prisma.definition, 'findUnique').mockResolvedValue(null);
       vi.spyOn(prisma.image, 'findMany').mockResolvedValue([]);
-      vi.spyOn(prisma.image, 'findFirst').mockResolvedValue(null);
-      vi.spyOn(prisma.image, 'create').mockResolvedValue({
+      vi.spyOn(prisma.image, 'upsert').mockResolvedValue({
         id: 201,
         url: 'https://images.site.com/plane.jpg',
         source: 'mock',
@@ -317,8 +379,14 @@ describe('Image Feature Service', () => {
 
       // Both LLM and image-generator called
       expect(global.fetch).toHaveBeenCalledTimes(2);
-      expect(prisma.image.create).toHaveBeenCalledWith({
-        data: {
+      expect(prisma.image.upsert).toHaveBeenCalledWith({
+        where: { url: 'https://images.site.com/plane.jpg' },
+        update: {
+          definitions: {
+            connect: { id: 5 },
+          },
+        },
+        create: {
           url: 'https://images.site.com/plane.jpg',
           source: expect.any(String),
           text: 'airplane flight',
@@ -330,7 +398,6 @@ describe('Image Feature Service', () => {
       expect(results).toHaveLength(1);
     });
   });
-
 
   describe('composeImageSearchKeywords - target word first requirement', () => {
     it('places the target word as the first keyword', () => {
@@ -372,10 +439,9 @@ describe('Image Feature Service', () => {
       expect(isEnglishWord('苹果')).toBe(false);
     });
 
-    it('sanitizeKeywords filters out non-English keywords and never returns Russian words', () => {
+    it('sanitizeKeywords filters out non-English keywords and returns empty array without fallback to object', () => {
       const result = sanitizeKeywords(['яблоко', 'фрукт'], 'съедобный плод яблони');
-      expect(result.every((k) => isEnglishWord(k))).toBe(true);
-      expect(result).toEqual(['object']);
+      expect(result).toEqual([]);
     });
 
     it('sanitizeKeywords keeps English keywords when mixed with foreign words', () => {
@@ -456,6 +522,33 @@ describe('Image Feature Service', () => {
       expect(result.fromDb).toBe(false);
       expect(result.keywords).toEqual(['banana', 'fruit']);
       expect(result.images[0].url).toBe('https://images.site.com/banana.jpg');
+    });
+  });
+
+  describe('empty results and fallback handling', () => {
+    it('returns empty array and does not query DB or generator if keywords are empty', async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
+        ok: true,
+        json: async () => ({ data: { keywords: [] } }),
+      } as any));
+
+      vi.spyOn(prisma.definition, 'findUnique').mockResolvedValue(null);
+      const findManySpy = vi.spyOn(prisma.image, 'findMany');
+      const results = await processDefinitionImage(1, '');
+      expect(results).toEqual([]);
+      expect(findManySpy).not.toHaveBeenCalled();
+    });
+
+    it('getImagesForDefinitionText returns empty array when keywords are empty', async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
+        ok: true,
+        json: async () => ({ data: { keywords: [] } }),
+      } as any));
+
+      const result = await getImagesForDefinitionText('');
+      expect(result.keywords).toEqual([]);
+      expect(result.images).toEqual([]);
+      expect(result.fromDb).toBe(false);
     });
   });
 });

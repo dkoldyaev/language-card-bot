@@ -38,9 +38,11 @@ export class PexelsImageAdapter implements IImageGenerator {
 
   private async fetchSingle(keywords: string[]): Promise<string> {
     const query = keywords.map((k) => k.trim()).filter((k) => k.length > 0).join(' ');
-    const searchQuery = query.length > 0 ? query : 'nature';
+    if (query.length === 0) {
+      return '';
+    }
 
-    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=1`;
+    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`;
 
     const response = await fetch(url, {
       headers: {
@@ -64,6 +66,6 @@ export class PexelsImageAdapter implements IImageGenerator {
       return firstPhoto.src.large;
     }
 
-    return `https://mockimage.tw/photo/640x480/cccccc/333333/${encodeURIComponent(searchQuery)}`;
+    return '';
   }
 }
