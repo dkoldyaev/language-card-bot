@@ -3,6 +3,7 @@ import type { IImageGenerator } from '../core/IImageGenerator';
 
 interface WikimediaImageInfo {
   url: string;
+  mime?: string;
   descriptionurl?: string;
   descriptionshorturl?: string;
   thumburl?: string;
@@ -43,7 +44,7 @@ export class WikimediaImageAdapter implements IImageGenerator {
       return '';
     }
 
-    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json`;
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=10&prop=imageinfo&iiprop=url|mime&iiurlwidth=640&format=json`;
 
     const response = await fetch(url, {
       headers: {
@@ -60,15 +61,21 @@ export class WikimediaImageAdapter implements IImageGenerator {
     const pages = data.query?.pages;
 
     if (pages) {
-      const firstPageKey = Object.keys(pages)[0];
-      const firstPage = firstPageKey ? pages[firstPageKey] : null;
-      const imageInfo = firstPage?.imageinfo && firstPage.imageinfo.length > 0 ? firstPage.imageinfo[0] : null;
+      const validPages = Object.values(pages).filter((p) => {
+        const info = p.imageinfo?.[0];
+        return info && info.mime && info.mime.startsWith('image/');
+      });
 
-      if (imageInfo?.thumburl) {
-        return imageInfo.thumburl;
-      }
-      if (imageInfo?.url) {
-        return imageInfo.url;
+      if (validPages.length > 0) {
+        const firstPage = validPages[0];
+        const imageInfo = firstPage.imageinfo![0];
+
+        if (imageInfo.thumburl) {
+          return imageInfo.thumburl;
+        }
+        if (imageInfo.url) {
+          return imageInfo.url;
+        }
       }
     }
 

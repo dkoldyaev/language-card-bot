@@ -23,6 +23,7 @@ describe('WikimediaImageAdapter', () => {
                 {
                   thumburl: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/test.jpg',
                   url: 'https://upload.wikimedia.org/wikipedia/commons/test.jpg',
+                  mime: 'image/jpeg',
                 },
               ],
             },
@@ -36,6 +37,73 @@ describe('WikimediaImageAdapter', () => {
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(result).toEqual(['https://thumb.wikimedia.org/wikipedia/commons/thumb/test.jpg']);
+  });
+
+  it('skips audio/video files and returns the first valid image', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        query: {
+          pages: {
+            '101': {
+              imageinfo: [
+                {
+                  url: 'https://upload.wikimedia.org/wikipedia/commons/audio.ogg',
+                  mime: 'audio/ogg',
+                },
+              ],
+            },
+            '102': {
+              imageinfo: [
+                {
+                  url: 'https://upload.wikimedia.org/wikipedia/commons/video.mp4',
+                  mime: 'video/mp4',
+                },
+              ],
+            },
+            '103': {
+              imageinfo: [
+                {
+                  url: 'https://upload.wikimedia.org/wikipedia/commons/image.jpg',
+                  thumburl: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/image.jpg',
+                  mime: 'image/jpeg',
+                },
+              ],
+            },
+          },
+        },
+      }),
+    } as unknown as Response);
+
+    const adapter = new WikimediaImageAdapter();
+    const result = await adapter.generate([['pronunciation', 'sound']]);
+
+    expect(result).toEqual(['https://thumb.wikimedia.org/wikipedia/commons/thumb/image.jpg']);
+  });
+
+  it('returns empty string if no valid images are found', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        query: {
+          pages: {
+            '101': {
+              imageinfo: [
+                {
+                  url: 'https://upload.wikimedia.org/wikipedia/commons/audio.ogg',
+                  mime: 'audio/ogg',
+                },
+              ],
+            },
+          },
+        },
+      }),
+    } as unknown as Response);
+
+    const adapter = new WikimediaImageAdapter();
+    const result = await adapter.generate([['pronunciation']]);
+
+    expect(result).toEqual(['']);
   });
 
   it('returns empty string if Wikimedia Commons returns no pages without fallback', async () => {

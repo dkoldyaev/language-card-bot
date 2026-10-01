@@ -11,9 +11,7 @@ import { prisma } from '../prisma';
 import {
   composeImageSearchKeywords,
   extractKeywordsFromDefinition,
-  isEnglishWord,
   normalizeKeywordsText,
-  sanitizeKeywords,
 } from '../features/image/image.service';
 
 function printUsage() {
@@ -161,8 +159,7 @@ function parseArgs(): ParsedArgs {
     process.exit(1);
   }
 
-  const rawSanitized = rawKeywords !== undefined ? sanitizeKeywords(rawKeywords, '') : undefined;
-  const keywords = rawSanitized ? rawSanitized.filter((k) => isEnglishWord(k)) : undefined;
+  const keywords = rawKeywords !== undefined ? rawKeywords.split(',').map(k => k.trim()).filter(Boolean) : undefined;
 
   return {
     ...parsed.data,
@@ -191,9 +188,8 @@ async function extractKeywords(
     if (isNetworkError) {
       if (!args.urlsOnly && !args.isJson) {
         console.warn(`⚠️  LLM HTTP service (${env.LLM_API_URL}) is not running.`);
-        console.warn('   Extracting fallback keywords directly from definition text.');
       }
-      return sanitizeKeywords(null, definitionText);
+      return [];
     }
     throw err;
   }
@@ -246,7 +242,7 @@ async function main() {
 
   // 1. Extract keywords (first keyword must always be the word itself)
   let keywords = await extractKeywords(args.definitionText, args.wordText, args);
-  if (args.wordText && isEnglishWord(args.wordText)) {
+  if (args.wordText) {
     keywords = composeImageSearchKeywords(args.wordText, keywords);
   }
   const normalizedText = normalizeKeywordsText(keywords);

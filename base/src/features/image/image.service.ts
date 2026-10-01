@@ -2,39 +2,8 @@ import { env } from '../../core/env';
 import { prisma } from '../../prisma';
 
 export interface ExtractedKeywordsResponse {
-  keywords?: string[];
+  keywords: string[];
 }
-
-export function isEnglishWord(word: string): boolean {
-  return /^[a-zA-Z0-9\s-]+$/.test(word.trim());
-}
-
-export function sanitizeKeywords(rawKeywords: unknown, fallbackText: string): string[] {
-  let keywords: string[] = [];
-  if (Array.isArray(rawKeywords)) {
-    keywords = rawKeywords
-      .map((k) => String(k).trim().toLowerCase())
-      .filter((k) => k.length > 0 && isEnglishWord(k));
-  } else if (typeof rawKeywords === 'string') {
-    keywords = rawKeywords
-      .split(/[,s]+/)
-      .map((k) => k.trim().toLowerCase())
-      .filter((k) => k.length > 0 && isEnglishWord(k));
-  }
-
-  if (keywords.length === 0) {
-    keywords = fallbackText
-      .replace(/[^a-zA-Z0-9\s]/g, '')
-      .split(/\s+/)
-      .map((w) => w.trim().toLowerCase())
-      .filter((w) => w.length > 3 && isEnglishWord(w))
-      .slice(0, 3);
-  }
-
-  // Strictly return empty array if no valid keywords exist, no silent fallback
-  return keywords.slice(0, 3);
-}
-
 
 export function composeImageSearchKeywords(
   word: string | undefined,
@@ -60,31 +29,6 @@ export function normalizeKeywordsText(keywords: string[]): string {
     .filter((k) => k.length > 0)
     .sort()
     .join(' ');
-}
-
-
-export async function ensureEnglishKeywords(
-  keywords: string[],
-  fallbackText: string
-): Promise<string[]> {
-  const validEnglish = keywords.filter((k) => isEnglishWord(k));
-  if (validEnglish.length > 0) {
-    return validEnglish.slice(0, 3);
-  }
-
-  // Extract English ASCII tokens from fallbackText
-  const englishTokens = fallbackText
-    .replace(/[^a-zA-Z0-9\s]/g, '')
-    .split(/\s+/)
-    .map((w) => w.trim().toLowerCase())
-    .filter((w) => w.length > 3 && isEnglishWord(w))
-    .slice(0, 3);
-
-  if (englishTokens.length > 0) {
-    return englishTokens;
-  }
-
-  return [];
 }
 
 export async function extractKeywordsFromDefinition(definitionText: string, wordText?: string): Promise<string[]> {
@@ -138,12 +82,9 @@ CRITICAL INSTRUCTIONS:
     throw new Error(`LLM API error: ${json.error}`);
   }
 
-  let keywords = sanitizeKeywords(json.data?.keywords, definitionText);
-  if (!keywords.every((k) => isEnglishWord(k))) {
-    keywords = await ensureEnglishKeywords(keywords, definitionText);
-  }
+  let keywords = json.data?.keywords || [];
 
-  if (wordText && isEnglishWord(wordText)) {
+  if (wordText) {
     keywords = composeImageSearchKeywords(wordText, keywords);
   }
 

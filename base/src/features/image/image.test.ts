@@ -9,9 +9,6 @@ import {
   processDefinitionImage,
   getImagesForDefinitionText,
   composeImageSearchKeywords,
-  isEnglishWord,
-  ensureEnglishKeywords,
-  sanitizeKeywords,
 } from './image.service';
 
 describe('Image Feature Service', () => {
@@ -23,35 +20,6 @@ describe('Image Feature Service', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
-  });
-
-  describe('sanitizeKeywords', () => {
-    it('cleans and limits keywords to 2-3 tokens', () => {
-      const result = sanitizeKeywords(['Car', 'Air ', 'Filter', 'Part'], 'some text');
-      expect(result).toEqual(['car', 'air', 'filter']);
-    });
-
-    it('falls back to long words from definition text if keywords are empty', () => {
-      const result = sanitizeKeywords([], 'electronic computer processor');
-      expect(result).toEqual(['electronic', 'computer', 'processor']);
-    });
-
-    it('returns empty array when sanitization yields no valid English tokens', () => {
-      const result = sanitizeKeywords([], 'съедобный плод яблони');
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe('ensureEnglishKeywords', () => {
-    it('returns empty array when no valid English tokens exist without fallback to object', async () => {
-      const result = await ensureEnglishKeywords(['яблоко'], 'съедобный плод');
-      expect(result).toEqual([]);
-    });
-
-    it('preserves valid English keywords', async () => {
-      const result = await ensureEnglishKeywords(['apple', 'tree'], 'some text');
-      expect(result).toEqual(['apple', 'tree']);
-    });
   });
 
   describe('normalizeKeywordsText', () => {
@@ -430,24 +398,6 @@ describe('Image Feature Service', () => {
   });
 
   describe('English keywords enforcement', () => {
-    it('isEnglishWord validates English words and rejects non-English characters', () => {
-      expect(isEnglishWord('apple')).toBe(true);
-      expect(isEnglishWord('car-part')).toBe(true);
-      expect(isEnglishWord('air filter')).toBe(true);
-      expect(isEnglishWord('яблоко')).toBe(false);
-      expect(isEnglishWord('café')).toBe(false);
-      expect(isEnglishWord('苹果')).toBe(false);
-    });
-
-    it('sanitizeKeywords filters out non-English keywords and returns empty array without fallback to object', () => {
-      const result = sanitizeKeywords(['яблоко', 'фрукт'], 'съедобный плод яблони');
-      expect(result).toEqual([]);
-    });
-
-    it('sanitizeKeywords keeps English keywords when mixed with foreign words', () => {
-      const result = sanitizeKeywords(['яблоко', 'apple', 'fruit'], 'съедобный плод');
-      expect(result).toEqual(['apple', 'fruit']);
-    });
 
     it('extractKeywordsFromDefinition includes strict instruction that keywords must be in English regardless of definition language', async () => {
       let capturedBody: any;
@@ -475,7 +425,6 @@ describe('Image Feature Service', () => {
         required: ['keywords'],
       });
       expect(capturedBody.prompt).toContain(russianDefinition);
-      expect(keywords.every((k) => isEnglishWord(k))).toBe(true);
       expect(keywords).toEqual(['apple', 'fruit']);
     });
   });
