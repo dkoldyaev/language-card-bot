@@ -8,6 +8,8 @@ import {
   normalizeKeywordsText,
   processDefinitionImage,
   getImagesForDefinitionText,
+  isEnglishWord,
+  ensureEnglishKeywords,
   sanitizeKeywords,
 } from './image.service';
 
@@ -327,6 +329,48 @@ describe('Image Feature Service', () => {
       expect(results).toHaveLength(1);
     });
   });
+
+  describe('English keywords enforcement', () => {
+    it('isEnglishWord validates English words and rejects non-English characters', () => {
+      expect(isEnglishWord('apple')).toBe(true);
+      expect(isEnglishWord('car-part')).toBe(true);
+      expect(isEnglishWord('air filter')).toBe(true);
+      expect(isEnglishWord('яблоко')).toBe(false);
+      expect(isEnglishWord('café')).toBe(false);
+      expect(isEnglishWord('苹果')).toBe(false);
+    });
+
+    it('sanitizeKeywords filters out non-English keywords and never returns Russian words', () => {
+      const result = sanitizeKeywords(['яблоко', 'фрукт'], 'съедобный плод яблони');
+      expect(result.every((k) => isEnglishWord(k))).toBe(true);
+      expect(result).toEqual(['object']);
+    });
+
+    it('sanitizeKeywords keeps English keywords when mixed with foreign words', () => {
+      const result = sanitizeKeywords(['яблоко', 'apple', 'fruit'], 'съедобный плод');
+      expect(result).toEqual(['apple', 'fruit']);
+    });
+
+    it('extractKeywordsFromDefinition includes strict instruction that keywords must be in English regardless of definition language', async () => {
+      let capturedBody: any;
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url: any, options: any) => {
+        capturedBody = JSON.parse(options.body);
+        return {
+          ok: true,
+          json: async () => ({ data: { keywords: ['apple', 'fruit'] } }),
+        } as any;
+      });
+
+      const russianDefinition = 'Съедобный плод домашней яблони';
+      const keywords = await extractKeywordsFromDefinition(russianDefinition);
+
+      expect(capturedBody.prompt).toContain('Regardless of what language the definition is in, all extracted keywords MUST be in English');
+      expect(capturedBody.prompt).toContain(russianDefinition);
+      expect(keywords.every((k) => isEnglishWord(k))).toBe(true);
+      expect(keywords).toEqual(['apple', 'fruit']);
+    });
+  });
+
   describe('getImagesForDefinitionText', () => {
     it('returns existing images from DB if matching keywords found without calling generator', async () => {
       vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any) => {

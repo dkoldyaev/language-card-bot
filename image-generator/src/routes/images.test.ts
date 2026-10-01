@@ -41,6 +41,20 @@ describe('POST /api/v1/images', () => {
     expect(res.body.error).toBe('Invalid request data');
   });
 
+
+  it('validates request and returns 400 for non-English keywords', async () => {
+    const res = await request(app)
+      .post('/api/v1/images')
+      .send({
+        keywords: [['яблоко', 'фрукт']],
+        provider: 'mock',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Invalid request data');
+    expect(JSON.stringify(res.body.details)).toContain('must be in English');
+  });
+
   it('validates request and returns 400 for missing provider', async () => {
     const res = await request(app)
       .post('/api/v1/images')

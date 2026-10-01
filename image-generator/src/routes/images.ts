@@ -17,9 +17,15 @@ export function buildCacheKey(provider: string, keywords: string[]): string {
   return `image-generator:${provider}:${queryKey}`;
 }
 
+const ENGLISH_KEYWORD_REGEX = /^[a-zA-Z0-9\s-]+$/;
+
 const GenerateImagesRequestSchema = z.object({
   keywords: z
-    .array(z.array(z.string().min(1)).min(1, 'Keyword group must not be empty'))
+    .array(
+      z.array(
+        z.string().min(1).regex(ENGLISH_KEYWORD_REGEX, 'Each keyword must be in English (ASCII letters, digits, spaces, hyphens)')
+      ).min(1, 'Keyword group must not be empty')
+    )
     .min(1, 'Keywords array must not be empty'),
   provider: z.enum(IMAGE_PROVIDERS),
 });

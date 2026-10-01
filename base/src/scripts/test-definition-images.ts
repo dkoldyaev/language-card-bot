@@ -10,6 +10,7 @@ import { env } from '../core/env';
 import { prisma } from '../prisma';
 import {
   extractKeywordsFromDefinition,
+  isEnglishWord,
   normalizeKeywordsText,
   sanitizeKeywords,
 } from '../features/image/image.service';
@@ -150,7 +151,8 @@ function parseArgs(): ParsedArgs {
     process.exit(1);
   }
 
-  const keywords = rawKeywords !== undefined ? sanitizeKeywords(rawKeywords, '') : undefined;
+  const rawSanitized = rawKeywords !== undefined ? sanitizeKeywords(rawKeywords, '') : undefined;
+  const keywords = rawSanitized ? rawSanitized.filter((k) => isEnglishWord(k)) : undefined;
 
   return {
     ...parsed.data,

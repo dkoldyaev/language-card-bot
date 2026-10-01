@@ -5,25 +5,29 @@ export interface ExtractedKeywordsResponse {
   keywords?: string[];
 }
 
+export function isEnglishWord(word: string): boolean {
+  return /^[a-zA-Z0-9\s-]+$/.test(word.trim());
+}
+
 export function sanitizeKeywords(rawKeywords: unknown, fallbackText: string): string[] {
   let keywords: string[] = [];
   if (Array.isArray(rawKeywords)) {
     keywords = rawKeywords
       .map((k) => String(k).trim().toLowerCase())
-      .filter((k) => k.length > 0);
+      .filter((k) => k.length > 0 && isEnglishWord(k));
   } else if (typeof rawKeywords === 'string') {
     keywords = rawKeywords
       .split(/[,\s]+/)
       .map((k) => k.trim().toLowerCase())
-      .filter((k) => k.length > 0);
+      .filter((k) => k.length > 0 && isEnglishWord(k));
   }
 
   if (keywords.length === 0) {
     keywords = fallbackText
-      .replace(/[^\p{L}\p{N}\s]/gu, '')
+      .replace(/[^a-zA-Z0-9\s]/g, '')
       .split(/\s+/)
       .map((w) => w.trim().toLowerCase())
-      .filter((w) => w.length > 3)
+      .filter((w) => w.length > 3 && isEnglishWord(w))
       .slice(0, 3);
   }
 
@@ -43,8 +47,40 @@ export function normalizeKeywordsText(keywords: string[]): string {
     .join(' ');
 }
 
+
+export async function ensureEnglishKeywords(
+  keywords: string[],
+  fallbackText: string
+): Promise<string[]> {
+  const validEnglish = keywords.filter((k) => isEnglishWord(k));
+  if (validEnglish.length > 0) {
+    return validEnglish.slice(0, 3);
+  }
+
+  // Fallback: extract English ASCII tokens from fallbackText
+  const englishTokens = fallbackText
+    .replace(/[^a-zA-Z0-9\s]/g, '')
+    .split(/\s+/)
+    .map((w) => w.trim().toLowerCase())
+    .filter((w) => w.length > 3 && isEnglishWord(w))
+    .slice(0, 3);
+
+  if (englishTokens.length > 0) {
+    return englishTokens;
+  }
+
+  return ['object'];
+}
+
 export async function extractKeywordsFromDefinition(definitionText: string): Promise<string[]> {
-  const prompt = `Extract 2 to 3 concise, visually descriptive keywords in English for image search from the following definition:\n"${definitionText}"`;
+  const prompt = `Extract 2 to 3 concise, visually descriptive keywords in English for image search from the following definition:
+"${definitionText}"
+
+CRITICAL INSTRUCTIONS:
+- The definition may be written in any language (English, Russian, Spanish, German, French, Chinese, Japanese, etc.).
+- Regardless of what language the definition is in, all extracted keywords MUST be in English.
+- Translate any non-English concepts into English search keywords (ASCII English letters only: a-z).
+- Never return keywords in the original non-English language.`;
   const jsonFormat = { keywords: ['keyword1', 'keyword2', 'keyword3'] };
 
   const response = await fetch(env.LLM_API_URL, {
@@ -68,7 +104,11 @@ export async function extractKeywordsFromDefinition(definitionText: string): Pro
     throw new Error(`LLM API error: ${json.error}`);
   }
 
-  return sanitizeKeywords(json.data?.keywords, definitionText);
+  const sanitized = sanitizeKeywords(json.data?.keywords, definitionText);
+  if (!sanitized.every((k) => isEnglishWord(k))) {
+    return await ensureEnglishKeywords(sanitized, definitionText);
+  }
+  return sanitized;
 }
 
 export async function fetchImagesFromGenerator(keywords: string[]): Promise<string[]> {
