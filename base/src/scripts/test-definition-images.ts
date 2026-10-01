@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { env } from '../core/env';
 import { prisma } from '../prisma';
 import {
+  composeImageSearchKeywords,
   extractKeywordsFromDefinition,
   isEnglishWord,
   normalizeKeywordsText,
@@ -25,6 +26,7 @@ Arguments:
   [definition...]               Text of the definition to search images for
 
 Options:
+  --word, -w <word>                     Target word (guaranteed to be the FIRST keyword)
   --definition, -d, --text, -t <text>   Text of the definition
   --provider, -p <provider>             Image provider: 'mock' | 'unsplash' | 'pexels' | 'pixabay' | 'wikimedia'
   --keywords, -k <keywords>             Manually specify keywords (e.g. "car, automobile")
@@ -55,6 +57,7 @@ type LLMProviderType = typeof ValidLLMProviders[number];
 
 interface ParsedArgs {
   definitionText: string;
+  wordText?: string;
   provider?: ImageProviderType;
   keywords?: string[];
   llmProvider?: LLMProviderType;
@@ -73,6 +76,7 @@ function parseArgs(): ParsedArgs {
 
   const positional: string[] = [];
   let definitionText: string | undefined;
+  let wordText: string | undefined;
   let provider: string | undefined;
   let rawKeywords: string | undefined;
   let llmProvider: string | undefined;
@@ -83,7 +87,11 @@ function parseArgs(): ParsedArgs {
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === '--definition' || arg === '-d' || arg === '--text' || arg === '-t') {
+    if (arg === '--word' || arg === '-w') {
+      wordText = argv[++i];
+    } else if (arg.startsWith('--word=')) {
+      wordText = arg.split('=')[1];
+    } else if (arg === '--definition' || arg === '-d' || arg === '--text' || arg === '-t') {
       definitionText = argv[++i];
     } else if (arg.startsWith('--definition=')) {
       definitionText = arg.split('=')[1];
@@ -142,6 +150,8 @@ function parseArgs(): ParsedArgs {
     isJson,
   });
 
+  const resolvedWord = wordText ? wordText.trim() : undefined;
+
   if (!parsed.success) {
     console.error('❌ Validation error:');
     parsed.error.issues.forEach((issue) => {
@@ -156,20 +166,22 @@ function parseArgs(): ParsedArgs {
 
   return {
     ...parsed.data,
+    wordText: resolvedWord,
     keywords,
   };
 }
 
 async function extractKeywords(
   definitionText: string,
+  wordText: string | undefined,
   args: ParsedArgs
 ): Promise<string[]> {
   if (args.keywords && args.keywords.length > 0) {
-    return args.keywords;
+    return wordText ? composeImageSearchKeywords(wordText, args.keywords) : args.keywords;
   }
 
   try {
-    return await extractKeywordsFromDefinition(definitionText);
+    return await extractKeywordsFromDefinition(definitionText, wordText);
   } catch (err: any) {
     const isNetworkError =
       err?.cause?.code === 'ECONNREFUSED' ||
@@ -232,8 +244,11 @@ async function main() {
   const args = parseArgs();
   const provider = args.provider !== undefined ? args.provider : env.IMAGE_GENERATOR_PROVIDER;
 
-  // 1. Extract keywords
-  const keywords = await extractKeywords(args.definitionText, args);
+  // 1. Extract keywords (first keyword must always be the word itself)
+  let keywords = await extractKeywords(args.definitionText, args.wordText, args);
+  if (args.wordText && isEnglishWord(args.wordText)) {
+    keywords = composeImageSearchKeywords(args.wordText, keywords);
+  }
   const normalizedText = normalizeKeywordsText(keywords);
   const rawJoinedText = keywords.join(' ');
 

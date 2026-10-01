@@ -17,17 +17,26 @@ export class MockProvider implements ILLMProvider {
       ? options.jsonFormat 
       : JSON.stringify(options.jsonFormat);
 
-    // If schema specifies keywords, return extracted keywords (MUST be English)
+    // If schema specifies keywords, return extracted keywords (MUST be English, target word first)
     if (formatStr.includes('keywords')) {
-      const match = options.prompt.match(/"([^"]+)"/);
+      const wordMatch = options.prompt.match(/target word[:\s]+"([^"]+)"/i);
+      const rawTargetWord = wordMatch ? wordMatch[1].trim().toLowerCase() : '';
+      const targetWord = /^[a-zA-Z0-9\s-]+$/.test(rawTargetWord) ? rawTargetWord : '';
+
+      const match = options.prompt.match(/definition[:\s]*\n?"([^"]+)"/i) || options.prompt.match(/"([^"]+)"/);
       const text = match ? match[1] : options.prompt;
       // Filter strictly English ASCII words
-      const englishTokens = text
+      let englishTokens = text
         .replace(/[^a-zA-Z0-9\s-]/g, '')
         .split(/\s+/)
         .map((w) => w.trim().toLowerCase())
         .filter((w) => w.length > 3 && /^[a-zA-Z0-9\s-]+$/.test(w))
         .slice(0, 3);
+
+      if (targetWord) {
+        englishTokens = [targetWord, ...englishTokens.filter((w) => w !== targetWord)];
+      }
+
       return {
         keywords: englishTokens.length > 0 ? englishTokens : ['image', 'card'],
       };

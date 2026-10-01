@@ -12,6 +12,7 @@ appEvents.on(Events.DEFINITION_ADDED, async (payload: DefinitionAddedPayload) =>
         definitionText: payload.definitionText,
         username: payload.username,
         wordId: payload.wordId,
+        wordText: payload.wordText,
       },
     ]);
   } catch (error) {

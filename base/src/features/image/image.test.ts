@@ -8,6 +8,7 @@ import {
   normalizeKeywordsText,
   processDefinitionImage,
   getImagesForDefinitionText,
+  composeImageSearchKeywords,
   isEnglishWord,
   ensureEnglishKeywords,
   sanitizeKeywords,
@@ -327,6 +328,37 @@ describe('Image Feature Service', () => {
         },
       });
       expect(results).toHaveLength(1);
+    });
+  });
+
+
+  describe('composeImageSearchKeywords - target word first requirement', () => {
+    it('places the target word as the first keyword', () => {
+      const result = composeImageSearchKeywords('apple', ['fruit', 'eatable']);
+      expect(result).toEqual(['apple', 'fruit', 'eatable']);
+      expect(result[0]).toBe('apple');
+    });
+
+    it('removes duplicates of target word from definition keywords and keeps it first', () => {
+      const result = composeImageSearchKeywords('apple', ['fruit', 'apple', 'sweet']);
+      expect(result).toEqual(['apple', 'fruit', 'sweet']);
+      expect(result[0]).toBe('apple');
+    });
+
+    it('returns definition keywords unchanged if word is undefined or empty', () => {
+      expect(composeImageSearchKeywords(undefined, ['fruit', 'eatable'])).toEqual(['fruit', 'eatable']);
+      expect(composeImageSearchKeywords('', ['fruit', 'eatable'])).toEqual(['fruit', 'eatable']);
+    });
+
+    it('extractKeywordsFromDefinition places wordText as the first keyword', async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
+        ok: true,
+        json: async () => ({ data: { keywords: ['fruit', 'eatable'] } }),
+      } as any));
+
+      const keywords = await extractKeywordsFromDefinition('a round edible fruit', 'apple');
+      expect(keywords[0]).toBe('apple');
+      expect(keywords).toEqual(['apple', 'fruit', 'eatable']);
     });
   });
 

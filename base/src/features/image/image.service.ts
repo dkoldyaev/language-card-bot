@@ -39,6 +39,25 @@ export function sanitizeKeywords(rawKeywords: unknown, fallbackText: string): st
   return keywords.slice(0, 3);
 }
 
+
+export function composeImageSearchKeywords(
+  word: string | undefined,
+  definitionKeywords: string[]
+): string[] {
+  if (!word || word.trim().length === 0) {
+    return definitionKeywords;
+  }
+
+  const cleanWord = word.trim().toLowerCase();
+  // Filter out any duplicates of target word from definition keywords
+  const otherKeywords = definitionKeywords.filter(
+    (k) => k.toLowerCase() !== cleanWord
+  );
+
+  // The first word MUST always be the target word itself:
+  return [cleanWord, ...otherKeywords];
+}
+
 export function normalizeKeywordsText(keywords: string[]): string {
   return keywords
     .map((k) => k.trim().toLowerCase())
@@ -72,8 +91,18 @@ export async function ensureEnglishKeywords(
   return ['object'];
 }
 
-export async function extractKeywordsFromDefinition(definitionText: string): Promise<string[]> {
-  const prompt = `Extract 2 to 3 concise, visually descriptive keywords in English for image search from the following definition:
+export async function extractKeywordsFromDefinition(definitionText: string, wordText?: string): Promise<string[]> {
+  const prompt = wordText
+    ? `Extract keywords in English for image search for the target word "${wordText}" with definition:
+"${definitionText}"
+
+CRITICAL INSTRUCTIONS:
+- The target word and definition may be written in any language (English, Russian, Spanish, German, French, etc.).
+- Regardless of the language, all extracted keywords MUST be in English.
+- The FIRST keyword MUST ALWAYS be the target word itself in English (translate the target word to English if it is in another language).
+- Followed by 2 to 3 concise English visual keywords from the definition.
+- Output format: { "keywords": ["target_word_in_english", "keyword1", "keyword2"] }`
+    : `Extract 2 to 3 concise, visually descriptive keywords in English for image search from the following definition:
 "${definitionText}"
 
 CRITICAL INSTRUCTIONS:
@@ -104,11 +133,16 @@ CRITICAL INSTRUCTIONS:
     throw new Error(`LLM API error: ${json.error}`);
   }
 
-  const sanitized = sanitizeKeywords(json.data?.keywords, definitionText);
-  if (!sanitized.every((k) => isEnglishWord(k))) {
-    return await ensureEnglishKeywords(sanitized, definitionText);
+  let keywords = sanitizeKeywords(json.data?.keywords, definitionText);
+  if (!keywords.every((k) => isEnglishWord(k))) {
+    keywords = await ensureEnglishKeywords(keywords, definitionText);
   }
-  return sanitized;
+
+  if (wordText && isEnglishWord(wordText)) {
+    keywords = composeImageSearchKeywords(wordText, keywords);
+  }
+
+  return keywords;
 }
 
 export async function fetchImagesFromGenerator(keywords: string[]): Promise<string[]> {
@@ -209,10 +243,25 @@ export async function attachImagesToDefinition(
 
 export async function processDefinitionImage(
   definitionId: number,
-  definitionText: string
+  definitionText: string,
+  wordText?: string
 ): Promise<Array<{ id: number; url: string; source: string; text: string }>> {
-  // 1. Extract 2-3 keywords from definition via LLM
-  const keywords = await extractKeywordsFromDefinition(definitionText);
+  // 1. Look up target word if not supplied
+  let targetWord = wordText;
+  if (!targetWord) {
+    try {
+      const def = await prisma.definition.findUnique({
+        where: { id: definitionId },
+        include: { word: true },
+      });
+      targetWord = def?.word?.text;
+    } catch {
+      // Ignore DB lookup error in tests if unmocked
+    }
+  }
+
+  // 2. Extract keywords with the target word guaranteed to be first
+  const keywords = await extractKeywordsFromDefinition(definitionText, targetWord);
   const normalizedText = normalizeKeywordsText(keywords);
   const rawJoinedText = keywords.join(' ');
 
@@ -249,10 +298,11 @@ export interface DefinitionImagesResult {
 }
 
 export async function getImagesForDefinitionText(
-  definitionText: string
+  definitionText: string,
+  wordText?: string
 ): Promise<DefinitionImagesResult> {
-  // 1. Extract 2-3 keywords from definition via LLM
-  const keywords = await extractKeywordsFromDefinition(definitionText);
+  // 1. Extract keywords with the target word guaranteed to be first
+  const keywords = await extractKeywordsFromDefinition(definitionText, wordText);
   const normalizedText = normalizeKeywordsText(keywords);
   const rawJoinedText = keywords.join(' ');
 

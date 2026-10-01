@@ -12,6 +12,7 @@ export interface FetchImagesJobData {
   definitionText: string;
   username?: string;
   wordId?: number;
+  wordText?: string;
 }
 
 export async function enqueueFetchImages(items: FetchImagesJobData[]) {

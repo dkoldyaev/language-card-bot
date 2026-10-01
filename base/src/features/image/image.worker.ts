@@ -11,8 +11,8 @@ export const imageWorker = new Worker(
   'imageQueue',
   async (job: Job) => {
     if (job.name === 'fetchImages') {
-      const { definitionId, definitionText, username, wordId } = job.data;
-      const attachedImages = await processDefinitionImage(definitionId, definitionText);
+      const { definitionId, definitionText, username, wordId, wordText } = job.data;
+      const attachedImages = await processDefinitionImage(definitionId, definitionText, wordText);
 
       if (attachedImages.length > 0) {
         appEvents.emit(Events.IMAGE_ADDED, {
