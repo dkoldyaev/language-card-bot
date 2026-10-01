@@ -6,20 +6,27 @@ import { IMAGE_PROVIDERS } from '../types/image';
 
 const router = Router();
 
+const CACHE_TTL_SECONDS = 365 * 24 * 60 * 60; // 1 year, consistent with translator, definer, llm
+
+export function buildCacheKey(provider: string, keywords: string[]): string {
+  const normalizedTokens = keywords
+    .map((k) => k.trim().toLowerCase())
+    .filter((k) => k.length > 0)
+    .sort();
+  const queryKey = normalizedTokens.join('+');
+  return `image-generator:${provider}:${queryKey}`;
+}
+
 const GenerateImagesRequestSchema = z.object({
-  keywords: z.array(z.array(z.string().min(1))).min(1, 'Keywords array must not be empty'),
+  keywords: z
+    .array(z.array(z.string().min(1)).min(1, 'Keyword group must not be empty'))
+    .min(1, 'Keywords array must not be empty'),
   provider: z.enum(IMAGE_PROVIDERS),
 });
 
 router.post('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const rawBody = {
-      ...req.body,
-      keywords: req.body?.keywords ?? req.body?.keywordGroups,
-      provider: req.body?.provider ?? req.body?.imageProvider,
-    };
-
-    const parseResult = GenerateImagesRequestSchema.safeParse(rawBody);
+    const parseResult = GenerateImagesRequestSchema.safeParse(req.body);
 
     if (!parseResult.success) {
       res.status(400).json({
@@ -31,11 +38,11 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
 
     const { keywords, provider } = parseResult.data;
 
-    const normalizedQueries = keywords.map((group) =>
-      group.map((k) => k.trim().toLowerCase()).filter((k) => k.length > 0).join('+')
+    const cleanedKeywords = keywords.map((group) =>
+      group.map((k) => k.trim()).filter((k) => k.length > 0)
     );
 
-    const cacheKeys = normalizedQueries.map((q) => `image-generator:${provider}:${q}`);
+    const cacheKeys = cleanedKeywords.map((group) => buildCacheKey(provider, group));
     const cachedImages: Array<string | null> = await redisClient.mget(cacheKeys);
 
     const uncachedIndices: number[] = [];
@@ -44,7 +51,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
     cachedImages.forEach((cached, index) => {
       if (cached === null) {
         uncachedIndices.push(index);
-        uncachedKeywordGroups.push(keywords[index]);
+        uncachedKeywordGroups.push(cleanedKeywords[index]);
       }
     });
 
@@ -59,7 +66,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
         const originalIndex = uncachedIndices[i];
         finalImages[originalIndex] = imageUrl;
         const cacheKey = cacheKeys[originalIndex];
-        pipeline.set(cacheKey, imageUrl, 'EX', 365 * 24 * 60 * 60);
+        pipeline.set(cacheKey, imageUrl, 'EX', CACHE_TTL_SECONDS);
       });
       await pipeline.exec();
     }

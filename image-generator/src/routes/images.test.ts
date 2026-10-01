@@ -2,7 +2,8 @@ import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { redisClient } from '../core/cache';
-import { imagesRouter } from './images';
+import { ImageGeneratorFactory } from '../core/ImageGeneratorFactory';
+import { buildCacheKey, imagesRouter } from './images';
 
 describe('POST /api/v1/images', () => {
   const app = express();
@@ -11,6 +12,15 @@ describe('POST /api/v1/images', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+  });
+
+  describe('buildCacheKey', () => {
+    it('creates canonical, sorted, lowercase cache keys', () => {
+      const key1 = buildCacheKey('mock', ['Pet', 'Cat']);
+      const key2 = buildCacheKey('mock', ['cat', 'pet']);
+      expect(key1).toBe('image-generator:mock:cat+pet');
+      expect(key1).toBe(key2);
+    });
   });
 
   it('validates request and returns 400 for empty keywords array', async () => {
@@ -22,7 +32,25 @@ describe('POST /api/v1/images', () => {
     expect(res.body.error).toBe('Invalid request data');
   });
 
-  it('returns array of image URLs using mock provider and caches to redis', async () => {
+  it('validates request and returns 400 for empty keyword group', async () => {
+    const res = await request(app)
+      .post('/api/v1/images')
+      .send({ keywords: [[]], provider: 'mock' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Invalid request data');
+  });
+
+  it('validates request and returns 400 for missing provider', async () => {
+    const res = await request(app)
+      .post('/api/v1/images')
+      .send({ keywords: [['cat']] });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Invalid request data');
+  });
+
+  it('generates images and caches them in redis on cache miss', async () => {
     vi.spyOn(redisClient, 'mget').mockResolvedValue([null, null] as unknown as string[]);
     const mockPipeline = {
       set: vi.fn().mockReturnThis(),
@@ -44,13 +72,21 @@ describe('POST /api/v1/images', () => {
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body).toHaveLength(2);
     expect(res.body[0]).toContain('https://mockimage.tw/photo/');
+    expect(res.body[1]).toContain('https://mockimage.tw/photo/');
     expect(mockPipeline.set).toHaveBeenCalledTimes(2);
+    expect(mockPipeline.set).toHaveBeenCalledWith(
+      'image-generator:mock:air+car part+filter',
+      expect.stringContaining('https://mockimage.tw/photo/'),
+      'EX',
+      365 * 24 * 60 * 60
+    );
     expect(mockPipeline.exec).toHaveBeenCalledTimes(1);
   });
 
-  it('uses cached images from redis when available', async () => {
+  it('uses cached images from redis when available (full cache hit)', async () => {
     const cachedUrl = 'https://cached.site/image-1.jpg';
     vi.spyOn(redisClient, 'mget').mockResolvedValue([cachedUrl] as unknown as string[]);
+    const getGeneratorSpy = vi.spyOn(ImageGeneratorFactory, 'getGenerator');
 
     const res = await request(app)
       .post('/api/v1/images')
@@ -61,5 +97,44 @@ describe('POST /api/v1/images', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual([cachedUrl]);
+    expect(getGeneratorSpy).not.toHaveBeenCalled();
+  });
+
+  it('handles partial cache hits: only generates uncached images and preserves order', async () => {
+    const cachedUrl = 'https://cached.site/cat.jpg';
+    vi.spyOn(redisClient, 'mget').mockResolvedValue([cachedUrl, null] as unknown as string[]);
+    const mockPipeline = {
+      set: vi.fn().mockReturnThis(),
+      exec: vi.fn().mockResolvedValue([]),
+    };
+    vi.spyOn(redisClient, 'pipeline').mockReturnValue(mockPipeline as unknown as ReturnType<typeof redisClient.pipeline>);
+
+    const mockGenerator = {
+      generate: vi.fn().mockResolvedValue(['https://generated.site/dog.jpg']),
+    };
+    vi.spyOn(ImageGeneratorFactory, 'getGenerator').mockReturnValue(mockGenerator as any);
+
+    const res = await request(app)
+      .post('/api/v1/images')
+      .send({
+        keywords: [
+          ['cat'],
+          ['dog'],
+        ],
+        provider: 'mock',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([cachedUrl, 'https://generated.site/dog.jpg']);
+    expect(mockGenerator.generate).toHaveBeenCalledTimes(1);
+    expect(mockGenerator.generate).toHaveBeenCalledWith([['dog']]);
+    expect(mockPipeline.set).toHaveBeenCalledTimes(1);
+    expect(mockPipeline.set).toHaveBeenCalledWith(
+      'image-generator:mock:dog',
+      'https://generated.site/dog.jpg',
+      'EX',
+      365 * 24 * 60 * 60
+    );
+    expect(mockPipeline.exec).toHaveBeenCalledTimes(1);
   });
 });

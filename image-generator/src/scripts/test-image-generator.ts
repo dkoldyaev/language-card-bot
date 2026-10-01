@@ -3,7 +3,11 @@ import type { ImageProviderType } from '../types/image';
 
 async function main() {
   const args = process.argv.slice(2);
-  const provider = (args[0] as ImageProviderType) || 'mock';
+  if (!args[0]) {
+    console.error('Usage: npm run test:cli -- <provider>');
+    process.exit(1);
+  }
+  const provider = args[0] as ImageProviderType;
 
   console.log(`Testing Image Generator with provider: ${provider}`);
 
