@@ -7,6 +7,7 @@ import {
   fetchImagesFromGenerator,
   normalizeKeywordsText,
   processDefinitionImage,
+  getImagesForDefinitionText,
   sanitizeKeywords,
 } from './image.service';
 
@@ -324,6 +325,50 @@ describe('Image Feature Service', () => {
         },
       });
       expect(results).toHaveLength(1);
+    });
+  });
+  describe('getImagesForDefinitionText', () => {
+    it('returns existing images from DB if matching keywords found without calling generator', async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any) => {
+        if (url.toString().includes('generate')) {
+          return {
+            ok: true,
+            json: async () => ({ data: { keywords: ['apple', 'fruit'] } }),
+          } as any;
+        }
+        throw new Error('Image generator should not be called');
+      });
+
+      vi.spyOn(prisma.image, 'findMany').mockResolvedValue([
+        { url: 'https://images.site.com/apple.jpg', source: 'unsplash', text: 'apple fruit' },
+      ] as any);
+
+      const result = await getImagesForDefinitionText('an edible round fruit');
+      expect(result.fromDb).toBe(true);
+      expect(result.keywords).toEqual(['apple', 'fruit']);
+      expect(result.images[0].url).toBe('https://images.site.com/apple.jpg');
+    });
+
+    it('fetches from generator when no matching images exist in DB', async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any) => {
+        if (url.toString().includes('generate')) {
+          return {
+            ok: true,
+            json: async () => ({ data: { keywords: ['banana', 'fruit'] } }),
+          } as any;
+        }
+        return {
+          ok: true,
+          json: async () => ['https://images.site.com/banana.jpg'],
+        } as any;
+      });
+
+      vi.spyOn(prisma.image, 'findMany').mockResolvedValue([]);
+
+      const result = await getImagesForDefinitionText('a long yellow fruit');
+      expect(result.fromDb).toBe(false);
+      expect(result.keywords).toEqual(['banana', 'fruit']);
+      expect(result.images[0].url).toBe('https://images.site.com/banana.jpg');
     });
   });
 });

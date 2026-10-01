@@ -201,3 +201,54 @@ export async function processDefinitionImage(
   // 4. Attach new images to definition in DB
   return attachImagesToDefinition(definitionId, imageUrls, keywords);
 }
+
+export interface DefinitionImagesResult {
+  keywords: string[];
+  fromDb: boolean;
+  images: Array<{ url: string; source: string; text: string }>;
+}
+
+export async function getImagesForDefinitionText(
+  definitionText: string
+): Promise<DefinitionImagesResult> {
+  // 1. Extract 2-3 keywords from definition via LLM
+  const keywords = await extractKeywordsFromDefinition(definitionText);
+  const normalizedText = normalizeKeywordsText(keywords);
+  const rawJoinedText = keywords.join(' ');
+
+  // 2. Check if the database table already has images with the same keywords
+  const existingImages = await prisma.image.findMany({
+    where: {
+      OR: [
+        { text: normalizedText },
+        { text: rawJoinedText },
+      ],
+    },
+    select: {
+      url: true,
+      source: true,
+      text: true,
+    },
+  });
+
+  if (existingImages.length > 0) {
+    return {
+      keywords,
+      fromDb: true,
+      images: existingImages,
+    };
+  }
+
+  // 3. Otherwise, fetch images from image-generator
+  const imageUrls = await fetchImagesFromGenerator(keywords);
+
+  return {
+    keywords,
+    fromDb: false,
+    images: imageUrls.map((url) => ({
+      url,
+      source: env.IMAGE_GENERATOR_PROVIDER,
+      text: normalizedText,
+    })),
+  };
+}

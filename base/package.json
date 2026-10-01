@@ -24,7 +24,9 @@
     "users:list": "node run-script.js manage-users list",
     "users:make-admin": "node run-script.js manage-users make-admin",
     "users:make-regular": "node run-script.js manage-users make-regular",
-    "users:revoke-admin": "node run-script.js manage-users make-regular"
+    "users:revoke-admin": "node run-script.js manage-users make-regular",
+    "image:cli": "node run-script.js test-definition-images",
+    "test:cli:image": "node run-script.js test-definition-images"
   },
   "keywords": [],
   "author": "",

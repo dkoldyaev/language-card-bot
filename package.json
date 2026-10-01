@@ -64,7 +64,9 @@
     "users:make-admin": "npm run --prefix base users:make-admin --",
     "users:make-regular": "npm run --prefix base users:make-regular --",
     "image-generator:cli": "npm run --prefix image-generator test:cli --",
-    "test:image-generator": "npm run --prefix image-generator test"
+    "test:image-generator": "npm run --prefix image-generator test",
+    "image:cli": "npm run --prefix base image:cli --",
+    "test:cli:image": "npm run --prefix base image:cli --"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13"
