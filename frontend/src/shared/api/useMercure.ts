@@ -62,6 +62,10 @@ export function useMercure() {
                 if (Array.isArray(data.words)) {
                   useStore.getState().updateDictionaryTranslationsBatch(data.words);
                 }
+              } else if (data.type === 'definition_images_loaded') {
+                if (Array.isArray(data.definitions)) {
+                  useStore.getState().setDefinitionImagesBatch(data.definitions);
+                }
               } else if (data.type === 'state_sync') {
                 useStore.getState().setAppState(data);
               } else if (data.type === 'dictionaries_sync' && data.dictionaries) {

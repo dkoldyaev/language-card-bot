@@ -1,9 +1,12 @@
-import type { Definition, DefinitionTranslation, Word } from '@prisma/client';
+import type { Definition, DefinitionTranslation, Image, Word } from '@prisma/client';
 import { prisma } from '../../prisma';
 
 export type QuizCardData = {
   word: Word;
-  definition: Definition & { translation: DefinitionTranslation | null };
+  definition: Definition & {
+    translation: DefinitionTranslation | null;
+    images?: Image[];
+  };
 };
 
 export async function generateQuizCard(userId: number, dictionaryId: number, excludeWordId?: number): Promise<QuizCardData | null> {
@@ -40,7 +43,8 @@ export async function generateQuizCard(userId: number, dictionaryId: number, exc
     include: {
       definitions: {
         include: {
-          translation: true
+          translation: true,
+          images: true
         }
       }
     }
@@ -68,7 +72,7 @@ export async function getNextDefinition(wordId: number, currentDefinitionId: num
     where: { id: wordId },
     include: {
       definitions: {
-        include: { translation: true }
+        include: { translation: true, images: true }
       }
     }
   });

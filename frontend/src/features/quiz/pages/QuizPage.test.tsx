@@ -45,6 +45,29 @@ describe('Quiz', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/quiz/start', { dictionaryId: null });
   });
 
+  it('renders random image and source attribution when definition has images', () => {
+    useStore.setState({
+      quizCard: {
+        wordId: 1,
+        definition: {
+          id: 1,
+          text: 'A fruit',
+          translation: null,
+          images: [
+            { id: 10, url: 'https://images.site.com/apple.jpg', source: 'unsplash' }
+          ]
+        }
+      }
+    });
+
+    render(<Quiz />);
+
+    const img = screen.getByRole('img', { name: 'A fruit' });
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'https://images.site.com/apple.jpg');
+    expect(screen.getByText(/Source: unsplash/i)).toBeInTheDocument();
+  });
+
   it('renders card when quizCard is set', () => {
     useStore.setState({
       quizCard: {

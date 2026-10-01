@@ -42,6 +42,7 @@ export interface DictionaryDefinition {
   text: string;
   translation: DictionaryTranslation | null;
   presets?: PresetBadge[];
+  images?: QuizCardImageItem[];
 }
 
 export interface UnnormalizedDefinitionText {
@@ -76,6 +77,7 @@ export interface AppSyncState {
     id: number;
     text: string;
     translation: string | null;
+    images?: QuizCardImageItem[];
   } | null;
   activeDictionaryId?: number | null;
   mode?: string;
@@ -89,12 +91,19 @@ export interface DefinitionInput {
   presets?: PresetBadge[];
 }
 
+export interface QuizCardImageItem {
+  id: number;
+  url: string;
+  source: string;
+}
+
 export interface QuizCardData {
   wordId: number;
   definition: {
     id: number;
     text: string;
     translation: string | null;
+    images?: QuizCardImageItem[];
   };
 }
 
@@ -207,6 +216,7 @@ interface AppState {
   setQuizEvaluation: (evalData: QuizEvaluationData | null) => void;
   setQuizTranslation: (translation: string | null) => void;
   setQuizVariants: (variants: string[] | null) => void;
+  setDefinitionImagesBatch: (items: Array<{ id: number; images: QuizCardImageItem[] }>) => void;
   hasSeenOnboarding: boolean;
   setHasSeenOnboarding: (hasSeen: boolean) => void;
   presets: any[]; // Type should be PresetItem[] but we don't have it imported here. It's fine for now, or we can use any[]
@@ -329,7 +339,8 @@ const useStore = create<AppState>()(
             definition: {
               id: appState.currentDefinition.id,
               text: appState.currentDefinition.text,
-              translation: appState.currentDefinition.translation
+              translation: appState.currentDefinition.translation,
+              images: appState.currentDefinition.images
             }
           };
         }
@@ -366,6 +377,29 @@ const useStore = create<AppState>()(
       setQuizEvaluation: (evalData) => set({ quizEvaluation: evalData }),
       setQuizTranslation: (translation) => set({ quizTranslation: translation }),
       setQuizVariants: (variants) => set({ quizVariants: variants }),
+      setDefinitionImagesBatch: (items) => set((state) => {
+        const imageMap = new Map(items.map((item) => [item.id, item.images]));
+        let quizCard = state.quizCard;
+        if (quizCard && imageMap.has(quizCard.definition.id)) {
+          quizCard = {
+            ...quizCard,
+            definition: {
+              ...quizCard.definition,
+              images: imageMap.get(quizCard.definition.id),
+            },
+          };
+        }
+        const dictionary = state.dictionary.map((w) => ({
+          ...w,
+          definitions: w.definitions.map((d) => {
+            if (imageMap.has(d.id)) {
+              return { ...d, images: imageMap.get(d.id) };
+            }
+            return d;
+          }),
+        }));
+        return { quizCard, dictionary };
+      }),
       setDashboardStats: (dashboardStats) => set({ dashboardStats }),
       setPresets: (presets) => set({ presets }),
       addDictionaryWord: (word) => set((state) => {

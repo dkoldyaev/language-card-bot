@@ -57,7 +57,10 @@ router.post('/start', authMiddleware, validateRequest(QuizStartSchema), async (r
       definition: {
         id: cardData.definition.id,
         text: cardData.definition.text,
-        translation: cardData.definition.translation?.text || null
+        translation: cardData.definition.translation ? cardData.definition.translation.text : null,
+        images: Array.isArray(cardData.definition.images)
+          ? cardData.definition.images.map((img) => ({ id: img.id, url: img.url, source: img.source }))
+          : [],
       }
     };
     
@@ -222,7 +225,10 @@ router.post('/next_card', authMiddleware, validateRequest(QuizNextCardSchema), a
       definition: {
         id: cardData.definition.id,
         text: cardData.definition.text,
-        translation: cardData.definition.translation?.text || null
+        translation: cardData.definition.translation ? cardData.definition.translation.text : null,
+        images: Array.isArray(cardData.definition.images)
+          ? cardData.definition.images.map((img) => ({ id: img.id, url: img.url, source: img.source }))
+          : [],
       }
     };
     
@@ -265,7 +271,10 @@ router.post('/next_definition', authMiddleware, validateRequest(QuizNextDefiniti
       definition: {
         id: definition.id,
         text: definition.text,
-        translation: definition.translation?.text || null
+        translation: definition.translation ? definition.translation.text : null,
+        images: Array.isArray(definition.images)
+          ? definition.images.map((img) => ({ id: img.id, url: img.url, source: img.source }))
+          : [],
       }
     };
 

@@ -1,5 +1,6 @@
 import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import ShuffleRoundedIcon from '@mui/icons-material/ShuffleRounded';
 import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded';
@@ -7,10 +8,12 @@ import {
   alpha,
   Box,
   Chip,
+  Dialog,
+  IconButton,
   Typography,
 } from '@mui/material';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n';
 import { trackEvent } from '../../../shared/lib/analytics';
@@ -23,7 +26,6 @@ import {
   spacingTokens,
 } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
-
 
 const handleTranslateDefinition = async () => {
   try {
@@ -65,6 +67,7 @@ export default function QuizPlayground() {
   const { t } = useTranslation();
   const [submitting, setSubmitting] = useState(false);
   const [suggestion, setSuggestion] = useState('');
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const quizCard = useStore((state) => state.quizCard);
   const quizEvaluation = useStore((state) => state.quizEvaluation);
@@ -76,6 +79,13 @@ export default function QuizPlayground() {
     CLOSE_MATCH: { label: t('quiz.closeMatchFeedback'), color: colorTokens.learningStatus.streak.color, background: colorTokens.learningStatus.streak.lightBg },
     INCORRECT: { label: t('quiz.incorrectFeedback'), color: colorTokens.learningStatus.attention.color, background: colorTokens.learningStatus.attention.lightBg },
   };
+
+  const randomImage = useMemo(() => {
+    const images = quizCard?.definition?.images;
+    if (!images || images.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * images.length);
+    return images[randomIndex];
+  }, [quizCard?.definition?.id, quizCard?.definition?.images]);
 
   const handleSubmitSuggestion = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -173,6 +183,66 @@ export default function QuizPlayground() {
           {quizCard.definition.text}
         </Typography>
 
+        {randomImage && (
+          <Box
+            sx={{
+              mt: 2.5,
+              position: 'relative',
+              borderRadius: `${radiusTokens.md}px`,
+              overflow: 'hidden',
+              border: '1px solid',
+              borderColor: 'divider',
+              cursor: 'pointer',
+              maxHeight: { xs: 220, sm: 280 },
+              width: '100%',
+              backgroundColor: 'action.hover',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              '&:hover': {
+                transform: 'scale(1.01)',
+                boxShadow: 3,
+              },
+            }}
+            onClick={() => setPreviewOpen(true)}
+            role="button"
+            tabIndex={0}
+            aria-label={t('quiz.viewImageAria', { source: randomImage.source })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                setPreviewOpen(true);
+              }
+            }}
+          >
+            <Box
+              component="img"
+              src={randomImage.url}
+              alt={quizCard.definition.text}
+              loading="lazy"
+              sx={{
+                width: '100%',
+                maxHeight: { xs: 220, sm: 280 },
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
+            <Chip
+              size="small"
+              label={t('quiz.imageSource', { source: randomImage.source })}
+              sx={{
+                position: 'absolute',
+                bottom: 10,
+                right: 10,
+                backgroundColor: 'rgba(0, 0, 0, 0.72)',
+                backdropFilter: 'blur(6px)',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                textTransform: 'capitalize',
+                pointerEvents: 'none',
+              }}
+            />
+          </Box>
+        )}
+
         {quizTranslation && (
           <Typography
             variant="body1"
@@ -188,6 +258,69 @@ export default function QuizPlayground() {
           </Typography>
         )}
       </AppCard>
+
+      {randomImage && (
+        <Dialog
+          open={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: `${radiusTokens.lg}px`,
+              overflow: 'hidden',
+              backgroundColor: 'background.paper',
+            },
+          }}
+        >
+          <Box sx={{ position: 'relative' }}>
+            <IconButton
+              onClick={() => setPreviewOpen(false)}
+              aria-label={t('quiz.closeImagePreview')}
+              sx={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                backgroundColor: 'rgba(0, 0, 0, 0.65)',
+                color: '#ffffff',
+                zIndex: 1,
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                },
+              }}
+            >
+              <CloseRoundedIcon />
+            </IconButton>
+            <Box
+              component="img"
+              src={randomImage.url}
+              alt={quizCard.definition.text}
+              sx={{
+                width: '100%',
+                maxHeight: '75vh',
+                objectFit: 'contain',
+                display: 'block',
+                backgroundColor: '#000000',
+              }}
+            />
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                {quizCard.definition.text}
+              </Typography>
+              <Chip
+                size="small"
+                label={t('quiz.imageSource', { source: randomImage.source })}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  textTransform: 'capitalize',
+                  flexShrink: 0,
+                }}
+              />
+            </Box>
+          </Box>
+        </Dialog>
+      )}
 
       <Box
         component="form"

@@ -297,6 +297,9 @@ const en = {
   'quiz.emptyBenefit1': 'Add words manually in the "Dictionary" section',
   'quiz.emptyBenefit2': 'Or choose a ready-made set in "Presets"',
   'quiz.emptyBenefit3': 'Train your memory with flashcards',
+  'quiz.imageSource': 'Source: {{source}}',
+  'quiz.viewImageAria': 'View image (source: {{source}})',
+  'quiz.closeImagePreview': 'Close preview',
   'quiz.goToDictionaryBtn': 'Go to Dictionary',
 
   // Theme

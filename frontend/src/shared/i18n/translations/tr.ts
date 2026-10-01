@@ -269,6 +269,9 @@ const tr = {
   'quiz.emptyBenefit1': '"Sözlük" bölümünden manuel olarak kelime ekleyin',
   'quiz.emptyBenefit2': 'Veya "Hazır Setler" bölümünden bir set seçin',
   'quiz.emptyBenefit3': 'Bilgi kartlarıyla hafızanızı geliştirin',
+  'quiz.imageSource': 'Kaynak: {{source}}',
+  'quiz.viewImageAria': 'Görseli görüntüle (kaynak: {{source}})',
+  'quiz.closeImagePreview': 'Önizlemeyi kapat',
   'quiz.goToDictionaryBtn': 'Sözlüğe Git',
 
   // Theme

@@ -269,6 +269,9 @@ const de = {
   'quiz.emptyBenefit1': 'Füge Wörter manuell im Bereich "Wörterbuch" hinzu',
   'quiz.emptyBenefit2': 'Oder wähle ein fertiges Set unter "Presets"',
   'quiz.emptyBenefit3': 'Trainiere dein Gedächtnis mit Lernkarten',
+  'quiz.imageSource': 'Quelle: {{source}}',
+  'quiz.viewImageAria': 'Bild anzeigen (Quelle: {{source}})',
+  'quiz.closeImagePreview': 'Vorschau schließen',
   'quiz.goToDictionaryBtn': 'Zum Wörterbuch',
 
   // Theme

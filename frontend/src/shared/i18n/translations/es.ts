@@ -269,6 +269,9 @@ const es = {
   'quiz.emptyBenefit1': 'Añade palabras manualmente en la sección "Diccionario"',
   'quiz.emptyBenefit2': 'O elige un conjunto predefinido en "Ajustes"',
   'quiz.emptyBenefit3': 'Entrena tu memoria con tarjetas',
+  'quiz.imageSource': 'Fuente: {{source}}',
+  'quiz.viewImageAria': 'Ver imagen (fuente: {{source}})',
+  'quiz.closeImagePreview': 'Cerrar vista previa',
   'quiz.goToDictionaryBtn': 'Ir al Diccionario',
 
   // Theme

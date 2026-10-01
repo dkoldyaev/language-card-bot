@@ -146,7 +146,7 @@ apiClient.interceptors.response.use(
           const def = getRandomDef(word);
           const defText = def.text;
           const transText = def.translation?.text ?? null;
-          store.setQuizCard({ wordId: word.id, definition: { id: def.id, text: defText, translation: transText } });
+          store.setQuizCard({ wordId: word.id, definition: { id: def.id, text: defText, translation: transText, images: def.images } });
         }
       } else if (url === '/quiz/answer') {
         const card = store.quizCard;
@@ -174,7 +174,7 @@ apiClient.interceptors.response.use(
             const def = getRandomDef(word);
             const defText = def.text;
             const transText = def.translation?.text || null;
-            store.setQuizCard({ wordId: word.id, definition: { id: def.id, text: defText, translation: transText } });
+            store.setQuizCard({ wordId: word.id, definition: { id: def.id, text: defText, translation: transText, images: def.images } });
           }
         }
       } else if (url === '/quiz/variants') {

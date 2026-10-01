@@ -269,6 +269,9 @@ const it = {
   'quiz.emptyBenefit1': 'Aggiungi parole manualmente nella sezione "Dizionario"',
   'quiz.emptyBenefit2': 'O scegli un set predefinito nei "Preset"',
   'quiz.emptyBenefit3': 'Allena la tua memoria con le flashcard',
+  'quiz.imageSource': 'Fonte: {{source}}',
+  'quiz.viewImageAria': 'Visualizza immagine (fonte: {{source}})',
+  'quiz.closeImagePreview': 'Chiudi anteprima',
   'quiz.goToDictionaryBtn': 'Vai al dizionario',
 
   // Theme

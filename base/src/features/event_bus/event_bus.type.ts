@@ -16,7 +16,7 @@ export interface StateSyncMercureEvent extends BaseMercureEvent {
   showVariants?: boolean;
   showDefinitionTranslation?: boolean;
   currentDefinitionId?: number | null;
-  currentDefinition?: { id: number; text: string; translation: string | null } | null;
+  currentDefinition?: { id: number; text: string; translation: string | null; images?: QuizCardImageItem[] } | null;
 }
 
 export interface EchoMercureEvent extends BaseMercureEvent {
@@ -97,6 +97,12 @@ export interface DefinitionTranslateLoadedEvent extends BaseMercureEvent {
   words: DefinitionTranslateLoadedWordItem[];
 }
 
+export interface QuizCardImageItem {
+  id: number;
+  url: string;
+  source: string;
+}
+
 export interface QuizCardMercureEvent extends BaseMercureEvent {
   type: 'quiz_card';
   wordId: number;
@@ -104,6 +110,7 @@ export interface QuizCardMercureEvent extends BaseMercureEvent {
     id: number;
     text: string;
     translation: string | null;
+    images?: QuizCardImageItem[];
   };
 }
 

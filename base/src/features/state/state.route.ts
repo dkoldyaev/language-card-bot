@@ -19,7 +19,7 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
         activeDictionary: true,
         currentWord: true,
         currentDefinition: {
-          include: { translation: true },
+          include: { translation: true, images: true },
         },
       },
     });
@@ -48,7 +48,10 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
       currentDefinition: userState.currentDefinition ? {
         id: userState.currentDefinition.id,
         text: userState.currentDefinition.text,
-        translation: userState.currentDefinition.translation?.text || null,
+        translation: userState.currentDefinition.translation ? userState.currentDefinition.translation.text : null,
+        images: Array.isArray(userState.currentDefinition.images)
+          ? userState.currentDefinition.images.map((img) => ({ id: img.id, url: img.url, source: img.source }))
+          : [],
       } : undefined,
     };
 

@@ -268,6 +268,9 @@ const zh = {
   'quiz.emptyBenefit1': '在“字典”部分手动添加单词',
   'quiz.emptyBenefit2': '或在“预设”中选择现成的词汇表',
   'quiz.emptyBenefit3': '用抽认卡训练您的记忆力',
+  'quiz.imageSource': '来源: {{source}}',
+  'quiz.viewImageAria': '查看图片 (来源: {{source}})',
+  'quiz.closeImagePreview': '关闭预览',
   'quiz.goToDictionaryBtn': '前往词典',
 
   // Theme

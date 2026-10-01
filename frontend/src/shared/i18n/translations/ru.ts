@@ -298,6 +298,9 @@ const ru = {
   'quiz.emptyBenefit1': 'Добавьте слова вручную в разделе "Словарь"',
   'quiz.emptyBenefit2': 'Или выберите готовый набор в разделе "Пресеты"',
   'quiz.emptyBenefit3': 'Тренируйтесь с помощью карточек',
+  'quiz.imageSource': 'Источник: {{source}}',
+  'quiz.viewImageAria': 'Просмотреть изображение (источник: {{source}})',
+  'quiz.closeImagePreview': 'Закрыть просмотр',
   'quiz.goToDictionaryBtn': 'Перейти в Словарь',
 
   // Theme

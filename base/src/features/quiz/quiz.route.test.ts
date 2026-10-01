@@ -101,11 +101,11 @@ describe('Quiz Route', () => {
     expect(publishEvent).toHaveBeenCalledWith('test_user', expect.objectContaining({
       type: 'quiz_card',
       wordId: 10,
-      definition: {
+      definition: expect.objectContaining({
         id: 100,
         text: 'a greeting',
         translation: 'привет'
-      }
+      })
     }));
   });
 

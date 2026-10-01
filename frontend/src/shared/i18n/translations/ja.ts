@@ -269,6 +269,9 @@ const ja = {
   'quiz.emptyBenefit1': '「辞書」セクションで手動で単語を追加する',
   'quiz.emptyBenefit2': 'または「プリセット」から既製のセットを選択する',
   'quiz.emptyBenefit3': 'フラッシュカードで記憶力を鍛える',
+  'quiz.imageSource': '出典: {{source}}',
+  'quiz.viewImageAria': '画像を表示 (出典: {{source}})',
+  'quiz.closeImagePreview': 'プレビューを閉じる',
   'quiz.goToDictionaryBtn': '辞書へ行く',
 
   // Theme
