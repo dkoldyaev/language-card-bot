@@ -16,7 +16,8 @@
 			"definer/src/**",
 			"translator/src/**",
 			"llm/src/**",
-			"mercure-monitor/src/**"
+			"mercure-monitor/src/**",
+			"image-generator/src/**"
 		]
 	},
 	"formatter": {

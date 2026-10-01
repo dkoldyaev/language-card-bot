@@ -86,6 +86,21 @@ services:
       - llm
       - translator
 
+
+  image-generator:
+    build:
+      context: ./image-generator
+      target: ${IMAGE_GENERATOR_TARGET}
+    environment:
+      - PORT=${IMAGE_GENERATOR_PORT}
+      - IMAGE_GENERATOR_PROVIDER=${IMAGE_GENERATOR_PROVIDER}
+      - UNSPLASH_ACCESS_KEY=${IMAGE_GENERATOR_UNSPLASH_ACCESS_KEY}
+      - PEXELS_API_KEY=${IMAGE_GENERATOR_PEXELS_API_KEY}
+      - PIXABAY_API_KEY=${IMAGE_GENERATOR_PIXABAY_API_KEY}
+      - WIKIMEDIA_USER_AGENT=${IMAGE_GENERATOR_WIKIMEDIA_USER_AGENT}
+      - MOCK_TIMEOUT=${IMAGE_GENERATOR_MOCK_TIMEOUT}
+      - CACHE_URL=${IMAGE_GENERATOR_CACHE_URL}
+
   frontend:
     build:
       context: ./frontend

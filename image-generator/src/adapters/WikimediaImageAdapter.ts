@@ -1,0 +1,71 @@
+import { env } from '../core/env';
+import type { IImageGenerator } from '../core/IImageGenerator';
+
+interface WikimediaImageInfo {
+  url: string;
+  thumburl?: string;
+  descriptionurl?: string;
+}
+
+interface WikimediaPage {
+  pageid: number;
+  title: string;
+  imageinfo?: WikimediaImageInfo[];
+}
+
+interface WikimediaResponse {
+  query?: {
+    pages?: Record<string, WikimediaPage>;
+  };
+}
+
+export class WikimediaImageAdapter implements IImageGenerator {
+  private readonly userAgent: string;
+
+  constructor() {
+    if (!env.WIKIMEDIA_USER_AGENT || env.WIKIMEDIA_USER_AGENT.trim() === '') {
+      throw new Error('WIKIMEDIA_USER_AGENT is required for WikimediaImageAdapter');
+    }
+    this.userAgent = env.WIKIMEDIA_USER_AGENT;
+  }
+
+  async generate(keywordGroups: string[][]): Promise<string[]> {
+    return Promise.all(keywordGroups.map((keywords) => this.fetchSingle(keywords)));
+  }
+
+  private async fetchSingle(keywords: string[]): Promise<string> {
+    const query = keywords.map((k) => k.trim()).filter((k) => k.length > 0).join(' ');
+    const searchQuery = query.length > 0 ? query : 'nature';
+
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(searchQuery)}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json`;
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': this.userAgent,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Wikimedia Commons API error (${response.status}): ${errorText}`);
+    }
+
+    const data = (await response.json()) as WikimediaResponse;
+    const pages = data.query?.pages;
+
+    if (pages) {
+      const firstPageKey = Object.keys(pages)[0];
+      const firstPage = firstPageKey ? pages[firstPageKey] : null;
+      const imageInfo = firstPage?.imageinfo && firstPage.imageinfo.length > 0 ? firstPage.imageinfo[0] : null;
+
+      if (imageInfo?.thumburl) {
+        return imageInfo.thumburl;
+      }
+      if (imageInfo?.url) {
+        return imageInfo.url;
+      }
+    }
+
+    return `https://mockimage.tw/photo/640x480/cccccc/333333/${encodeURIComponent(searchQuery)}`;
+  }
+}

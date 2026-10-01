@@ -95,5 +95,16 @@ services:
       - /app/node_modules
       - /app/dist
 
+
+  image-generator:
+    environment:
+      - CACHE_URL=redis://redis:6379/5
+    depends_on:
+      - redis
+    volumes:
+      - ./image-generator:/app
+      - /app/node_modules
+      - /app/dist
+
 volumes:
   redis_data:
