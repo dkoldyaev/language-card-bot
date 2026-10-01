@@ -148,7 +148,7 @@ export interface GuestQuizAttempt {
   createdAt: string;
 }
 
-export type SyncAction = SyncActionPayload & { timestamp: number };
+export type SyncAction = SyncActionPayload & { id: string; timestamp: number };
 
 interface AppState {
   token: string | null;
@@ -180,6 +180,7 @@ interface AppState {
   toggleThemeMode: () => void;
   setIsOffline: (isOffline: boolean) => void;
   enqueueSyncAction: (action: SyncActionPayload) => void;
+  removeSyncAction: (id: string) => void;
   clearSyncQueue: () => void;
   setToken: (token: string | null) => void;
   setMercureToken: (token: string | null) => void;
@@ -287,8 +288,14 @@ const useStore = create<AppState>()(
         return { themeMode: currentMode === 'dark' ? 'light' : 'dark' };
       }),
       setIsOffline: (isOffline) => set({ isOffline }),
-      enqueueSyncAction: (action) => set((state) => ({ 
-        syncQueue: [...state.syncQueue, { ...action, timestamp: Date.now() } as SyncAction] 
+      enqueueSyncAction: (action) => set((state) => {
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        return {
+          syncQueue: [...state.syncQueue, { ...action, id, timestamp: Date.now() }],
+        };
+      }),
+      removeSyncAction: (id) => set((state) => ({
+        syncQueue: state.syncQueue.filter((item) => item.id !== id),
       })),
       clearSyncQueue: () => set({ syncQueue: [] }),
       setToken: (token) => set({ token }),
@@ -632,6 +639,18 @@ const useStore = create<AppState>()(
                 state.guestDictionaryWords[Number(id)] = normalizeWords(words);
               }
             }
+          }
+          if (Array.isArray(state.syncQueue)) {
+            state.syncQueue = state.syncQueue.map((item, index) => {
+              if (typeof item.id === 'string' && item.id.length > 0) {
+                return item;
+              }
+              const ts = typeof item.timestamp === 'number' ? item.timestamp : Date.now();
+              return {
+                ...item,
+                id: `${ts}-${index}`,
+              };
+            });
           }
           if (state.token) {
             // Self-heal: if we have a token, we shouldn't have any stale guest IDs

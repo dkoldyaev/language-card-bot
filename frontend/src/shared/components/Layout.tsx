@@ -9,6 +9,7 @@ import DictionarySelector from './DictionarySelector';
 import LocaleSwitcher from './LocaleSwitcher';
 import Sidebar from './Sidebar';
 import ThemeSwitcher from './ThemeSwitcher';
+import UpdateNotification from './UpdateNotification';
 
 const GuidelineController = lazy(
   () => import('../../features/guideline/components/GuidelineController')
@@ -109,6 +110,7 @@ export default function Layout() {
       <Suspense fallback={null}>
         <GuidelineController />
       </Suspense>
+      <UpdateNotification />
       <Sidebar />
       <Box
         component="main"

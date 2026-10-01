@@ -1,40 +1,63 @@
 import { isAxiosError } from 'axios';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import useStore from '../../store/useStore';
 import api from '../api/client';
 
 export function useOfflineSync() {
-  const setIsOffline = useStore(state => state.setIsOffline);
-  const syncQueue = useStore(state => state.syncQueue);
-  const clearSyncQueue = useStore(state => state.clearSyncQueue);
+  const setIsOffline = useStore((state) => state.setIsOffline);
+  const removeSyncAction = useStore((state) => state.removeSyncAction);
+  const isSyncingRef = useRef<boolean>(false);
 
   const syncData = useCallback(async () => {
-    if (syncQueue.length === 0) return;
+    if (isSyncingRef.current) {
+      return;
+    }
+    const currentQueue = useStore.getState().syncQueue;
+    if (currentQueue.length === 0) {
+      return;
+    }
 
-    // Process actions sequentially
-    for (const action of syncQueue) {
-      try {
-        if (action.type === 'DELETE_WORD') {
-          await api.delete(`/api/dictionary/words/${action.wordId}`);
-        } else if (action.type === 'DELETE_DEFINITION') {
-          await api.delete(`/api/dictionary/words/${action.wordId}/definitions/${action.definitionId}`);
-        } else if (action.type === 'EDIT_TRANSLATION') {
-          await api.put(`/api/dictionary/words/${action.wordId}/definitions/${action.definitionId}/translation`, {
-            text: action.text
-          });
+    isSyncingRef.current = true;
+
+    try {
+      // Process actions sequentially
+      for (const action of currentQueue) {
+        let shouldRemove = false;
+        try {
+          if (action.type === 'DELETE_WORD') {
+            await api.delete(`/word_delete/${action.wordId}`);
+          } else if (action.type === 'DELETE_DEFINITION') {
+            await api.delete(`/definition_delete/${action.definitionId}`);
+          } else if (action.type === 'EDIT_TRANSLATION') {
+            await api.put(`/definition_translate_edit/${action.definitionId}`, {
+              text: action.text,
+            });
+          }
+          shouldRemove = true;
+        } catch (error: unknown) {
+          if (isAxiosError(error) && error.response) {
+            const status = error.response.status;
+            if (status === 404 || status === 409) {
+              console.warn(`Collision or entity not found for action ${action.type}, discarding action.`);
+              shouldRemove = true;
+            } else {
+              console.error(`Failed to sync action ${action.type}, halting sync.`, error);
+              break;
+            }
+          } else {
+            console.error(`Network or unexpected error while syncing action ${action.type}, halting sync.`, error);
+            break;
+          }
         }
-      } catch (error: unknown) {
-        if (isAxiosError(error) && error.response && [404, 409].includes(error.response.status)) {
-          console.warn(`Collision or entity not found for action ${action.type}, discarding action.`);
-        } else {
-          console.error(`Failed to sync action ${action.type}`, error);
+
+        if (shouldRemove) {
+          removeSyncAction(action.id);
         }
       }
+    } finally {
+      isSyncingRef.current = false;
     }
-    
-    // Clear the queue after processing
-    clearSyncQueue();
-  }, [syncQueue, clearSyncQueue]);
+  }, [removeSyncAction]);
 
   useEffect(() => {
     const handleOnline = () => {
