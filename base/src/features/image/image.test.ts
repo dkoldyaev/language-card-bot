@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '../../prisma';
 import {
+  attachExistingImagesToDefinition,
   attachImagesToDefinition,
   extractKeywordsFromDefinition,
   fetchImagesFromGenerator,
+  normalizeKeywordsText,
   processDefinitionImage,
   sanitizeKeywords,
 } from './image.service';
@@ -28,6 +30,15 @@ describe('Image Feature Service', () => {
     it('falls back to long words from definition text if keywords are empty', () => {
       const result = sanitizeKeywords([], 'electronic computer processor');
       expect(result).toEqual(['electronic', 'computer', 'processor']);
+    });
+  });
+
+  describe('normalizeKeywordsText', () => {
+    it('creates deterministic, sorted, lowercase keyword text', () => {
+      const text1 = normalizeKeywordsText(['Pet', 'Cat']);
+      const text2 = normalizeKeywordsText(['cat', 'pet']);
+      expect(text1).toBe('cat pet');
+      expect(text1).toBe(text2);
     });
   });
 
@@ -71,13 +82,80 @@ describe('Image Feature Service', () => {
     });
   });
 
+  describe('attachExistingImagesToDefinition', () => {
+    it('connects all existing images to the definition m2m', async () => {
+      const existingImages = [
+        {
+          id: 1,
+          url: 'https://images.site.com/car-1.jpg',
+          source: 'mock',
+          text: 'auto car',
+          definitions: [{ id: 10 }],
+        },
+        {
+          id: 2,
+          url: 'https://images.site.com/car-2.jpg',
+          source: 'mock',
+          text: 'auto car',
+          definitions: [{ id: 10 }],
+        },
+      ];
+
+      vi.spyOn(prisma.image, 'update').mockImplementation(async ({ where, data }: any) => ({
+        id: where.id,
+        url: where.id === 1 ? 'https://images.site.com/car-1.jpg' : 'https://images.site.com/car-2.jpg',
+        source: 'mock',
+        text: 'auto car',
+      }));
+
+      const attached = await attachExistingImagesToDefinition(20, existingImages);
+
+      expect(attached).toHaveLength(2);
+      expect(prisma.image.update).toHaveBeenCalledTimes(2);
+      expect(prisma.image.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          definitions: {
+            connect: { id: 20 },
+          },
+        },
+      });
+      expect(prisma.image.update).toHaveBeenCalledWith({
+        where: { id: 2 },
+        data: {
+          definitions: {
+            connect: { id: 20 },
+          },
+        },
+      });
+    });
+
+    it('skips connection if already connected to this definition', async () => {
+      const existingImages = [
+        {
+          id: 1,
+          url: 'https://images.site.com/car-1.jpg',
+          source: 'mock',
+          text: 'auto car',
+          definitions: [{ id: 20 }],
+        },
+      ];
+
+      const updateSpy = vi.spyOn(prisma.image, 'update');
+      const attached = await attachExistingImagesToDefinition(20, existingImages);
+
+      expect(attached).toHaveLength(1);
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('attachImagesToDefinition', () => {
     it('creates and attaches image to definition in prisma', async () => {
       const mockImage = {
         id: 1,
         url: 'https://images.site.com/photo-1.jpg',
         source: 'mock',
-        text: 'car auto',
+        text: 'auto car',
         createdAt: new Date(),
       };
 
@@ -92,7 +170,7 @@ describe('Image Feature Service', () => {
         data: {
           url: 'https://images.site.com/photo-1.jpg',
           source: expect.any(String),
-          text: 'car auto',
+          text: 'auto car',
           definitions: {
             connect: { id: 10 },
           },
@@ -105,7 +183,8 @@ describe('Image Feature Service', () => {
         id: 5,
         url: 'https://images.site.com/photo-1.jpg',
         source: 'mock',
-        text: 'car auto',
+        text: 'auto car',
+        definitions: [],
         createdAt: new Date(),
       };
 
@@ -123,6 +202,128 @@ describe('Image Feature Service', () => {
           },
         },
       });
+    });
+  });
+
+  describe('processDefinitionImage', () => {
+    it('does NOT make any external image generator requests if matching images exist in DB, and attaches all of them to second definition m2m', async () => {
+      // LLM extracts keywords
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: {
+            keywords: ['car', 'auto'],
+          },
+        }),
+      } as unknown as Response);
+
+      const existingImages = [
+        {
+          id: 101,
+          url: 'https://existing.site/car1.jpg',
+          source: 'mock',
+          text: 'auto car',
+          definitions: [{ id: 1 }],
+        },
+        {
+          id: 102,
+          url: 'https://existing.site/car2.jpg',
+          source: 'mock',
+          text: 'auto car',
+          definitions: [{ id: 1 }],
+        },
+      ];
+
+      vi.spyOn(prisma.image, 'findMany').mockResolvedValue(existingImages as any);
+      const updateSpy = vi.spyOn(prisma.image, 'update').mockImplementation(async ({ where }: any) => ({
+        id: where.id,
+        url: `https://existing.site/car${where.id}.jpg`,
+        source: 'mock',
+        text: 'auto car',
+      }));
+
+      // Call for second definition (definitionId = 2)
+      const results = await processDefinitionImage(2, 'a motor vehicle with four wheels');
+
+      // 1. LLM was called once for keyword extraction
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
+      // 2. Database was checked for matching keywords
+      expect(prisma.image.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { text: 'auto car' },
+            { text: 'car auto' },
+          ],
+        },
+        include: {
+          definitions: true,
+        },
+      });
+
+      // 3. Both images attached to definition 2 m2m
+      expect(updateSpy).toHaveBeenCalledTimes(2);
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: 101 },
+        data: {
+          definitions: {
+            connect: { id: 2 },
+          },
+        },
+      });
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: 102 },
+        data: {
+          definitions: {
+            connect: { id: 2 },
+          },
+        },
+      });
+
+      // 4. Returned results contain both images
+      expect(results).toHaveLength(2);
+    });
+
+    it('fetches from image-generator and creates new images when no matching keywords exist in DB', async () => {
+      // First fetch call is LLM, second fetch call is image-generator
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: {
+              keywords: ['airplane', 'flight'],
+            },
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ['https://images.site.com/plane.jpg'],
+        } as unknown as Response);
+
+      vi.spyOn(prisma.image, 'findMany').mockResolvedValue([]);
+      vi.spyOn(prisma.image, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.image, 'create').mockResolvedValue({
+        id: 201,
+        url: 'https://images.site.com/plane.jpg',
+        source: 'mock',
+        text: 'airplane flight',
+      } as any);
+
+      const results = await processDefinitionImage(5, 'a powered flying vehicle with fixed wings');
+
+      // Both LLM and image-generator called
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(prisma.image.create).toHaveBeenCalledWith({
+        data: {
+          url: 'https://images.site.com/plane.jpg',
+          source: expect.any(String),
+          text: 'airplane flight',
+          definitions: {
+            connect: { id: 5 },
+          },
+        },
+      });
+      expect(results).toHaveLength(1);
     });
   });
 });

@@ -35,6 +35,14 @@ export function sanitizeKeywords(rawKeywords: unknown, fallbackText: string): st
   return keywords.slice(0, 3);
 }
 
+export function normalizeKeywordsText(keywords: string[]): string {
+  return keywords
+    .map((k) => k.trim().toLowerCase())
+    .filter((k) => k.length > 0)
+    .sort()
+    .join(' ');
+}
+
 export async function extractKeywordsFromDefinition(definitionText: string): Promise<string[]> {
   const prompt = `Extract 2 to 3 concise, visually descriptive keywords in English for image search from the following definition:\n"${definitionText}"`;
   const jsonFormat = { keywords: ['keyword1', 'keyword2', 'keyword3'] };
@@ -82,25 +90,17 @@ export async function fetchImagesFromGenerator(keywords: string[]): Promise<stri
   return Array.isArray(urls) ? urls : [];
 }
 
-export async function attachImagesToDefinition(
+export async function attachExistingImagesToDefinition(
   definitionId: number,
-  imageUrls: string[],
-  keywords: string[]
+  existingImages: Array<{ id: number; url: string; source: string; text: string; definitions?: Array<{ id: number }> }>
 ): Promise<Array<{ id: number; url: string; source: string; text: string }>> {
   const attachedImages: Array<{ id: number; url: string; source: string; text: string }> = [];
 
-  for (const url of imageUrls) {
-    if (!url || typeof url !== 'string' || !url.startsWith('http')) {
-      continue;
-    }
-
-    const existingImage = await prisma.image.findFirst({
-      where: { url },
-    });
-
-    if (existingImage) {
+  for (const img of existingImages) {
+    const isAlreadyConnected = Array.isArray(img.definitions) && img.definitions.some((d) => d.id === definitionId);
+    if (!isAlreadyConnected) {
       const updated = await prisma.image.update({
-        where: { id: existingImage.id },
+        where: { id: img.id },
         data: {
           definitions: {
             connect: { id: definitionId },
@@ -109,11 +109,52 @@ export async function attachImagesToDefinition(
       });
       attachedImages.push(updated);
     } else {
+      attachedImages.push(img);
+    }
+  }
+
+  return attachedImages;
+}
+
+export async function attachImagesToDefinition(
+  definitionId: number,
+  imageUrls: string[],
+  keywords: string[]
+): Promise<Array<{ id: number; url: string; source: string; text: string }>> {
+  const attachedImages: Array<{ id: number; url: string; source: string; text: string }> = [];
+  const normalizedText = normalizeKeywordsText(keywords);
+
+  for (const url of imageUrls) {
+    if (!url || typeof url !== 'string' || !url.startsWith('http')) {
+      continue;
+    }
+
+    const existingImage = await prisma.image.findFirst({
+      where: { url },
+      include: { definitions: true },
+    });
+
+    if (existingImage) {
+      const isAlreadyConnected = Array.isArray(existingImage.definitions) && existingImage.definitions.some((d) => d.id === definitionId);
+      if (!isAlreadyConnected) {
+        const updated = await prisma.image.update({
+          where: { id: existingImage.id },
+          data: {
+            definitions: {
+              connect: { id: definitionId },
+            },
+          },
+        });
+        attachedImages.push(updated);
+      } else {
+        attachedImages.push(existingImage);
+      }
+    } else {
       const created = await prisma.image.create({
         data: {
           url,
           source: env.IMAGE_GENERATOR_PROVIDER,
-          text: keywords.join(' '),
+          text: normalizedText,
           definitions: {
             connect: { id: definitionId },
           },
@@ -132,10 +173,31 @@ export async function processDefinitionImage(
 ): Promise<Array<{ id: number; url: string; source: string; text: string }>> {
   // 1. Extract 2-3 keywords from definition via LLM
   const keywords = await extractKeywordsFromDefinition(definitionText);
+  const normalizedText = normalizeKeywordsText(keywords);
+  const rawJoinedText = keywords.join(' ');
 
-  // 2. Fetch images from image-generator
+  // 2. Check if the database table already has images with the same keywords
+  const existingImages = await prisma.image.findMany({
+    where: {
+      OR: [
+        { text: normalizedText },
+        { text: rawJoinedText },
+      ],
+    },
+    include: {
+      definitions: true,
+    },
+  });
+
+  if (existingImages.length > 0) {
+    // If images with identical keywords already exist in the database table,
+    // do NOT make any requests to image-generator. Attach all of them to the definition m2m.
+    return attachExistingImagesToDefinition(definitionId, existingImages);
+  }
+
+  // 3. Otherwise, fetch images from image-generator
   const imageUrls = await fetchImagesFromGenerator(keywords);
 
-  // 3. Attach images to definition in DB
+  // 4. Attach new images to definition in DB
   return attachImagesToDefinition(definitionId, imageUrls, keywords);
 }
