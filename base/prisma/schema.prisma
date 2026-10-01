@@ -108,6 +108,7 @@ model Definition {
   translation DefinitionTranslation?
   userStates  UserState[]
   presets     Preset[]
+  images      Image[]
 
   @@index([wordId])
 }
@@ -149,4 +150,15 @@ model QuizAttempt {
   @@index([userId, wordId])
 }
 
+model Image {
+  id          Int          @id @default(autoincrement())
+  url         String
+  source      String
+  text        String
+  createdAt   DateTime     @default(now())
 
+  definitions Definition[]
+
+  @@index([url])
+  @@index([source])
+}
