@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useMercure } from '../shared/api/useMercure';
 import Layout from '../shared/components/Layout';
+import NavigationTracker from '../shared/components/NavigationTracker';
 import { useOfflineSync } from '../shared/hooks/useOfflineSync';
 import useStore from '../store/useStore';
 
@@ -38,6 +39,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <NavigationTracker />
       <Suspense fallback={null}>
         <Routes>
           <Route path="/login" element={<Auth />} />

@@ -4,8 +4,13 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { alpha, Box, Tooltip, Typography } from '@mui/material';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import {
+  handleDictionaryCancelNavigation,
+  useNavigationTracker,
+} from '../../../shared/lib/navigationHistory';
 import {
   AppChip,
   AppIconButton,
@@ -23,12 +28,15 @@ import WordList from '../components/WordList';
 
 export default function DictionaryPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  useNavigationTracker();
   const loading = useStore((state) => state.isDictionaryLoading);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const actionButtonsRef = useRef<HTMLDivElement>(null);
+  const hasAutoOpenedRef = useRef(false);
 
   const token = useStore((state) => state.token);
   const setDictionary = useStore((state) => state.setDictionary);
@@ -49,10 +57,20 @@ export default function DictionaryPage() {
   }, [currentDict?.id, currentDict?.name, currentDict]);
 
   useEffect(() => {
-    if (!loading && dictionaries.length === 0 && !createDialogOpen) {
+    if (!loading && dictionaries.length === 0 && !hasAutoOpenedRef.current) {
+      hasAutoOpenedRef.current = true;
       setCreateDialogOpen(true);
+    } else if (dictionaries.length > 0) {
+      hasAutoOpenedRef.current = false;
     }
-  }, [loading, dictionaries.length, createDialogOpen]);
+  }, [loading, dictionaries.length]);
+
+  const handleCancelCreateDialog = () => {
+    setCreateDialogOpen(false);
+    if (dictionaries.length === 0) {
+      handleDictionaryCancelNavigation(navigate);
+    }
+  };
 
   const handleSelectDictionary = async (dictId: number) => {
     if (!token) {
@@ -280,6 +298,7 @@ export default function DictionaryPage() {
       <CreateDictionaryDialog
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
+        onCancel={handleCancelCreateDialog}
         onCreated={(newDict) => {
           handleSelectDictionary(newDict.id);
         }}

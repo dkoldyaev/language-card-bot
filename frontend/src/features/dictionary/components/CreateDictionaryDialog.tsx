@@ -27,10 +27,16 @@ type DialogPaperSlotProps = PaperProps & { 'data-testid'?: string };
 interface CreateDictionaryDialogProps {
   open: boolean;
   onClose: () => void;
+  onCancel?: () => void;
   onCreated?: (dict: DictionaryItem) => void;
 }
 
-export default function CreateDictionaryDialog({ open, onClose, onCreated }: CreateDictionaryDialogProps) {
+export default function CreateDictionaryDialog({
+  open,
+  onClose,
+  onCancel,
+  onCreated,
+}: CreateDictionaryDialogProps) {
   const { t, locale } = useTranslation();
   const [name, setName] = useState('');
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode | ''>('');
@@ -129,6 +135,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
     ) {
       useGuidelineStore.setState({ currentStep: 'step1_dict_selector' });
     }
+    onCancel?.();
   };
 
   const handleInputFocus = () => {
@@ -248,6 +255,7 @@ export default function CreateDictionaryDialog({ open, onClose, onCreated }: Cre
           size="small"
           onClick={handleCancel}
           disabled={submitting}
+          data-testid="create-dictionary-cancel-btn"
         >
           {t('dialogs.cancel')}
         </AppButton>
