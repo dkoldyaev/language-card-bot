@@ -98,7 +98,7 @@ describe('Image Feature Service', () => {
   });
 
   describe('attachExistingImagesToDefinition', () => {
-    it('connects all existing images to the definition if not already connected', async () => {
+    it('connects all existing images to the definition in a single batch query if not already connected', async () => {
       const existingImages = [
         {
           id: 1,
@@ -116,36 +116,23 @@ describe('Image Feature Service', () => {
         },
       ];
 
-      const updateSpy = vi.spyOn(prisma.image, 'update').mockImplementation(async (args: any) => ({
-        id: args.where.id,
-        url: 'url',
-        source: 'mock',
-        text: 'auto car',
-      }) as any);
+      const updateSpy = vi.spyOn(prisma.definition, 'update').mockResolvedValue({ id: 20 } as any);
 
       const attached = await attachExistingImagesToDefinition(20, existingImages);
 
       expect(attached).toHaveLength(2);
-      expect(updateSpy).toHaveBeenCalledTimes(2);
+      expect(updateSpy).toHaveBeenCalledTimes(1);
       expect(updateSpy).toHaveBeenCalledWith({
-        where: { id: 1 },
+        where: { id: 20 },
         data: {
-          definitions: {
-            connect: { id: 20 },
-          },
-        },
-      });
-      expect(updateSpy).toHaveBeenCalledWith({
-        where: { id: 2 },
-        data: {
-          definitions: {
-            connect: { id: 20 },
+          images: {
+            connect: [{ id: 1 }, { id: 2 }],
           },
         },
       });
     });
 
-    it('skips connection if already connected to this definition', async () => {
+    it('skips connection if all images are already connected to this definition', async () => {
       const existingImages = [
         {
           id: 1,
@@ -156,7 +143,7 @@ describe('Image Feature Service', () => {
         },
       ];
 
-      const updateSpy = vi.spyOn(prisma.image, 'update');
+      const updateSpy = vi.spyOn(prisma.definition, 'update');
       const attached = await attachExistingImagesToDefinition(20, existingImages);
 
       expect(attached).toHaveLength(1);
@@ -270,12 +257,7 @@ describe('Image Feature Service', () => {
 
       vi.spyOn(prisma.definition, 'findUnique').mockResolvedValue(null);
       vi.spyOn(prisma.image, 'findMany').mockResolvedValue(existingImages as any);
-      const updateSpy = vi.spyOn(prisma.image, 'update').mockImplementation(async (args: any) => ({
-        id: args.where.id,
-        url: 'url',
-        source: 'mock',
-        text: 'auto car',
-      }) as any);
+      const updateSpy = vi.spyOn(prisma.definition, 'update').mockResolvedValue({ id: 2 } as any);
 
       const results = await processDefinitionImage(2, 'a road vehicle with four wheels');
 
@@ -296,20 +278,12 @@ describe('Image Feature Service', () => {
       });
 
       // 3. Both images attached to definition 2 m2m
-      expect(updateSpy).toHaveBeenCalledTimes(2);
+      expect(updateSpy).toHaveBeenCalledTimes(1);
       expect(updateSpy).toHaveBeenCalledWith({
-        where: { id: 101 },
+        where: { id: 2 },
         data: {
-          definitions: {
-            connect: { id: 2 },
-          },
-        },
-      });
-      expect(updateSpy).toHaveBeenCalledWith({
-        where: { id: 102 },
-        data: {
-          definitions: {
-            connect: { id: 2 },
+          images: {
+            connect: [{ id: 101 }, { id: 102 }],
           },
         },
       });

@@ -114,26 +114,34 @@ export async function attachExistingImagesToDefinition(
   definitionId: number,
   existingImages: Array<{ id: number; url: string; source: string; text: string; definitions?: Array<{ id: number }> }>
 ): Promise<Array<{ id: number; url: string; source: string; text: string }>> {
-  const attachedImages: Array<{ id: number; url: string; source: string; text: string }> = [];
-
-  for (const img of existingImages) {
-    const isAlreadyConnected = Array.isArray(img.definitions) && img.definitions.some((d) => d.id === definitionId);
-    if (!isAlreadyConnected) {
-      const updated = await prisma.image.update({
-        where: { id: img.id },
-        data: {
-          definitions: {
-            connect: { id: definitionId },
-          },
-        },
-      });
-      attachedImages.push(updated);
-    } else {
-      attachedImages.push(img);
-    }
+  if (existingImages.length === 0) {
+    return [];
   }
 
-  return attachedImages;
+  // 1. Identify which images are not yet connected to this definition
+  const idsToConnect = existingImages
+    .filter((img) => !Array.isArray(img.definitions) || !img.definitions.some((d) => d.id === definitionId))
+    .map((img) => ({ id: img.id }));
+
+  // 2. Perform a single batch connect if there are unlinked images
+  if (idsToConnect.length > 0) {
+    await prisma.definition.update({
+      where: { id: definitionId },
+      data: {
+        images: {
+          connect: idsToConnect,
+        },
+      },
+    });
+  }
+
+  // 3. Return the formatted list of images
+  return existingImages.map((img) => ({
+    id: img.id,
+    url: img.url,
+    source: img.source,
+    text: img.text,
+  }));
 }
 
 export async function attachImagesToDefinition(
