@@ -27,17 +27,17 @@ export class UnsplashImageAdapter implements IImageGenerator {
     this.accessKey = env.UNSPLASH_ACCESS_KEY;
   }
 
-  async generate(keywordGroups: string[][]): Promise<string[]> {
+  async generate(keywordGroups: string[][]): Promise<string[][]> {
     return Promise.all(keywordGroups.map((keywords) => this.fetchSingle(keywords)));
   }
 
-  private async fetchSingle(keywords: string[]): Promise<string> {
+  private async fetchSingle(keywords: string[]): Promise<string[]> {
     const query = keywords.map((k) => k.trim()).filter((k) => k.length > 0).join(' ');
     if (query.length === 0) {
-      return '';
+      return [];
     }
 
-    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1`;
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=3`;
 
     const response = await fetch(url, {
       headers: {
@@ -52,16 +52,10 @@ export class UnsplashImageAdapter implements IImageGenerator {
     }
 
     const data = (await response.json()) as UnsplashSearchResponse;
-    const firstResult = data.results && data.results.length > 0 ? data.results[0] : null;
-
-    if (firstResult?.urls?.regular) {
-      return firstResult.urls.regular;
+    if (data.results && data.results.length > 0) {
+      return data.results.map(res => res.urls?.regular || res.urls?.small || '').filter(u => u.length > 0);
     }
 
-    if (firstResult?.urls?.small) {
-      return firstResult.urls.small;
-    }
-
-    return '';
+    return [];
   }
 }

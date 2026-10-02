@@ -9,7 +9,6 @@ import { z } from 'zod';
 import { env } from '../core/env';
 import { prisma } from '../prisma';
 import {
-  composeImageSearchKeywords,
   extractKeywordsFromDefinition,
   normalizeKeywordsText,
 } from '../features/image/image.service';
@@ -172,9 +171,9 @@ async function extractKeywords(
   definitionText: string,
   wordText: string | undefined,
   args: ParsedArgs
-): Promise<string[]> {
+): Promise<string[][]> {
   if (args.keywords && args.keywords.length > 0) {
-    return wordText ? composeImageSearchKeywords(wordText, args.keywords) : args.keywords;
+    return [args.keywords];
   }
 
   try {
@@ -196,16 +195,16 @@ async function extractKeywords(
 }
 
 async function fetchImages(
-  keywords: string[],
+  keywordSets: string[][],
   provider: ImageProviderType,
   args: ParsedArgs
-): Promise<string[]> {
+): Promise<string[][]> {
   try {
     const response = await fetch(env.IMAGE_GENERATOR_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        keywords: [keywords],
+        keywords: keywordSets,
         provider,
       }),
     });
@@ -215,7 +214,7 @@ async function fetchImages(
       throw new Error(`Image Generator API error (${response.status}): ${errorText}`);
     }
 
-    const urls = (await response.json()) as string[];
+    const urls = (await response.json()) as string[][];
     return Array.isArray(urls) ? urls : [];
   } catch (err: any) {
     const isNetworkError =
@@ -228,9 +227,7 @@ async function fetchImages(
         console.warn(`⚠️  Image Generator HTTP service (${env.IMAGE_GENERATOR_API_URL}) is not running.`);
         console.warn('   Generating mock image URL for test verification.');
       }
-      return [
-        `https://mockimage.tw/photo/640x480/282c34/61dafb/${encodeURIComponent(keywords.join(' '))}`,
-      ];
+      return keywordSets.map(ks => [`https://mockimage.tw/photo/640x480/282c34/61dafb/${encodeURIComponent(ks.join(' '))}`]);
     }
     throw err;
   }
@@ -240,13 +237,11 @@ async function main() {
   const args = parseArgs();
   const provider = args.provider !== undefined ? args.provider : env.IMAGE_GENERATOR_PROVIDER;
 
-  // 1. Extract keywords (first keyword must always be the word itself)
-  let keywords = await extractKeywords(args.definitionText, args.wordText, args);
-  if (args.wordText) {
-    keywords = composeImageSearchKeywords(args.wordText, keywords);
-  }
-  const normalizedText = normalizeKeywordsText(keywords);
-  const rawJoinedText = keywords.join(' ');
+  // 1. Extract keywords
+  let keywordSets = await extractKeywords(args.definitionText, args.wordText, args);
+  
+  const normalizedTexts = keywordSets.map(normalizeKeywordsText);
+  const rawJoinedTexts = keywordSets.map(ks => ks.join(' '));
 
   let fromDb = false;
   let source: string = provider;
@@ -258,8 +253,8 @@ async function main() {
     existingImages = await prisma.image.findMany({
       where: {
         OR: [
-          { text: normalizedText },
-          { text: rawJoinedText },
+          { text: { in: normalizedTexts } },
+          { text: { in: rawJoinedTexts } },
         ],
       },
       select: {
@@ -281,23 +276,29 @@ async function main() {
     imageUrls = existingImages.map((img) => img.url);
   } else {
     // 3. Fetch from Image Generator
-    imageUrls = await fetchImages(keywords, provider, args);
+    const imageUrlGroups = await fetchImages(keywordSets, provider, args);
 
-    if (args.save && imageUrls.length > 0) {
-      for (const url of imageUrls) {
-        try {
-          await prisma.image.create({
-            data: {
-              url,
-              source: provider,
-              text: normalizedText,
-            },
-          });
-        } catch {
-          // ignore duplicate in save
+    if (args.save && imageUrlGroups.length > 0) {
+      for (let i = 0; i < imageUrlGroups.length; i++) {
+        const text = normalizeKeywordsText(keywordSets[i] || []);
+        const urls = imageUrlGroups[i];
+        if (!Array.isArray(urls)) continue;
+        for (const url of urls) {
+          try {
+            await prisma.image.create({
+              data: {
+                url,
+                source: provider,
+                text,
+              },
+            });
+          } catch {
+            // ignore duplicate in save
+          }
         }
       }
     }
+    imageUrls = imageUrlGroups.flat();
   }
 
   // 4. Output results
@@ -306,7 +307,7 @@ async function main() {
       JSON.stringify(
         {
           definition: args.definitionText,
-          keywords,
+          keywords: keywordSets,
           fromDb,
           source,
           urls: imageUrls,
@@ -322,7 +323,7 @@ async function main() {
   } else {
     console.log('\n========================================');
     console.log(`Definition: "${args.definitionText}"`);
-    console.log(`Keywords:   [${keywords.join(', ')}]`);
+    console.log(`Keywords:   ${JSON.stringify(keywordSets)}`);
     console.log(`Source:     ${source}`);
     console.log(`From DB:    ${fromDb ? 'yes (cached)' : 'no (fetched)'}`);
     console.log(`Images (${imageUrls.length}):`);

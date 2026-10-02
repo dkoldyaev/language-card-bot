@@ -24,18 +24,17 @@ export class PixabayImageAdapter implements IImageGenerator {
     this.apiKey = env.PIXABAY_API_KEY;
   }
 
-  async generate(keywordGroups: string[][]): Promise<string[]> {
+  async generate(keywordGroups: string[][]): Promise<string[][]> {
     return Promise.all(keywordGroups.map((keywords) => this.fetchSingle(keywords)));
   }
 
-  private async fetchSingle(keywords: string[]): Promise<string> {
-    const rawQuery = keywords.map((k) => k.trim()).filter((k) => k.length > 0).join(' ');
-    const query = rawQuery.slice(0, 100);
+  private async fetchSingle(keywords: string[]): Promise<string[]> {
+    const query = keywords.map((k) => k.trim()).filter((k) => k.length > 0).join(' ');
     if (query.length === 0) {
-      return '';
+      return [];
     }
 
-    // Pixabay minimum per_page is 3
+    // Pixabay minimum per_page is 3, we can request 10
     const url = `https://pixabay.com/api/?key=${encodeURIComponent(this.apiKey)}&q=${encodeURIComponent(query)}&image_type=photo&per_page=3`;
 
     const response = await fetch(url);
@@ -46,16 +45,10 @@ export class PixabayImageAdapter implements IImageGenerator {
     }
 
     const data = (await response.json()) as PixabaySearchResponse;
-    const firstHit = data.hits && data.hits.length > 0 ? data.hits[0] : null;
-
-    if (firstHit?.webformatURL) {
-      return firstHit.webformatURL;
+    if (data.hits && data.hits.length > 0) {
+      return data.hits.map(hit => hit.webformatURL || hit.largeImageURL || '').filter(u => u.length > 0);
     }
 
-    if (firstHit?.largeImageURL) {
-      return firstHit.largeImageURL;
-    }
-
-    return '';
+    return [];
   }
 }

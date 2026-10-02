@@ -29,7 +29,7 @@ describe('PixabayImageAdapter', () => {
     const result = await adapter.generate([['mountain', 'snow']]);
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(result).toEqual(['https://pixabay.com/get/test-webformat.jpg']);
+    expect(result).toEqual([['https://pixabay.com/get/test-webformat.jpg']]);
   });
 
   it('returns empty string if Pixabay returns no hits without fallback', async () => {
@@ -41,7 +41,7 @@ describe('PixabayImageAdapter', () => {
     const adapter = new PixabayImageAdapter();
     const result = await adapter.generate([['nonexistentquery']]);
 
-    expect(result).toEqual(['']);
+    expect(result).toEqual([[]]);
   });
 
   it('returns empty string without querying API if keywords are empty', async () => {
@@ -52,6 +52,6 @@ describe('PixabayImageAdapter', () => {
     const result = await adapter.generate([['  ']]);
 
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(result).toEqual(['']);
+    expect(result).toEqual([[]]);
   });
 });

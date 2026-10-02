@@ -110,8 +110,8 @@ function parseArgs(): ParsedArgs {
   }
 
   const resolvedWord = word !== undefined ? word : positional.join(' ');
-  const resolvedApp = app !== undefined ? app : process.env.DEFINER_APP_TYPE;
-  const resolvedLanguage = language !== undefined ? language : process.env.DEFINER_LANGUAGE;
+  const resolvedApp = app !== undefined ? app : (provider !== undefined ? provider : env.DEFINER_APP_TYPE);
+  const resolvedLanguage = language;
 
   const validApps = ['mistral', 'gemini', 'mock', 'freedictionary', 'llm'] as const;
   const validProviders = ['mistral', 'gemini', 'mock'] as const;

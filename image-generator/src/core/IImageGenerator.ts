@@ -1,3 +1,3 @@
 export interface IImageGenerator {
-  generate(keywordGroups: string[][]): Promise<string[]>;
+  generate(keywordGroups: string[][]): Promise<string[][]>;
 }

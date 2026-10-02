@@ -23,7 +23,7 @@ describe('POST /api/v1/images', () => {
     vi.spyOn(redisClient, 'pipeline').mockReturnValue(mockPipeline as unknown as ReturnType<typeof redisClient.pipeline>);
 
     const mockGenerator = {
-      generate: vi.fn().mockResolvedValue(['']),
+      generate: vi.fn().mockResolvedValue([[]]),
     };
     vi.spyOn(ImageGeneratorFactory, 'getGenerator').mockReturnValue(mockGenerator as any);
 
@@ -35,7 +35,7 @@ describe('POST /api/v1/images', () => {
       });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual(['']);
+    expect(res.body).toEqual([[]]);
     expect(mockPipeline.set).not.toHaveBeenCalled();
   });
 
@@ -110,8 +110,8 @@ describe('POST /api/v1/images', () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body).toHaveLength(2);
-    expect(res.body[0]).toContain('https://mockimage.tw/photo/');
-    expect(res.body[1]).toContain('https://mockimage.tw/photo/');
+    expect(res.body[0][0]).toContain('https://mockimage.tw/photo/');
+    expect(res.body[1][0]).toContain('https://mockimage.tw/photo/');
     expect(mockPipeline.set).toHaveBeenCalledTimes(2);
     expect(mockPipeline.set).toHaveBeenCalledWith(
       'image-generator:mock:air+car part+filter',
@@ -123,8 +123,8 @@ describe('POST /api/v1/images', () => {
   });
 
   it('uses cached images from redis when available (full cache hit)', async () => {
-    const cachedUrl = 'https://cached.site/image-1.jpg';
-    vi.spyOn(redisClient, 'mget').mockResolvedValue([cachedUrl] as unknown as string[]);
+    const cachedUrls = ['https://cached.site/image-1.jpg'];
+    vi.spyOn(redisClient, 'mget').mockResolvedValue([JSON.stringify(cachedUrls)] as unknown as string[]);
     const getGeneratorSpy = vi.spyOn(ImageGeneratorFactory, 'getGenerator');
 
     const res = await request(app)
@@ -135,13 +135,13 @@ describe('POST /api/v1/images', () => {
       });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual([cachedUrl]);
+    expect(res.body).toEqual([cachedUrls]);
     expect(getGeneratorSpy).not.toHaveBeenCalled();
   });
 
   it('handles partial cache hits: only generates uncached images and preserves order', async () => {
-    const cachedUrl = 'https://cached.site/cat.jpg';
-    vi.spyOn(redisClient, 'mget').mockResolvedValue([cachedUrl, null] as unknown as string[]);
+    const cachedUrls = ['https://cached.site/cat.jpg'];
+    vi.spyOn(redisClient, 'mget').mockResolvedValue([JSON.stringify(cachedUrls), null] as unknown as string[]);
     const mockPipeline = {
       set: vi.fn().mockReturnThis(),
       exec: vi.fn().mockResolvedValue([]),
@@ -149,7 +149,7 @@ describe('POST /api/v1/images', () => {
     vi.spyOn(redisClient, 'pipeline').mockReturnValue(mockPipeline as unknown as ReturnType<typeof redisClient.pipeline>);
 
     const mockGenerator = {
-      generate: vi.fn().mockResolvedValue(['https://generated.site/dog.jpg']),
+      generate: vi.fn().mockResolvedValue([['https://generated.site/dog.jpg']]),
     };
     vi.spyOn(ImageGeneratorFactory, 'getGenerator').mockReturnValue(mockGenerator as any);
 
@@ -164,13 +164,13 @@ describe('POST /api/v1/images', () => {
       });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual([cachedUrl, 'https://generated.site/dog.jpg']);
+    expect(res.body).toEqual([cachedUrls, ['https://generated.site/dog.jpg']]);
     expect(mockGenerator.generate).toHaveBeenCalledTimes(1);
     expect(mockGenerator.generate).toHaveBeenCalledWith([['dog']]);
     expect(mockPipeline.set).toHaveBeenCalledTimes(1);
     expect(mockPipeline.set).toHaveBeenCalledWith(
       'image-generator:mock:dog',
-      'https://generated.site/dog.jpg',
+      JSON.stringify(['https://generated.site/dog.jpg']),
       'EX',
       365 * 24 * 60 * 60
     );

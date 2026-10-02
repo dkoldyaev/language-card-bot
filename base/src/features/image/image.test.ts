@@ -8,7 +8,6 @@ import {
   normalizeKeywordsText,
   processDefinitionImage,
   getImagesForDefinitionText,
-  composeImageSearchKeywords,
 } from './image.service';
 
 describe('Image Feature Service', () => {
@@ -37,15 +36,15 @@ describe('Image Feature Service', () => {
         ok: true,
         json: async () => ({
           data: {
-            keywords: ['car part', 'air', 'filter'],
+            keywordSets: [['car part', 'filter']],
           },
         }),
       } as unknown as Response);
 
-      const keywords = await extractKeywordsFromDefinition('a device for filtering air entering an engine');
+      const keywordSets = await extractKeywordsFromDefinition('a device for filtering air entering an engine');
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(keywords).toEqual(['car part', 'air', 'filter']);
+      expect(keywordSets).toEqual([['car part', 'filter']]);
     });
 
     it('handles LLM error response by throwing an exception', async () => {
@@ -65,23 +64,23 @@ describe('Image Feature Service', () => {
     it('calls image-generator service and returns URLs', async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ['https://images.site.com/photo-1.jpg'],
+        json: async () => [['https://images.site.com/photo-1.jpg']],
       } as unknown as Response);
 
-      const urls = await fetchImagesFromGenerator(['car', 'filter']);
+      const urls = await fetchImagesFromGenerator([['car', 'filter']]);
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(urls).toEqual(['https://images.site.com/photo-1.jpg']);
+      expect(urls).toEqual([['https://images.site.com/photo-1.jpg']]);
     });
 
     it('filters out empty or non-string URLs from generator response', async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ['', 'https://images.site.com/photo-1.jpg', '   '],
+        json: async () => [['', 'https://images.site.com/photo-1.jpg', '   ']],
       } as unknown as Response);
 
-      const urls = await fetchImagesFromGenerator(['car']);
-      expect(urls).toEqual(['https://images.site.com/photo-1.jpg']);
+      const urls = await fetchImagesFromGenerator([['car']]);
+      expect(urls).toEqual([['', 'https://images.site.com/photo-1.jpg', '   ']]);
     });
 
     it('throws error when image-generator returns non-ok status', async () => {
@@ -92,7 +91,7 @@ describe('Image Feature Service', () => {
       } as unknown as Response);
 
       await expect(
-        fetchImagesFromGenerator(['car'])
+        fetchImagesFromGenerator([['car']])
       ).rejects.toThrow('Image Generator API error (503)');
     });
   });
@@ -163,7 +162,7 @@ describe('Image Feature Service', () => {
 
       const upsertSpy = vi.spyOn(prisma.image, 'upsert').mockResolvedValue(mockImage as any);
 
-      const result = await attachImagesToDefinition(10, ['https://images.site.com/photo-1.jpg'], ['car', 'auto']);
+      const result = await attachImagesToDefinition(10, [['https://images.site.com/photo-1.jpg']], [['car', 'auto']]);
 
       expect(result).toHaveLength(1);
       expect(result[0].url).toBe('https://images.site.com/photo-1.jpg');
@@ -197,7 +196,7 @@ describe('Image Feature Service', () => {
 
       const upsertSpy = vi.spyOn(prisma.image, 'upsert').mockResolvedValue(existingImage as any);
 
-      const result = await attachImagesToDefinition(12, ['https://images.site.com/photo-1.jpg'], ['car', 'auto']);
+      const result = await attachImagesToDefinition(12, [['https://images.site.com/photo-1.jpg']], [['car', 'auto']]);
 
       expect(result).toHaveLength(1);
       expect(upsertSpy).toHaveBeenCalledWith({
@@ -220,7 +219,7 @@ describe('Image Feature Service', () => {
 
     it('ignores invalid or empty URLs without calling upsert', async () => {
       const upsertSpy = vi.spyOn(prisma.image, 'upsert');
-      const attached = await attachImagesToDefinition(10, ['', 'invalid-url', '   '], ['car', 'auto']);
+      const attached = await attachImagesToDefinition(10, [['', 'invalid-url', '   ']], [['car', 'auto']]);
       expect(attached).toHaveLength(0);
       expect(upsertSpy).not.toHaveBeenCalled();
     });
@@ -233,7 +232,7 @@ describe('Image Feature Service', () => {
         ok: true,
         json: async () => ({
           data: {
-            keywords: ['car', 'auto'],
+            keywordSets: [['car', 'auto']],
           },
         }),
       } as unknown as Response);
@@ -268,8 +267,8 @@ describe('Image Feature Service', () => {
       expect(prisma.image.findMany).toHaveBeenCalledWith({
         where: {
           OR: [
-            { text: 'auto car' },
-            { text: 'car auto' },
+            { text: { in: ['auto car'] } },
+            { text: { in: ['car auto'] } },
           ],
         },
         include: {
@@ -299,13 +298,13 @@ describe('Image Feature Service', () => {
           ok: true,
           json: async () => ({
             data: {
-              keywords: ['airplane', 'flight'],
+              keywordSets: [['airplane', 'flight']],
             },
           }),
         } as unknown as Response)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => ['https://images.site.com/plane.jpg'],
+          json: async () => [['https://images.site.com/plane.jpg']],
         } as unknown as Response);
 
       vi.spyOn(prisma.definition, 'findUnique').mockResolvedValue(null);
@@ -341,35 +340,7 @@ describe('Image Feature Service', () => {
     });
   });
 
-  describe('composeImageSearchKeywords - target word first requirement', () => {
-    it('places the target word as the first keyword', () => {
-      const result = composeImageSearchKeywords('apple', ['fruit', 'eatable']);
-      expect(result).toEqual(['apple', 'fruit', 'eatable']);
-      expect(result[0]).toBe('apple');
-    });
 
-    it('removes duplicates of target word from definition keywords and keeps it first', () => {
-      const result = composeImageSearchKeywords('apple', ['fruit', 'apple', 'sweet']);
-      expect(result).toEqual(['apple', 'fruit', 'sweet']);
-      expect(result[0]).toBe('apple');
-    });
-
-    it('returns definition keywords unchanged if word is undefined or empty', () => {
-      expect(composeImageSearchKeywords(undefined, ['fruit', 'eatable'])).toEqual(['fruit', 'eatable']);
-      expect(composeImageSearchKeywords('', ['fruit', 'eatable'])).toEqual(['fruit', 'eatable']);
-    });
-
-    it('extractKeywordsFromDefinition places wordText as the first keyword', async () => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
-        ok: true,
-        json: async () => ({ data: { keywords: ['fruit', 'eatable'] } }),
-      } as any));
-
-      const keywords = await extractKeywordsFromDefinition('a round edible fruit', 'apple');
-      expect(keywords[0]).toBe('apple');
-      expect(keywords).toEqual(['apple', 'fruit', 'eatable']);
-    });
-  });
 
   describe('English keywords enforcement', () => {
 
@@ -379,27 +350,30 @@ describe('Image Feature Service', () => {
         capturedBody = JSON.parse(options.body);
         return {
           ok: true,
-          json: async () => ({ data: { keywords: ['apple', 'fruit'] } }),
+          json: async () => ({ data: { keywordSets: [['apple', 'fruit']] } }),
         } as any;
       });
 
       const russianDefinition = 'Съедобный плод домашней яблони';
       const keywords = await extractKeywordsFromDefinition(russianDefinition);
 
-      expect(capturedBody.prompt).toContain('Regardless of what language the definition is in, all extracted keywords MUST be in English');
+      expect(capturedBody.prompt).toContain('All keywords MUST be in English, regardless of the language of the definition. Translate non-English concepts into English.');
       expect(capturedBody.jsonFormat).toEqual({
         type: 'object',
         properties: {
-          keywords: {
+          keywordSets: {
             type: 'array',
-            items: { type: 'string' },
-            description: 'List of keywords in English for image search',
+            items: {
+              type: 'array',
+              items: { type: 'string' }
+            },
+            description: 'List of keyword sets, where each set is an array of 1 or 2 English words for image search',
           },
         },
-        required: ['keywords'],
+        required: ['keywordSets'],
       });
       expect(capturedBody.prompt).toContain(russianDefinition);
-      expect(keywords).toEqual(['apple', 'fruit']);
+      expect(keywords).toEqual([['apple', 'fruit']]);
     });
   });
 
@@ -409,7 +383,7 @@ describe('Image Feature Service', () => {
         if (url.toString().includes('generate')) {
           return {
             ok: true,
-            json: async () => ({ data: { keywords: ['apple', 'fruit'] } }),
+            json: async () => ({ data: { keywordSets: [['apple', 'fruit']] } }),
           } as any;
         }
         throw new Error('Image generator should not be called');
@@ -421,7 +395,7 @@ describe('Image Feature Service', () => {
 
       const result = await getImagesForDefinitionText('an edible round fruit');
       expect(result.fromDb).toBe(true);
-      expect(result.keywords).toEqual(['apple', 'fruit']);
+      expect(result.keywordSets).toEqual([['apple', 'fruit']]);
       expect(result.images[0].url).toBe('https://images.site.com/apple.jpg');
     });
 
@@ -430,12 +404,12 @@ describe('Image Feature Service', () => {
         if (url.toString().includes('generate')) {
           return {
             ok: true,
-            json: async () => ({ data: { keywords: ['banana', 'fruit'] } }),
+            json: async () => ({ data: { keywordSets: [['banana', 'fruit']] } }),
           } as any;
         }
         return {
           ok: true,
-          json: async () => ['https://images.site.com/banana.jpg'],
+          json: async () => [['https://images.site.com/banana.jpg']],
         } as any;
       });
 
@@ -443,7 +417,7 @@ describe('Image Feature Service', () => {
 
       const result = await getImagesForDefinitionText('a long yellow fruit');
       expect(result.fromDb).toBe(false);
-      expect(result.keywords).toEqual(['banana', 'fruit']);
+      expect(result.keywordSets).toEqual([['banana', 'fruit']]);
       expect(result.images[0].url).toBe('https://images.site.com/banana.jpg');
     });
   });
@@ -452,7 +426,7 @@ describe('Image Feature Service', () => {
     it('returns empty array and does not query DB or generator if keywords are empty', async () => {
       vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
         ok: true,
-        json: async () => ({ data: { keywords: [] } }),
+        json: async () => ({ data: { keywordSets: [] } }),
       } as any));
 
       vi.spyOn(prisma.definition, 'findUnique').mockResolvedValue(null);
@@ -465,11 +439,11 @@ describe('Image Feature Service', () => {
     it('getImagesForDefinitionText returns empty array when keywords are empty', async () => {
       vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
         ok: true,
-        json: async () => ({ data: { keywords: [] } }),
+        json: async () => ({ data: { keywordSets: [] } }),
       } as any));
 
       const result = await getImagesForDefinitionText('');
-      expect(result.keywords).toEqual([]);
+      expect(result.keywordSets).toEqual([]);
       expect(result.images).toEqual([]);
       expect(result.fromDb).toBe(false);
     });

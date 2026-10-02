@@ -36,7 +36,7 @@ describe('WikimediaImageAdapter', () => {
     const result = await adapter.generate([['cat', 'snow']]);
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(result).toEqual(['https://thumb.wikimedia.org/wikipedia/commons/thumb/test.jpg']);
+    expect(result).toEqual([['https://thumb.wikimedia.org/wikipedia/commons/thumb/test.jpg']]);
   });
 
   it('skips audio/video files and returns the first valid image', async () => {
@@ -78,7 +78,7 @@ describe('WikimediaImageAdapter', () => {
     const adapter = new WikimediaImageAdapter();
     const result = await adapter.generate([['pronunciation', 'sound']]);
 
-    expect(result).toEqual(['https://thumb.wikimedia.org/wikipedia/commons/thumb/image.jpg']);
+    expect(result).toEqual([['https://thumb.wikimedia.org/wikipedia/commons/thumb/image.jpg']]);
   });
 
   it('returns empty string if no valid images are found', async () => {
@@ -103,7 +103,7 @@ describe('WikimediaImageAdapter', () => {
     const adapter = new WikimediaImageAdapter();
     const result = await adapter.generate([['pronunciation']]);
 
-    expect(result).toEqual(['']);
+    expect(result).toEqual([[]]);
   });
 
   it('returns empty string if Wikimedia Commons returns no pages without fallback', async () => {
@@ -115,7 +115,9 @@ describe('WikimediaImageAdapter', () => {
     const adapter = new WikimediaImageAdapter();
     const result = await adapter.generate([['qwertyunknown']]);
 
-    expect(result).toEqual(['']);
+    expect(result).toEqual([
+      []
+    ]);
   });
 
   it('returns empty string without querying API if keywords are empty', async () => {
@@ -126,6 +128,6 @@ describe('WikimediaImageAdapter', () => {
     const result = await adapter.generate([['   ']]);
 
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(result).toEqual(['']);
+    expect(result).toEqual([[]]);
   });
 });

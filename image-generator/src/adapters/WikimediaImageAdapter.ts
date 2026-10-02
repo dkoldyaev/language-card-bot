@@ -34,14 +34,14 @@ export class WikimediaImageAdapter implements IImageGenerator {
     this.userAgent = env.WIKIMEDIA_USER_AGENT;
   }
 
-  async generate(keywordGroups: string[][]): Promise<string[]> {
+  async generate(keywordGroups: string[][]): Promise<string[][]> {
     return Promise.all(keywordGroups.map((keywords) => this.fetchSingle(keywords)));
   }
 
-  private async fetchSingle(keywords: string[]): Promise<string> {
+  private async fetchSingle(keywords: string[]): Promise<string[]> {
     const query = keywords.map((k) => k.trim()).filter((k) => k.length > 0).join(' ');
     if (query.length === 0) {
-      return '';
+      return [];
     }
 
     const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=10&prop=imageinfo&iiprop=url|mime&iiurlwidth=640&format=json`;
@@ -64,21 +64,16 @@ export class WikimediaImageAdapter implements IImageGenerator {
       const validPages = Object.values(pages).filter((p) => {
         const info = p.imageinfo?.[0];
         return info && info.mime && info.mime.startsWith('image/');
-      });
+      }).slice(0, 3);
 
       if (validPages.length > 0) {
-        const firstPage = validPages[0];
-        const imageInfo = firstPage.imageinfo![0];
-
-        if (imageInfo.thumburl) {
-          return imageInfo.thumburl;
-        }
-        if (imageInfo.url) {
-          return imageInfo.url;
-        }
+        return validPages.map(page => {
+          const imageInfo = page.imageinfo![0];
+          return imageInfo.thumburl || imageInfo.url || '';
+        }).filter(url => url.length > 0);
       }
     }
 
-    return '';
+    return [];
   }
 }

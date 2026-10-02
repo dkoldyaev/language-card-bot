@@ -1,15 +1,15 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
-import { Alert, alpha, Box, Button, Typography } from '@mui/material';
+import { Alert, alpha, Box, Typography } from '@mui/material';
 import { isAxiosError } from 'axios';
 import type React from 'react';
 import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
 import { AppButton, AppCard, AppTextField, radiusTokens, spacingTokens } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
+import { addGuestWordsLocally } from '../../dictionary/lib/guestDictionaryService';
 
 interface QuickAddWordCardProps {
   onWordAdded?: (word: string) => void;
@@ -32,14 +32,19 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
 
   const handleAdd = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!token) return;
     const cleanWord = wordText.trim();
     if (!cleanWord || submitting || !targetDictId) return;
 
     setSubmitting(true);
     setError(null);
     try {
-      await apiClient.post('/add_word', { word: cleanWord, dictionaryId: targetDictId });
+      if (!token) {
+        if (targetDict) {
+          await addGuestWordsLocally([cleanWord], targetDict);
+        }
+      } else {
+        await apiClient.post('/add_word', { word: cleanWord, dictionaryId: targetDictId });
+      }
       trackEvent('Word Added');
       setSuccessWord(cleanWord);
       setWordText('');
@@ -102,60 +107,28 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
         </Alert>
       )}
 
-      {!token ? (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: spacingTokens.element_group_gap * 1.5,
-            p: spacingTokens.element_group_gap * 1.5,
-            borderRadius: `${radiusTokens.md}px`,
-            backgroundColor: (th) =>
-              th.palette.mode === 'dark' ? alpha(th.palette.primary.main, 0.08) : '#F4F7FB',
-            border: '1px solid',
-            borderColor: 'divider',
-          }}
+      <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', gap: spacingTokens.element_group_gap, alignItems: 'stretch' }}>
+        <AppTextField
+          size="small"
+          fullWidth
+          placeholder={t('dashboard.quickAddPlaceholder')}
+          value={wordText}
+          onChange={(e) => setWordText(e.target.value)}
+          disabled={submitting}
+          sx={{height: '100%'}}
+        />
+        <AppButton
+          type="submit"
+          variant="primary"
+          size="small"
+          disabled={!wordText.trim() || submitting}
+          loading={submitting}
+          endIcon={<SendRoundedIcon fontSize="small" />}
+          sx={{ whiteSpace: 'nowrap', px: 2 }}
         >
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem' }}>
-            {t('dashboard.quickAddAuthNotice')}
-          </Typography>
-          <Button
-            component={RouterLink}
-            to="/login"
-            size="small"
-            variant="outlined"
-            color="primary"
-            data-testid="quick-add-login-btn"
-            sx={{ whiteSpace: 'nowrap', textTransform: 'none', fontWeight: 700, borderRadius: `${radiusTokens.sm}px` }}
-          >
-            {t('auth.submitLogin')}
-          </Button>
-        </Box>
-      ) : (
-        <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', gap: spacingTokens.element_group_gap, alignItems: 'stretch' }}>
-          <AppTextField
-            size="small"
-            fullWidth
-            placeholder={t('dashboard.quickAddPlaceholder')}
-            value={wordText}
-            onChange={(e) => setWordText(e.target.value)}
-            disabled={submitting}
-            sx={{height: '100%'}}
-          />
-          <AppButton
-            type="submit"
-            variant="primary"
-            size="small"
-            disabled={!wordText.trim() || submitting}
-            loading={submitting}
-            endIcon={<SendRoundedIcon fontSize="small" />}
-            sx={{ whiteSpace: 'nowrap', px: 2 }}
-          >
-            {t('dashboard.quickAddBtn')}
-          </AppButton>
-        </Box>
-      )}
+          {t('dashboard.quickAddBtn')}
+        </AppButton>
+      </Box>
     </AppCard>
   );
 }

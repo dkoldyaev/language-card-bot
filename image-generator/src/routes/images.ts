@@ -49,7 +49,8 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
     );
 
     const cacheKeys = cleanedKeywords.map((group) => buildCacheKey(provider, group));
-    const cachedImages: Array<string | null> = await redisClient.mget(cacheKeys);
+    const cachedImagesRaw: Array<string | null> = await redisClient.mget(cacheKeys);
+    const cachedImages: Array<string[] | null> = cachedImagesRaw.map(raw => raw ? JSON.parse(raw) : null);
 
     const uncachedIndices: number[] = [];
     const uncachedKeywordGroups: string[][] = [];
@@ -61,7 +62,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
       }
     });
 
-    const finalImages: string[] = [...(cachedImages as string[])];
+    const finalImages: string[][] = [...(cachedImages as string[][])];
 
     if (uncachedKeywordGroups.length > 0) {
       const generator = ImageGeneratorFactory.getGenerator(provider);
@@ -70,14 +71,14 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
       const pipeline = redisClient.pipeline();
       let hasKeysToCache = false;
 
-      generatedBatch.forEach((imageUrl, i) => {
+      generatedBatch.forEach((imageUrls, i) => {
         const originalIndex = uncachedIndices[i];
-        finalImages[originalIndex] = imageUrl;
+        finalImages[originalIndex] = imageUrls;
 
-        // Strictly cache only valid, non-empty URLs
-        if (imageUrl && imageUrl.trim().length > 0) {
+        const validUrls = imageUrls.filter(u => u && typeof u === 'string' && u.trim().length > 0);
+        if (validUrls.length > 0) {
           const cacheKey = cacheKeys[originalIndex];
-          pipeline.set(cacheKey, imageUrl, 'EX', CACHE_TTL_SECONDS);
+          pipeline.set(cacheKey, JSON.stringify(validUrls), 'EX', CACHE_TTL_SECONDS);
           hasKeysToCache = true;
         }
       });

@@ -31,7 +31,7 @@ describe('UnsplashImageAdapter', () => {
     const result = await adapter.generate([['car part', 'air', 'filter']]);
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(result).toEqual(['https://images.unsplash.com/photo-test-regular']);
+    expect(result).toEqual([['https://images.unsplash.com/photo-test-regular']]);
   });
 
   it('returns empty string if Unsplash returns no results without fallback', async () => {
@@ -43,7 +43,7 @@ describe('UnsplashImageAdapter', () => {
     const adapter = new UnsplashImageAdapter();
     const result = await adapter.generate([['nonexistentkeyword123']]);
 
-    expect(result).toEqual(['']);
+    expect(result).toEqual([[]]);
   });
 
   it('returns empty string without querying API if keywords are empty', async () => {
@@ -54,7 +54,7 @@ describe('UnsplashImageAdapter', () => {
     const result = await adapter.generate([['   ']]);
 
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(result).toEqual(['']);
+    expect(result).toEqual([[]]);
   });
 
   it('throws an error if Unsplash API returns non-ok response', async () => {

@@ -13,6 +13,7 @@ const envSchema = z.object({
   LLM_MODEL: z.string(),
   MOCK_TIMEOUT: z.string().optional(),
   CACHE_URL: z.string(),
+  APP_TYPE: z.enum(['googletranslate', 'mock', 'laratranslate', 'llm', 'mistral', 'gemini']),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

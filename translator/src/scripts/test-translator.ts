@@ -84,10 +84,8 @@ function parseArgs(): ParsedArgs {
     if (arg === '--text' || arg === '-t') {
       const val = argv[++i];
       if (val) {
-        val.split(',').forEach((t) => {
-          const trimmed = t.trim();
-          if (trimmed) rawTexts.push(trimmed);
-        });
+        const trimmed = val.trim();
+        if (trimmed) rawTexts.push(trimmed);
       }
     } else if (arg === '--from' || arg === '--source-lang' || arg === '-s') {
       sourceLanguage = argv[++i];
@@ -125,9 +123,9 @@ function parseArgs(): ParsedArgs {
     rawTexts.push(positional.join(' '));
   }
 
-  const resolvedApp = app !== undefined ? app : process.env.TRANSLATOR_APP_TYPE;
-  const resolvedSourceLang = sourceLanguage !== undefined ? sourceLanguage : process.env.TRANSLATOR_SOURCE_LANG;
-  const resolvedTargetLang = targetLanguage !== undefined ? targetLanguage : process.env.TRANSLATOR_TARGET_LANG;
+  const resolvedApp = app !== undefined ? app : (provider !== undefined ? provider : env.APP_TYPE);
+  const resolvedSourceLang = sourceLanguage;
+  const resolvedTargetLang = targetLanguage;
 
   const validApps = ['googletranslate', 'mock', 'laratranslate', 'llm', 'mistral', 'gemini'] as const;
   const validProviders = ['mistral', 'gemini', 'mock'] as const;

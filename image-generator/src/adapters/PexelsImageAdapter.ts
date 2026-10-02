@@ -32,17 +32,17 @@ export class PexelsImageAdapter implements IImageGenerator {
     this.apiKey = env.PEXELS_API_KEY;
   }
 
-  async generate(keywordGroups: string[][]): Promise<string[]> {
+  async generate(keywordGroups: string[][]): Promise<string[][]> {
     return Promise.all(keywordGroups.map((keywords) => this.fetchSingle(keywords)));
   }
 
-  private async fetchSingle(keywords: string[]): Promise<string> {
+  private async fetchSingle(keywords: string[]): Promise<string[]> {
     const query = keywords.map((k) => k.trim()).filter((k) => k.length > 0).join(' ');
     if (query.length === 0) {
-      return '';
+      return [];
     }
 
-    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`;
+    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=3`;
 
     const response = await fetch(url, {
       headers: {
@@ -56,16 +56,10 @@ export class PexelsImageAdapter implements IImageGenerator {
     }
 
     const data = (await response.json()) as PexelsSearchResponse;
-    const firstPhoto = data.photos && data.photos.length > 0 ? data.photos[0] : null;
-
-    if (firstPhoto?.src?.medium) {
-      return firstPhoto.src.medium;
+    if (data.photos && data.photos.length > 0) {
+      return data.photos.map(photo => photo.src?.medium || photo.src?.large || '').filter(u => u.length > 0);
     }
 
-    if (firstPhoto?.src?.large) {
-      return firstPhoto.src.large;
-    }
-
-    return '';
+    return [];
   }
 }

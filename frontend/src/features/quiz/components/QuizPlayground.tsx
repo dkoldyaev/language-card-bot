@@ -265,11 +265,13 @@ export default function QuizPlayground() {
           onClose={() => setPreviewOpen(false)}
           maxWidth="md"
           fullWidth
-          PaperProps={{
-            sx: {
-              borderRadius: `${radiusTokens.lg}px`,
-              overflow: 'hidden',
-              backgroundColor: 'background.paper',
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: `${radiusTokens.lg}px`,
+                overflow: 'hidden',
+                backgroundColor: 'background.paper',
+              },
             },
           }}
         >

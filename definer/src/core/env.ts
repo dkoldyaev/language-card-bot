@@ -12,6 +12,7 @@ const envSchema = z.object({
   CACHE_URL: z.string(),
   TRANSLATOR_API_URL: z.string(),
   TRANSLATOR_APP_TYPE: z.enum(['googletranslate', 'mock', 'laratranslate', 'llm', 'mistral', 'gemini']),
+  DEFINER_APP_TYPE: z.enum(['freedictionary', 'mock', 'llm', 'mistral', 'gemini']),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

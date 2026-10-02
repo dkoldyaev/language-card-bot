@@ -21,8 +21,6 @@ export default function QuizPage() {
         .catch((error) => {
           console.error('Failed to auto-start quiz:', error);
           setStartError(error.response?.data?.error || 'Failed to start quiz');
-        })
-        .finally(() => {
           setStarting(false);
         });
     }
