@@ -9,7 +9,7 @@ const router = Router();
 
 router.get('/stats', authMiddleware, validateRequest(DashboardStatsQuerySchema, 'query'), async (req: Request, res: Response) => {
   const user = getAuthUser(req);
-  const { dictionaryId } = req.query as unknown as DashboardStatsQuery;
+  const { dictionaryId } = res.locals.validatedData as DashboardStatsQuery;
 
   try {
     const stats = await getDashboardStats(user.id, dictionaryId);

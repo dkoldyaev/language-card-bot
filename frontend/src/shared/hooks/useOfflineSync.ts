@@ -19,9 +19,11 @@ export function useOfflineSync() {
         } else if (action.type === 'DELETE_DEFINITION') {
           await api.delete(`/api/dictionary/words/${action.wordId}/definitions/${action.definitionId}`);
         } else if (action.type === 'EDIT_TRANSLATION') {
-          await api.put(`/api/dictionary/words/${action.wordId}/definitions/${action.definitionId}/translation`, {
+          await api.put(`/definition_translate_edit/${action.definitionId}`, {
             text: action.text
           });
+        } else if (action.type === 'DELETE_IMAGE') {
+          await api.delete(`/image/${action.definitionId}/${action.imageId}`);
         }
       } catch (error: unknown) {
         if (isAxiosError(error) && error.response && [404, 409].includes(error.response.status)) {

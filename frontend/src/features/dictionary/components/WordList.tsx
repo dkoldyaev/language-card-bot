@@ -14,6 +14,7 @@ import {
   Divider,
   FormControlLabel,
   IconButton,
+  Modal,
   TextField,
   Tooltip,
   Typography,
@@ -44,6 +45,7 @@ export default function WordList({ loading }: { loading: boolean }) {
   const [editTransText, setEditTransText] = useState('');
   const [selectedWordIds, setSelectedWordIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
 
   const token = useStore((state) => state.token);
   const dictionary = useStore((state) => state.dictionary);
@@ -53,6 +55,7 @@ export default function WordList({ loading }: { loading: boolean }) {
   const updateDictionaryTranslation = useStore((state) => state.updateDictionaryTranslation);
   const addDictionaryDefinition = useStore((state) => state.addDictionaryDefinition);
   const removeDictionaryDefinition = useStore((state) => state.removeDictionaryDefinition);
+  const removeDefinitionImage = useStore((state) => state.removeDefinitionImage);
 
   const filteredDictionary = searchQuery
     ? dictionary.filter((w) => w.text.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -175,6 +178,19 @@ export default function WordList({ loading }: { loading: boolean }) {
         removeDictionaryDefinition(wordId, defId);
       } catch (error) {
         console.error('Failed to delete definition:', error);
+      }
+    }
+  };
+
+  const handleDeleteImage = async (wordId: number, defId: number, imageId: number) => {
+    if (window.confirm(t('dictionary.deleteImageConfirm', { defaultValue: 'Are you sure you want to delete this image?' }))) {
+      try {
+        if (token) {
+          await apiClient.delete(`/image/${defId}/${imageId}`);
+        }
+        removeDefinitionImage(wordId, defId, imageId);
+      } catch (error) {
+        console.error('Failed to delete image:', error);
       }
     }
   };
@@ -330,7 +346,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                     )}
 
                     <Box sx={{ flexGrow: 1 }} />
-                    <StatusChip word={word.text} />
+                    <StatusChip word={word.text} isProcessing={word.isProcessing} />
                     <Chip
                       label={t('dictionary.definitionCount', { count: word.definitions.length })}
                       size="small"
@@ -481,6 +497,50 @@ export default function WordList({ loading }: { loading: boolean }) {
                         </Box>
                       )}
 
+                      {def.images && def.images.length > 0 && (
+                        <Box sx={{ display: 'flex', gap: 1.5, ml: 2, mt: 1.5, flexWrap: 'wrap' }}>
+                          {def.images.map((img) => (
+                            <Box key={img.id} sx={{ position: 'relative', display: 'inline-flex' }}>
+                              <Box
+                                component="img"
+                                src={img.url}
+                                alt="preview"
+                                sx={{
+                                  width: 64,
+                                  height: 64,
+                                  objectFit: 'cover',
+                                  borderRadius: `${radiusTokens.md}px`,
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  cursor: 'pointer',
+                                }}
+                                onClick={() => setSelectedImageUrl(img.url)}
+                              />
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleDeleteImage(word.id, def.id, img.id)}
+                                sx={{
+                                  position: 'absolute',
+                                  top: -8,
+                                  right: -8,
+                                  width: 20,
+                                  height: 20,
+                                  bgcolor: 'background.paper',
+                                  boxShadow: 1,
+                                  '&:hover': {
+                                    bgcolor: 'error.lighter',
+                                  },
+                                  zIndex: 1,
+                                }}
+                              >
+                                <DeleteIcon sx={{ fontSize: 14 }} />
+                              </IconButton>
+                            </Box>
+                          ))}
+                        </Box>
+                      )}
+
                       {idx < word.definitions.length - 1 && <Divider sx={{ mt: 2 }} />}
                     </Box>
                   ))}
@@ -500,6 +560,49 @@ export default function WordList({ loading }: { loading: boolean }) {
           })}
         </Box>
       )}
+
+      <Modal
+        open={!!selectedImageUrl}
+        onClose={() => setSelectedImageUrl(null)}
+        aria-labelledby="image-modal"
+        aria-describedby="image-modal-description"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2,
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            outline: 'none',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={() => setSelectedImageUrl(null)}
+        >
+          {selectedImageUrl && (
+            <Box
+              component="img"
+              src={selectedImageUrl}
+              alt="Expanded view"
+              sx={{
+                maxWidth: '100%',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+                borderRadius: `${radiusTokens.md}px`,
+                boxShadow: 24,
+                bgcolor: 'background.paper',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+        </Box>
+      </Modal>
     </Box>
   );
 }

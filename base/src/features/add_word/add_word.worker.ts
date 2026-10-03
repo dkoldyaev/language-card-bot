@@ -103,8 +103,8 @@ export const dictionaryWorker = new Worker('dictionaryQueue', async (job: Job) =
       username,
       wordId,
       wordText,
-      toLanguageCode(baseLanguage),
       toLanguageCode(targetLanguage),
+      toLanguageCode(baseLanguage),
     );
 
     // 5. Enqueue image generation jobs for all definitions of this word

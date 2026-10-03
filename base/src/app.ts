@@ -24,6 +24,7 @@ import './features/definition_translate_edit/definition_translate.listener';
 import './features/quiz/quiz_cleanup.worker';
 import './features/image/image.worker';
 import './features/image/image.listener';
+import imageRoutes from './features/image/image.route';
 
 import { env } from './core/env';
 
@@ -59,6 +60,7 @@ app.use('/api/v1/quiz', quizRoutes);
 app.use('/api/v1/preset', presetRoutes);
 app.use('/api/v1/presets', presetRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/image', imageRoutes);
 app.use('/api/v1', echoRoutes);
 
 app.get('/health', (_req, res) => {

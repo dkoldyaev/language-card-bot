@@ -112,7 +112,7 @@ function AuthContent() {
   useEffect(() => {
     setError(null);
     setRegistrationSuccess(false);
-  }, []);
+  }, [location.pathname]);
 
   // ==========================================
   // GOOGLE OAUTH HANDLERS

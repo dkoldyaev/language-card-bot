@@ -5,10 +5,15 @@ import { env } from './core/env';
 
 const connectionString = env.DATABASE_URL;
 
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-
 const isLoggingEnabled = env.ENABLE_DB_LOGGING === 'true';
+
+const pool = new Pool({ 
+  connectionString,
+  max: 50,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000 
+});
+const adapter = new PrismaPg(pool);
 
 export const prisma = new PrismaClient({
   adapter,

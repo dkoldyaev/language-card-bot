@@ -62,6 +62,7 @@ export interface DictionaryWord {
   text: string;
   definitions: DictionaryDefinition[];
   presets?: PresetBadge[];
+  isProcessing?: boolean;
 }
 
 export interface UnnormalizedWord {
@@ -69,6 +70,7 @@ export interface UnnormalizedWord {
   text: string;
   definitions: UnnormalizedDefinition[];
   presets?: PresetBadge[];
+  isProcessing?: boolean;
 }
 
 export interface AppSyncState {
@@ -149,7 +151,8 @@ export interface DashboardStats {
 export type SyncActionPayload = 
   | { type: 'EDIT_TRANSLATION'; wordId: number; definitionId: number; text: string }
   | { type: 'DELETE_WORD'; wordId: number }
-  | { type: 'DELETE_DEFINITION'; wordId: number; definitionId: number };
+  | { type: 'DELETE_DEFINITION'; wordId: number; definitionId: number }
+  | { type: 'DELETE_IMAGE'; wordId: number; definitionId: number; imageId: number };
 
 export interface GuestQuizAttempt {
   wordText: string;
@@ -212,6 +215,7 @@ interface AppState {
   updateDictionaryTranslationsBatch: (words: { wordId: number; definitions: { id: number; translation: string }[] }[]) => void;
   addDictionaryDefinition: (wordId: number, definition: DictionaryDefinition) => void;
   removeDictionaryDefinition: (wordId: number, definitionId: number) => void;
+  removeDefinitionImage: (wordId: number, definitionId: number, imageId: number) => void;
   setQuizCard: (card: QuizCardData | null) => void;
   setQuizEvaluation: (evalData: QuizEvaluationData | null) => void;
   setQuizTranslation: (translation: string | null) => void;
@@ -253,6 +257,7 @@ const initialState = {
 export const normalizeWordDefinitions = (word: UnnormalizedWord | DictionaryWord, baseLang?: string): DictionaryWord => {
   return {
     ...word,
+    isProcessing: word.isProcessing,
     definitions: (word.definitions || []).map((def) => {
       let text: string | UnnormalizedDefinitionText = def.text;
       let translation: DictionaryTranslation | string | null | undefined = def.translation;
@@ -496,6 +501,7 @@ const useStore = create<AppState>()(
               presets: d.presets ?? [],
             })),
             presets: [],
+            isProcessing: false,
           }));
 
         const updatedDictionary = state.dictionary.map((word) => {
@@ -528,6 +534,7 @@ const useStore = create<AppState>()(
           return {
             ...word,
             definitions: mergedDefs,
+            isProcessing: false,
           };
         });
 
@@ -609,6 +616,24 @@ const useStore = create<AppState>()(
             word.id === wordId ? {
               ...word,
               definitions: word.definitions.filter(def => def.id !== definitionId)
+            } : word
+          )
+        };
+      }),
+      removeDefinitionImage: (wordId, definitionId, imageId) => set((state) => {
+        if (state.isOffline) {
+          state.enqueueSyncAction({ type: 'DELETE_IMAGE', wordId, definitionId, imageId });
+        }
+        return {
+          dictionary: state.dictionary.map(word => 
+            word.id === wordId ? {
+              ...word,
+              definitions: word.definitions.map(def => 
+                def.id === definitionId ? {
+                  ...def,
+                  images: (def.images || []).filter(img => img.id !== imageId)
+                } : def
+              )
             } : word
           )
         };

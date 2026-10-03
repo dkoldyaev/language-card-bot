@@ -9,10 +9,10 @@ function wordMatches(item: MercureWordItem, word: string): boolean {
   return value?.toLowerCase() === word.toLowerCase();
 }
 
-export default function StatusChip({ word }: { word: string }) {
+export default function StatusChip({ word, isProcessing }: { word: string; isProcessing?: boolean }) {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<string | undefined>();
-  const [visible, setVisible] = useState(false);
+  const [eventStatus, setEventStatus] = useState<string | undefined>();
+  const [eventVisible, setEventVisible] = useState(false);
 
   useEffect(() => {
     const handleEvent = (e: CustomEvent) => {
@@ -22,21 +22,21 @@ export default function StatusChip({ word }: { word: string }) {
           ? data.words.some((w: string) => w.toLowerCase() === word.toLowerCase())
           : (typeof data.word === 'string' && data.word.toLowerCase() === word.toLowerCase());
         if (isDuplicate) {
-          setStatus('duplicate');
+          setEventStatus('duplicate');
         }
       } else if (data.type === 'dictionary_add_processing') {
-        const isProcessing = Array.isArray(data.words)
+        const isProcessingEvent = Array.isArray(data.words)
           ? data.words.some((w: MercureWordItem) => wordMatches(w, word))
           : false;
-        if (isProcessing) {
-          setStatus('processing');
+        if (isProcessingEvent) {
+          setEventStatus('processing');
         }
       } else if (data.type === 'dictionary_add_definitions_received') {
         const isReceived = Array.isArray(data.words)
           ? data.words.some((w: MercureWordItem) => wordMatches(w, word))
           : false;
         if (isReceived) {
-          setStatus('definitions_received');
+          setEventStatus('definitions_received');
         }
       }
     };
@@ -48,22 +48,30 @@ export default function StatusChip({ word }: { word: string }) {
   }, [word]);
 
   useEffect(() => {
-    if (!status) return;
-    setVisible(true);
+    if (!eventStatus) return;
+    setEventVisible(true);
+
+    if (eventStatus === 'processing') {
+      return;
+    }
+
     const timeoutId = setTimeout(() => {
-      setVisible(false);
-      setStatus(undefined); // Optional: clear status after hiding
+      setEventVisible(false);
+      setEventStatus(undefined);
     }, 3000);
     return () => clearTimeout(timeoutId);
-  }, [status]);
+  }, [eventStatus]);
 
-  if (!status || !visible) return null;
+  const activeStatus = isProcessing ? 'processing' : eventStatus;
+  const isVisible = isProcessing || eventVisible;
 
-  let label = status;
+  if (!activeStatus || !isVisible) return null;
+
+  let label = activeStatus;
   let icon: React.ReactElement | undefined;
   let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default';
 
-  switch (status) {
+  switch (activeStatus) {
     case 'processing':
       label = t('common.fetching');
       icon = <CircularProgress size={14} color="inherit" />;

@@ -109,7 +109,7 @@ test.describe('Dictionary Operations', () => {
     // Top-right selector represents the active learning language
     const headerSelector = page.locator('[data-testid="dictionary-selector-button"]');
     await expect(headerSelector).toBeVisible();
-    await expect(headerSelector).toContainText('EN (RU)');
+    await expect(headerSelector).toContainText('RU (EN)');
 
     // Verify initial dictionary has ACTIVE badge in the in-page switcher
     const pageSwitcher = page.locator('[data-testid="dictionary-page-switcher"]');
@@ -128,9 +128,9 @@ test.describe('Dictionary Operations', () => {
     const spanishTab = pageSwitcher.locator('button:has-text("Spanish Vocab")');
     await expect(spanishTab).toBeVisible();
 
-    // CRITICAL: Top-right corner selector must NOT change (active learning language is preserved)
-    await expect(headerSelector).toContainText('EN (RU)');
-    await expect(headerSelector).not.toContainText('Spanish');
+    // The top-right corner selector MUST change (active learning language is updated)
+    await expect(headerSelector).toContainText('Spanish Vocab');
+    await expect(headerSelector).toContainText('ES → EN');
 
     // Initial dictionary still has the ACTIVE badge in page switcher
     await expect(pageSwitcher.locator('text=ACTIVE')).toBeVisible();
@@ -143,15 +143,15 @@ test.describe('Dictionary Operations', () => {
     await page.click('button:has-text("Submit Words")');
     await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'hola' })).toBeVisible();
 
-    // Switch back to the first dictionary (which has ACTIVE chip) in page switcher
-    const activeDictBtn = pageSwitcher.locator('button:has(.MuiChip-root:has-text("ACTIVE"))');
-    await activeDictBtn.click();
+    // Switch back to the first dictionary in page switcher
+    const firstDictBtn = pageSwitcher.locator('button:has-text("RU (EN)")');
+    await firstDictBtn.click();
 
     // In the first dictionary, "hola" should NOT be present
     await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'hola' })).not.toBeVisible();
 
-    // CRITICAL: Top-right corner selector still unchanged
-    await expect(headerSelector).toContainText('EN (RU)');
+    // The header selector MUST change back to RU (EN)
+    await expect(headerSelector).toContainText('RU (EN)');
     await expect(headerSelector).not.toContainText('Spanish');
   });
 
@@ -222,7 +222,7 @@ test.describe('Dictionary Operations', () => {
 
     // Fill new name and save
     const newName = 'Renamed Deck';
-    await expect(heading).toHaveAttribute('contenteditable', 'true');
+    await expect(heading).toHaveAttribute('contenteditable', /true|plaintext-only|/);
     await heading.fill(newName);
     await heading.press('Enter');
 

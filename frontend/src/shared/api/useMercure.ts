@@ -49,6 +49,7 @@ export function useMercure() {
                         text: item.word,
                         definitions: [],
                         presets: item.presets || [],
+                        isProcessing: true,
                       }))
                     );
                   }
