@@ -4,7 +4,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { alpha, Box, Tooltip, Typography } from '@mui/material';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useMatch, Navigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import {
@@ -24,6 +24,7 @@ import AddWordForm from '../components/AddWordForm';
 import CreateDictionaryDialog from '../components/CreateDictionaryDialog';
 import DictionaryPresets from '../components/DictionaryPresets';
 import DictionarySwitcher from '../components/DictionarySwitcher';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 import WordList from '../components/WordList';
 
 export default function DictionaryPage() {
@@ -38,10 +39,11 @@ export default function DictionaryPage() {
   const actionButtonsRef = useRef<HTMLDivElement>(null);
   const hasAutoOpenedRef = useRef(false);
 
+  const { locale } = useParams<{ locale: string }>();
+  const isNewRoute = !!useMatch('/:locale/dictionary/new');
   const token = useStore((state) => state.token);
   const setDictionary = useStore((state) => state.setDictionary);
-  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
-  const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
+  const activeDictionaryId = useActiveDictionaryId();
   const dictionaries = useStore((state) => state.dictionaries);
   const setDictionaries = useStore((state) => state.setDictionaries);
   const removeDictionary = useStore((state) => state.removeDictionary);
@@ -59,11 +61,19 @@ export default function DictionaryPage() {
   useEffect(() => {
     if (!loading && dictionaries.length === 0 && !hasAutoOpenedRef.current) {
       hasAutoOpenedRef.current = true;
+      if (!isNewRoute) {
+        navigate(`/${locale}/dictionary/new`, { replace: true });
+      }
       setCreateDialogOpen(true);
     } else if (dictionaries.length > 0) {
       hasAutoOpenedRef.current = false;
     }
-  }, [loading, dictionaries.length]);
+  }, [loading, dictionaries.length, isNewRoute, navigate, locale]);
+
+  // Handle redirect if no active dictionary is selected but we have dictionaries
+  if (!loading && !activeDictionaryId && !isNewRoute && dictionaries.length > 0) {
+    return <Navigate to={`/${locale}/dictionary/${dictionaries[0].id}`} replace />;
+  }
 
   const handleCancelCreateDialog = () => {
     setCreateDialogOpen(false);
@@ -73,10 +83,10 @@ export default function DictionaryPage() {
   };
 
   const handleSelectDictionary = async (dictId: number) => {
+    navigate(`/${locale}/dictionary/${dictId}`);
     if (!token) {
-      setActiveDictionaryId(dictId);
       const dictWords = useStore.getState().guestDictionaryWords[dictId] || [];
-      setDictionary(dictWords);
+      setDictionary(dictWords, dictId);
       return;
     }
     

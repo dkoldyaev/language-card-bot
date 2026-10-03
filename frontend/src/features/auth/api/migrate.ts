@@ -17,7 +17,7 @@ export async function performGuestMigration(token: string, mode: 'merge' | 'repl
     return null;
   }
 
-  const activeDict = dictionaries.find((d) => d.id === store.activeDictionaryId) || dictionaries[0];
+  const activeDict = dictionaries[0];
   const targetLanguage = activeDict?.targetLanguage || 'en';
   const baseLanguage = activeDict?.baseLanguage || 'ru';
 

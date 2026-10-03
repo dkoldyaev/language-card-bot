@@ -10,6 +10,7 @@ import useStore from '../store/useStore';
 const Auth = lazy(() => import('../features/auth/pages/AuthPage'));
 const Dashboard = lazy(() => import('../features/dashboard/pages/DashboardPage'));
 const Dictionary = lazy(() => import('../features/dictionary/pages/DictionaryPage'));
+const EditDictionary = lazy(() => import('../features/dictionary/pages/EditDictionaryPage'));
 const OnboardingPage = lazy(() => import('../features/onboarding/pages/OnboardingPage'));
 const Presets = lazy(() => import('../features/presets/pages/PresetsPage'));
 const Quiz = lazy(() => import('../features/quiz/pages/QuizPage'));
@@ -33,6 +34,11 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RootRedirect() {
+  const baseLanguage = useStore((state) => state.settings?.baseLanguage) || 'en';
+  return <Navigate to={`/${baseLanguage.toLowerCase()}`} replace />;
+}
+
 function App() {
   useMercure();
   useOfflineSync();
@@ -45,13 +51,20 @@ function App() {
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          
+          <Route path="/" element={<RootRedirect />} />
+          
+          <Route path="/:locale" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
-            <Route path="settings" element={<Navigate to="/" replace />} />
-            <Route path="dictionary" element={<Dictionary />} />
-            {/* Legacy routes redirect to unified dictionary page */}
-            <Route path="dictionary/add" element={<Navigate to="/dictionary" replace />} />
-            <Route path="dictionary/edit" element={<Navigate to="/dictionary" replace />} />
+            <Route path="settings" element={<Navigate to="." replace />} />
+            
+            <Route path="dictionary">
+              <Route index element={<Dictionary />} />
+              <Route path="new" element={<Dictionary />} />
+              <Route path=":dictId" element={<Dictionary />} />
+              <Route path=":dictId/edit" element={<EditDictionary />} />
+            </Route>
+
             <Route path="quiz" element={<Quiz />} />
             <Route
               path="presets"

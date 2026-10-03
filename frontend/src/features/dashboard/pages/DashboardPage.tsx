@@ -10,7 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import {
   AppButton,
@@ -30,6 +30,7 @@ import NeedsAttentionWidget from '../components/NeedsAttentionWidget';
 import QuickAddWordCard from '../components/QuickAddWordCard';
 import WeeklyActivityChart from '../components/WeeklyActivityChart';
 import { computeGuestDashboardStats } from '../lib/guestStats';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -38,10 +39,11 @@ export default function Dashboard() {
   const dictionary = useStore((state) => state.dictionary);
   const guestAttempts = useStore((state) => state.guestQuizAttempts);
   const dictionaries = useStore((state) => state.dictionaries);
-  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
+  const activeDictionaryId = useActiveDictionaryId();
   const dashboardStats = useStore((state) => state.dashboardStats);
   const setDashboardStats = useStore((state) => state.setDashboardStats);
   const navigate = useNavigate();
+  const { locale } = useParams<{ locale: string }>();
 
   const totalWords = dictionary.length;
   const totalDefinitions = dictionary.reduce((sum, word) => sum + word.definitions.length, 0);
@@ -137,7 +139,7 @@ export default function Dashboard() {
               <AppButton
                 variant="secondary"
                 disabled={true}
-                onClick={() => navigate('/quiz')}
+                onClick={() => navigate(`/${locale}/quiz`)}
                 endIcon={<ArrowForwardRoundedIcon />}
               >
                 {t('dashboard.startQuizBtn')}
@@ -196,7 +198,7 @@ export default function Dashboard() {
               <AppButton
                 variant="secondary"
                 size="large"
-                onClick={() => navigate('/quiz')}
+                onClick={() => navigate(`/${locale}/quiz`)}
                 endIcon={<ArrowForwardRoundedIcon />}
               >
                 {t('dashboard.startQuizBtn')}
@@ -213,7 +215,7 @@ export default function Dashboard() {
                   </Typography>
                   <Button
                     size="small"
-                    onClick={() => navigate('/dictionary')}
+                    onClick={() => navigate(`/${locale}/dictionary${targetDictId ? `/${targetDictId}` : ''}`)}
                     startIcon={<TranslateRoundedIcon fontSize="small" />}
                     sx={{ textTransform: 'none', fontWeight: 700 }}
                   >
@@ -318,7 +320,7 @@ export default function Dashboard() {
                 {dashboardStats.needsAttention.length > 0 && (
                   <AppButton
                     variant="outline"
-                    onClick={() => navigate('/quiz')}
+                    onClick={() => navigate(`/${locale}/quiz`)}
                   >
                     {t('dashboard.practiceMistakesBtn')}
                   </AppButton>
@@ -326,7 +328,7 @@ export default function Dashboard() {
                 <AppButton
                   variant="secondary"
                   size="large"
-                  onClick={() => navigate('/quiz')}
+                  onClick={() => navigate(`/${locale}/quiz`)}
                   startIcon={<PlayArrowRoundedIcon />}
                   endIcon={<ArrowForwardRoundedIcon />}
                 >
@@ -448,7 +450,7 @@ export default function Dashboard() {
                   </Typography>
                   <Button
                     size="small"
-                    onClick={() => navigate('/dictionary')}
+                    onClick={() => navigate(`/${locale}/dictionary${targetDictId ? `/${targetDictId}` : ''}`)}
                     sx={{ textTransform: 'none', fontWeight: 700 }}
                   >
                     {t('dashboard.dictionaryBtn')}

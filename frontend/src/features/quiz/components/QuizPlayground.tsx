@@ -24,37 +24,34 @@ import {
 } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 
-const handleTranslateDefinition = async () => {
+const handleTranslateDefinition = async (dictionaryId: number | null) => {
   try {
-    const dictionaryId = useStore.getState().activeDictionaryId;
     await apiClient.post('/quiz/translate_definition', { dictionaryId });
   } catch (error) {
     console.error('Failed to translate definition:', error);
   }
 };
 
-const handleNextDefinition = async () => {
+const handleNextDefinition = async (dictionaryId: number | null) => {
   try {
-    const dictionaryId = useStore.getState().activeDictionaryId;
     await apiClient.post('/quiz/next_definition', { dictionaryId });
   } catch (error) {
     console.error('Failed to get next definition:', error);
   }
 };
 
-const handleVariants = async () => {
+const handleVariants = async (dictionaryId: number | null) => {
   try {
-    const dictionaryId = useStore.getState().activeDictionaryId;
     await apiClient.post('/quiz/variants', { dictionaryId });
   } catch (error) {
     console.error('Failed to get variants:', error);
   }
 };
 
-const handleNextCard = async () => {
+const handleNextCard = async (dictionaryId: number | null) => {
   try {
-    const dictionaryId = useStore.getState().activeDictionaryId;
     await apiClient.post('/quiz/next_card', { dictionaryId });
   } catch (error) {
     console.error('Failed to get next card:', error);
@@ -65,6 +62,7 @@ export default function QuizPlayground() {
   const { t } = useTranslation();
   const [submitting, setSubmitting] = useState(false);
   const [suggestion, setSuggestion] = useState('');
+  const activeDictionaryId = useActiveDictionaryId();
 
   const quizCard = useStore((state) => state.quizCard);
   const quizEvaluation = useStore((state) => state.quizEvaluation);
@@ -84,8 +82,7 @@ export default function QuizPlayground() {
     setSubmitting(true);
     try {
       trackEvent('Card Answered');
-      const dictionaryId = useStore.getState().activeDictionaryId;
-      const res = await apiClient.post('/quiz/answer', { suggestion, dictionaryId });
+      const res = await apiClient.post('/quiz/answer', { suggestion, dictionaryId: activeDictionaryId });
       if (res.data?.evaluation) {
         useStore.getState().setQuizEvaluation({
           result: res.data.evaluation.result,
@@ -103,7 +100,7 @@ export default function QuizPlayground() {
   useEffect(() => {
     if (quizEvaluation?.result === 'SUCCESS') {
       const timer = setTimeout(() => {
-        handleNextCard();
+        handleNextCard(activeDictionaryId);
       }, 2000);
       return () => clearTimeout(timer);
     }
@@ -132,7 +129,7 @@ export default function QuizPlayground() {
         <AppButton
           variant="outline"
           size="small"
-          onClick={handleNextCard}
+          onClick={() => handleNextCard(activeDictionaryId)}
           endIcon={<ArrowForwardRoundedIcon />}
           sx={{ mb: 0.5, whiteSpace: 'nowrap' }}
         >
@@ -269,7 +266,7 @@ export default function QuizPlayground() {
           <AppButton
             variant="outline"
             size="small"
-            onClick={handleTranslateDefinition}
+            onClick={() => handleTranslateDefinition(activeDictionaryId)}
             disabled={Boolean(quizTranslation)}
             startIcon={<TranslateRoundedIcon />}
           >
@@ -278,7 +275,7 @@ export default function QuizPlayground() {
           <AppButton
             variant="outline"
             size="small"
-            onClick={handleNextDefinition}
+            onClick={() => handleNextDefinition(activeDictionaryId)}
             startIcon={<ShuffleRoundedIcon />}
           >
             {t('quiz.anotherDefBtn')}
@@ -286,7 +283,7 @@ export default function QuizPlayground() {
           <AppButton
             variant="outline"
             size="small"
-            onClick={handleVariants}
+            onClick={() => handleVariants(activeDictionaryId)}
             disabled={Boolean(quizVariants)}
             startIcon={<AppsRoundedIcon />}
           >
@@ -308,8 +305,7 @@ export default function QuizPlayground() {
                   onClick={() => {
                     setSuggestion(variant);
                     trackEvent('Card Answered');
-                    const dictionaryId = useStore.getState().activeDictionaryId;
-                    apiClient.post('/quiz/answer', { suggestion: variant, dictionaryId })
+                    apiClient.post('/quiz/answer', { suggestion: variant, dictionaryId: activeDictionaryId })
                       .then((res) => {
                         if (res.data?.evaluation) {
                           useStore.getState().setQuizEvaluation({

@@ -8,6 +8,7 @@ import { trackEvent } from '../../../shared/lib/analytics';
 import { AppButton, AppCard, AppTextField, spacingTokens } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 import { addGuestWordsLocally } from '../lib/guestDictionaryService';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 
 interface AddWordFormProps {
   dictionaryId?: number;
@@ -19,8 +20,7 @@ export default function AddWordForm({ dictionaryId }: AddWordFormProps = {}) {
   const [submitting, setSubmitting] = useState(false);
 
   const token = useStore((state) => state.token);
-
-  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
+  const activeDictionaryId = useActiveDictionaryId();
   const dictionaries = useStore((state) => state.dictionaries);
 
   const targetDictId = dictionaryId ?? activeDictionaryId;

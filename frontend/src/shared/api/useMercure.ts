@@ -1,10 +1,18 @@
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useEffect, useRef } from 'react';
 import useStore from '../../store/useStore';
+import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 
 export function useMercure() {
   const profile = useStore((state) => state.profile);
   const mercureToken = useStore((state) => state.mercureToken);
+  const dictId = useActiveDictionaryId();
+  const dictIdRef = useRef(dictId);
+  
+  useEffect(() => {
+    dictIdRef.current = dictId;
+  }, [dictId]);
+
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -49,7 +57,8 @@ export function useMercure() {
                         text: item.word,
                         definitions: [],
                         presets: item.presets || [],
-                      }))
+                      })),
+                      dictIdRef.current || undefined
                     );
                   }
                 } else if (data.type === 'dictionary_add_definitions_received') {

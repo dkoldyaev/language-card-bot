@@ -7,6 +7,7 @@ import { useTranslation } from '../i18n/I18nContext';
 import { radiusTokens, spacingTokens } from '../ui/tokens';
 import DictionarySelector from './DictionarySelector';
 import LocaleSwitcher from './LocaleSwitcher';
+import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 import Sidebar from './Sidebar';
 import ThemeSwitcher from './ThemeSwitcher';
 import UpdateNotification from './UpdateNotification';
@@ -24,10 +25,9 @@ export default function Layout() {
   const setSettings = useStore((state) => state.setSettings);
   const setAppState = useStore((state) => state.setAppState);
   const setDictionaries = useStore((state) => state.setDictionaries);
-  const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
   const setProfile = useStore((state) => state.setProfile);
   const isOffline = useStore((state) => state.isOffline);
-  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
+  const activeDictionaryId = useActiveDictionaryId();
   const setIsDictionaryLoading = useStore((state) => state.setIsDictionaryLoading);
 
   // Centralized dictionary fetcher: whenever the active dictionary changes (via `/dictionaries`, `/state/sync`, or Mercure), fetch its words.
@@ -41,7 +41,7 @@ export default function Layout() {
     apiClient.get('/dictionary', { params: { dictionaryId: activeDictionaryId } })
       .then((res) => {
         if (res.data.dictionary) {
-          setDictionary(res.data.dictionary);
+          setDictionary(res.data.dictionary, activeDictionaryId);
         }
       })
       .catch((err) => console.error('Failed to load active dictionary:', err))
@@ -71,13 +71,9 @@ export default function Layout() {
       .then((res) => {
         if (res.data.dictionaries) {
           setDictionaries(res.data.dictionaries);
-          const nextActiveId = res.data.activeDictionaryId;
           
-          if (nextActiveId) {
-            setActiveDictionaryId(nextActiveId);
-          } else if (res.data.dictionaries.length === 0) {
+          if (res.data.dictionaries.length === 0) {
             // Self-heal: if backend has no dictionaries, clear the local fake ones
-            setActiveDictionaryId(null);
             setDictionary([]);
             setIsDictionaryLoading(false);
           }
@@ -103,7 +99,7 @@ export default function Layout() {
         }
       })
       .catch((error) => console.error('Failed to sync state:', error));
-  }, [token, setDictionary, setSettings, setAppState, setDictionaries, setActiveDictionaryId, setProfile, setIsDictionaryLoading]);
+  }, [token, setDictionary, setSettings, setAppState, setDictionaries, setProfile, setIsDictionaryLoading]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
