@@ -101,6 +101,8 @@ const pt = {
   'dictionary.selectDictionary': 'Selecionar dicionário',
   'dictionary.yourDictionaries': 'SEUS DICIONÁRIOS',
   'dictionary.wordsCount': '{{count}} palavras',
+  'dictionary.editSettingsTitle': 'Editar configurações do dicionário',
+  'dictionary.editSettingsDesc': 'Editando configurações do dicionário com ID: {{id}}',
 
   // Add Word Form
   'dictionary.addWords': 'Adicionar palavras',

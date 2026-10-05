@@ -133,7 +133,7 @@ export default function Sidebar() {
               disabled={isDisabled}
               aria-label={item.label}
               data-tour={isQuizItem ? 'nav-quiz' : undefined}
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 if (item.isAction) {
                   handleActionClick(e);
                   return;
@@ -288,13 +288,13 @@ export default function Sidebar() {
               component={item.isAction ? 'button' : (isDisabled ? 'button' : NavLink)}
               to={item.isAction || isDisabled ? undefined : item.path}
               disabled={isDisabled}
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 if (item.isAction) {
                   handleActionClick(e);
                   return;
                 }
                 if (isQuizItem) {
-                  useGuidelineStore.getState().advanceStep('step3_nav_quiz');
+                  useGuidelineStore.getState().advanceStep('step4_nav_quiz');
                 }
               }}
               sx={{

@@ -101,6 +101,8 @@ const ja = {
   'dictionary.selectDictionary': '辞書を選択',
   'dictionary.yourDictionaries': 'あなたの辞書',
   'dictionary.wordsCount': '{{count}} 単語',
+  'dictionary.editSettingsTitle': '辞書の設定を編集',
+  'dictionary.editSettingsDesc': '辞書 ID：{{id}} の設定を編集中',
 
   // Add Word Form
   'dictionary.addWords': '単語を追加',

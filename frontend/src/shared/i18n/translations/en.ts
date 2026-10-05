@@ -130,6 +130,8 @@ const en = {
   'dictionary.selectDictionary': 'Select Dictionary',
   'dictionary.yourDictionaries': 'YOUR DICTIONARIES',
   'dictionary.wordsCount': '{{count}} words',
+  'dictionary.editSettingsTitle': 'Edit Dictionary Settings',
+  'dictionary.editSettingsDesc': 'Editing settings for dictionary ID: {{id}}',
 
   // Add Word Form
   'dictionary.addWords': 'Add words',

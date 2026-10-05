@@ -14,7 +14,6 @@ const Auth = lazy(() => import('../features/auth/pages/AuthPage'));
 const Dashboard = lazy(() => import('../features/dashboard/pages/DashboardPage'));
 const Dictionary = lazy(() => import('../features/dictionary/pages/DictionaryPage'));
 const EditDictionary = lazy(() => import('../features/dictionary/pages/EditDictionaryPage'));
-const OnboardingPage = lazy(() => import('../features/onboarding/pages/OnboardingPage'));
 const Presets = lazy(() => import('../features/presets/pages/PresetsPage'));
 const Quiz = lazy(() => import('../features/quiz/pages/QuizPage'));
 
@@ -61,13 +60,10 @@ function App() {
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<RootRedirect />} />
           <Route path="/register" element={<RootRedirect />} />
-          <Route path="/onboarding" element={<RootRedirect />} />
           
           <Route path="/:locale" element={<LocaleGuard />}>
             <Route path="login" element={<Auth />} />
             <Route path="register" element={<Auth />} />
-            <Route path="onboarding" element={<OnboardingPage />} />
-
             <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="settings" element={<Navigate to="/" replace />} />

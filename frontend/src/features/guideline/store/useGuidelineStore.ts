@@ -9,6 +9,7 @@ const STEP_SEQUENCE: GuidelineStep[] = [
   'step2_create_dict_dialog',
   'step3_select_preset',
   'step4_nav_quiz',
+  'step4_start_quiz',
   'completed',
 ];
 
@@ -43,11 +44,6 @@ export const useGuidelineStore = create<GuidelineState>()(
 
         // If fromStep is provided, only advance if we are actually at that step
         if (fromStep && currentStep !== fromStep) return;
-
-        if (currentStep === 'step4_start_quiz') {
-          set({ currentStep: 'completed', isCompleted: true, isActive: false, isStepDismissed: false });
-          return;
-        }
 
         const currentIndex = currentStep ? STEP_SEQUENCE.indexOf(currentStep) : -1;
         if (currentIndex >= 0 && currentIndex < STEP_SEQUENCE.length - 1) {

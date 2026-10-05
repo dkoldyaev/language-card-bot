@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom';
 import { getCookie } from '../lib/cookie';
 import { detectBrowserLanguage, isSupportedLocale, useTranslation } from '../i18n/I18nContext';

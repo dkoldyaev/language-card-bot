@@ -101,6 +101,8 @@ const tr = {
   'dictionary.selectDictionary': 'Sözlük Seç',
   'dictionary.yourDictionaries': 'SÖZLÜKLERİNİZ',
   'dictionary.wordsCount': '{{count}} kelime',
+  'dictionary.editSettingsTitle': 'Sözlük ayarlarını düzenle',
+  'dictionary.editSettingsDesc': 'Sözlük ayarları düzenleniyor, ID: {{id}}',
 
   // Add Word Form
   'dictionary.addWords': 'Kelime ekle',

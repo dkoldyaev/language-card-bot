@@ -101,6 +101,8 @@ const de = {
   'dictionary.selectDictionary': 'Wörterbuch auswählen',
   'dictionary.yourDictionaries': 'DEINE WÖRTERBÜCHER',
   'dictionary.wordsCount': '{{count}} Wörter',
+  'dictionary.editSettingsTitle': 'Wörterbucheinstellungen bearbeiten',
+  'dictionary.editSettingsDesc': 'Einstellungen für Wörterbuch-ID bearbeiten: {{id}}',
 
   // Add Word Form
   'dictionary.addWords': 'Wörter hinzufügen',

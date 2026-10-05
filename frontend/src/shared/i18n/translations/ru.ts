@@ -130,6 +130,8 @@ const ru = {
   'dictionary.selectDictionary': 'Выбрать словарь',
   'dictionary.yourDictionaries': 'ВАШИ СЛОВАРИ',
   'dictionary.wordsCount': '{{count}} слов',
+  'dictionary.editSettingsTitle': 'Настройки словаря',
+  'dictionary.editSettingsDesc': 'Редактирование настроек словаря с ID: {{id}}',
 
   // Add Word Form
   'dictionary.addWords': 'Добавить слова',

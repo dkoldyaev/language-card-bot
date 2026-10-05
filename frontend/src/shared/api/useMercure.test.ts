@@ -29,7 +29,7 @@ describe('useMercure', () => {
     requestOptions = undefined;
     vi.mocked(fetchEventSource).mockImplementation((_url, options) => {
       onMessage = options.onmessage as unknown as (event: { data: string }) => void;
-      requestOptions = options;
+      requestOptions = options as unknown as { signal?: AbortSignal };
       return new Promise(() => {});
     });
   });

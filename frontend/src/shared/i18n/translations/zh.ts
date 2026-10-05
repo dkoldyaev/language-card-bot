@@ -101,6 +101,8 @@ const zh = {
   'dictionary.selectDictionary': '选择词典',
   'dictionary.yourDictionaries': '您的词典',
   'dictionary.wordsCount': '{{count}} 个单词',
+  'dictionary.editSettingsTitle': '编辑词典设置',
+  'dictionary.editSettingsDesc': '正在编辑词典设置，ID：{{id}}',
 
   // Add Word Form
   'dictionary.addWords': '添加单词',

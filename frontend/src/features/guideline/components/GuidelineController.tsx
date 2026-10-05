@@ -114,8 +114,8 @@ export default function GuidelineController() {
   useEffect(() => {
     if (isCompleted || isActive || token) return;
 
-    // Only start on main page
-    if (location.pathname !== '/') return;
+    // Only start on the locale dashboard, for example /en or /ru.
+    if (!/^\/[^/]+$/.test(location.pathname)) return;
 
     // Delay slightly for initial render and data fetch to settle
     const timer = setTimeout(() => {
@@ -157,26 +157,24 @@ export default function GuidelineController() {
       return;
     }
 
-    const validRoutes: Record<string, string[]> = {
-      step0_locale: ['/'],
-      step1_dict_selector: ['/'],
-      step2_create_dict_menu: ['/'],
-      step2_create_dict_dialog: ['/'],
-      step3_select_preset: ['/dictionary'],
-      step4_nav_quiz: ['/dictionary'],
-      completed: ['/quiz', '/'],
+    const isDashboardRoute = /^\/[^/]+$/.test(location.pathname);
+    const isDictionaryRoute = /^\/[^/]+\/dictionary\/\d+$/.test(location.pathname);
+    const isQuizRoute = /^\/[^/]+\/quiz\/\d+$/.test(location.pathname);
+    const isStepRouteValid: Record<GuidelineStep, boolean> = {
+      step0_locale: isDashboardRoute,
+      step1_dict_selector: isDashboardRoute,
+      step2_create_dict_menu: isDashboardRoute,
+      step2_create_dict_dialog: isDashboardRoute,
+      step3_select_preset: isDictionaryRoute,
+      step4_nav_quiz: isDictionaryRoute,
+      step4_start_quiz: isQuizRoute,
+      completed: isDashboardRoute || isQuizRoute,
     };
 
-    const allowed = validRoutes[currentStep];
-    if (allowed && !allowed.includes(location.pathname)) {
+    if (!isStepRouteValid[currentStep]) {
       if (driverInstanceRef.current?.isActive()) {
         driverInstanceRef.current.destroy();
       }
-      return;
-    }
-
-    if (currentStep === 'step4_start_quiz') {
-      advanceStep('step4_start_quiz');
       return;
     }
 
