@@ -1,198 +1,80 @@
-import { test, expect } from '@playwright/test';
-import { register, login } from './helpers';
+import { expect, test, type Page } from '@playwright/test';
+import { createDictionary, login, register } from './helpers';
 
-test.describe('Anonymous (Guest) Access Flow', () => {
-  test.beforeEach(async ({ page }) => {
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        console.log(`[PAGE ERROR LOG]: ${msg.text()}`);
-      }
-    });
-    page.on('pageerror', (error) => console.log(`[PAGE ERROR]: ${error.message}`));
+async function createSpanishPreset(page: Page, title: string) {
+  await page.locator('nav').getByText('Presets').click();
+  await expect(page.getByText('Presets Catalog')).toBeVisible();
+  await page.getByRole('button', { name: 'Create Preset' }).first().click();
+  await page.getByPlaceholder('e.g. 50 Essential Spanish Verbs').fill(title);
+  await page.getByRole('button', { name: 'Create Preset', exact: true }).click();
+  await expect(page.locator('.MuiCard-root').filter({ hasText: title })).toBeVisible();
+}
+
+async function applyGuestPreset(page: Page, presetTitle: string) {
+  const presetsSection = page.getByTestId('dictionary-presets-section');
+  const presetCard = presetsSection.locator('.MuiCard-root').filter({ hasText: presetTitle });
+  await expect(presetCard).toBeVisible();
+  await presetCard.getByRole('button', { name: 'Add to Dictionary' }).click();
+  await expect(page.getByText(`Added "${presetTitle}"`, { exact: false })).toBeVisible();
+}
+
+test.describe('Guest access', () => {
+  test('guest creates a dictionary, applies a preset, keeps it after reload, and practices', async ({ page }, testInfo) => {
+    test.setTimeout(90000);
+    const suffix = `${Date.now()}_${testInfo.workerIndex}`;
+    const presetTitle = `Guest Spanish ${suffix}`;
+
+    await register(page, `admin_guest_${suffix}`);
+    await login(page, `admin_guest_${suffix}`);
+    await createSpanishPreset(page, presetTitle);
+    await page.getByRole('button', { name: 'Sign out' }).click();
+
+    await expect(page).toHaveURL('/en');
+    await expect(page.getByTestId('guest-banner')).toBeVisible();
+    await createDictionary(page, { name: 'Guest Spanish', targetLanguage: 'es', baseLanguage: 'en' });
+    await applyGuestPreset(page, presetTitle);
+
+    await page.reload();
+    await expect(page).toHaveURL(/\/en\/dictionary\/\d+$/);
+    await expect(page.getByRole('heading', { name: 'Guest Spanish', exact: true })).toBeVisible();
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'hola' })).toBeVisible();
+
+    await page.locator('nav').getByText('Quiz').click();
+    await expect(page.getByRole('heading', { name: 'Quiz' })).toBeVisible({ timeout: 20000 });
+    await page.getByRole('textbox', { name: 'Your answer' }).fill('hola');
+    await page.getByRole('button', { name: 'Submit' }).click();
+    await expect(page.getByText('Your answer', { exact: true }).last()).toBeVisible();
   });
 
-  test('full guest journey: onboarding, presets, local quiz, second visit persistence, and account migration', async ({
-    page,
-    request,
-  }, testInfo) => {
+  test('existing account offers to merge guest vocabulary and retains it after confirmation', async ({ page }, testInfo) => {
     test.setTimeout(90000);
+    const suffix = `${Date.now()}_${testInfo.workerIndex}`;
+    const username = `existing_guest_${suffix}`;
+    const presetTitle = `Merge Spanish ${suffix}`;
 
-    // Seed a preset to ensure one exists
-    const adminUsername = `admin_${Date.now()}_${testInfo.workerIndex}`;
-    await register(page, adminUsername, 'en', 'es');
-    await login(page, adminUsername);
-    const presetsNav = page.locator('nav').getByText('Presets');
-    await presetsNav.click();
-    await page.getByRole('button', { name: 'Create Preset' }).first().click();
-    const presetTitle = `Preset ES ${Date.now()}`;
-    await page.getByPlaceholder('e.g. 50 Essential Spanish Verbs').fill(presetTitle);
-    await page.getByRole('button', { name: 'Create Preset', exact: true }).click();
-    await expect(page.locator('.MuiCard-root').filter({ hasText: presetTitle })).toBeVisible();
+    await register(page, `admin_merge_${suffix}`);
+    await login(page, `admin_merge_${suffix}`);
+    await createSpanishPreset(page, presetTitle);
+    await page.getByRole('button', { name: 'Sign out' }).click();
 
-    // Logout so we become a guest again
-    await page.locator('button, [role="button"]').filter({ hasText: /Sign out|Logout/i }).first().click();
-    await expect(page).toHaveURL('/');
+    await register(page, username);
+    await login(page, username);
+    await page.getByRole('button', { name: 'Sign out' }).click();
 
-    // 1. Visit root with empty storage as first-time guest
-    await page.goto('/');
+    await createDictionary(page, { name: 'Guest data to merge', targetLanguage: 'es', baseLanguage: 'en' });
+    await applyGuestPreset(page, presetTitle);
 
-    // Verify stays on root and guest banner is visible (no unwanted redirect)
-    await expect(page).toHaveURL('/');
-    const initialGuestBanner = page.locator('[data-testid="guest-banner"]');
-    await expect(initialGuestBanner).toBeVisible();
-    await expect(initialGuestBanner).toContainText(/guest mode/i);
+    await page.getByTestId('guest-banner-auth-btn').click();
+    await page.getByLabel(/Username|Login/i).fill(username);
+    await page.getByRole('button', { name: 'Log in' }).click();
 
-    // Guest opens onboarding wizard
-    await page.goto('/onboarding');
-    await expect(page).toHaveURL('/onboarding');
-    const onboardingDialog = page.locator('[data-testid="guest-onboarding-dialog"]');
-    await expect(onboardingDialog).toBeVisible({ timeout: 10000 });
-    await expect(onboardingDialog).toContainText('Welcome to CardBot');
+    const mergeDialog = page.getByTestId('merge-guest-dialog');
+    await expect(mergeDialog).toBeVisible();
+    await mergeDialog.getByTestId('merge-guest-confirm-btn').click();
+    await expect(page).toHaveURL('/en');
+    await expect(page.getByTestId('guest-banner')).toBeHidden();
 
-    // Step 1: Click "Next" to go to preset selection
-    const nextBtn = page.locator('[data-testid="guest-onboarding-next-btn"]');
-    await expect(nextBtn).toBeVisible();
-    await nextBtn.click();
-
-    // Step 2: Presets should be loaded and displayed
-    const presetCards = page.locator('[data-testid^="preset-card-"]');
-    await expect(presetCards.first()).toBeVisible({ timeout: 10000 });
-
-    // Click to select the first preset
-    await presetCards.first().click();
-
-    // Click finish button to start learning
-    const finishBtn = page.locator('[data-testid="guest-onboarding-finish-btn"]');
-    await expect(finishBtn).toBeEnabled();
-    await finishBtn.click();
-
-    // Onboarding modal should close
-    await expect(onboardingDialog).toBeHidden({ timeout: 5000 });
-
-    // Guest banner should be visible
-    const guestBanner = page.locator('[data-testid="guest-banner"]');
-    await expect(guestBanner).toBeVisible();
-    await expect(guestBanner).toContainText(/guest mode/i);
-
-    // Verify words are stored in localStorage
-    const storageStr = await page.evaluate(() => localStorage.getItem('english-card-bot-storage'));
-    expect(storageStr).toBeTruthy();
-    const parsedState = JSON.parse(storageStr!).state;
-    expect(parsedState.dictionaries.length).toBeGreaterThan(0);
-    expect(parsedState.dictionary.length).toBeGreaterThan(0);
-    const initialWordCount = parsedState.dictionary.length;
-
-    // 2. Second visit persistence: reload page
-    await page.reload();
-
-    // Modal must NOT re-open on second visit
-    await expect(onboardingDialog).toBeHidden();
-    await expect(guestBanner).toBeVisible();
-
-    // 3. Quiz practice in guest mode
-    await page.goto('/quiz');
-    await expect(page).toHaveURL('/quiz');
-
-    // Quiz heading or start button should appear
-    await expect(async () => {
-      const heading = page.locator('h1:has-text("Quiz"), h4:has-text("Quiz")');
-      if (await heading.isVisible()) return;
-      const startBtn = page.locator('button:has-text("Start Quiz")');
-      if (await startBtn.isVisible()) {
-        await startBtn.click();
-      }
-      await expect(heading).toBeVisible({ timeout: 3000 });
-    }).toPass({ timeout: 15000 });
-
-    // Interact with quiz card
-    const cardContent = page.locator('.MuiCardContent-root').first();
-    await expect(cardContent).toBeVisible();
-
-    const answerInput = page.getByLabel(/Your answer/i);
-    const submitBtn = page.locator('button[type="submit"]');
-
-    if (await answerInput.isVisible()) {
-      await answerInput.fill('testword');
-      await submitBtn.click();
-    } else {
-      const variantBtn = page.locator('button[data-testid^="variant-btn-"]').first();
-      if (await variantBtn.isVisible()) {
-        await variantBtn.click();
-      }
-    }
-
-    // Check that guest attempt was recorded in localStorage
-    await expect.poll(async () => {
-      const updatedStorage = await page.evaluate(() => localStorage.getItem('english-card-bot-storage'));
-      const updatedState = updatedStorage ? JSON.parse(updatedStorage).state : null;
-      return updatedState?.guestQuizAttempts?.length ?? 0;
-    }, { timeout: 10000 }).toBeGreaterThanOrEqual(1);
-
-    // Navigate to dashboard and verify it displays guest stats smoothly
-    await page.goto('/');
-    await expect(page).toHaveURL('/');
-    await expect(guestBanner).toBeVisible();
-
-    // 4. Registration and automatic migration
-    const timestamp = Date.now();
-    const newUsername = `guest_mig_${timestamp}_${testInfo.workerIndex}`;
-
-    await register(page, newUsername, 'en', 'es');
-    await login(page, newUsername);
-
-    // Guest banner should now be gone because user is logged in
-    await expect(guestBanner).toBeHidden();
-
-    // Verify user profile is active
-    const postAuthStorage = await page.evaluate(() => localStorage.getItem('english-card-bot-storage'));
-    const postAuthState = JSON.parse(postAuthStorage!).state;
-    expect(postAuthState.token).toBeTruthy();
-    expect(postAuthState.profile.username).toEqual(newUsername);
-
-    // Check that dictionary page has words
-    await page.goto('/dictionary');
-    const presetDictBtn = page.locator('button').filter({ hasText: /Preset ES/i }).first();
-    if (await presetDictBtn.isVisible()) {
-      await presetDictBtn.click();
-    }
-    await expect(page.locator('.MuiAccordion-root').first()).toBeVisible({ timeout: 10000 });
-
-    // 5. Existing account login & merge confirmation dialog
-    // Sign out
-    const signOutBtn = page.locator('button, [role="button"]').filter({ hasText: /Sign out|Logout/i }).first();
-    await signOutBtn.click();
-    await expect(page).toHaveURL('/');
-
-    // Pick another preset as a new guest session
-    await page.goto('/onboarding');
-    await expect(page).toHaveURL('/onboarding');
-    await expect(onboardingDialog).toBeVisible({ timeout: 10000 });
-
-    // Pick another preset as a new guest session
-    await nextBtn.click();
-    await expect(presetCards.first()).toBeVisible({ timeout: 10000 });
-    await presetCards.first().click();
-    await expect(finishBtn).toBeEnabled();
-    await finishBtn.click();
-    await expect(onboardingDialog).toBeHidden();
-    await expect(guestBanner).toBeVisible();
-
-    // Now navigate to login to log into existing user
-    await page.goto('/login');
-    await page.getByLabel(/Username|Login/i).fill(newUsername);
-    await page.click('button:has-text("Log in")');
-
-    // Merge confirmation dialog must appear!
-    const mergeDialog = page.locator('[data-testid="merge-guest-dialog"]');
-    await expect(mergeDialog).toBeVisible({ timeout: 10000 });
-
-    // Click "Merge data"
-    const confirmMergeBtn = page.locator('[data-testid="merge-guest-confirm-btn"]');
-    await expect(confirmMergeBtn).toBeVisible();
-    await confirmMergeBtn.click();
-
-    // Successfully navigated to dashboard
-    await expect(page).toHaveURL('/');
-    await expect(guestBanner).toBeHidden();
+    await page.locator('nav').getByText('Dictionary').click();
+    await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'hola' })).toBeVisible();
   });
 });

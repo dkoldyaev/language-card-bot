@@ -4,7 +4,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
 import {
-  recordNavigation,
   resetNavigationHistoryForTesting,
 } from '../../../shared/lib/navigationHistory';
 import useStore from '../../../store/useStore';
@@ -173,8 +172,7 @@ describe('DictionaryPage', () => {
     expect(useStore.getState().dictionaries[0].name).toBe('Renamed Guest Deck');
   });
 
-  it('auto-opens create dialog when dictionaries is empty and cancel navigates to / if no previous route', async () => {
-    const user = userEvent.setup();
+  it('does not open a create dialog when no dictionaries exist', () => {
     useStore.setState({
       dictionaries: [],
       activeDictionaryId: null,
@@ -182,83 +180,15 @@ describe('DictionaryPage', () => {
     });
 
     render(
-      <MemoryRouter initialEntries={['/dictionary']}>
+      <MemoryRouter initialEntries={['/en/dictionary']}>
         <Routes>
-          <Route path="/" element={<div>Home Page</div>} />
-          <Route path="/dictionary" element={<DictionaryPage />} />
+          <Route path="/:locale/dictionary" element={<DictionaryPage />} />
         </Routes>
       </MemoryRouter>
     );
 
-    // Dialog should be open
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('Create New Dictionary')).toBeInTheDocument();
-
-    // Click Cancel
-    const cancelBtn = screen.getByTestId('create-dictionary-cancel-btn');
-    await user.click(cancelBtn);
-
-    // Should navigate to / (Home Page)
-    expect(await screen.findByText('Home Page')).toBeInTheDocument();
-  });
-
-  it('navigates back to /quiz when cancel is clicked and previous route was /quiz', async () => {
-    const user = userEvent.setup();
-    useStore.setState({
-      dictionaries: [],
-      activeDictionaryId: null,
-      isDictionaryLoading: false,
-    });
-
-    recordNavigation('/quiz');
-    recordNavigation('/dictionary');
-
-    render(
-      <MemoryRouter initialEntries={['/quiz', '/dictionary']} initialIndex={1}>
-        <Routes>
-          <Route path="/quiz" element={<div>Quiz Page</div>} />
-          <Route path="/dictionary" element={<DictionaryPage />} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
-
-    const cancelBtn = screen.getByTestId('create-dictionary-cancel-btn');
-    await user.click(cancelBtn);
-
-    // Should navigate back to Quiz Page
-    expect(await screen.findByText('Quiz Page')).toBeInTheDocument();
-  });
-
-  it('navigates to / when cancel is clicked and previous route was also a dictionary route', async () => {
-    const user = userEvent.setup();
-    useStore.setState({
-      dictionaries: [],
-      activeDictionaryId: null,
-      isDictionaryLoading: false,
-    });
-
-    recordNavigation('/dictionary/add');
-    recordNavigation('/dictionary');
-
-    render(
-      <MemoryRouter initialEntries={['/dictionary/add', '/dictionary']} initialIndex={1}>
-        <Routes>
-          <Route path="/" element={<div>Home Page</div>} />
-          <Route path="/dictionary/add" element={<div>Dict Add Page</div>} />
-          <Route path="/dictionary" element={<DictionaryPage />} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
-
-    const cancelBtn = screen.getByTestId('create-dictionary-cancel-btn');
-    await user.click(cancelBtn);
-
-    // Because previous route was a dictionary route, it must navigate to /
-    expect(await screen.findByText('Home Page')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
   });
 
   it('does not auto-open dialog and cancel does not navigate away when user already has dictionaries', async () => {

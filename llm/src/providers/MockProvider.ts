@@ -17,7 +17,38 @@ export class MockProvider implements ILLMProvider {
       ? options.jsonFormat 
       : JSON.stringify(options.jsonFormat);
 
-    // If schema specifies filteredDefinitions, return filtered definitions
+    // If schema specifies results array with filteredDefinitions
+    if (formatStr.includes('results') && formatStr.includes('filteredDefinitions')) {
+      let items: { word: string; definitions: string[] }[] = [];
+      const match = options.prompt.match(/evaluate the following definitions for the words:\s*\n(\[[\s\S]*\])/i);
+      if (match) {
+        try {
+          // In case there is trailing text, we might want to just parse the match
+          // But since we control the prompt, it ends with the JSON array
+          const jsonStr = match[1].trim();
+          items = JSON.parse(jsonStr);
+        } catch {}
+      }
+
+      if (items.length > 0) {
+        const results = items.map(item => {
+          const targetWord = item.word;
+          const maskFn = (str: string) => {
+            if (!targetWord) return str;
+            const escaped = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(?<=^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`, 'gui');
+            return str.replace(regex, '***');
+          };
+          return {
+            word: targetWord,
+            filteredDefinitions: item.definitions.map(d => maskFn(`[Mock LLM: ${options.model}] ${d}`)),
+          };
+        });
+        return { results };
+      }
+    }
+
+    // If schema specifies single filteredDefinitions
     if (formatStr.includes('filteredDefinitions')) {
       const wordMatch = options.prompt.match(/Target word:\s*"([^"]+)"/i) || options.prompt.match(/word\s+"([^"]+)"/i);
       const targetWord = wordMatch ? wordMatch[1].trim() : '';

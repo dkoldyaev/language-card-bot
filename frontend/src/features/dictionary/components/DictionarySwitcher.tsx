@@ -121,7 +121,7 @@ export default function DictionarySwitcher({
                 )}
               </Button>
 
-              {onDeleteDictionary && dictionaries.length > 1 && (
+              {onDeleteDictionary && (
                 <Tooltip title={t('dictionary.deleteDictTooltip', { name: dict.name })}>
                   <IconButton
                     size="small"

@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import LocaleGuard from '../components/LocaleGuard';
 import LocaleSwitcher from '../components/LocaleSwitcher';
 import { getCookie, setCookie } from '../lib/cookie';
 import { detectBrowserLanguage, I18nProvider, useTranslation } from './I18nContext';
@@ -140,10 +142,23 @@ describe('i18n infrastructure', () => {
       setCookie('locale', 'en');
 
       render(
-        <I18nProvider>
-          <LocaleSwitcher />
-          <TestConsumer />
-        </I18nProvider>
+        <MemoryRouter initialEntries={['/en']}>
+          <I18nProvider>
+            <Routes>
+              <Route path="/:locale" element={<LocaleGuard />}>
+                <Route
+                  index
+                  element={(
+                    <>
+                      <LocaleSwitcher />
+                      <TestConsumer />
+                    </>
+                  )}
+                />
+              </Route>
+            </Routes>
+          </I18nProvider>
+        </MemoryRouter>
       );
 
       // Current locale button should have aria-label

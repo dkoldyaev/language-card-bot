@@ -8,7 +8,7 @@
     "cli": "tsx src/scripts/test-llm.ts",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "test": "npm run test:ts && vitest run",
+    "test": "npm run test:ts && PORT=3003 CACHE_URL=redis://localhost:6380/3 vitest run",
     "test:cli": "tsx src/scripts/test-llm.ts",
     "test:ts": "tsc --noEmit"
   },

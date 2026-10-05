@@ -24,6 +24,36 @@ describe('Dictionaries API', () => {
     vi.clearAllMocks();
   });
 
+  it.each([
+    ['GET', () => request(app).get('/api/v1/dictionaries')],
+    ['POST', () => request(app).post('/api/v1/dictionaries').send({ targetLanguage: 'es', baseLanguage: 'en' })],
+    ['SELECT', () => request(app).post('/api/v1/dictionaries/11/select')],
+    ['DELETE', () => request(app).delete('/api/v1/dictionaries/11')],
+    ['PATCH', () => request(app).patch('/api/v1/dictionaries/11').send({ name: 'Renamed' })],
+  ])('%s dictionaries endpoint rejects unauthenticated requests', async (_operation, makeRequest) => {
+    const res = await makeRequest();
+    expect(res.status).toBe(401);
+  });
+
+  it.each([
+    ['POST', () => request(app).post('/api/v1/dictionaries/not-a-number/select')],
+    ['DELETE', () => request(app).delete('/api/v1/dictionaries/not-a-number')],
+    ['PATCH', () => request(app).patch('/api/v1/dictionaries/not-a-number').send({ name: 'Renamed' })],
+  ])('%s rejects a non-numeric dictionary id', async (_operation, makeRequest) => {
+    const res = await makeRequest().set('Authorization', `Bearer ${token}`);
+    expect(res).toMatchObject({ status: 400, body: { error: 'Invalid dictionary ID' } });
+  });
+
+  it('rejects an invalid dictionary payload without creating a record', async () => {
+    const res = await request(app)
+      .post('/api/v1/dictionaries')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ targetLanguage: 'invalid', baseLanguage: 'en' });
+
+    expect(res).toMatchObject({ status: 400, body: { error: 'Invalid dictionary data' } });
+    expect(prismaMock.dictionary.create).not.toHaveBeenCalled();
+  });
+
   it('GET /api/v1/dictionaries should return dictionaries with active status', async () => {
     prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,

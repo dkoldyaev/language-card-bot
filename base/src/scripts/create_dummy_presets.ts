@@ -1,3 +1,5 @@
+import { redisClient } from '../core/cache';
+import { invalidatePresetsCache } from '../features/preset/preset.service';
 import { prisma } from '../prisma';
 
 async function main() {
@@ -94,9 +96,13 @@ async function main() {
     }
   });
 
+  await invalidatePresetsCache();
   console.log('Done!');
 }
 
 main()
   .catch(console.error)
-  .finally(() => prisma.$disconnect());
+  .finally(async () => {
+    await prisma.$disconnect();
+    await redisClient.quit();
+  });

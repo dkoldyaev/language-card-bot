@@ -166,4 +166,50 @@ describe('CreateDictionaryDialog - native language defaults and cookie persisten
     expect(storeState.dictionaries[0].isActive).toBe(true);
     expect(storeState.activeDictionaryId).toBe(storeState.dictionaries[0].id);
   });
+
+  it('cancels without creating a dictionary or changing existing dictionaries', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const onCancel = vi.fn();
+    useStore.setState({
+      dictionaries: [{ id: 1, name: 'Existing deck', targetLanguage: 'es', baseLanguage: 'en', wordCount: 0, isActive: true }],
+    });
+    const postSpy = vi.spyOn(apiClient, 'post');
+
+    render(
+      <TestWrapper initialLocale="en">
+        <CreateDictionaryDialog open onClose={onClose} onCancel={onCancel} />
+      </TestWrapper>
+    );
+
+    await user.click(screen.getByTestId('create-dictionary-cancel-btn'));
+
+    expect(postSpy).not.toHaveBeenCalled();
+    expect(useStore.getState().dictionaries).toHaveLength(1);
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the form open and displays the server error when creation fails', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(apiClient, 'post').mockRejectedValue({
+      isAxiosError: true,
+      response: { data: { error: 'Dictionary name is already in use' } },
+    });
+
+    render(
+      <TestWrapper initialLocale="en">
+        <CreateDictionaryDialog open onClose={vi.fn()} />
+      </TestWrapper>
+    );
+
+    await user.click(screen.getByLabelText(/Language to Learn \(Target\)/i));
+    await user.click(screen.getByRole('option', { name: /German \(DE\)/i }));
+    await user.type(screen.getByLabelText(/Dictionary Name \(Optional\)/i), 'German deck');
+    await user.click(screen.getByRole('button', { name: /Create Dictionary/i }));
+
+    expect(await screen.findByText('Dictionary name is already in use')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Dictionary Name \(Optional\)/i)).toHaveValue('German deck');
+  });
 });

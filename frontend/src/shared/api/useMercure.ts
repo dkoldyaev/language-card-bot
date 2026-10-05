@@ -75,6 +75,7 @@ export function useMercure() {
                 useStore.getState().setAppState(data);
               } else if (data.type === 'dictionaries_sync' && data.dictionaries) {
                 useStore.getState().setDictionaries(data.dictionaries);
+                useStore.getState().setActiveDictionaryId(data.activeDictionaryId ?? null);
               } else if (data.type === 'quiz_card') {
                 useStore.getState().setQuizCard(data);
                 useStore.getState().setQuizEvaluation(null); // Reset evaluation on new card

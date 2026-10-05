@@ -24,6 +24,6 @@ test.describe('English Card Bot Frontend E2E', () => {
 
   test('should redirect /settings to dashboard', async ({ page }) => {
     await page.goto('/settings');
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL('/en');
   });
 });

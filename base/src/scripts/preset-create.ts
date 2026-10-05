@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { redisClient } from '../core/cache';
 import type { PresetDto } from '../features/preset/preset.type';
 import { generatePreset } from '../features/preset/preset_generator.service';
 import { prisma } from '../prisma';
@@ -335,6 +336,7 @@ async function main() {
     process.exit(1);
   } finally {
     await prisma.$disconnect();
+    await redisClient.quit();
     process.exit(0);
   }
 }

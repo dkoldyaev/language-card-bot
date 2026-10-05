@@ -8,7 +8,7 @@
     "cli": "tsx src/scripts/test-definer.ts",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "test": "npm run test:ts && vitest run",
+    "test": "npm run test:ts && PORT=3002 LLM_SERVICE_URL=http://localhost:3003/api/v1/generate LLM_PROVIDER=mock LLM_MODEL=mock MOCK_TIMEOUT=0 CACHE_URL=redis://localhost:6380/2 TRANSLATOR_API_URL=http://localhost:3001/api/v1/translate TRANSLATOR_APP_TYPE=mock vitest run",
     "test:cli": "tsx src/scripts/test-definer.ts",
     "test:ts": "tsc --noEmit"
   },

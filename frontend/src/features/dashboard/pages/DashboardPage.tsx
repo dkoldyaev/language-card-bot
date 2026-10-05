@@ -9,8 +9,9 @@ import {
   Chip,
   Typography,
 } from '@mui/material';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import {
   AppButton,
@@ -23,6 +24,7 @@ import {
   spacingTokens,
 } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
+import CreateDictionaryDialog from '../../dictionary/components/CreateDictionaryDialog';
 import DictionaryPresets from '../../dictionary/components/DictionaryPresets';
 import { fetchDashboardStats } from '../api/dashboard.api';
 import DashboardKpiBar from '../components/DashboardKpiBar';
@@ -30,7 +32,6 @@ import NeedsAttentionWidget from '../components/NeedsAttentionWidget';
 import QuickAddWordCard from '../components/QuickAddWordCard';
 import WeeklyActivityChart from '../components/WeeklyActivityChart';
 import { computeGuestDashboardStats } from '../lib/guestStats';
-import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -44,6 +45,7 @@ export default function Dashboard() {
   const setDashboardStats = useStore((state) => state.setDashboardStats);
   const navigate = useNavigate();
   const { locale } = useParams<{ locale: string }>();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const totalWords = dictionary.length;
   const totalDefinitions = dictionary.reduce((sum, word) => sum + word.definitions.length, 0);
@@ -66,9 +68,9 @@ export default function Dashboard() {
       .then((stats) => {
         setDashboardStats(stats);
       })
-      .catch((e: any) => {
-        if (e.name === 'CanceledError') return;
-        console.error('Failed to load dashboard stats:', e);
+      .catch((error: unknown) => {
+        if (error instanceof Error && error.name === 'CanceledError') return;
+        console.error('Failed to load dashboard stats:', error);
       });
   }, [token, targetDictId, setDashboardStats]);
 
@@ -97,6 +99,20 @@ export default function Dashboard() {
 
   const hasQuizzes = (dashboardStats?.totalAttempts ?? 0) > 0;
   const isDeckEmpty = totalWords === 0;
+
+  const openDictionary = () => {
+    if (targetDictId) {
+      navigate(`/${locale}/dictionary/${targetDictId}`);
+      return;
+    }
+    setCreateDialogOpen(true);
+  };
+
+  const startQuiz = () => {
+    if (targetDictId) {
+      navigate(`/${locale}/quiz/${targetDictId}`);
+    }
+  };
 
   return (
     <PageContainer size="default" sx={{ pb: spacingTokens.page_outer_vertical_padding.md * 1.5 }}>
@@ -139,7 +155,7 @@ export default function Dashboard() {
               <AppButton
                 variant="secondary"
                 disabled={true}
-                onClick={() => navigate(`/${locale}/quiz`)}
+                onClick={startQuiz}
                 endIcon={<ArrowForwardRoundedIcon />}
               >
                 {t('dashboard.startQuizBtn')}
@@ -198,7 +214,7 @@ export default function Dashboard() {
               <AppButton
                 variant="secondary"
                 size="large"
-                onClick={() => navigate(`/${locale}/quiz`)}
+                onClick={startQuiz}
                 endIcon={<ArrowForwardRoundedIcon />}
               >
                 {t('dashboard.startQuizBtn')}
@@ -215,7 +231,7 @@ export default function Dashboard() {
                   </Typography>
                   <Button
                     size="small"
-                    onClick={() => navigate(`/${locale}/dictionary${targetDictId ? `/${targetDictId}` : ''}`)}
+                    onClick={openDictionary}
                     startIcon={<TranslateRoundedIcon fontSize="small" />}
                     sx={{ textTransform: 'none', fontWeight: 700 }}
                   >
@@ -320,7 +336,7 @@ export default function Dashboard() {
                 {dashboardStats.needsAttention.length > 0 && (
                   <AppButton
                     variant="outline"
-                    onClick={() => navigate(`/${locale}/quiz`)}
+                    onClick={startQuiz}
                   >
                     {t('dashboard.practiceMistakesBtn')}
                   </AppButton>
@@ -328,7 +344,7 @@ export default function Dashboard() {
                 <AppButton
                   variant="secondary"
                   size="large"
-                  onClick={() => navigate(`/${locale}/quiz`)}
+                  onClick={startQuiz}
                   startIcon={<PlayArrowRoundedIcon />}
                   endIcon={<ArrowForwardRoundedIcon />}
                 >
@@ -450,7 +466,7 @@ export default function Dashboard() {
                   </Typography>
                   <Button
                     size="small"
-                    onClick={() => navigate(`/${locale}/dictionary${targetDictId ? `/${targetDictId}` : ''}`)}
+                    onClick={openDictionary}
                     sx={{ textTransform: 'none', fontWeight: 700 }}
                   >
                     {t('dashboard.dictionaryBtn')}
@@ -484,6 +500,13 @@ export default function Dashboard() {
           </Box>
         </Box>
       )}
+      <CreateDictionaryDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onCreated={(newDict) => {
+          navigate(`/${locale}/dictionary/${newDict.id}`);
+        }}
+      />
     </PageContainer>
   );
 }

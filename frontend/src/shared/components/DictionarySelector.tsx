@@ -14,7 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
 import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
@@ -190,9 +190,7 @@ export default function DictionarySelector() {
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
         onCreated={(newDict) => {
-          if (useGuidelineStore.getState().isActive) {
-            navigate(`/${locale}/dictionary/${newDict.id}`);
-          }
+          navigate(`/${locale}/dictionary/${newDict.id}`);
         }}
       />
     </>

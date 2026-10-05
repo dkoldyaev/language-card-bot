@@ -35,7 +35,7 @@ describe('Words E2E', () => {
     await prisma.$disconnect();
   });
 
-  it('should handle add_word flows and word deletion correctly', async () => {
+  it('should add words in a batch, report duplicates, publish updates, and delete a word', async () => {
     const originalFetch = global.fetch;
     const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (url, options) => {
       const urlStr = url.toString();
@@ -63,15 +63,19 @@ describe('Words E2E', () => {
       return originalFetch(url, options);
     });
 
-    // 2. Successfully adds word
+    // 2. The UI submits words through the batch endpoint.
     const addWordSuccessRes = await request(app)
-      .post('/api/v1/add_word')
+      .post('/api/v1/add_word/batch')
       .set('Authorization', `Bearer ${userToken}`)
-      .send({ word: 'apple', dictionaryId: setup.dictionary.id });
+      .send({ words: ['apple'], dictionaryId: setup.dictionary.id });
 
     expect(addWordSuccessRes).toMatchObject({
       status: 200,
-      body: { message: 'Word added successfully' }
+      body: {
+        message: 'Words processed successfully',
+        addedCount: 1,
+        duplicateCount: 0,
+      },
     });
 
     const waitForCondition = async (condition: () => boolean, timeout = 5000) => {
@@ -108,15 +112,19 @@ describe('Words E2E', () => {
     expect(createdWord.definitions.length).toBe(2);
     expect(createdWord.definitions[0].translation?.text).toBe('mocked_translation');
 
-    // 3. Duplicate word check
+    // 3. Duplicate word check uses the same batch contract as the UI.
     const duplicateAddRes = await request(app)
-      .post('/api/v1/add_word')
+      .post('/api/v1/add_word/batch')
       .set('Authorization', `Bearer ${userToken}`)
-      .send({ word: 'Apple ', dictionaryId: setup.dictionary.id });
+      .send({ words: ['Apple '], dictionaryId: setup.dictionary.id });
 
     expect(duplicateAddRes).toMatchObject({
       status: 200,
-      body: { message: 'Word already exists' }
+      body: {
+        message: 'Words processed successfully',
+        addedCount: 0,
+        duplicateCount: 1,
+      },
     });
 
     await waitForCondition(() => 

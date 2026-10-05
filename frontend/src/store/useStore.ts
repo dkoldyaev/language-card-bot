@@ -10,6 +10,7 @@ export interface UserProfile {
   picture?: string | null;
   isAdmin?: boolean;
   is_admin?: boolean;
+  active_dictionary_id?: number | null;
 }
 
 export interface SettingsState {
@@ -158,6 +159,7 @@ interface AppState {
   profile: UserProfile | null;
   settings: SettingsState | null;
   dictionaries: DictionaryItem[];
+  activeDictionaryId: number | null;
 
   appState: AppSyncState | null;
   isDictionaryLoading: boolean;
@@ -186,6 +188,7 @@ interface AppState {
   setProfile: (profile: UserProfile | null) => void;
   setSettings: (settings: SettingsState | null) => void;
   setDictionaries: (dictionaries: DictionaryItem[]) => void;
+  setActiveDictionaryId: (id: number | null) => void;
   addDictionary: (dictionary: DictionaryItem) => void;
   removeDictionary: (id: number) => void;
   updateDictionaryItem: (id: number, partial: Partial<DictionaryItem>) => void;
@@ -221,6 +224,7 @@ const initialState = {
   profile: null,
   settings: null,
   dictionaries: [] as DictionaryItem[],
+  activeDictionaryId: null as number | null,
 
   appState: null,
   isDictionaryLoading: true,
@@ -300,6 +304,7 @@ const useStore = create<AppState>()(
       setProfile: (profile) => set({ profile }),
       setSettings: (settings) => set({ settings }),
       setDictionaries: (dictionaries) => set({ dictionaries }),
+      setActiveDictionaryId: (activeDictionaryId) => set({ activeDictionaryId }),
 
       addDictionary: (dict) => set((state) => ({
         dictionaries: state.dictionaries.some(d => d.id === dict.id)
@@ -348,6 +353,7 @@ const useStore = create<AppState>()(
         return {
           dictionary: normalizedDictionary,
           guestDictionaryWords: updatedGuestWords,
+          activeDictionaryId: dictId !== undefined ? dictId : state.activeDictionaryId,
           ...(shouldResetQuiz ? { quizCard: null, quizVariants: null } : {})
         };
       }),

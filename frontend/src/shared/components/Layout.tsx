@@ -3,11 +3,11 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
+import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 import { useTranslation } from '../i18n/I18nContext';
 import { radiusTokens, spacingTokens } from '../ui/tokens';
 import DictionarySelector from './DictionarySelector';
 import LocaleSwitcher from './LocaleSwitcher';
-import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 import Sidebar from './Sidebar';
 import ThemeSwitcher from './ThemeSwitcher';
 import UpdateNotification from './UpdateNotification';
@@ -22,13 +22,14 @@ export default function Layout() {
   const { t } = useTranslation();
   const token = useStore((state) => state.token);
   const setDictionary = useStore((state) => state.setDictionary);
-  const setSettings = useStore((state) => state.setSettings);
   const setAppState = useStore((state) => state.setAppState);
   const setDictionaries = useStore((state) => state.setDictionaries);
   const setProfile = useStore((state) => state.setProfile);
   const isOffline = useStore((state) => state.isOffline);
   const activeDictionaryId = useActiveDictionaryId();
   const setIsDictionaryLoading = useStore((state) => state.setIsDictionaryLoading);
+  const dictionaries = useStore((state) => state.dictionaries);
+  const activeDictionary = dictionaries.find((dictionary) => dictionary.id === activeDictionaryId);
 
   // Centralized dictionary fetcher: whenever the active dictionary changes (via `/dictionaries`, `/state/sync`, or Mercure), fetch its words.
   useEffect(() => {
@@ -47,16 +48,17 @@ export default function Layout() {
       .catch((err) => console.error('Failed to load active dictionary:', err))
       .finally(() => setIsDictionaryLoading(false));
 
-    // Also fetch presets for this dictionary's language
-    const activeDict = useStore.getState().dictionaries.find(d => d.id === activeDictionaryId);
-    if (activeDict) {
-      apiClient.get('/preset', { params: { for_language: activeDict.targetLanguage } })
-        .then((res) => {
-          useStore.getState().setPresets(res.data.presets || []);
-        })
-        .catch((err) => console.error('Failed to load presets:', err));
-    }
   }, [token, activeDictionaryId, setDictionary, setIsDictionaryLoading]);
+
+  useEffect(() => {
+    if (!activeDictionary) return;
+
+    apiClient.get('/preset', { params: { for_language: activeDictionary.targetLanguage } })
+      .then((res) => {
+        useStore.getState().setPresets(res.data.presets || []);
+      })
+      .catch((err) => console.error('Failed to load presets:', err));
+  }, [activeDictionary]);
 
   useEffect(() => {
     if (!token) return;
@@ -84,14 +86,6 @@ export default function Layout() {
         setIsDictionaryLoading(false);
       });
 
-    apiClient.get('/settings')
-      .then((res) => {
-        if (res.data.settings) {
-          setSettings(res.data.settings);
-        }
-      })
-      .catch((error) => console.error('Failed to load settings:', error));
-
     apiClient.post('/state/sync')
       .then((res) => {
         if (res.data.state) {
@@ -99,7 +93,7 @@ export default function Layout() {
         }
       })
       .catch((error) => console.error('Failed to sync state:', error));
-  }, [token, setDictionary, setSettings, setAppState, setDictionaries, setProfile, setIsDictionaryLoading]);
+  }, [token, setDictionary, setAppState, setDictionaries, setProfile, setIsDictionaryLoading]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh' }}>

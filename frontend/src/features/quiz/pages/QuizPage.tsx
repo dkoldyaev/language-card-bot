@@ -11,6 +11,7 @@ export default function QuizPage() {
   const quizCard = useStore((state) => state.quizCard);
   const dictionary = useStore((state) => state.dictionary);
   const activeDictionaryId = useActiveDictionaryId();
+  const isDictionaryLoading = useStore((state) => state.isDictionaryLoading);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
 
@@ -27,7 +28,15 @@ export default function QuizPage() {
           setStarting(false);
         });
     }
-  }, [dictionary.length, quizCard, starting, startError]);
+  }, [dictionary.length, quizCard, starting, startError, activeDictionaryId]);
+
+  if (isDictionaryLoading) {
+    return (
+      <PageContainer size="narrow">
+        <LoadingState minHeight="60vh" />
+      </PageContainer>
+    );
+  }
 
   if (dictionary.length === 0) {
     return (

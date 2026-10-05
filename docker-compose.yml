@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   app:
+    init: true
     build:
       context: ./base
       target: ${BASE_TARGET}
@@ -40,6 +41,7 @@ services:
       - ALLOW_ANONYMOUS=${MERCURE_ALLOW_ANONYMOUS}
 
   translator:
+    init: true
     build:
       context: ./translator
       target: ${TRANSLATOR_TARGET}
@@ -58,6 +60,7 @@ services:
       - llm
 
   llm:
+    init: true
     build:
       context: ./llm
       target: ${LLM_TARGET}
@@ -69,6 +72,7 @@ services:
       - CACHE_URL=${LLM_CACHE_URL}
 
   definer:
+    init: true
     build:
       context: ./definer
       target: ${DEFINER_TARGET}
@@ -87,6 +91,7 @@ services:
       - translator
 
   frontend:
+    init: true
     build:
       context: ./frontend
       target: ${FRONTEND_TARGET}
@@ -109,4 +114,3 @@ services:
 
 volumes:
   redis_data:
-
