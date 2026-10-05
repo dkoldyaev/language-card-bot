@@ -38,7 +38,7 @@ function AuthContent() {
 
   const authProvider = import.meta.env.VITE_AUTH_PROVIDER;
   const isTestAuth = authProvider === 'test-username';
-  const isRegisterRoute = location.pathname === '/register';
+  const isRegisterRoute = location.pathname.endsWith('/register');
 
   const [username, setUsername] = useState('');
   const [baseLanguage, setBaseLanguage] = useState<LanguageCode | null>(null);
@@ -300,7 +300,7 @@ function AuthContent() {
                       </Alert>
                       <AppButton
                         component={RouterLink}
-                        to="/login"
+                        to={`/${locale}/login`}
                         variant="secondary"
                         sx={{ mt: 1 }}
                       >
@@ -335,7 +335,7 @@ function AuthContent() {
                         {isRegisterRoute ? (
                           <Button
                             component={RouterLink}
-                            to="/login"
+                            to={`/${locale}/login`}
                             variant="text"
                             sx={{ color: 'text.secondary', textTransform: 'none', fontWeight: 600 }}
                           >
@@ -344,7 +344,7 @@ function AuthContent() {
                         ) : (
                           <Button
                             component={RouterLink}
-                            to="/register"
+                            to={`/${locale}/register`}
                             variant="text"
                             sx={{ color: 'text.secondary', textTransform: 'none', fontWeight: 600 }}
                           >

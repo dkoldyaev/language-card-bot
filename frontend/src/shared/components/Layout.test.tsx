@@ -5,6 +5,14 @@ import useStore from '../../store/useStore';
 import Layout from './Layout';
 
 describe('Layout', () => {
+  const renderLayout = (initialEntry = '/en') => render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <Routes>
+        <Route path="/:locale/*" element={<Layout />} />
+      </Routes>
+    </MemoryRouter>
+  );
+
   beforeEach(() => {
     useStore.setState({
       token: 'fake-token',
@@ -15,11 +23,7 @@ describe('Layout', () => {
   });
 
   it('renders sidebar navigation links', () => {
-    render(
-      <MemoryRouter>
-        <Layout />
-      </MemoryRouter>
-    );
+    renderLayout();
     // Sidebar should render navigation items
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Dictionary')).toBeInTheDocument();
@@ -36,10 +40,10 @@ describe('Layout', () => {
       hasSeenOnboarding: false,
     });
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/en']}>
         <Routes>
-          <Route path="/" element={<Layout />} />
-          <Route path="/onboarding" element={<div>Onboarding Page Content</div>} />
+          <Route path="/:locale/*" element={<Layout />} />
+          <Route path="/:locale/onboarding" element={<div>Onboarding Page Content</div>} />
         </Routes>
       </MemoryRouter>
     );
@@ -65,10 +69,10 @@ describe('Layout', () => {
       hasSeenOnboarding: true,
     });
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/en']}>
         <Routes>
-          <Route path="/" element={<Layout />} />
-          <Route path="/onboarding" element={<div>Onboarding Page Content</div>} />
+          <Route path="/:locale/*" element={<Layout />} />
+          <Route path="/:locale/onboarding" element={<div>Onboarding Page Content</div>} />
         </Routes>
       </MemoryRouter>
     );
@@ -78,11 +82,7 @@ describe('Layout', () => {
 
   it('disables Quiz navigation when dictionary is empty', () => {
     useStore.setState({ dictionary: [] });
-    render(
-      <MemoryRouter>
-        <Layout />
-      </MemoryRouter>
-    );
+    renderLayout();
 
     const quizButtons = screen.getAllByRole('button', { name: /Quiz/i });
     quizButtons.forEach((button) => {
@@ -100,11 +100,7 @@ describe('Layout', () => {
         },
       ],
     });
-    render(
-      <MemoryRouter>
-        <Layout />
-      </MemoryRouter>
-    );
+    renderLayout();
 
     const quizLinks = screen.getAllByRole('link', { name: /Quiz/i });
     expect(quizLinks.length).toBeGreaterThan(0);
@@ -112,20 +108,12 @@ describe('Layout', () => {
 
   it('renders Presets link only for admin users', () => {
     useStore.setState({ profile: { id: 1, username: 'normal_user', isAdmin: false, is_admin: false } });
-    const { unmount } = render(
-      <MemoryRouter>
-        <Layout />
-      </MemoryRouter>
-    );
+    const { unmount } = renderLayout();
     expect(screen.queryByText('Presets')).not.toBeInTheDocument();
     unmount();
 
     useStore.setState({ profile: { id: 1, username: 'admin_user', isAdmin: true, is_admin: true } });
-    render(
-      <MemoryRouter>
-        <Layout />
-      </MemoryRouter>
-    );
+    renderLayout();
     expect(screen.getAllByText('Presets').length).toBeGreaterThan(0);
   });
 });

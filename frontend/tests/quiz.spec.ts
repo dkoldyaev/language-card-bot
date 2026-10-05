@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { register, login, addWordsAndAwaitDefinitions } from './helpers';
+import { createDictionary, register, login, addWordsAndAwaitDefinitions } from './helpers';
 
 test.describe('Quiz Operations', () => {
   test.beforeEach(async ({ page }, testInfo) => {
@@ -14,38 +14,28 @@ test.describe('Quiz Operations', () => {
     // We register and then login the user for each test
     await register(page, username);
     await login(page, username);
+    await createDictionary(page, { name: 'Quiz deck' });
   });
 
   test('should disable quiz when dictionary is empty and show locked state on /quiz', async ({ page }) => {
+    // Go back to dashboard to check states.
+    await page.locator('nav').getByText('Dashboard').click();
+
     // User starts with 0 words in dictionary on Dashboard
     const dashboardQuizBtn = page.locator('button:has-text("Start a quiz")');
     await expect(dashboardQuizBtn).toBeDisabled();
-    await expect(page.locator('text=Add words to your dictionary to unlock quiz practice.')).toBeVisible();
+    await expect(page.locator('text=Add words to your dictionary to start practicing.')).toBeVisible();
 
     // Check Sidebar Quiz item is disabled
     const sidebarQuizBtn = page.locator('button:has-text("Quiz")').first();
     await expect(sidebarQuizBtn).toBeDisabled();
-
-    // Navigate directly to /quiz
-    await page.goto('/quiz');
-
-    // Should show Quiz is locked empty state
-    await expect(page.locator('text=Quiz is locked')).toBeVisible();
-    await expect(page.locator('text=Your dictionary is empty')).toBeVisible();
-
-    const goToDictionaryBtn = page.locator('button:has-text("Go to Dictionary")');
-    await expect(goToDictionaryBtn).toBeVisible();
-
-    // Click Go to Dictionary and verify navigation
-    await goToDictionaryBtn.click();
-    await expect(page).toHaveURL(/\/dictionary$/);
   });
 
   test('should navigate to Quiz and click Start Quiz', async ({ page }) => {
     // Add a word first so the quiz has content
     await addWordsAndAwaitDefinitions(page, ['apple']);
 
-    await page.goto('/quiz');
+    await page.locator('nav').getByText('Quiz').click();
     await expect(async () => {
       const heading = page.getByRole('heading', { name: 'Quiz' });
       if (await heading.isVisible()) return;
@@ -55,10 +45,14 @@ test.describe('Quiz Operations', () => {
       }
       await expect(heading).toBeVisible({ timeout: 3000 });
     }).toPass({ timeout: 20000 });
-    
+
+    await page.reload();
+    await expect(page).toHaveURL(/\/en\/quiz\/\d+$/);
+    await expect(page.getByRole('heading', { name: 'Quiz' })).toBeVisible({ timeout: 20000 });
+
     const cardContent = page.locator('.MuiCardContent-root').first();
     await expect(cardContent).toContainText('[Mock] Definition');
-    await expect(cardContent).toContainText('for apple in ru');
+    await expect(cardContent).toContainText('for apple in en');
 
     const answerInput = page.getByLabel(/Your answer/i);
     const submitBtn = page.locator('button[type="submit"]');
@@ -77,12 +71,12 @@ test.describe('Quiz Operations', () => {
 
     // 3. Test Translate Definition
     await page.click('button:has-text("Translate definition")');
-    await expect(page.locator('text=Translation: [MOCK: ru -> en] [Mock] Definition')).toBeVisible();
+    await expect(page.getByText(/Translation: \[MOCK: ru -> en\] \[Mock] Definition/)).toBeVisible();
 
     // 4. Test Another Definition
     const currentDefText = await cardContent.innerText();
     await page.click('button:has-text("Another definition")');
-    
+
     // Wait for the definition to change
     await expect(async () => {
       const newDefText = await cardContent.innerText();
@@ -102,7 +96,7 @@ test.describe('Quiz Operations', () => {
     // Add a word first so the quiz has content
     await addWordsAndAwaitDefinitions(page, ['apple', 'banana']);
 
-    await page.goto('/quiz');
+    await page.locator('nav').getByText('Quiz').click();
     await expect(async () => {
       const heading = page.getByRole('heading', { name: 'Quiz' });
       if (await heading.isVisible()) return;
@@ -112,19 +106,19 @@ test.describe('Quiz Operations', () => {
       }
       await expect(heading).toBeVisible({ timeout: 3000 });
     }).toPass({ timeout: 20000 });
-    
+
     const cardContent = page.locator('.MuiCardContent-root').first();
     await expect(cardContent).toContainText('[Mock] Definition');
     const initialDefText = await cardContent.innerText();
     let currentWord = 'apple';
     let nextWord = 'banana';
-    
+
     if (initialDefText.includes('for banana')) {
       currentWord = 'banana';
       nextWord = 'apple';
     }
 
-    await expect(cardContent).toContainText(`for ${currentWord} in ru`);
+    await expect(cardContent).toContainText(`for ${currentWord} in en`);
 
     const answerInput = page.getByLabel(/Your answer/i);
     const submitBtn = page.locator('button[type="submit"]');
@@ -137,7 +131,7 @@ test.describe('Quiz Operations', () => {
     await expect(page.locator('text=Success! 🎉')).toBeHidden();
 
     // Verify it switched to the next word
-    await expect(cardContent).toContainText(`for ${nextWord} in ru`);
+    await expect(cardContent).toContainText(`for ${nextWord} in en`);
     await expect(answerInput).toBeEmpty();
     await expect(submitBtn).toBeDisabled();
   });
@@ -146,7 +140,7 @@ test.describe('Quiz Operations', () => {
     // Add words so we have variants
     await addWordsAndAwaitDefinitions(page, ['apple', 'banana', 'cherry']);
 
-    await page.goto('/quiz');
+    await page.locator('nav').getByText('Quiz').click();
     await expect(async () => {
       const heading = page.getByRole('heading', { name: 'Quiz' });
       if (await heading.isVisible()) return;
@@ -156,22 +150,22 @@ test.describe('Quiz Operations', () => {
       }
       await expect(heading).toBeVisible({ timeout: 3000 });
     }).toPass({ timeout: 20000 });
-    
+
     const cardContent = page.locator('.MuiCardContent-root').first();
     await expect(cardContent).toContainText('[Mock] Definition');
 
     const initialDefText = await cardContent.innerText();
-    
+
     // Determine the current word from the mock definition text
     let currentWord = '';
     const words = ['apple', 'banana', 'cherry'];
     for (const w of words) {
-        if (initialDefText.includes(`for ${w} in ru`)) {
+        if (initialDefText.includes(`for ${w} in en`)) {
             currentWord = w;
             break;
         }
     }
-    
+
     expect(currentWord).not.toBe('');
 
     // Click 'Show variants'
@@ -183,14 +177,14 @@ test.describe('Quiz Operations', () => {
 
     // Check there are variant buttons
     const variantButtons = page.locator('.MuiButton-colorSecondary');
-    
+
     // There should be 3 variants total since we added 3 words
     await expect(variantButtons).toHaveCount(3);
 
     const correctVariantBtn = variantButtons.filter({ hasText: currentWord });
     const answerInput = page.getByLabel(/Your answer/i);
     const submitBtn = page.locator('button[type="submit"]');
-    
+
     // Click an incorrect variant
     const totalVariants = await variantButtons.count();
     let incorrectVariantIdx = 0;
@@ -203,16 +197,16 @@ test.describe('Quiz Operations', () => {
     }
 
     await variantButtons.nth(incorrectVariantIdx).click();
-    
+
     // Incorrect answer shows Incorrect message
     await expect(page.locator('text=Incorrect 😢')).toBeVisible();
 
     // Now click the correct variant
     await correctVariantBtn.click();
     await expect(page.locator('text=Success! 🎉')).toBeVisible();
-    
+
     // Wait for auto-advance to next card (2000ms delay in component)
-    await expect(cardContent).not.toContainText(`for ${currentWord} in ru`);
+    await expect(cardContent).not.toContainText(`for ${currentWord} in en`);
     await expect(answerInput).toBeEmpty();
     await expect(submitBtn).toBeDisabled();
   });

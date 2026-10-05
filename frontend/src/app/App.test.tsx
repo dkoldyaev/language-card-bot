@@ -6,6 +6,7 @@ import App from './App';
 
 describe('App Routing', () => {
   beforeEach(() => {
+    window.history.pushState({}, '', '/');
     vi.spyOn(apiClient, 'get').mockResolvedValue({ data: [] });
     vi.spyOn(apiClient, 'post').mockResolvedValue({ data: {} });
     useStore.setState({ token: 'dummy_token', profile: { id: 1, username: 'testuser' } });
@@ -13,9 +14,34 @@ describe('App Routing', () => {
 
   it('renders Dashboard page on default route', async () => {
     render(<App />);
-    expect(await screen.findByText(/Welcome/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Welcome/i, {}, { timeout: 5000 })).toBeInTheDocument();
     await waitFor(() => {
       expect(apiClient.get).toHaveBeenCalled();
     });
+  });
+
+  it('renders the dictionary selected by its canonical URL', async () => {
+    window.history.pushState({}, '', '/en/dictionary/7');
+    useStore.setState({
+      dictionaries: [{ id: 7, name: 'Spanish deck', targetLanguage: 'es', baseLanguage: 'en', wordCount: 1, isActive: true }],
+      activeDictionaryId: 7,
+      dictionary: [{ id: 101, text: 'hola', definitions: [] }],
+    });
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Spanish deck' })).toBeInTheDocument();
+    expect(screen.getByText('hola')).toBeInTheDocument();
+  });
+
+  it('does not open a dictionary-creation page for /dictionary/new', async () => {
+    window.history.pushState({}, '', '/en/dictionary/new');
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/en');
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

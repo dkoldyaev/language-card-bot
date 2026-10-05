@@ -9,7 +9,7 @@ const envSchema = z.object({
   PORT: z.string(),
   MERCURE_URL: z.string(),
   MERCURE_JWT: z.string(),
-  MERCURE_JWT_KEY: z.string().optional(),
+  MERCURE_JWT_KEY: z.string(),
   TRANSLATOR_API_URL: z.string(),
   DEFINER_API_URL: z.string(),
   DEFINER_APP_TYPE: z.enum(['mistral', 'gemini', 'mock', 'freedictionary']),

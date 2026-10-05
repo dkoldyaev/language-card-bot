@@ -17,9 +17,12 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
+import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
 import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
+import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 import { useTranslation } from '../i18n/I18nContext';
 import { colorTokens, radiusTokens, spacingTokens } from '../ui/tokens';
 
@@ -57,16 +60,35 @@ export default function Sidebar() {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { locale } = useParams();
+  if (!locale) {
+    throw new Error('Locale is required for Sidebar');
+  }
+  const loc = locale;
+
+  const dictionaries = useStore((state) => state.dictionaries);
+  const activeDictionaryId = useActiveDictionaryId();
+  const targetDictId = activeDictionaryId ?? dictionaries[0]?.id;
+
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  const dictionaryPath = targetDictId ? `/${loc}/dictionary/${targetDictId}` : undefined;
+  const quizPath = targetDictId ? `/${loc}/quiz/${targetDictId}` : undefined;
+
+  const handleActionClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setCreateDialogOpen(true);
+  };
 
   const navItems = [
-    { path: '/', label: t('nav.dashboard'), icon: <HomeRoundedIcon /> },
-    { path: '/dictionary', label: t('nav.dictionary'), icon: <MenuBookRoundedIcon /> },
-    { path: '/quiz', label: t('nav.quiz'), icon: <SchoolRoundedIcon /> },
+    { id: 'dashboard', path: `/${loc}`, label: t('nav.dashboard'), icon: <HomeRoundedIcon /> },
+    { id: 'dictionary', path: dictionaryPath, label: t('nav.dictionary'), icon: <MenuBookRoundedIcon />, isAction: !targetDictId },
+    { id: 'quiz', path: quizPath, label: t('nav.quiz'), icon: <SchoolRoundedIcon />, isAction: !targetDictId },
   ];
-  
+
   const isAdmin = Boolean(profile?.isAdmin || profile?.is_admin);
   if (token && isAdmin) {
-    navItems.push({ path: '/presets', label: t('nav.presets'), icon: <AutoAwesomeRoundedIcon /> });
+    navItems.push({ id: 'presets', path: `/${loc}/presets`, label: t('nav.presets'), icon: <AutoAwesomeRoundedIcon /> });
   }
 
   const hasWords = dictionary.length > 0;
@@ -74,7 +96,7 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     reset();
-    navigate('/');
+    navigate(`/${loc}`);
   };
 
   if (isMobile) {
@@ -100,18 +122,23 @@ export default function Sidebar() {
         }}
       >
         {currentNavItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          const isDisabled = item.path === '/quiz' && !hasWords;
+          const isActive = item.path !== undefined && location.pathname === item.path;
+          const isQuizItem = item.id === 'quiz';
+          const isDisabled = isQuizItem && !hasWords;
           const button = (
             <ListItemButton
-              key={item.path}
-              component={isDisabled ? 'button' : NavLink}
-              to={isDisabled ? undefined : item.path}
+              key={item.id}
+              component={item.isAction ? 'button' : (isDisabled ? 'button' : NavLink)}
+              to={item.isAction || isDisabled ? undefined : item.path}
               disabled={isDisabled}
               aria-label={item.label}
-              data-tour={item.path === '/quiz' ? 'nav-quiz' : undefined}
-              onClick={() => {
-                if (item.path === '/quiz') {
+              data-tour={isQuizItem ? 'nav-quiz' : undefined}
+              onClick={(e) => {
+                if (item.isAction) {
+                  handleActionClick(e);
+                  return;
+                }
+                if (isQuizItem) {
                   useGuidelineStore.getState().advanceStep('step4_nav_quiz');
                 }
               }}
@@ -149,7 +176,7 @@ export default function Sidebar() {
 
           if (isDisabled) {
             return (
-              <Tooltip key={item.path} title={t('nav.quizLockedTooltip')} placement="top">
+              <Tooltip key={item.id} title={t('nav.quizLockedTooltip')} placement="top">
                 <Box component="div" sx={{ display: 'flex', flex: 1, minWidth: 62, maxWidth: 86 }}>
                   {button}
                 </Box>
@@ -208,6 +235,13 @@ export default function Sidebar() {
             </Typography>
           </ListItemButton>
         )}
+        <CreateDictionaryDialog
+          open={createDialogOpen}
+          onClose={() => setCreateDialogOpen(false)}
+          onCreated={(newDict) => {
+            navigate(`/${loc}/dictionary/${newDict.id}`);
+          }}
+        />
       </Box>
     );
   }
@@ -245,18 +279,22 @@ export default function Sidebar() {
 
       <List component="div" sx={{ px: spacingTokens.element_group_gap * 1.5, pt: 0, flexGrow: 1 }}>
         {currentNavItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          const isDisabled = item.path === '/quiz' && !hasWords;
+          const isActive = item.path !== undefined && location.pathname === item.path;
+          const isQuizItem = item.id === 'quiz';
+          const isDisabled = isQuizItem && !hasWords;
           const button = (
             <ListItemButton
-              key={item.path}
-              component={isDisabled ? 'button' : NavLink}
-              to={isDisabled ? undefined : item.path}
+              key={item.id}
+              component={item.isAction ? 'button' : (isDisabled ? 'button' : NavLink)}
+              to={item.isAction || isDisabled ? undefined : item.path}
               disabled={isDisabled}
-              data-tour={item.path === '/quiz' ? 'nav-quiz' : undefined}
-              onClick={() => {
-                if (item.path === '/quiz') {
-                  useGuidelineStore.getState().advanceStep('step4_nav_quiz');
+              onClick={(e) => {
+                if (item.isAction) {
+                  handleActionClick(e);
+                  return;
+                }
+                if (isQuizItem) {
+                  useGuidelineStore.getState().advanceStep('step3_nav_quiz');
                 }
               }}
               sx={{
@@ -289,7 +327,7 @@ export default function Sidebar() {
 
           if (isDisabled) {
             return (
-              <Tooltip key={item.path} title={t('nav.quizLockedTooltip')} placement="right">
+              <Tooltip key={item.id} title={t('nav.quizLockedTooltip')} placement="right">
                 <Box component="div" sx={{ display: 'block' }}>
                   {button}
                 </Box>
@@ -376,6 +414,14 @@ export default function Sidebar() {
           </>
         )}
       </Box>
+
+      <CreateDictionaryDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onCreated={(newDict) => {
+          navigate(`/${loc}/dictionary/${newDict.id}`);
+        }}
+      />
     </Box>
   );
 }

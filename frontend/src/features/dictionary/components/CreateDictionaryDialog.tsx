@@ -46,9 +46,7 @@ export default function CreateDictionaryDialog({
 
   const token = useStore((state) => state.token);
   const dictionaries = useStore((state) => state.dictionaries);
-  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
   const addDictionary = useStore((state) => state.addDictionary);
-  const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
   const setDictionary = useStore((state) => state.setDictionary);
 
   const handleBaseLanguageChange = (newBase: LanguageCode) => {
@@ -75,7 +73,7 @@ export default function CreateDictionaryDialog({
       let newDict: DictionaryItem;
       if (!token) {
         const dictId = Date.now();
-        const isFirst = dictionaries.length === 0 || !activeDictionaryId;
+        const isFirst = dictionaries.length === 0;
         const defaultName = `${targetLanguage.toUpperCase()} (${baseLanguage.toUpperCase()})`;
         newDict = {
           id: dictId,
@@ -98,8 +96,7 @@ export default function CreateDictionaryDialog({
       }
 
       addDictionary(newDict);
-      setActiveDictionaryId(newDict.id);
-      setDictionary([]);
+      setDictionary([], newDict.id);
 
       if (onCreated) {
         onCreated(newDict);

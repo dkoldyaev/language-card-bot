@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useGuidelineStore } from '../../features/guideline';
 import { useTranslation } from '../i18n';
 import type { LocaleInfo, SupportedLocale } from '../i18n/types';
@@ -30,6 +31,8 @@ export default function LocaleSwitcher({
 }: LocaleSwitcherProps) {
   const { locale, setLocale, locales, currentLocaleInfo } = useTranslation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -40,7 +43,13 @@ export default function LocaleSwitcher({
   };
 
   const handleSelect = (code: SupportedLocale) => {
-    setLocale(code);
+    const regex = new RegExp(`^/${locale}(?=/|$)`);
+    if (regex.test(location.pathname)) {
+      const newPath = location.pathname.replace(regex, `/${code}`);
+      navigate(`${newPath}${location.search}${location.hash}`);
+    } else {
+      setLocale(code);
+    }
     handleClose();
     useGuidelineStore.getState().advanceStep('step0_locale');
   };

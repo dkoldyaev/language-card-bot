@@ -4,8 +4,9 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { alpha, Box, Tooltip, Typography } from '@mui/material';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import {
   handleDictionaryCancelNavigation,
@@ -36,16 +37,15 @@ export default function DictionaryPage() {
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const actionButtonsRef = useRef<HTMLDivElement>(null);
-  const hasAutoOpenedRef = useRef(false);
 
+  const { locale } = useParams<{ locale: string }>();
   const token = useStore((state) => state.token);
   const setDictionary = useStore((state) => state.setDictionary);
-  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
-  const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
+  const activeDictionaryId = useActiveDictionaryId();
   const dictionaries = useStore((state) => state.dictionaries);
-  const setDictionaries = useStore((state) => state.setDictionaries);
   const removeDictionary = useStore((state) => state.removeDictionary);
   const updateDictionaryItem = useStore((state) => state.updateDictionaryItem);
+  const [pendingDeletedDictionaryId, setPendingDeletedDictionaryId] = useState<number | null>(null);
 
   const currentDict = dictionaries.find((d) => d.id === activeDictionaryId);
 
@@ -57,13 +57,19 @@ export default function DictionaryPage() {
   }, [currentDict?.id, currentDict?.name, currentDict]);
 
   useEffect(() => {
-    if (!loading && dictionaries.length === 0 && !hasAutoOpenedRef.current) {
-      hasAutoOpenedRef.current = true;
-      setCreateDialogOpen(true);
-    } else if (dictionaries.length > 0) {
-      hasAutoOpenedRef.current = false;
+    if (pendingDeletedDictionaryId === null || dictionaries.some((dictionary) => dictionary.id === pendingDeletedDictionaryId)) {
+      return;
     }
-  }, [loading, dictionaries.length]);
+
+    setPendingDeletedDictionaryId(null);
+    if (dictionaries.length === 0) {
+      navigate(`/${locale}`, { replace: true });
+      return;
+    }
+
+    const nextDictionaryId = activeDictionaryId ?? dictionaries[0].id;
+    navigate(`/${locale}/dictionary/${nextDictionaryId}`, { replace: true });
+  }, [activeDictionaryId, dictionaries, locale, navigate, pendingDeletedDictionaryId]);
 
   const handleCancelCreateDialog = () => {
     setCreateDialogOpen(false);
@@ -73,10 +79,10 @@ export default function DictionaryPage() {
   };
 
   const handleSelectDictionary = async (dictId: number) => {
+    navigate(`/${locale}/dictionary/${dictId}`);
     if (!token) {
-      setActiveDictionaryId(dictId);
       const dictWords = useStore.getState().guestDictionaryWords[dictId] || [];
-      setDictionary(dictWords);
+      setDictionary(dictWords, dictId);
       return;
     }
     
@@ -162,14 +168,17 @@ export default function DictionaryPage() {
 
     try {
       if (token) {
+        setPendingDeletedDictionaryId(dictId);
         await apiClient.delete(`/dictionaries/${dictId}`);
+        return;
       }
+
       removeDictionary(dictId);
-      if (token) {
-        const dictsRes = await apiClient.get('/dictionaries');
-        if (dictsRes.data.dictionaries) {
-          setDictionaries(dictsRes.data.dictionaries);
-        }
+      const remainingDictionaries = dictionaries.filter((dictionary) => dictionary.id !== dictId);
+      if (remainingDictionaries.length === 0) {
+        navigate(`/${locale}`, { replace: true });
+      } else if (activeDictionaryId === dictId) {
+        await handleSelectDictionary(remainingDictionaries[0].id);
       }
     } catch (err) {
       console.error('Failed to delete dictionary:', err);

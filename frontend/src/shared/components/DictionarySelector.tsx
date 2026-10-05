@@ -14,23 +14,24 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
 import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import { useTranslation } from '../i18n/I18nContext';
 import { AppChip, radiusTokens, spacingTokens } from '../ui';
+import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 
 type MenuPaperSlotProps = PaperProps & { 'data-testid'?: string };
 
 export default function DictionarySelector() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { locale } = useParams<{ locale: string }>();
   const token = useStore((state) => state.token);
   const dictionaries = useStore((state) => state.dictionaries);
-  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
-  const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
+  const activeDictionaryId = useActiveDictionaryId();
   const setDictionary = useStore((state) => state.setDictionary);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -57,21 +58,21 @@ export default function DictionarySelector() {
     handleCloseMenu();
     if (dictId === activeDictionaryId) return;
 
+    navigate(`/${locale}/dictionary/${dictId}`);
+
     if (!token) {
-      setActiveDictionaryId(dictId);
       const dictWords = useStore.getState().guestDictionaryWords[dictId] || [];
-      setDictionary(dictWords);
+      setDictionary(dictWords, dictId);
       return;
     }
 
     try {
       await apiClient.post(`/dictionaries/${dictId}/select`);
-      setActiveDictionaryId(dictId);
 
       // Fetch words for newly selected dictionary
-      const res = await apiClient.get('/dictionary');
+      const res = await apiClient.get('/dictionary', { params: { dictionaryId: dictId } });
       if (res.data.dictionary) {
-        setDictionary(res.data.dictionary);
+        setDictionary(res.data.dictionary, dictId);
       }
     } catch (error) {
       console.error('Failed to select dictionary:', error);
@@ -188,10 +189,8 @@ export default function DictionarySelector() {
       <CreateDictionaryDialog
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
-        onCreated={() => {
-          if (useGuidelineStore.getState().isActive) {
-            navigate('/dictionary');
-          }
+        onCreated={(newDict) => {
+          navigate(`/${locale}/dictionary/${newDict.id}`);
         }}
       />
     </>

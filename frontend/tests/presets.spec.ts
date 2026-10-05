@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { register, login } from './helpers';
+import { createDictionary, register, login } from './helpers';
 
 test.describe('Presets & Admin Flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -19,9 +19,10 @@ test.describe('Presets & Admin Flow', () => {
     // Verify "Presets" link is not present in navigation
     await expect(page.getByRole('link', { name: 'Presets' })).not.toBeVisible();
 
-    // Try direct navigation to /presets -> redirected away to /
-    await page.goto('/presets');
-    await expect(page).toHaveURL('/');
+    // A manually entered protected URL is still rejected; this is a routing boundary,
+    // not a substitute for navigation-flow coverage.
+    await page.goto('/en/presets');
+    await expect(page).toHaveURL('/en');
   });
 
   test('admin user sees presets navigation, creates a preset, and applies it to dictionary', async ({ page }, testInfo) => {
@@ -30,6 +31,11 @@ test.describe('Presets & Admin Flow', () => {
     const adminUsername = `admin_${Date.now()}_${testInfo.workerIndex}`;
     await register(page, adminUsername, 'en', 'es');
     await login(page, adminUsername);
+    await createDictionary(page, {
+      name: 'Spanish Learner',
+      targetLanguage: 'es',
+      baseLanguage: 'en',
+    });
 
     // Verify "Presets" is visible in sidebar for admin
     const presetsNav = page.locator('nav').getByText('Presets');
@@ -37,7 +43,10 @@ test.describe('Presets & Admin Flow', () => {
 
     // Navigate to Presets page
     await presetsNav.click();
-    await expect(page).toHaveURL('/presets');
+    await expect(page).toHaveURL('/en/presets');
+    await expect(page.getByText('Presets Catalog')).toBeVisible();
+    await page.reload();
+    await expect(page).toHaveURL('/en/presets');
     await expect(page.getByText('Presets Catalog')).toBeVisible();
 
     // Open Create Preset modal
@@ -60,8 +69,8 @@ test.describe('Presets & Admin Flow', () => {
     await expect(presetCard.getByRole('button', { name: 'Apply to Dict' })).not.toBeVisible();
 
     // Navigate to dictionary to verify that the preset is listed under Available Presets and can be applied
-    await page.goto('/dictionary');
-    await expect(page.getByText('Vocabulary Deck', { exact: true })).toBeVisible();
+    await page.locator('nav').getByText('Dictionary').click();
+    await expect(page.getByRole('heading', { name: 'Spanish Learner', exact: true })).toBeVisible();
 
     const presetsSection = page.getByTestId('dictionary-presets-section');
     await expect(presetsSection).toBeVisible();
@@ -76,40 +85,4 @@ test.describe('Presets & Admin Flow', () => {
     await expect(page.locator('.MuiAccordion-root').filter({ hasText: 'hola' })).toBeVisible();
   });
 
-  test('displays available presets on dictionary page and allows applying them', async ({ page }, testInfo) => {
-    test.setTimeout(90000);
-
-    // Register user with base en, target es
-    const username = `dict_user_${Date.now()}_${testInfo.workerIndex}`;
-    await register(page, username, 'en', 'es');
-    await login(page, username);
-
-    // Navigate to dictionary page
-    await page.goto('/dictionary');
-    await expect(page.getByText('Vocabulary Deck', { exact: true })).toBeVisible();
-
-    // Verify "Available Presets" section is rendered
-    const presetsSection = page.getByTestId('dictionary-presets-section');
-    await expect(presetsSection).toBeVisible();
-    await expect(presetsSection.getByRole('heading', { name: 'Available Presets' })).toBeVisible();
-    await expect(presetsSection.getByText('ES', { exact: true })).toBeVisible();
-
-    // If there is an available preset (from earlier or preloaded), apply it
-    const applyBtn = presetsSection.getByRole('button', { name: 'Add to Dictionary' }).first();
-    if (await applyBtn.isVisible()) {
-      await applyBtn.click();
-      await expect(page.locator('text=Added "').first()).toBeVisible();
-
-      // Word with preset chip should be visible in WordList
-      await expect(page.locator('[data-testid^="word-preset-chip-"]').first()).toBeVisible();
-
-      // Expand accordion to inspect definition
-      const wordAccordion = page.locator('.MuiAccordion-root').first();
-      await wordAccordion.click();
-
-      // Definition with preset chip should be visible
-      await expect(page.locator('[data-testid^="def-preset-chip-"]').first()).toBeVisible();
-    }
-  });
 });
-

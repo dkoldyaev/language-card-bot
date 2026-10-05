@@ -10,6 +10,7 @@ export interface UserProfile {
   picture?: string | null;
   isAdmin?: boolean;
   is_admin?: boolean;
+  active_dictionary_id?: number | null;
 }
 
 export interface SettingsState {
@@ -160,7 +161,7 @@ export interface GuestQuizAttempt {
   createdAt: string;
 }
 
-export type SyncAction = SyncActionPayload & { timestamp: number };
+export type SyncAction = SyncActionPayload & { id: string; timestamp: number };
 
 interface AppState {
   token: string | null;
@@ -192,21 +193,22 @@ interface AppState {
   toggleThemeMode: () => void;
   setIsOffline: (isOffline: boolean) => void;
   enqueueSyncAction: (action: SyncActionPayload) => void;
+  removeSyncAction: (id: string) => void;
   clearSyncQueue: () => void;
   setToken: (token: string | null) => void;
   setMercureToken: (token: string | null) => void;
   setProfile: (profile: UserProfile | null) => void;
   setSettings: (settings: SettingsState | null) => void;
   setDictionaries: (dictionaries: DictionaryItem[]) => void;
-  setActiveDictionaryId: (activeDictionaryId: number | null) => void;
+  setActiveDictionaryId: (id: number | null) => void;
   addDictionary: (dictionary: DictionaryItem) => void;
   removeDictionary: (id: number) => void;
   updateDictionaryItem: (id: number, partial: Partial<DictionaryItem>) => void;
   setAppState: (appState: AppSyncState | null) => void;
   setIsDictionaryLoading: (isLoading: boolean) => void;
-  setDictionary: (dictionary: DictionaryWord[]) => void;
-  addDictionaryWord: (word: DictionaryWord) => void;
-  addDictionaryWords: (words: DictionaryWord[]) => void;
+  setDictionary: (dictionary: DictionaryWord[], dictId?: number) => void;
+  addDictionaryWord: (word: DictionaryWord, dictId?: number) => void;
+  addDictionaryWords: (words: DictionaryWord[], dictId?: number) => void;
   removeDictionaryWord: (wordId: number) => void;
   setDictionaryDefinitions: (wordId: number, definitions: DefinitionInput[], wordText?: string) => void;
   setDictionaryDefinitionsBatch: (items: { wordId: number; word: string; definitions: DefinitionInput[] }[]) => void;
@@ -302,8 +304,14 @@ const useStore = create<AppState>()(
         return { themeMode: currentMode === 'dark' ? 'light' : 'dark' };
       }),
       setIsOffline: (isOffline) => set({ isOffline }),
-      enqueueSyncAction: (action) => set((state) => ({ 
-        syncQueue: [...state.syncQueue, { ...action, timestamp: Date.now() } as SyncAction] 
+      enqueueSyncAction: (action) => set((state) => {
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        return {
+          syncQueue: [...state.syncQueue, { ...action, id, timestamp: Date.now() }],
+        };
+      }),
+      removeSyncAction: (id) => set((state) => ({
+        syncQueue: state.syncQueue.filter((item) => item.id !== id),
       })),
       clearSyncQueue: () => set({ syncQueue: [] }),
       setToken: (token) => set({ token }),
@@ -311,13 +319,7 @@ const useStore = create<AppState>()(
       setProfile: (profile) => set({ profile }),
       setSettings: (settings) => set({ settings }),
       setDictionaries: (dictionaries) => set({ dictionaries }),
-      setActiveDictionaryId: (activeDictionaryId) => set((state) => ({
-        activeDictionaryId,
-        dictionaries: state.dictionaries.map(d => ({
-          ...d,
-          isActive: d.id === activeDictionaryId
-        }))
-      })),
+      setActiveDictionaryId: (activeDictionaryId) => set({ activeDictionaryId }),
 
       addDictionary: (dict) => set((state) => ({
         dictionaries: state.dictionaries.some(d => d.id === dict.id)
@@ -330,7 +332,6 @@ const useStore = create<AppState>()(
         return {
           dictionaries: state.dictionaries.filter(d => d.id !== id),
           guestDictionaryWords: updatedGuestWords,
-          activeDictionaryId: state.activeDictionaryId === id ? null : state.activeDictionaryId,
         };
       }),
       updateDictionaryItem: (id, partial) => set((state) => ({
@@ -349,32 +350,26 @@ const useStore = create<AppState>()(
             }
           };
         }
-        const activeDictionaryId = appState?.activeDictionaryId ?? state.activeDictionaryId;
         return {
           appState,
           quizCard,
-          activeDictionaryId,
-          dictionaries: state.dictionaries.map(d => ({
-            ...d,
-            isActive: d.id === activeDictionaryId
-          }))
         };
       }),
       setIsDictionaryLoading: (isDictionaryLoading) => set({ isDictionaryLoading }),
-      setDictionary: (dictionary) => set((state) => {
-        const dict = state.dictionaries.find(d => d.id === state.activeDictionaryId);
+      setDictionary: (dictionary, dictId) => set((state) => {
+        const dict = dictId ? state.dictionaries.find(d => d.id === dictId) : undefined;
         const normalizedDictionary = (dictionary || []).map((word) => normalizeWordDefinitions(word, dict?.baseLanguage?.toLowerCase()));
         
         const dictionaryWordIds = new Set(normalizedDictionary.map(w => w.id));
         const shouldResetQuiz = state.quizCard && !dictionaryWordIds.has(state.quizCard.wordId);
         
-        const currentDictId = state.activeDictionaryId;
-        const updatedGuestWords = (!state.token && currentDictId)
-          ? { ...state.guestDictionaryWords, [currentDictId]: normalizedDictionary }
+        const updatedGuestWords = (!state.token && dictId)
+          ? { ...state.guestDictionaryWords, [dictId]: normalizedDictionary }
           : state.guestDictionaryWords;
         return {
           dictionary: normalizedDictionary,
           guestDictionaryWords: updatedGuestWords,
+          activeDictionaryId: dictId !== undefined ? dictId : state.activeDictionaryId,
           ...(shouldResetQuiz ? { quizCard: null, quizVariants: null } : {})
         };
       }),
@@ -407,15 +402,15 @@ const useStore = create<AppState>()(
       }),
       setDashboardStats: (dashboardStats) => set({ dashboardStats }),
       setPresets: (presets) => set({ presets }),
-      addDictionaryWord: (word) => set((state) => {
-        const dict = state.dictionaries.find(d => d.id === state.activeDictionaryId);
+      addDictionaryWord: (word, dictId) => set((state) => {
+        const dict = dictId ? state.dictionaries.find(d => d.id === dictId) : undefined;
         const normalized = normalizeWordDefinitions(word, dict?.baseLanguage?.toLowerCase());
         const exists = state.dictionary.some(w => w.id === normalized.id || w.text.toLowerCase() === normalized.text.toLowerCase());
         if (exists) return state;
         return { dictionary: [normalized, ...state.dictionary] };
       }),
-      addDictionaryWords: (words) => set((state) => {
-        const dict = state.dictionaries.find(d => d.id === state.activeDictionaryId);
+      addDictionaryWords: (words, dictId) => set((state) => {
+        const dict = dictId ? state.dictionaries.find(d => d.id === dictId) : undefined;
         const normalized = normalizeWords(words, dict?.baseLanguage?.toLowerCase());
         const existingIds = new Set(state.dictionary.map(w => w.id));
         const existingTexts = new Set(state.dictionary.map(w => w.text.toLowerCase()));
@@ -649,7 +644,6 @@ const useStore = create<AppState>()(
         guestDictionaryWords: {},
         dictionary: [],
         dictionaries: [],
-        activeDictionaryId: null,
         dashboardStats: null,
         quizCard: null,
         quizEvaluation: null,
@@ -692,12 +686,20 @@ const useStore = create<AppState>()(
               }
             }
           }
+          if (Array.isArray(state.syncQueue)) {
+            state.syncQueue = state.syncQueue.map((item, index) => {
+              if (typeof item.id === 'string' && item.id.length > 0) {
+                return item;
+              }
+              const ts = typeof item.timestamp === 'number' ? item.timestamp : Date.now();
+              return {
+                ...item,
+                id: `${ts}-${index}`,
+              };
+            });
+          }
           if (state.token) {
-            // Self-heal: if we have a token, we shouldn't have any stale guest IDs
             const GUEST_ID_THRESHOLD = 1000000000;
-            if (state.activeDictionaryId && state.activeDictionaryId > GUEST_ID_THRESHOLD) {
-              state.activeDictionaryId = null;
-            }
 
             if (Array.isArray(state.dictionaries)) {
               state.dictionaries = state.dictionaries.filter(d => d.id < GUEST_ID_THRESHOLD);

@@ -19,14 +19,12 @@ import { migrateGuestData } from './migrate_guest.service';
 
 const router = Router();
 const JWT_SECRET = env.JWT_SECRET;
-const MERCURE_JWT_SECRET = env.MERCURE_JWT_KEY || env.MERCURE_JWT;
+const MERCURE_JWT_SECRET = env.MERCURE_JWT_KEY;
 
-const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID || undefined);
+const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
 function createMercureToken(identifier: string | number) {
-  // Use the BASE_DOMAIN from env, fallback to http://localhost
-  const baseDomain = env.BASE_DOMAIN || 'http://localhost';
-  const topic = `${baseDomain}/v1/users/${identifier}`;
+  const topic = `${env.BASE_DOMAIN}/v1/users/${identifier}`;
   
   return jwt.sign(
     { mercure: { subscribe: [topic] } },

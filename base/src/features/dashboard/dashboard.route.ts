@@ -12,7 +12,9 @@ router.get('/stats', authMiddleware, validateRequest(DashboardStatsQuerySchema, 
   const { dictionaryId } = res.locals.validatedData as DashboardStatsQuery;
 
   try {
-    const stats = await getDashboardStats(user.id, dictionaryId);
+    // TODO(query-normalization): query values remain raw after validation; convert numeric values at their use sites.
+    const parsedDictionaryId = parseInt(dictionaryId, 10);
+    const stats = await getDashboardStats(user.id, parsedDictionaryId);
     res.json({ stats });
   } catch (error) {
     console.error('Failed to get dashboard stats:', error);

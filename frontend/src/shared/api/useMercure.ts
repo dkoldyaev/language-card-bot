@@ -1,11 +1,18 @@
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useEffect, useRef } from 'react';
 import useStore from '../../store/useStore';
+import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 
 export function useMercure() {
   const profile = useStore((state) => state.profile);
   const mercureToken = useStore((state) => state.mercureToken);
+  const dictId = useActiveDictionaryId();
+  const dictIdRef = useRef(dictId);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    dictIdRef.current = dictId;
+  }, [dictId]);
 
   useEffect(() => {
     if (!profile || !mercureToken) return;
@@ -50,7 +57,8 @@ export function useMercure() {
                         definitions: [],
                         presets: item.presets || [],
                         isProcessing: true,
-                      }))
+                      })),
+                      dictIdRef.current || undefined,
                     );
                   }
                 } else if (data.type === 'dictionary_add_definitions_received') {
@@ -71,6 +79,7 @@ export function useMercure() {
                 useStore.getState().setAppState(data);
               } else if (data.type === 'dictionaries_sync' && data.dictionaries) {
                 useStore.getState().setDictionaries(data.dictionaries);
+                useStore.getState().setActiveDictionaryId(data.activeDictionaryId ?? null);
               } else if (data.type === 'quiz_card') {
                 useStore.getState().setQuizCard(data);
                 useStore.getState().setQuizEvaluation(null); // Reset evaluation on new card

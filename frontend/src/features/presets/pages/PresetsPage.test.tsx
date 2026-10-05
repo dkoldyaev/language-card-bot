@@ -18,6 +18,7 @@ describe('PresetsPage', () => {
     vi.clearAllMocks();
     useStore.setState({
       profile: { id: 1, username: 'admin_user', isAdmin: true, is_admin: true },
+      presets: [],
       dictionaries: [
         {
           id: 10,
@@ -108,6 +109,13 @@ describe('PresetsPage', () => {
         type: 'word-definition',
       }));
     });
+
+    // DictionaryPresets reads this shared catalogue, not PresetsPage local state.
+    // Keep the assertion here so a refactor cannot make a new preset disappear
+    // as soon as the administrator navigates away.
+    expect(useStore.getState().presets).toEqual([
+      expect.objectContaining({ id: 2, title: 'French 101' }),
+    ]);
   });
 
   it('renders preset card with edit and delete actions and no apply button', async () => {

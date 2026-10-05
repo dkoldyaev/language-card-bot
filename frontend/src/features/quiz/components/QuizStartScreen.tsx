@@ -8,13 +8,14 @@ import { useTranslation } from '../../../shared/i18n';
 import { trackEvent } from '../../../shared/lib/analytics';
 import useStore from '../../../store/useStore';
 import { useGuidelineStore } from '../../guideline';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 
 export default function QuizStartScreen() {
   const { t } = useTranslation();
   const [starting, setStarting] = useState(false);
   const dictionary = useStore((state) => state.dictionary);
   const dictionaries = useStore((state) => state.dictionaries);
-  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
+  const activeDictionaryId = useActiveDictionaryId();
   const activeDict = dictionaries.find((d) => d.id === activeDictionaryId) || dictionaries[0];
 
   const handleStartQuiz = async () => {
@@ -23,7 +24,7 @@ export default function QuizStartScreen() {
     try {
       trackEvent('Quiz Started');
       useGuidelineStore.getState().advanceStep('step4_start_quiz');
-      await apiClient.post('/quiz/start', { dictionaryId: activeDictionaryId });
+      await apiClient.post('/quiz/start', { dictionaryId: activeDict.id });
     } catch (error) {
       console.error('Failed to start quiz:', error);
       alert(t('quiz.failedStart'));

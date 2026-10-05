@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import type { Prisma } from '@prisma/client';
+import { redisClient } from '../core/cache';
+import { invalidatePresetsCache } from '../features/preset/preset.service';
 import { prisma } from '../prisma';
 import { type LanguageCode, LanguageCodeSchema } from '../types/language';
 
@@ -144,12 +146,17 @@ async function main() {
       console.log(`Removing preset: ${p.id}`);
       return prisma.preset.delete({ where: { id: p.id } })
     }));
+
+    if (!params.dryRun) {
+      await invalidatePresetsCache();
+    }
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error('\nPreset operation failed:', msg);
     process.exit(1);
   } finally {
     await prisma.$disconnect();
+    await redisClient.quit();
   }
 
   process.exit(0);

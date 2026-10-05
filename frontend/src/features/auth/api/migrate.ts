@@ -17,14 +17,12 @@ export async function performGuestMigration(token: string, mode: 'merge' | 'repl
     return null;
   }
 
-  const activeDict = dictionaries.find((d) => d.id === store.activeDictionaryId) || dictionaries[0];
+  const activeDict = dictionaries[0];
   const targetLanguage = activeDict?.targetLanguage || 'en';
   const baseLanguage = activeDict?.baseLanguage || 'ru';
 
   const guestEntries = Object.entries(guestDictionaryWords);
-  const words =
-    guestEntries.length > 0
-      ? guestEntries.flatMap(([dictIdStr, dictWords]) => {
+  const wordsFromGuestDictionaries = guestEntries.flatMap(([dictIdStr, dictWords]) => {
           const dict = dictionaries.find((d) => d.id === Number(dictIdStr));
           const target = dict?.targetLanguage || targetLanguage;
           const base = dict?.baseLanguage || baseLanguage;
@@ -37,11 +35,14 @@ export async function performGuestMigration(token: string, mode: 'merge' | 'repl
               translation: def.translation?.text || null,
             })),
           }));
-        })
+        });
+  const words =
+    wordsFromGuestDictionaries.length > 0
+      ? wordsFromGuestDictionaries
       : dictionary.map((w) => ({
-          text: w.text,
-          targetLanguage,
-          baseLanguage,
+        text: w.text,
+        targetLanguage,
+        baseLanguage,
           definitions: w.definitions.map((def) => ({
             text: def.text,
             translation: def.translation?.text || null,
@@ -68,7 +69,13 @@ export async function performGuestMigration(token: string, mode: 'merge' | 'repl
   });
 
   // Clear guest data once migrated to server
-  useStore.getState().clearGuestData();
+  const { dictionaries: migratedDictionaries, activeDictionaryId } = response.data;
+  const storeAfterMigration = useStore.getState();
+  const migratedWords = storeAfterMigration.dictionary;
+  storeAfterMigration.clearGuestData();
+  storeAfterMigration.setDictionaries(migratedDictionaries);
+  storeAfterMigration.setActiveDictionaryId(activeDictionaryId);
+  storeAfterMigration.setDictionary(migratedWords, activeDictionaryId);
 
   return response.data;
 }

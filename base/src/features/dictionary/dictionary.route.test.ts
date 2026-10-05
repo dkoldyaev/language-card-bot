@@ -26,6 +26,33 @@ describe('Dictionary Fetch Endpoint', () => {
     expect(res.status).toBe(401);
   });
 
+  it.each([
+    ['/api/v1/dictionary', 'dictionaryId query parameter is required'],
+    ['/api/v1/dictionary?dictionaryId=not-a-number', 'dictionaryId must be a valid number'],
+  ])('rejects an invalid dictionary query: %s', async (url, error) => {
+    const token = jwt.sign({ id: 42, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
+
+    const res = await request(app)
+      .get(url)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res).toMatchObject({ status: 400, body: { error } });
+    expect(prismaMock.word.findMany).not.toHaveBeenCalled();
+  });
+
+  it('does not return a dictionary that does not belong to the authenticated user', async () => {
+    const token = jwt.sign({ id: 42, username: 'test_user' }, JWT_SECRET, { expiresIn: '1h' });
+    prismaMock.dictionary.findFirst.mockResolvedValue(null);
+
+    const res = await request(app)
+      .get('/api/v1/dictionary?dictionaryId=10')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res).toMatchObject({ status: 404, body: { error: 'Dictionary not found' } });
+    expect(prismaMock.dictionary.findFirst).toHaveBeenCalledWith({ where: { id: 10, userId: 42 } });
+    expect(prismaMock.word.findMany).not.toHaveBeenCalled();
+  });
+
   it('should return dictionary correctly', async () => {
     const userId = 42;
     const username = 'test_user';

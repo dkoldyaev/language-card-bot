@@ -82,4 +82,18 @@ describe('DictionarySwitcher', () => {
     await user.click(deleteButtons[1]);
     expect(onDelete).toHaveBeenCalledWith(2, 'Spanish');
   });
+
+  it('offers deletion when there is only one dictionary', () => {
+    render(
+      <DictionarySwitcher
+        dictionaries={[mockDictionaries[0]]}
+        activeDictionaryId={1}
+        onSelectDictionary={vi.fn()}
+        onOpenCreateDialog={vi.fn()}
+        onDeleteDictionary={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /Delete dictionary/i })).toBeInTheDocument();
+  });
 });

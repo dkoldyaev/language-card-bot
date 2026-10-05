@@ -48,6 +48,7 @@ export default function PresetsPage() {
   const isAdmin = Boolean(profile?.isAdmin || profile?.is_admin);
   const dictionaries = useStore((state) => state.dictionaries);
   const token = useStore((state) => state.token);
+  const setStorePresets = useStore((state) => state.setPresets);
   const setDictionary = useStore((state) => state.setDictionary);
   const currentWords = useStore((state) => state.dictionary);
   const updateDictionaryItem = useStore((state) => state.updateDictionaryItem);
@@ -91,6 +92,7 @@ export default function PresetsPage() {
         setError(null);
         const res = await apiClient.get('/preset', { signal: controller.signal });
         setPresets(res.data.presets || []);
+        setStorePresets(res.data.presets || []);
       } catch (err: unknown) {
         if (isAxiosError(err) && err.name === 'CanceledError') return;
         const message = isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
@@ -216,10 +218,14 @@ export default function PresetsPage() {
         setPresets((prev) =>
           prev.map((p) => (p.id === editingPreset.id ? res.data.preset : p))
         );
+        setStorePresets(
+          useStore.getState().presets.map((p) => (p.id === editingPreset.id ? res.data.preset : p))
+        );
         setSuccessMessage(t('presets.presetSuccessUpdated', { title: formTitle }));
       } else {
         const res = await apiClient.post('/preset', payload);
         setPresets((prev) => [res.data.preset, ...prev]);
+        setStorePresets([res.data.preset, ...useStore.getState().presets]);
         setSuccessMessage(t('presets.presetSuccessCreated', { title: formTitle }));
       }
       setDialogOpen(false);
@@ -242,6 +248,7 @@ export default function PresetsPage() {
       setDeleting(true);
       await apiClient.delete(`/preset/${presetToDelete.id}`);
       setPresets((prev) => prev.filter((p) => p.id !== presetToDelete.id));
+      setStorePresets(useStore.getState().presets.filter((p) => p.id !== presetToDelete.id));
       setSuccessMessage(t('presets.presetSuccessDeleted', { title: presetToDelete.title }));
       setDeleteConfirmOpen(false);
     } catch (err: unknown) {

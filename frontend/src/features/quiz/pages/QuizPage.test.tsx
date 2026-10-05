@@ -1,18 +1,27 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
 import useStore from '../../../store/useStore';
 import Quiz from './QuizPage';
 
 describe('Quiz', () => {
+  const renderQuiz = () => render(
+    <MemoryRouter initialEntries={['/en/quiz/1']}>
+      <Routes>
+        <Route path="/:locale/quiz/:dictId" element={<Quiz />} />
+      </Routes>
+    </MemoryRouter>
+  );
+
   beforeEach(() => {
     useStore.setState({
       quizCard: null,
       quizEvaluation: null,
       quizTranslation: null,
       quizVariants: null,
+      isDictionaryLoading: false,
       dictionary: [
         {
           id: 1,
@@ -25,11 +34,7 @@ describe('Quiz', () => {
 
   it('renders locked/empty state when dictionary is empty', () => {
     useStore.setState({ dictionary: [], quizCard: null });
-    render(
-      <MemoryRouter>
-        <Quiz />
-      </MemoryRouter>
-    );
+    renderQuiz();
 
     expect(screen.getByText('Quiz is locked')).toBeInTheDocument();
     expect(screen.getByText('Your dictionary is empty')).toBeInTheDocument();
@@ -39,10 +44,10 @@ describe('Quiz', () => {
   it('automatically starts quiz and displays loading state when no card is set', () => {
     vi.spyOn(apiClient, 'post').mockResolvedValue({});
 
-    render(<Quiz />);
+    renderQuiz();
 
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/start', { dictionaryId: null });
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/start', { dictionaryId: 1 });
   });
 
   it('renders random image and source attribution when definition has images', () => {
@@ -76,7 +81,7 @@ describe('Quiz', () => {
       }
     });
 
-    render(<Quiz />);
+    renderQuiz();
     
     expect(screen.getByText('Quiz')).toBeInTheDocument();
     expect(screen.getByText('A fruit')).toBeInTheDocument();
@@ -94,7 +99,7 @@ describe('Quiz', () => {
       }
     });
 
-    render(<Quiz />);
+    renderQuiz();
     
     const input = screen.getByRole('textbox', { name: /Your answer/i });
     await user.type(input, 'apple');
@@ -102,7 +107,7 @@ describe('Quiz', () => {
     const submitBtn = screen.getByRole('button', { name: /Submit/i });
     await user.click(submitBtn);
 
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'apple', dictionaryId: null });
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'apple', dictionaryId: 1 });
     
     await waitFor(() => {
       expect(input).toHaveValue('');
@@ -121,7 +126,7 @@ describe('Quiz', () => {
       }
     });
 
-    render(<Quiz />);
+    renderQuiz();
     
     expect(screen.getByText('apple')).toBeInTheDocument();
     expect(screen.getByText('Success! 🎉')).toBeInTheDocument();
@@ -136,7 +141,7 @@ describe('Quiz', () => {
       quizTranslation: 'Фрукт'
     });
 
-    const { unmount } = render(<Quiz />);
+    const { unmount } = renderQuiz();
     
     expect(screen.getByText('Translation: Фрукт')).toBeInTheDocument();
     
@@ -146,12 +151,12 @@ describe('Quiz', () => {
     // Now test without translation
     unmount();
     useStore.setState({ quizTranslation: null });
-    render(<Quiz />);
+    renderQuiz();
 
     const activeTranslateBtn = screen.getByRole('button', { name: /Translate definition/i });
     expect(activeTranslateBtn).not.toBeDisabled();
     await user.click(activeTranslateBtn);
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/translate_definition', { dictionaryId: null });
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/translate_definition', { dictionaryId: 1 });
   });
 
   it('handles next definition request', async () => {
@@ -162,11 +167,11 @@ describe('Quiz', () => {
       quizCard: { wordId: 1, definition: { id: 1, text: 'A fruit', translation: null } }
     });
 
-    render(<Quiz />);
+    renderQuiz();
     
     const nextDefBtn = screen.getByRole('button', { name: /Another definition/i });
     await user.click(nextDefBtn);
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/next_definition', { dictionaryId: null });
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/next_definition', { dictionaryId: 1 });
   });
 
   it('handles variants request and display', async () => {
@@ -178,7 +183,7 @@ describe('Quiz', () => {
       quizVariants: ['pear', 'banana', 'orange']
     });
 
-    render(<Quiz />);
+    renderQuiz();
     
     expect(screen.getByText('pear')).toBeInTheDocument();
     expect(screen.getByText('banana')).toBeInTheDocument();
@@ -186,7 +191,7 @@ describe('Quiz', () => {
     const variantBtn = screen.getByRole('button', { name: 'pear' });
     await user.click(variantBtn);
     
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'pear', dictionaryId: null });
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/answer', { suggestion: 'pear', dictionaryId: 1 });
   });
 
   it('handles next card request', async () => {
@@ -197,10 +202,10 @@ describe('Quiz', () => {
       quizCard: { wordId: 1, definition: { id: 1, text: 'A fruit', translation: null } }
     });
 
-    render(<Quiz />);
+    renderQuiz();
     
     const nextCardBtn = screen.getByRole('button', { name: /Next card/i });
     await user.click(nextCardBtn);
-    expect(apiClient.post).toHaveBeenCalledWith('/quiz/next_card', { dictionaryId: null });
+    expect(apiClient.post).toHaveBeenCalledWith('/quiz/next_card', { dictionaryId: 1 });
   });
 });
