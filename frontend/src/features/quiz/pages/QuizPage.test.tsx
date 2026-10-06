@@ -16,7 +16,11 @@ describe('Quiz', () => {
   );
 
   beforeEach(() => {
+    vi.restoreAllMocks();
     useStore.setState({
+      activeDictionaryId: 1,
+      dictionaries: [],
+      profile: null,
       quizCard: null,
       quizEvaluation: null,
       quizTranslation: null,
@@ -65,7 +69,7 @@ describe('Quiz', () => {
       }
     });
 
-    render(<Quiz />);
+    renderQuiz();
 
     const img = screen.getByRole('img', { name: 'A fruit' });
     expect(img).toBeInTheDocument();
