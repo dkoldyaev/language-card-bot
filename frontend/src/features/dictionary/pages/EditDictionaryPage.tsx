@@ -1,8 +1,8 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { PageContainer, AppIconButton, spacingTokens } from '../../../shared/ui';
-import { Typography, Box } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Box, Typography } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import { AppIconButton, PageContainer, spacingTokens } from '../../../shared/ui';
 
 export default function EditDictionaryPage() {
   const { locale, dictId } = useParams<{ locale: string, dictId: string }>();

@@ -3,12 +3,12 @@ import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import { alpha, Box, Typography } from '@mui/material';
 import { useState } from 'react';
 import apiClient from '../../../shared/api/client';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
 import { AppButton, AppCard, AppTextField, spacingTokens } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 import { addGuestWordsLocally } from '../lib/guestDictionaryService';
-import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 
 interface AddWordFormProps {
   dictionaryId?: number;

@@ -19,9 +19,9 @@ import CreateDictionaryDialog from '../../features/dictionary/components/CreateD
 import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
+import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 import { useTranslation } from '../i18n/I18nContext';
 import { AppChip, radiusTokens, spacingTokens } from '../ui';
-import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 
 type MenuPaperSlotProps = PaperProps & { 'data-testid'?: string };
 

@@ -42,6 +42,7 @@
     "preset:create": "npm run --prefix base preset:create --",
     "preset:list": "npm run --prefix base preset:list --",
     "preset:remove": "npm run --prefix base preset:remove --",
+    "prepare": "git config core.hooksPath .githooks",
     "read:dokploy:logs": "node scripts/read-dokploy-logs.mjs",
     "stats:clear": "npm run --prefix base stats:clear",
     "test": "npm run test:ts && npm run test:unit && npm run test:e2e",

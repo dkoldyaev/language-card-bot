@@ -65,9 +65,6 @@ describe('Dashboard Route', () => {
     const res = await request(app)
       .get('/api/v1/dashboard/stats?dictionaryId=5')
       .set('Authorization', `Bearer ${token}`);
-    
-    console.log(res.status, res.text);
-
     expect(res.status).toBe(200);
     expect(res.body.stats).toBeDefined();
     expect(res.body.stats.streak).toBe(0);

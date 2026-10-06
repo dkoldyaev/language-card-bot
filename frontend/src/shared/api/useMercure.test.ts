@@ -1,5 +1,5 @@
-import { renderHook } from '@testing-library/react';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { renderHook } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

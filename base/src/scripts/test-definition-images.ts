@@ -7,11 +7,11 @@ dotenv.config();
 
 import { z } from 'zod';
 import { env } from '../core/env';
-import { prisma } from '../prisma';
 import {
   extractKeywordsFromDefinition,
   normalizeKeywordsText,
 } from '../features/image/image.service';
+import { prisma } from '../prisma';
 
 function printUsage() {
   console.log(`
@@ -238,7 +238,7 @@ async function main() {
   const provider = args.provider !== undefined ? args.provider : env.IMAGE_GENERATOR_PROVIDER;
 
   // 1. Extract keywords
-  let keywordSets = await extractKeywords(args.definitionText, args.wordText, args);
+  const keywordSets = await extractKeywords(args.definitionText, args.wordText, args);
   
   const normalizedTexts = keywordSets.map(normalizeKeywordsText);
   const rawJoinedTexts = keywordSets.map(ks => ks.join(' '));

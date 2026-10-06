@@ -9,8 +9,8 @@ import { publishEvent } from '../event_bus/event_bus.service';
 import type {
   DictionaryAddDefinitionsReceivedEvent
 } from '../event_bus/event_bus.type';
-import { enqueueFetchTranslations } from './add_word.queue';
 import { enqueueFetchImages } from '../image/image.queue';
+import { enqueueFetchTranslations } from './add_word.queue';
 
 interface DefinerWorkerResponse {
   definitions: Array<string | { text: string }>;

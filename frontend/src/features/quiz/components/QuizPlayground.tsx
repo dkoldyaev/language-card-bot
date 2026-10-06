@@ -85,7 +85,7 @@ export default function QuizPlayground() {
     if (!images || images.length === 0) return null;
     const randomIndex = Math.floor(Math.random() * images.length);
     return images[randomIndex];
-  }, [quizCard?.definition?.id, quizCard?.definition?.images]);
+  }, [quizCard?.definition?.images]);
 
   const handleSubmitSuggestion = async (event: React.FormEvent) => {
     event.preventDefault();

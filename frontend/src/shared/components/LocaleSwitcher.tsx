@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useGuidelineStore } from '../../features/guideline';
 import { useTranslation } from '../i18n';
 import type { LocaleInfo, SupportedLocale } from '../i18n/types';

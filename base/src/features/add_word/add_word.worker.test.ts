@@ -3,7 +3,6 @@ import type { Job } from 'bullmq';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type mockDeep, mockReset } from 'vitest-mock-extended';
 import { prisma } from '../../prisma';
-import * as eventBusService from '../event_bus/event_bus.service';
 import * as imageQueue from '../image/image.queue';
 import * as addWordQueue from './add_word.queue';
 import { dictionaryWorker } from './add_word.worker';
@@ -79,8 +78,8 @@ describe('dictionaryWorker - add_word job handling', () => {
       'john',
       10,
       'apple',
-      'ru',
-      'en'
+      'en',
+      'ru'
     );
 
     // 2. Images enqueued for all created definitions

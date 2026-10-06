@@ -9,7 +9,7 @@ const router = Router();
 
 router.get('/stats', authMiddleware, validateRequest(DashboardStatsQuerySchema, 'query'), async (req: Request, res: Response) => {
   const user = getAuthUser(req);
-  const { dictionaryId } = res.locals.validatedData as DashboardStatsQuery;
+  const { dictionaryId } = req.query as unknown as DashboardStatsQuery;
 
   try {
     // TODO(query-normalization): query values remain raw after validation; convert numeric values at their use sites.

@@ -268,7 +268,7 @@ export async function getImagesForDefinitionText(
     return !foundNormalizedTexts.has(norm) && !foundNormalizedTexts.has(raw);
   });
 
-  let newImages: Array<{ url: string; source: string; text: string }> = [];
+  const newImages: Array<{ url: string; source: string; text: string }> = [];
   if (missingSets.length > 0) {
     const imageUrlGroups = await fetchImagesFromGenerator(missingSets);
     for (let i = 0; i < imageUrlGroups.length; i++) {

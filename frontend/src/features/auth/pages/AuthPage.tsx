@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 import { type CredentialResponse, GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { isAxiosError } from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import LocaleSwitcher from '../../../shared/components/LocaleSwitcher';
@@ -34,6 +34,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 function AuthContent() {
   const { t, locale } = useTranslation();
   const location = useLocation();
+  const previousPathname = useRef(location.pathname);
   const navigate = useNavigate();
 
   const authProvider = import.meta.env.VITE_AUTH_PROVIDER;
@@ -110,6 +111,11 @@ function AuthContent() {
   };
 
   useEffect(() => {
+    if (previousPathname.current === location.pathname) {
+      return;
+    }
+
+    previousPathname.current = location.pathname;
     setError(null);
     setRegistrationSuccess(false);
   }, [location.pathname]);

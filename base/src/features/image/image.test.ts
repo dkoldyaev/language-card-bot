@@ -5,9 +5,9 @@ import {
   attachImagesToDefinition,
   extractKeywordsFromDefinition,
   fetchImagesFromGenerator,
+  getImagesForDefinitionText,
   normalizeKeywordsText,
   processDefinitionImage,
-  getImagesForDefinitionText,
 } from './image.service';
 
 describe('Image Feature Service', () => {

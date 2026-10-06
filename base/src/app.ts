@@ -24,9 +24,9 @@ import './features/definition_translate_edit/definition_translate.listener';
 import './features/quiz/quiz_cleanup.worker';
 import './features/image/image.worker';
 import './features/image/image.listener';
-import imageRoutes from './features/image/image.route';
 
 import { env } from './core/env';
+import imageRoutes from './features/image/image.route';
 
 dotenv.config();
 
