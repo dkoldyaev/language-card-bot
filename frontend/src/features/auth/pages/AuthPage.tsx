@@ -16,8 +16,8 @@ import { trackEvent } from '../../../shared/lib/analytics';
 import { hasLegacyLocalData } from '../../../shared/lib/storage';
 import { AppButton, AppTextField, radiusTokens, spacingTokens } from '../../../shared/ui';
 import useStore, { type UserProfile } from '../../../store/useStore';
-import { migrateLegacyData } from '../api/migrateLegacyData';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
+import { migrateLegacyData } from '../api/migrateLegacyData';
 
 interface AuthUserData extends UserProfile {
   isNewUser?: boolean;
