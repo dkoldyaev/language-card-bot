@@ -1,6 +1,6 @@
 # Ревизия покрытия тестами
 
-Дата ревизии: 4 октября 2026. PWA/service worker намеренно исключены из оценки: это пока не в области текущей работы.
+Дата ревизии: 4 октября 2026.
 
 ## Итог
 
@@ -91,4 +91,4 @@
 - Серверные route-тесты последовательно проверяют auth, Zod-ошибки и основные эффекты для слов, определений, quiz и presets.
 - [`dashboard.service.test.ts`](base/src/features/dashboard/dashboard.service.test.ts:25) содержит полезные граничные случаи расчёта streak/cache, а [`evaluation.service.test.ts`](base/src/features/quiz/evaluation.service.test.ts:6) фиксирует правило typo matching.
 - Реальная PostgreSQL и Mercure задействованы в backend-сценариях, а [`presets.e2e.test.ts`](base/src/e2e/presets.e2e.test.ts:108) правильно проверяет связки preset–word–definition в БД.
-- Гостевой режим, migration и offline queue уже имеют отдельные точки покрытия; их нужно сделать компактнее и детерминированнее, а не переписывать с нуля.
+- Гостевой режим и migration уже имеют отдельные точки покрытия; их нужно сделать компактнее и детерминированнее, а не переписывать с нуля.

@@ -15,7 +15,6 @@ const zh = {
   'common.duplicate': '重复',
   'common.fetching': '获取中...',
   'common.processingDefinitions': '正在处理释义...',
-  'common.offlineNotice': '您当前处于离线状态。仅可使用测验和离线词典。重新连接后将同步更改。',
 
   // Navigation
   'nav.dashboard': '主页',

@@ -10,7 +10,6 @@ import DictionarySelector from './DictionarySelector';
 import LocaleSwitcher from './LocaleSwitcher';
 import Sidebar from './Sidebar';
 import ThemeSwitcher from './ThemeSwitcher';
-import UpdateNotification from './UpdateNotification';
 
 const GuidelineController = lazy(
   () => import('../../features/guideline/components/GuidelineController')
@@ -25,7 +24,6 @@ export default function Layout() {
   const setAppState = useStore((state) => state.setAppState);
   const setDictionaries = useStore((state) => state.setDictionaries);
   const setProfile = useStore((state) => state.setProfile);
-  const isOffline = useStore((state) => state.isOffline);
   const activeDictionaryId = useActiveDictionaryId();
   const setIsDictionaryLoading = useStore((state) => state.setIsDictionaryLoading);
   const dictionaries = useStore((state) => state.dictionaries);
@@ -100,7 +98,6 @@ export default function Layout() {
       <Suspense fallback={null}>
         <GuidelineController />
       </Suspense>
-      <UpdateNotification />
       <Sidebar />
       <Box
         component="main"
@@ -156,14 +153,6 @@ export default function Layout() {
             <ThemeSwitcher />
             <DictionarySelector />
             <LocaleSwitcher />
-          </Box>
-        )}
-
-        {isOffline && (
-          <Box sx={{ maxWidth: 1120, width: '100%', mx: 'auto', px: spacingTokens.page_outer_horizontal_padding, mt: spacingTokens.element_group_gap * 2 }}>
-            <Alert severity="warning">
-              {t('common.offlineNotice')}
-            </Alert>
           </Box>
         )}
 

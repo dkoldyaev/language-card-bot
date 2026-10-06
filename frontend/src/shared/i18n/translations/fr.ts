@@ -15,7 +15,6 @@ const fr = {
   'common.duplicate': 'Doublon',
   'common.fetching': 'Récupération...',
   'common.processingDefinitions': 'Traitement des définitions...',
-  'common.offlineNotice': 'Vous êtes hors ligne. Seuls le quiz et le dictionnaire hors ligne sont disponibles. Les modifications seront synchronisées dès votre reconnexion.',
 
   // Navigation
   'nav.dashboard': 'Accueil',

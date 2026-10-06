@@ -32,7 +32,7 @@ Below is a list of sequential, independent technical tasks based on the `user-fl
 - [x] **Next Card API (`/api/v1/quiz/next_card`)**: Implement an endpoint that resets the quiz state flags (`showVariants`, `showDefinitionTranslation`), calls the Quiz Generation Service to select a *new word*, updates the state, and sends the new card via a Mercure event.
 - [x] **Next Definition API (`/api/v1/quiz/next_definition`)**: Implement an endpoint that resets the quiz state flags, selects a *different random definition* for the *currently active word*, updates the state, and sends the updated card via a Mercure event.
 
-## Pending Tasks (PWA Integration)
+## Pending Tasks (Browser Data Hydration)
 
 ### Core Data & Hydration
 - [x] **Dictionary Fetch API (`GET /api/v1/dictionary`)**: Implement an endpoint to return the user's entire dictionary (all words, definitions, and translations) so the web app can render the "Edit dictionary" view without relying on chat messages.

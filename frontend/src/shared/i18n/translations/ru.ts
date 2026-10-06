@@ -15,7 +15,6 @@ const ru = {
   'common.duplicate': 'Дубликат',
   'common.fetching': 'Получение...',
   'common.processingDefinitions': 'Обработка определений...',
-  'common.offlineNotice': 'Вы не в сети. Доступны только квиз и сохранённый словарь. Изменения синхронизируются при подключении.',
 
   // Navigation
   'nav.dashboard': 'Главная',

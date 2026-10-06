@@ -15,7 +15,6 @@ const tr = {
   'common.duplicate': 'Yinelenen',
   'common.fetching': 'Alınıyor...',
   'common.processingDefinitions': 'Tanımlar işleniyor...',
-  'common.offlineNotice': 'Çevrimdışısınız. Yalnızca test ve çevrimdışı sözlük kullanılabilir. Değişiklikler yeniden bağlandığınızda senkronize edilecektir.',
 
   // Navigation
   'nav.dashboard': 'Ana Panel',

@@ -15,7 +15,6 @@ const pt = {
   'common.duplicate': 'Duplicado',
   'common.fetching': 'Buscando...',
   'common.processingDefinitions': 'Processando definições...',
-  'common.offlineNotice': 'Você está offline. Apenas o quiz e o dicionário offline estão disponíveis. As alterações serão sincronizadas ao reconectar.',
 
   // Navigation
   'nav.dashboard': 'Início',

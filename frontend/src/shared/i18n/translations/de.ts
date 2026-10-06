@@ -15,7 +15,6 @@ const de = {
   'common.duplicate': 'Duplikat',
   'common.fetching': 'Wird abgerufen...',
   'common.processingDefinitions': 'Definitionen werden verarbeitet...',
-  'common.offlineNotice': 'Sie sind offline. Nur das Quiz und das Offline-Wörterbuch sind verfügbar. Änderungen werden synchronisiert, sobald Sie wieder online sind.',
 
   // Navigation
   'nav.dashboard': 'Übersicht',

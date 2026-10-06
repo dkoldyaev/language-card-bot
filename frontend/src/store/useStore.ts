@@ -149,25 +149,15 @@ export interface DashboardStats {
   weeklyActivity: DayActivity[];
 }
 
-export type SyncActionPayload = 
-  | { type: 'EDIT_TRANSLATION'; wordId: number; definitionId: number; text: string }
-  | { type: 'DELETE_WORD'; wordId: number }
-  | { type: 'DELETE_DEFINITION'; wordId: number; definitionId: number }
-  | { type: 'DELETE_IMAGE'; wordId: number; definitionId: number; imageId: number };
-
 export interface GuestQuizAttempt {
   wordText: string;
   result: 'SUCCESS' | 'CLOSE_MATCH' | 'INCORRECT';
   createdAt: string;
 }
 
-export type SyncAction = SyncActionPayload & { id: string; timestamp: number };
-
 interface AppState {
   token: string | null;
   mercureToken: string | null;
-  isOffline: boolean;
-  syncQueue: SyncAction[];
   profile: UserProfile | null;
   settings: SettingsState | null;
   dictionaries: DictionaryItem[];
@@ -191,10 +181,6 @@ interface AppState {
   themeMode: 'light' | 'dark' | 'system';
   setThemeMode: (themeMode: 'light' | 'dark' | 'system') => void;
   toggleThemeMode: () => void;
-  setIsOffline: (isOffline: boolean) => void;
-  enqueueSyncAction: (action: SyncActionPayload) => void;
-  removeSyncAction: (id: string) => void;
-  clearSyncQueue: () => void;
   setToken: (token: string | null) => void;
   setMercureToken: (token: string | null) => void;
   setProfile: (profile: UserProfile | null) => void;
@@ -233,8 +219,6 @@ interface AppState {
 const initialState = {
   token: null,
   mercureToken: null,
-  isOffline: !navigator.onLine,
-  syncQueue: [] as SyncAction[],
   profile: null,
   settings: null,
   dictionaries: [] as DictionaryItem[],
@@ -303,17 +287,6 @@ const useStore = create<AppState>()(
         }
         return { themeMode: currentMode === 'dark' ? 'light' : 'dark' };
       }),
-      setIsOffline: (isOffline) => set({ isOffline }),
-      enqueueSyncAction: (action) => set((state) => {
-        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-        return {
-          syncQueue: [...state.syncQueue, { ...action, id, timestamp: Date.now() }],
-        };
-      }),
-      removeSyncAction: (id) => set((state) => ({
-        syncQueue: state.syncQueue.filter((item) => item.id !== id),
-      })),
-      clearSyncQueue: () => set({ syncQueue: [] }),
       setToken: (token) => set({ token }),
       setMercureToken: (mercureToken) => set({ mercureToken }),
       setProfile: (profile) => set({ profile }),
@@ -420,9 +393,6 @@ const useStore = create<AppState>()(
       }),
       removeDictionaryWord: (wordId) => set((state) => {
         const shouldResetQuiz = state.quizCard?.wordId === wordId;
-        if (state.isOffline) {
-          state.enqueueSyncAction({ type: 'DELETE_WORD', wordId });
-        }
         return {
           dictionary: state.dictionary.filter((w) => w.id !== wordId),
           ...(shouldResetQuiz && { quizCard: null, quizEvaluation: null, quizTranslation: null, quizVariants: null })
@@ -548,9 +518,6 @@ const useStore = create<AppState>()(
         )
       })),
       updateDictionaryTranslation: (wordId, definitionId, text) => set((state) => {
-        if (state.isOffline) {
-          state.enqueueSyncAction({ type: 'EDIT_TRANSLATION', wordId, definitionId, text });
-        }
         return {
           dictionary: state.dictionary.map(word => 
             word.id === wordId ? {
@@ -603,9 +570,6 @@ const useStore = create<AppState>()(
         )
       })),
       removeDictionaryDefinition: (wordId, definitionId) => set((state) => {
-        if (state.isOffline) {
-          state.enqueueSyncAction({ type: 'DELETE_DEFINITION', wordId, definitionId });
-        }
         return {
           dictionary: state.dictionary.map(word => 
             word.id === wordId ? {
@@ -616,9 +580,6 @@ const useStore = create<AppState>()(
         };
       }),
       removeDefinitionImage: (wordId, definitionId, imageId) => set((state) => {
-        if (state.isOffline) {
-          state.enqueueSyncAction({ type: 'DELETE_IMAGE', wordId, definitionId, imageId });
-        }
         return {
           dictionary: state.dictionary.map(word => 
             word.id === wordId ? {
@@ -652,7 +613,7 @@ const useStore = create<AppState>()(
         hasSeenOnboarding: false,
         hasCompletedGuestOnboarding: false,
       }),
-      reset: () => set((state) => ({ ...initialState, themeMode: state.themeMode, isOffline: !navigator.onLine })),
+      reset: () => set((state) => ({ ...initialState, themeMode: state.themeMode })),
     }),
     {
       name: 'english-card-bot-storage',
@@ -685,18 +646,6 @@ const useStore = create<AppState>()(
                 state.guestDictionaryWords[Number(id)] = normalizeWords(words);
               }
             }
-          }
-          if (Array.isArray(state.syncQueue)) {
-            state.syncQueue = state.syncQueue.map((item, index) => {
-              if (typeof item.id === 'string' && item.id.length > 0) {
-                return item;
-              }
-              const ts = typeof item.timestamp === 'number' ? item.timestamp : Date.now();
-              return {
-                ...item,
-                id: `${ts}-${index}`,
-              };
-            });
           }
           if (state.token) {
             const GUEST_ID_THRESHOLD = 1000000000;

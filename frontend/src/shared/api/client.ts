@@ -22,8 +22,8 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    if ((state.isOffline || !state.token) && config.url?.startsWith('/quiz/')) {
-      return Promise.reject({ isOfflineMock: true, url: config.url, data: config.data });
+    if (!state.token && config.url?.startsWith('/quiz/')) {
+      return Promise.reject({ isGuestQuizMock: true, url: config.url, data: config.data });
     }
 
     if (!state.token) {
@@ -128,7 +128,7 @@ apiClient.interceptors.response.use(
 
       return Promise.resolve({ data: {} });
     }
-    if (error?.isOfflineMock) {
+    if (error?.isGuestQuizMock) {
       const store = useStore.getState();
       const dictionary = store.dictionary;
       
@@ -164,7 +164,7 @@ apiClient.interceptors.response.use(
         if (card?.definition.translation) {
           store.setQuizTranslation(card.definition.translation);
         } else if (card) {
-          store.setQuizTranslation("Translation not available offline");
+          store.setQuizTranslation("Translation is not available for guest mode");
         }
       } else if (url === '/quiz/next_definition') {
         const card = store.quizCard;
@@ -203,10 +203,10 @@ apiClient.interceptors.response.use(
       }
     }
     
-    // Ignore aborted requests or offline/guest mocks for error tracking
+    // Ignore aborted requests or guest-mode mocks for error tracking
     if (
       !axios.isCancel(error) &&
-      !error.isOfflineMock &&
+      !error.isGuestQuizMock &&
       !error.isGuestDictionaryMock &&
       !error.isGuestDictionariesMock &&
       !error.isGuestAddWordMock

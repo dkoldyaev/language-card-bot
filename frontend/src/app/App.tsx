@@ -5,7 +5,6 @@ import { useMercure } from '../shared/api/useMercure';
 import Layout from '../shared/components/Layout';
 import LocaleGuard from '../shared/components/LocaleGuard';
 import NavigationTracker from '../shared/components/NavigationTracker';
-import { useOfflineSync } from '../shared/hooks/useOfflineSync';
 import { detectBrowserLanguage, isSupportedLocale } from '../shared/i18n/I18nContext';
 import { getCookie } from '../shared/lib/cookie';
 import useStore from '../store/useStore';
@@ -46,7 +45,6 @@ function RootRedirect() {
 
 function AppHooks() {
   useMercure();
-  useOfflineSync();
   return null;
 }
 

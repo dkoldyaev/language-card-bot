@@ -15,7 +15,6 @@ const es = {
   'common.duplicate': 'Duplicado',
   'common.fetching': 'Obteniendo...',
   'common.processingDefinitions': 'Procesando definiciones...',
-  'common.offlineNotice': 'Estás desconectado. Solo el cuestionario y el diccionario sin conexión están disponibles. Los cambios se sincronizarán al reconectar.',
 
   // Navigation
   'nav.dashboard': 'Inicio',

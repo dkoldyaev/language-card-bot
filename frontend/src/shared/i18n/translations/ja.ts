@@ -15,7 +15,6 @@ const ja = {
   'common.duplicate': '重複',
   'common.fetching': '取得中...',
   'common.processingDefinitions': '定義を処理中...',
-  'common.offlineNotice': 'オフラインです。クイズとオフライン辞書のみ利用可能です。再接続時に変更が同期されます。',
 
   // Navigation
   'nav.dashboard': 'ホーム',

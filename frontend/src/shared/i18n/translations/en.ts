@@ -15,7 +15,6 @@ const en = {
   'common.duplicate': 'Duplicate',
   'common.fetching': 'Fetching...',
   'common.processingDefinitions': 'Processing definitions...',
-  'common.offlineNotice': 'You are offline. Only the quiz and offline dictionary edits are available. Changes will be synced when you reconnect.',
 
   // Navigation
   'nav.dashboard': 'Dashboard',
