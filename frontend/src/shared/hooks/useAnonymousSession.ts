@@ -1,9 +1,9 @@
 import { isAxiosError } from 'axios';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import apiClient from '../api/client';
 import { migrateLegacyData } from '../../features/auth/api/migrateLegacyData';
-import { hasLegacyLocalData } from '../lib/storage';
 import useStore from '../../store/useStore';
+import apiClient from '../api/client';
+import { hasLegacyLocalData } from '../lib/storage';
 
 export type AnonymousSessionState = 'loading' | 'migrating-legacy-data' | 'ready' | 'recover-legacy-data' | 'error';
 

@@ -7,7 +7,6 @@ import { isAxiosError } from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
-import { migrateLegacyData } from '../api/migrateLegacyData';
 import LocaleSwitcher from '../../../shared/components/LocaleSwitcher';
 import ThemeSwitcher from '../../../shared/components/ThemeSwitcher';
 import type { LanguageCode } from '../../../shared/i18n';
@@ -17,6 +16,7 @@ import { trackEvent } from '../../../shared/lib/analytics';
 import { hasLegacyLocalData } from '../../../shared/lib/storage';
 import { AppButton, AppTextField, radiusTokens, spacingTokens } from '../../../shared/ui';
 import useStore, { type UserProfile } from '../../../store/useStore';
+import { migrateLegacyData } from '../api/migrateLegacyData';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
 
 interface AuthUserData extends UserProfile {

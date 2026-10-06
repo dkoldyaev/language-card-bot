@@ -1,13 +1,13 @@
 import { Alert, alpha, Box, Button, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
+import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
 import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 import { useTranslation } from '../i18n/I18nContext';
 import { radiusTokens, spacingTokens } from '../ui/tokens';
 import DictionarySelector from './DictionarySelector';
-import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
 import LocaleSwitcher from './LocaleSwitcher';
 import Sidebar from './Sidebar';
 import ThemeSwitcher from './ThemeSwitcher';

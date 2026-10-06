@@ -2,8 +2,8 @@ import { Alert, Box, Button, CircularProgress, Paper, Typography } from '@mui/ma
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { migrateLegacyData } from '../../features/auth/api/migrateLegacyData';
-import { detectBrowserLanguage, useTranslation } from '../i18n';
 import useStore from '../../store/useStore';
+import { detectBrowserLanguage, useTranslation } from '../i18n';
 
 interface LegacyDataRecoveryProps {
   createAnonymousSession: () => Promise<void>;
