@@ -6,8 +6,8 @@ export async function register(page: Page, username: string, baseLang = 'en', ta
   await page.getByLabel(/Username|Login/i).fill(username);
 
   await page.click('button:has-text("Create account")');
-  await expect(page.locator('text=Registration successful')).toBeVisible({ timeout: 30000 });
-  await page.click('a:has-text("Back to login")');
+  await expect(page).toHaveURL('/en');
+  await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL('/en/login');
 }
 
