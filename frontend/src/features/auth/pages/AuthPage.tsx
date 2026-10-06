@@ -1,23 +1,23 @@
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import {
-  Alert, Box, Button, Card, CardContent, CircularProgress, Typography,
+  Alert, Box, Button, Card, CardContent, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Typography,
 } from '@mui/material';
 import { type CredentialResponse, GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { isAxiosError } from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
+import { migrateLegacyData } from '../api/migrateLegacyData';
 import LocaleSwitcher from '../../../shared/components/LocaleSwitcher';
 import ThemeSwitcher from '../../../shared/components/ThemeSwitcher';
 import type { LanguageCode } from '../../../shared/i18n';
 import { getInitialBaseLanguage, saveBaseLanguage } from '../../../shared/i18n/helpers';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { trackEvent } from '../../../shared/lib/analytics';
+import { hasLegacyLocalData } from '../../../shared/lib/storage';
 import { AppButton, AppTextField, radiusTokens, spacingTokens } from '../../../shared/ui';
 import useStore, { type UserProfile } from '../../../store/useStore';
 import ActiveDictionaryLanguagesForm from '../../dictionary/components/ActiveDictionaryLanguagesForm';
-import { performGuestMigration } from '../api/migrate';
-import MergeGuestDataDialog from '../components/MergeGuestDataDialog';
 
 interface AuthUserData extends UserProfile {
   isNewUser?: boolean;
@@ -47,27 +47,22 @@ function AuthContent() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [showLegacyImport, setShowLegacyImport] = useState(false);
 
   // Google OAuth specific states
   const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
   const [tempToken, setTempToken] = useState<string | null>(null);
 
-  // Guest merge dialog states
-  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
-  const [pendingAuthData, setPendingAuthData] = useState<AuthData | null>(null);
-  const [merging, setMerging] = useState(false);
-
   const token = useStore((state) => state.token);
+  const profile = useStore((state) => state.profile);
   const setToken = useStore((state) => state.setToken);
   const setMercureToken = useStore((state) => state.setMercureToken);
   const setProfile = useStore((state) => state.setProfile);
-  const clearGuestData = useStore((state) => state.clearGuestData);
-
   useEffect(() => {
-    if (token) {
+    if (token && !profile?.isAnonymous && !showLegacyImport) {
       navigate('/', { replace: true });
     }
-  }, [token, navigate]);
+  }, [navigate, profile?.isAnonymous, showLegacyImport, token]);
 
   const completeLogin = (authData: AuthData) => {
     trackEvent('Sign In');
@@ -79,30 +74,34 @@ function AuthContent() {
       email: authData.user.email,
       name: authData.user.name,
       picture: authData.user.picture,
+      isAnonymous: authData.user.isAnonymous,
     });
+    if (!profile?.isAnonymous && hasLegacyLocalData()) {
+      setShowLegacyImport(true);
+      return;
+    }
     navigate('/');
   };
 
-  const handleConfirmMerge = async () => {
-    if (!pendingAuthData) return;
-    setMerging(true);
+  const importLegacyData = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      await performGuestMigration(pendingAuthData.token, 'merge');
-      completeLogin(pendingAuthData);
-    } catch (err) {
-      console.error('Failed to merge guest data:', err);
-      completeLogin(pendingAuthData);
+      await migrateLegacyData();
+      setShowLegacyImport(false);
+      navigate('/');
+    } catch (migrationError) {
+      console.error('Legacy data migration failed:', migrationError);
+      setError(t('auth.recoveryFailed'));
     } finally {
-      setMerging(false);
-      setMergeDialogOpen(false);
+      setLoading(false);
     }
   };
 
-  const handleDiscardGuestData = () => {
-    if (!pendingAuthData) return;
-    clearGuestData();
-    completeLogin(pendingAuthData);
-    setMergeDialogOpen(false);
+  const discardLegacyData = () => {
+    useStore.getState().clearGuestData();
+    setShowLegacyImport(false);
+    navigate('/');
   };
 
   const handleChangeBaseLanguage = (language: LanguageCode) => {
@@ -134,17 +133,11 @@ function AuthContent() {
 
       const { token, mercureToken, user } = response.data;
 
-      if (user.isNewUser) {
+      if (user.isNewUser && !profile?.isAnonymous) {
         setTempToken(token);
         setNeedsProfileCompletion(true);
       } else {
-        const hasGuestData = useStore.getState().dictionary.length > 0 || useStore.getState().guestQuizAttempts.length > 0;
-        if (hasGuestData) {
-          setPendingAuthData({ token, mercureToken, user });
-          setMergeDialogOpen(true);
-        } else {
-          completeLogin({ token, mercureToken, user });
-        }
+        completeLogin({ token, mercureToken, user });
       }
     } catch (err: unknown) {
       console.error('Auth error', isAxiosError(err) ? err.response?.data : err);
@@ -169,18 +162,6 @@ function AuthContent() {
 
     setLoading(true);
     try {
-
-
-      // Migrate any guest data to the newly created user
-      const hasGuestData = useStore.getState().dictionary.length > 0 || useStore.getState().guestQuizAttempts.length > 0;
-      if (hasGuestData) {
-        try {
-          await performGuestMigration(tempToken, 'merge');
-        } catch (e) {
-          console.error('Failed to migrate guest data on Google sign up:', e);
-        }
-      }
-
       setToken(tempToken);
       const meResponse = await apiClient.get('/auth/me', {
         headers: { Authorization: `Bearer ${tempToken}` },
@@ -214,32 +195,13 @@ function AuthContent() {
         // Login
         const response = await apiClient.post('/auth/login', { username: username.trim() });
         const { token, mercureToken, user } = response.data;
-        const hasGuestData = useStore.getState().dictionary.length > 0 || useStore.getState().guestQuizAttempts.length > 0;
-        if (hasGuestData) {
-          setPendingAuthData({ token, mercureToken, user });
-          setMergeDialogOpen(true);
-        } else {
-          completeLogin({ token, mercureToken, user });
-        }
+        completeLogin({ token, mercureToken, user });
       } else {
         // Registration
         const response = await apiClient.post('/auth/register', { username: username.trim() });
-        const { token } = response.data;
-
-
-
-        // Migrate any guest data to the newly created user
-        const hasGuestData = useStore.getState().dictionary.length > 0 || useStore.getState().guestQuizAttempts.length > 0;
-        if (hasGuestData) {
-          try {
-            await performGuestMigration(token, 'merge');
-          } catch (e) {
-            console.error('Failed to migrate guest data on register:', e);
-          }
-        }
-
+        const { token, mercureToken, user } = response.data;
         trackEvent('Sign Up');
-        setRegistrationSuccess(true);
+        completeLogin({ token, mercureToken, user });
       }
     } catch (err: unknown) {
       console.error('Auth error', isAxiosError(err) ? err.response?.data : err);
@@ -439,12 +401,21 @@ function AuthContent() {
         </Card>
       </Box>
 
-      <MergeGuestDataDialog
-        open={mergeDialogOpen}
-        onConfirmMerge={handleConfirmMerge}
-        onDiscard={handleDiscardGuestData}
-        loading={merging}
-      />
+      <Dialog open={showLegacyImport} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('auth.recoveryTitle')}</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary">{t('auth.recoveryDescription')}</Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Button fullWidth variant="contained" onClick={importLegacyData} disabled={loading}>
+            {t('guest.mergeConfirm')}
+          </Button>
+          <Button fullWidth onClick={discardLegacyData} disabled={loading}>
+            {t('guest.mergeDiscard')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 }

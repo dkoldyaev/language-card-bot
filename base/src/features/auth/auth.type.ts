@@ -12,21 +12,6 @@ export const UsernameAuthRequestSchema = z.object({
 
 export type UsernameAuthRequest = z.infer<typeof UsernameAuthRequestSchema>;
 
-export interface AuthResponse {
-  token: string;
-  mercureToken?: string;
-  user: {
-    id: number;
-    email: string;
-    username?: string;
-    name?: string | null;
-    picture?: string | null;
-    isNewUser?: boolean;
-    isAdmin?: boolean;
-    is_admin?: boolean;
-  };
-}
-
 export const MigrateGuestDefinitionSchema = z.object({
   text: z.string().min(1),
   translation: z.string().nullable().optional(),
@@ -55,9 +40,22 @@ export const MigrateGuestRequestSchema = z.object({
   dictionaries: z.array(MigrateGuestDictionarySchema),
   words: z.array(MigrateGuestWordSchema),
   quizAttempts: z.array(MigrateGuestAttemptSchema),
-  mode: z.enum(['merge', 'replace']),
 });
 
 export type MigrateGuestRequest = z.infer<typeof MigrateGuestRequestSchema>;
 
-
+export interface AuthResponse {
+  token: string;
+  mercureToken?: string;
+  user: {
+    id: number;
+    email: string;
+    username?: string;
+    name?: string | null;
+    picture?: string | null;
+    isNewUser?: boolean;
+    isAnonymous: boolean;
+    isAdmin?: boolean;
+    is_admin?: boolean;
+  };
+}

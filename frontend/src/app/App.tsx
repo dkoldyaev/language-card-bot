@@ -3,8 +3,10 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useMercure } from '../shared/api/useMercure';
 import Layout from '../shared/components/Layout';
+import LegacyDataRecovery from '../shared/components/LegacyDataRecovery';
 import LocaleGuard from '../shared/components/LocaleGuard';
 import NavigationTracker from '../shared/components/NavigationTracker';
+import { useAnonymousSession } from '../shared/hooks/useAnonymousSession';
 import { detectBrowserLanguage, isSupportedLocale } from '../shared/i18n/I18nContext';
 import { getCookie } from '../shared/lib/cookie';
 import useStore from '../store/useStore';
@@ -49,8 +51,17 @@ function AppHooks() {
 }
 
 function App() {
+  const anonymousSession = useAnonymousSession();
+
   return (
     <BrowserRouter>
+      {anonymousSession.state === 'recover-legacy-data' ? (
+        <LegacyDataRecovery
+          createAnonymousSession={anonymousSession.createAnonymousSession}
+          completeLegacyRecovery={anonymousSession.completeLegacyRecovery}
+        />
+      ) : anonymousSession.state === 'ready' ? (
+        <>
       <AppHooks />
       <NavigationTracker />
       <Suspense fallback={null}>
@@ -83,6 +94,8 @@ function App() {
           </Route>
         </Routes>
       </Suspense>
+        </>
+      ) : null}
     </BrowserRouter>
   );
 }

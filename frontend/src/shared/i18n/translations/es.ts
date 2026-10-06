@@ -58,6 +58,11 @@ const es = {
   'auth.authFailed': 'Error de autenticación',
   'auth.googleLoginFailed': 'Error al iniciar sesión con Google',
   'auth.profileSetupFailed': 'Error al guardar la configuración del perfil',
+  'auth.recoveryTitle': 'Recupera tu progreso guardado',
+  'auth.recoveryDescription': 'Este navegador contiene progreso de una versión anterior. Continúa sin registrarte para moverlo a una nueva sesión privada, o inicia sesión y decide si importarlo a tu cuenta.',
+  'auth.recoveryContinue': 'Continuar y conservar mi progreso',
+  'auth.recoverySignIn': 'Iniciar sesión',
+  'auth.recoveryFailed': 'No se pudo mover tu progreso guardado. No se ha eliminado nada; inténtalo de nuevo.',
 
   // Dashboard
   'dashboard.overline': 'Resumen del Diccionario',

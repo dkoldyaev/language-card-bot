@@ -54,6 +54,7 @@ export default function Sidebar() {
   const { t } = useTranslation();
   const token = useStore((state) => state.token);
   const profile = useStore((state) => state.profile);
+  const isAnonymous = profile?.isAnonymous === true;
   const dictionary = useStore((state) => state.dictionary);
   const reset = useStore((state) => state.reset);
   const navigate = useNavigate();
@@ -186,7 +187,7 @@ export default function Sidebar() {
 
           return button;
         })}
-        {token ? (
+        {!isAnonymous ? (
           <ListItemButton
             onClick={handleLogout}
             aria-label={t('nav.signOut')}
@@ -340,7 +341,7 @@ export default function Sidebar() {
       </List>
 
       <Box sx={{ p: 2.25, borderTop: '1px solid rgba(255, 255, 255, 0.12)' }}>
-        {token ? (
+        {!isAnonymous ? (
           <>
             {profile && (
               <Box sx={{ px: 1.25, pb: 1.5 }}>

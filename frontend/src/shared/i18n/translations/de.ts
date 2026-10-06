@@ -58,6 +58,11 @@ const de = {
   'auth.authFailed': 'Authentifizierung fehlgeschlagen',
   'auth.googleLoginFailed': 'Google-Anmeldung fehlgeschlagen',
   'auth.profileSetupFailed': 'Profileinstellungen konnten nicht gespeichert werden',
+  'auth.recoveryTitle': 'Gespeicherten Fortschritt wiederherstellen',
+  'auth.recoveryDescription': 'Dieser Browser enthält Fortschritt aus einer früheren Version. Fahre ohne Registrierung fort, um ihn in eine neue private Sitzung zu übertragen, oder melde dich an und entscheide über den Import in dein Konto.',
+  'auth.recoveryContinue': 'Fortfahren und Fortschritt behalten',
+  'auth.recoverySignIn': 'Stattdessen anmelden',
+  'auth.recoveryFailed': 'Der gespeicherte Fortschritt konnte nicht übertragen werden. Es wurde nichts gelöscht; bitte versuche es erneut.',
 
   // Dashboard
   'dashboard.overline': 'Wörterbuch-Übersicht',

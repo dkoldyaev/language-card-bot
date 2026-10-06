@@ -58,6 +58,11 @@ const fr = {
   'auth.authFailed': 'Échec de l\'authentification',
   'auth.googleLoginFailed': 'Échec de la connexion Google',
   'auth.profileSetupFailed': 'Impossible d\'enregistrer les paramètres du profil',
+  'auth.recoveryTitle': 'Récupérez votre progression enregistrée',
+  'auth.recoveryDescription': 'Ce navigateur contient une progression issue d’une version antérieure. Continuez sans vous inscrire pour la déplacer dans une nouvelle session privée, ou connectez-vous et choisissez de l’importer dans votre compte.',
+  'auth.recoveryContinue': 'Continuer et conserver ma progression',
+  'auth.recoverySignIn': 'Se connecter',
+  'auth.recoveryFailed': 'Impossible de déplacer votre progression enregistrée. Rien n’a été supprimé ; veuillez réessayer.',
 
   // Dashboard
   'dashboard.overline': 'Aperçu du Dictionnaire',

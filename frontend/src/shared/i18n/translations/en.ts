@@ -58,6 +58,11 @@ const en = {
   'auth.authFailed': 'Authentication failed',
   'auth.googleLoginFailed': 'Google Login Failed',
   'auth.profileSetupFailed': 'Failed to save profile settings',
+  'auth.recoveryTitle': 'Recover your saved progress',
+  'auth.recoveryDescription': 'This browser contains progress from an earlier version. Continue without registering to move it into a new private session, or sign in and choose whether to import it into your account.',
+  'auth.recoveryContinue': 'Continue and keep my progress',
+  'auth.recoverySignIn': 'Sign in instead',
+  'auth.recoveryFailed': 'We could not move your saved progress. Nothing has been deleted; please try again.',
 
   // Dashboard
   'dashboard.overline': 'Dictionary Overview',

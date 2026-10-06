@@ -1,5 +1,5 @@
 import { Alert, alpha, Box, Button, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
@@ -7,6 +7,7 @@ import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 import { useTranslation } from '../i18n/I18nContext';
 import { radiusTokens, spacingTokens } from '../ui/tokens';
 import DictionarySelector from './DictionarySelector';
+import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
 import LocaleSwitcher from './LocaleSwitcher';
 import Sidebar from './Sidebar';
 import ThemeSwitcher from './ThemeSwitcher';
@@ -24,10 +25,13 @@ export default function Layout() {
   const setAppState = useStore((state) => state.setAppState);
   const setDictionaries = useStore((state) => state.setDictionaries);
   const setProfile = useStore((state) => state.setProfile);
+  const isAnonymous = useStore((state) => state.profile?.isAnonymous === true);
   const activeDictionaryId = useActiveDictionaryId();
   const setIsDictionaryLoading = useStore((state) => state.setIsDictionaryLoading);
   const dictionaries = useStore((state) => state.dictionaries);
   const activeDictionary = dictionaries.find((dictionary) => dictionary.id === activeDictionaryId);
+  const [hasLoadedDictionaries, setHasLoadedDictionaries] = useState(false);
+  const [createDictionaryOpen, setCreateDictionaryOpen] = useState(false);
 
   // Centralized dictionary fetcher: whenever the active dictionary changes (via `/dictionaries`, `/state/sync`, or Mercure), fetch its words.
   useEffect(() => {
@@ -59,7 +63,11 @@ export default function Layout() {
   }, [activeDictionary]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      setHasLoadedDictionaries(false);
+      return;
+    }
+    setHasLoadedDictionaries(false);
     apiClient.get('/auth/me')
       .then((res) => {
         if (res.data.user) {
@@ -71,11 +79,13 @@ export default function Layout() {
       .then((res) => {
         if (res.data.dictionaries) {
           setDictionaries(res.data.dictionaries);
-          
+          setHasLoadedDictionaries(true);
           if (res.data.dictionaries.length === 0) {
-            // Self-heal: if backend has no dictionaries, clear the local fake ones
             setDictionary([]);
             setIsDictionaryLoading(false);
+            setCreateDictionaryOpen(true);
+          } else {
+            setCreateDictionaryOpen(false);
           }
         }
       })
@@ -166,7 +176,7 @@ export default function Layout() {
             flexGrow: 1,
           }}
         >
-          {!token && (
+          {isAnonymous && (
             <Alert
               severity="info"
               data-testid="guest-banner"
@@ -197,6 +207,10 @@ export default function Layout() {
           <Outlet />
         </Box>
       </Box>
+      <CreateDictionaryDialog
+        open={hasLoadedDictionaries && createDictionaryOpen}
+        onClose={() => setCreateDictionaryOpen(false)}
+      />
     </Box>
   );
 }

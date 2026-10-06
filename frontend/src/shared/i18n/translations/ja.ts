@@ -58,6 +58,11 @@ const ja = {
   'auth.authFailed': '認証に失敗しました',
   'auth.googleLoginFailed': 'Googleログインに失敗しました',
   'auth.profileSetupFailed': 'プロフィール設定の保存に失敗しました',
+  'auth.recoveryTitle': 'Recover your saved progress',
+  'auth.recoveryDescription': 'This browser contains progress from an earlier version. Continue without registering to move it into a new private session, or sign in and choose whether to import it into your account.',
+  'auth.recoveryContinue': 'Continue and keep my progress',
+  'auth.recoverySignIn': 'Sign in instead',
+  'auth.recoveryFailed': 'We could not move your saved progress. Nothing has been deleted; please try again.',
 
   // Dashboard
   'dashboard.overline': '辞書の概要',

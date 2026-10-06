@@ -58,6 +58,11 @@ const it = {
   'auth.authFailed': 'Autenticazione non riuscita',
   'auth.googleLoginFailed': 'Accesso Google non riuscito',
   'auth.profileSetupFailed': 'Impossibile salvare le impostazioni del profilo',
+  'auth.recoveryTitle': 'Recupera i tuoi progressi salvati',
+  'auth.recoveryDescription': 'Questo browser contiene progressi di una versione precedente. Continua senza registrarti per spostarli in una nuova sessione privata, oppure accedi e scegli se importarli nel tuo account.',
+  'auth.recoveryContinue': 'Continua e conserva i miei progressi',
+  'auth.recoverySignIn': 'Accedi invece',
+  'auth.recoveryFailed': 'Non è stato possibile spostare i progressi salvati. Non è stato eliminato nulla; riprova.',
 
   // Dashboard
   'dashboard.overline': 'Panoramica del Dizionario',

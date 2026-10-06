@@ -1,8 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import { type Request, type Response, Router } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import { env } from '../../core/env';
-import { authMiddleware } from '../../middleware/auth';
+import { authMiddleware, optionalAuthMiddleware } from '../../middleware/auth';
 import { validateRequest } from '../../middleware/validate';
 import { prisma } from '../../prisma';
 import { getAuthUser } from './auth.service';
@@ -33,11 +34,68 @@ function createMercureToken(identifier: string | number) {
   );
 }
 
+async function getAnonymousUser(req: Pick<Request, 'user'>) {
+  if (!req.user) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    include: { accounts: true },
+  });
+
+  if (!user || !user.accounts.some((account) => account.provider === 'anonymous')) {
+    return null;
+  }
+
+  return user;
+}
+
+router.post('/anonymous', async (_req: Request, res: Response<AuthResponse | { error: string }>) => {
+  try {
+    const anonymousId = randomUUID();
+    const email = `anonymous-${anonymousId}@anonymous.local`;
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name: 'Anonymous learner',
+        state: { create: {} },
+        accounts: {
+          create: {
+            provider: 'anonymous',
+            providerAccountId: anonymousId,
+          },
+        },
+      },
+    });
+    const username = `anonymous-${user.id}`;
+    const token = jwt.sign({ id: user.id, email: user.email, username }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.status(201).json({
+      token,
+      mercureToken: createMercureToken(username),
+      user: {
+        id: user.id,
+        email: user.email,
+        username,
+        name: user.name,
+        picture: user.picture,
+        isAnonymous: true,
+        isAdmin: false,
+        is_admin: false,
+      },
+    });
+  } catch (error) {
+    console.error('Anonymous session creation error:', error);
+    res.status(500).json({ error: 'Failed to create anonymous session' });
+  }
+});
+
 // ==========================================
 // TEST USERNAME AUTH (for tests & dev)
 // ==========================================
 
-router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req: Request<unknown, unknown, UsernameAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+router.post('/register', optionalAuthMiddleware, validateRequest(UsernameAuthRequestSchema), async (req: Request<unknown, unknown, UsernameAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
   if (env.ENABLE_TEST_AUTH !== 'true') {
     return res.status(403).json({ error: 'Test authentication is disabled' });
   }
@@ -72,7 +130,24 @@ router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req:
     const registerBody = req.body as UsernameAuthRequest & { isAdmin?: boolean; is_admin?: boolean };
     const isAdmin = Boolean(registerBody.isAdmin || registerBody.is_admin || username.startsWith('admin_'));
 
-    const user = await prisma.user.create({
+    const anonymousUser = await getAnonymousUser(req);
+    const user = anonymousUser
+      ? await prisma.user.update({
+        where: { id: anonymousUser.id },
+        data: {
+          email,
+          name: username,
+          isAdmin,
+          accounts: {
+            deleteMany: { provider: 'anonymous' },
+            create: {
+              provider: 'test-username',
+              providerAccountId: username,
+            },
+          },
+        },
+      })
+      : await prisma.user.create({
       data: {
         email,
         name: username,
@@ -87,7 +162,7 @@ router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req:
           }
         }
       }
-    });
+      });
 
     const mercureToken = createMercureToken(username);
     const token = jwt.sign({ id: user.id, email: user.email, username }, JWT_SECRET, { expiresIn: '7d' });
@@ -101,7 +176,8 @@ router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req:
         email: user.email,
         name: user.name,
         picture: user.picture,
-        isNewUser: true,
+        isNewUser: !anonymousUser,
+        isAnonymous: false,
         isAdmin: user.isAdmin,
         is_admin: user.isAdmin,
       }
@@ -112,7 +188,7 @@ router.post('/register', validateRequest(UsernameAuthRequestSchema), async (req:
   }
 });
 
-router.post('/login', validateRequest(UsernameAuthRequestSchema), async (req: Request<unknown, unknown, UsernameAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+router.post('/login', optionalAuthMiddleware, validateRequest(UsernameAuthRequestSchema), async (req: Request<unknown, unknown, UsernameAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
   if (env.ENABLE_TEST_AUTH !== 'true') {
     return res.status(403).json({ error: 'Test authentication is disabled' });
   }
@@ -148,6 +224,10 @@ router.post('/login', validateRequest(UsernameAuthRequestSchema), async (req: Re
       return res.status(401).json({ error: 'User not found' });
     }
 
+    if (await getAnonymousUser(req)) {
+      return res.status(409).json({ error: 'An anonymous session can only be linked to a new test account' });
+    }
+
     const mercureToken = createMercureToken(username);
     const token = jwt.sign({ id: user.id, email: user.email, username }, JWT_SECRET, { expiresIn: '7d' });
 
@@ -160,6 +240,7 @@ router.post('/login', validateRequest(UsernameAuthRequestSchema), async (req: Re
         email: user.email,
         name: user.name,
         picture: user.picture,
+        isAnonymous: false,
         isAdmin: user.isAdmin,
         is_admin: user.isAdmin,
       }
@@ -174,7 +255,7 @@ router.post('/login', validateRequest(UsernameAuthRequestSchema), async (req: Re
 // GOOGLE OAUTH
 // ==========================================
 
-router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Request<unknown, unknown, GoogleAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
+router.post('/google', optionalAuthMiddleware, validateRequest(GoogleAuthRequestSchema), async (req: Request<unknown, unknown, GoogleAuthRequest>, res: Response<AuthResponse | { error: string }>) => {
   if (!env.GOOGLE_CLIENT_ID) {
     return res.status(500).json({ error: 'Google OAuth is not configured on the server' });
   }
@@ -194,6 +275,7 @@ router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Req
 
     const { email, name, picture, sub: providerAccountId } = payload;
 
+    const anonymousUser = await getAnonymousUser(req);
     let user = null;
     let isNewUser = false;
 
@@ -209,7 +291,30 @@ router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Req
     });
 
     if (existingAccount) {
+      if (anonymousUser && existingAccount.userId !== anonymousUser.id) {
+        return res.status(409).json({ error: 'This Google account is already linked to another user' });
+      }
       user = existingAccount.user;
+    } else if (anonymousUser) {
+      const userWithEmail = await prisma.user.findUnique({ where: { email } });
+      if (userWithEmail && userWithEmail.id !== anonymousUser.id) {
+        return res.status(409).json({ error: 'This email is already linked to another user' });
+      }
+      user = await prisma.user.update({
+        where: { id: anonymousUser.id },
+        data: {
+          email,
+          name,
+          picture,
+          accounts: {
+            deleteMany: { provider: 'anonymous' },
+            create: {
+              provider: 'google',
+              providerAccountId,
+            },
+          },
+        },
+      });
     } else {
       // Find user by email or create new
       user = await prisma.user.findUnique({ where: { email } });
@@ -258,6 +363,7 @@ router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Req
         name: user.name,
         picture: user.picture,
         isNewUser,
+        isAnonymous: false,
         isAdmin: user.isAdmin,
         is_admin: user.isAdmin,
       }
@@ -274,7 +380,7 @@ router.post('/google', validateRequest(GoogleAuthRequestSchema), async (req: Req
 
 router.get('/me', authMiddleware, async (req: Request, res: Response) => {
   const authUser = getAuthUser(req);
-  const user = await prisma.user.findUnique({ where: { id: authUser.id } });
+  const user = await prisma.user.findUnique({ where: { id: authUser.id }, include: { accounts: true } });
   
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
@@ -287,27 +393,23 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
       username: authUser.username || user.name || user.email,
       name: user.name,
       picture: user.picture,
+      isAnonymous: user.accounts.some((account) => account.provider === 'anonymous'),
       isAdmin: user.isAdmin,
       is_admin: user.isAdmin,
     }
   });
 });
 
-// ==========================================
-// MIGRATE GUEST DATA
-// ==========================================
-
+// This endpoint exists only to bring data created by the retired browser-only
+// mode into an authenticated (including anonymous) server account.
 router.post('/migrate-guest', authMiddleware, validateRequest(MigrateGuestRequestSchema), async (req: Request<Record<string, never>, unknown, MigrateGuestRequest>, res: Response) => {
   const { id: userId } = getAuthUser(req);
   try {
     const result = await migrateGuestData(userId, req.body);
-    res.json({
-      message: 'Guest data migrated successfully',
-      ...result,
-    });
+    res.json(result);
   } catch (error: unknown) {
-    console.error('Migrate guest data error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to migrate guest data';
+    console.error('Legacy data migration error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to migrate legacy data';
     res.status(500).json({ error: message });
   }
 });

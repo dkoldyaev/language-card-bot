@@ -58,6 +58,11 @@ const zh = {
   'auth.authFailed': '身份验证失败',
   'auth.googleLoginFailed': 'Google 登录失败',
   'auth.profileSetupFailed': '保存个人资料设置失败',
+  'auth.recoveryTitle': 'Recover your saved progress',
+  'auth.recoveryDescription': 'This browser contains progress from an earlier version. Continue without registering to move it into a new private session, or sign in and choose whether to import it into your account.',
+  'auth.recoveryContinue': 'Continue and keep my progress',
+  'auth.recoverySignIn': 'Sign in instead',
+  'auth.recoveryFailed': 'We could not move your saved progress. Nothing has been deleted; please try again.',
 
   // Dashboard
   'dashboard.overline': '字典概述',

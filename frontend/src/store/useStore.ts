@@ -10,6 +10,7 @@ export interface UserProfile {
   picture?: string | null;
   isAdmin?: boolean;
   is_admin?: boolean;
+  isAnonymous?: boolean;
   active_dictionary_id?: number | null;
 }
 

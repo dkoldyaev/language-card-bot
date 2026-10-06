@@ -52,6 +52,32 @@ describe('Auth Endpoints', () => {
     mockVerifyIdToken.mockReset();
   });
 
+  describe('Anonymous session', () => {
+    it('creates a regular authenticated session for an anonymous user', async () => {
+      prismaMock.user.create.mockResolvedValue({
+        id: 7,
+        email: 'anonymous-id@anonymous.local',
+        name: 'Anonymous learner',
+        picture: null,
+        isAdmin: false,
+        createdAt: new Date(),
+      } as User);
+
+      const res = await request(app).post('/api/v1/auth/anonymous');
+
+      expect(res.status).toBe(201);
+      expect(res.body.user).toMatchObject({ id: 7, isAnonymous: true });
+      expect(jwt.verify(res.body.token, JWT_SECRET)).toMatchObject({ id: 7 });
+      expect(prismaMock.user.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          accounts: expect.objectContaining({
+            create: expect.objectContaining({ provider: 'anonymous' }),
+          }),
+        }),
+      }));
+    });
+  });
+
   describe('Google OAuth', () => {
     it('should register a new user via Google successfully', async () => {
       mockVerifyIdToken.mockResolvedValue({
@@ -225,7 +251,8 @@ describe('Auth Endpoints', () => {
         name: 'Test Me',
         picture: null,
         createdAt: new Date(),
-      } as User);
+        accounts: [],
+      } as User & { accounts: Account[] });
 
       const res = await request(app)
         .get('/api/v1/auth/me')
