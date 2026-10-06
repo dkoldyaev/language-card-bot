@@ -66,6 +66,19 @@ describe('DashboardPage', () => {
     expect(screen.getByPlaceholderText(/Type a new word/i)).toBeInTheDocument();
   });
 
+  it('opens the first dictionary dialog when the user has no dictionaries', async () => {
+    useStore.setState({
+      dictionary: [],
+      dictionaries: [],
+      activeDictionaryId: null,
+      dashboardStats: null,
+    });
+
+    renderDashboard();
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
 
 
   it('renders State 2 (Words added, no quizzes) with enabled quiz button and words preview', async () => {

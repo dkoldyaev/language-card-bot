@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { UserFeatureFlags } from '../user_features/user_features.service';
 
 export const GoogleAuthRequestSchema = z.object({
   credential: z.string(),
@@ -24,6 +25,7 @@ export interface AuthResponse {
     isNewUser?: boolean;
     isAdmin?: boolean;
     is_admin?: boolean;
+    features?: UserFeatureFlags;
   };
 }
 
@@ -59,5 +61,4 @@ export const MigrateGuestRequestSchema = z.object({
 });
 
 export type MigrateGuestRequest = z.infer<typeof MigrateGuestRequestSchema>;
-
 

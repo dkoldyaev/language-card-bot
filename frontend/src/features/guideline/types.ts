@@ -1,8 +1,5 @@
 export type GuidelineStep =
   | 'step0_locale'
-  | 'step1_dict_selector'
-  | 'step2_create_dict_menu'
-  | 'step2_create_dict_dialog'
   | 'step3_select_preset'
   | 'step4_nav_quiz'
   | 'step4_start_quiz'

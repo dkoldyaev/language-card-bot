@@ -44,6 +44,7 @@ describe('POST /api/v1/auth/migrate-guest', () => {
 
   beforeEach(() => {
     mockReset(prismaMock);
+    prismaMock.userFeatureFlag.findMany.mockResolvedValue([]);
   });
 
   it('should return 401 if unauthenticated', async () => {
@@ -134,5 +135,34 @@ describe('POST /api/v1/auth/migrate-guest', () => {
     expect(response.body.message).toBe('Guest data migrated successfully');
     expect(response.body.dictionaries).toHaveLength(1);
     expect(response.body.activeDictionaryId).toBe(10);
+  });
+
+  it('rejects migration with multiple dictionaries when the feature is disabled', async () => {
+    prismaMock.$transaction.mockImplementation(async (callback: (tx: PrismaClient) => Promise<unknown>) => {
+      const txMock = {
+        dictionary: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+      };
+      return callback(txMock as unknown as PrismaClient);
+    });
+
+    const response = await request(app)
+      .post('/api/v1/auth/migrate-guest')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        dictionaries: [
+          { name: 'English', targetLanguage: 'en', baseLanguage: 'ru' },
+          { name: 'Spanish', targetLanguage: 'es', baseLanguage: 'ru' },
+        ],
+        words: [],
+        quizAttempts: [],
+        mode: 'merge',
+      });
+
+    expect(response).toMatchObject({
+      status: 403,
+      body: { error: 'Multiple dictionaries feature is disabled' },
+    });
   });
 });

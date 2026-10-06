@@ -22,20 +22,8 @@ describe('useGuidelineStore', () => {
   it('advances through the full sequence step by step upon user actions', () => {
     useGuidelineStore.getState().startGuideline();
 
-    // Step 0 -> Step 1 (Language selected or Next clicked)
+    // Step 0 -> Step 3 (Language selected; the first dictionary is now created directly in a modal)
     useGuidelineStore.getState().advanceStep('step0_locale');
-    expect(useGuidelineStore.getState().currentStep).toBe('step1_dict_selector');
-
-    // Step 1 -> Step 2 Menu (Dictionary selector clicked, menu opened)
-    useGuidelineStore.getState().advanceStep('step1_dict_selector');
-    expect(useGuidelineStore.getState().currentStep).toBe('step2_create_dict_menu');
-
-    // Step 2 Menu -> Step 2 Dialog (Create deck clicked, dialog opened)
-    useGuidelineStore.getState().advanceStep('step2_create_dict_menu');
-    expect(useGuidelineStore.getState().currentStep).toBe('step2_create_dict_dialog');
-
-    // Step 2 Dialog -> Step 3 (Dictionary created, navigated to dictionary page)
-    useGuidelineStore.getState().advanceStep('step2_create_dict_dialog');
     expect(useGuidelineStore.getState().currentStep).toBe('step3_select_preset');
 
     // Step 3 -> Step 4 Nav (Preset applied, deck filled)

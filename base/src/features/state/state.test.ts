@@ -27,6 +27,7 @@ describe('State Endpoint', () => {
     vi.mocked(publishEvent).mockResolvedValue();
 
     mockReset(prismaMock);
+    prismaMock.userFeatureFlag.findMany.mockResolvedValue([]);
   });
 
   afterEach(async () => {

@@ -21,6 +21,8 @@
     "test:ts": "tsc --noEmit",
     "test:unit": "MERCURE_JWT_KEY=test_mercure_jwt_key DEFINER_APP_TYPE=mock TRANSLATOR_APP_TYPE=mock LLM_PROVIDER=mock LLM_MODEL=mock IMAGE_GENERATOR_API_URL=http://localhost:3000 IMAGE_GENERATOR_PROVIDER=mock vitest run --fileParallelism false",
     "users:create-admin": "node run-script.js manage-users create-admin",
+    "users:feature-disable": "node run-script.js manage-users feature-disable",
+    "users:feature-enable": "node run-script.js manage-users feature-enable",
     "users:list": "node run-script.js manage-users list",
     "users:make-admin": "node run-script.js manage-users make-admin",
     "users:make-regular": "node run-script.js manage-users make-regular",

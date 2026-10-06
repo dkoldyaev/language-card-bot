@@ -40,12 +40,14 @@ export default function DictionaryPage() {
 
   const { locale } = useParams<{ locale: string }>();
   const token = useStore((state) => state.token);
+  const profile = useStore((state) => state.profile);
   const setDictionary = useStore((state) => state.setDictionary);
   const activeDictionaryId = useActiveDictionaryId();
   const dictionaries = useStore((state) => state.dictionaries);
   const removeDictionary = useStore((state) => state.removeDictionary);
   const updateDictionaryItem = useStore((state) => state.updateDictionaryItem);
   const [pendingDeletedDictionaryId, setPendingDeletedDictionaryId] = useState<number | null>(null);
+  const multipleDictionariesEnabled = profile?.features?.multipleDictionaries === true;
 
   const currentDict = dictionaries.find((d) => d.id === activeDictionaryId);
 
@@ -286,7 +288,7 @@ export default function DictionaryPage() {
         </Typography>
       </Box>
 
-      {dictionaries.length > 0 && (
+      {multipleDictionariesEnabled && dictionaries.length > 0 && (
         <DictionarySwitcher
           dictionaries={dictionaries}
           activeDictionaryId={activeDictionaryId}
@@ -304,14 +306,16 @@ export default function DictionaryPage() {
       
       <WordList loading={loading} />
 
-      <CreateDictionaryDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
-        onCancel={handleCancelCreateDialog}
-        onCreated={(newDict) => {
-          handleSelectDictionary(newDict.id);
-        }}
-      />
+      {multipleDictionariesEnabled && (
+        <CreateDictionaryDialog
+          open={createDialogOpen}
+          onClose={() => setCreateDialogOpen(false)}
+          onCancel={handleCancelCreateDialog}
+          onCreated={(newDict) => {
+            handleSelectDictionary(newDict.id);
+          }}
+        />
+      )}
     </PageContainer>
   );
 }

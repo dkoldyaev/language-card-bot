@@ -25,11 +25,13 @@ export default function Layout() {
   const setAppState = useStore((state) => state.setAppState);
   const setDictionaries = useStore((state) => state.setDictionaries);
   const setProfile = useStore((state) => state.setProfile);
+  const profile = useStore((state) => state.profile);
   const isOffline = useStore((state) => state.isOffline);
   const activeDictionaryId = useActiveDictionaryId();
   const setIsDictionaryLoading = useStore((state) => state.setIsDictionaryLoading);
   const dictionaries = useStore((state) => state.dictionaries);
   const activeDictionary = dictionaries.find((dictionary) => dictionary.id === activeDictionaryId);
+  const multipleDictionariesEnabled = profile?.features?.multipleDictionaries === true;
 
   // Centralized dictionary fetcher: whenever the active dictionary changes (via `/dictionaries`, `/state/sync`, or Mercure), fetch its words.
   useEffect(() => {
@@ -133,7 +135,7 @@ export default function Layout() {
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: spacingTokens.element_group_gap, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               <ThemeSwitcher />
-              <DictionarySelector />
+              {multipleDictionariesEnabled && <DictionarySelector />}
               <LocaleSwitcher />
             </Box>
           </Box>
@@ -154,7 +156,7 @@ export default function Layout() {
             }}
           >
             <ThemeSwitcher />
-            <DictionarySelector />
+            {multipleDictionariesEnabled && <DictionarySelector />}
             <LocaleSwitcher />
           </Box>
         )}

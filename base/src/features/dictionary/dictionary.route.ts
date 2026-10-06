@@ -2,6 +2,7 @@ import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
+import { getUserFeatureFlags } from '../user_features/user_features.service';
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.get('/', authMiddleware, async (req: Request<Record<string, never>, unkno
   }
 
   try {
+    const features = await getUserFeatureFlags(userId);
     const dict = await prisma.dictionary.findFirst({
       where: { id: queryDictId, userId },
     });
@@ -41,7 +43,7 @@ router.get('/', authMiddleware, async (req: Request<Record<string, never>, unkno
         definitions: {
           include: {
             translation: true,
-            images: true,
+            images: features.cardImages,
             presets: {
               select: {
                 id: true,

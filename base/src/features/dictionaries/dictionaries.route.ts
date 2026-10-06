@@ -5,6 +5,7 @@ import { LanguageCodeSchema } from '../../types/language';
 import { getAuthUser } from '../auth/auth.service';
 import { publishEvent } from '../event_bus/event_bus.service';
 import type { DictionariesSyncMercureEvent, StateSyncMercureEvent } from '../event_bus/event_bus.type';
+import { getUserFeatureFlags } from '../user_features/user_features.service';
 import {
   createDictionary,
   deleteDictionary,
@@ -39,6 +40,12 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
   }
 
   try {
+    const dictionaryCount = await prisma.dictionary.count({ where: { userId } });
+    const features = await getUserFeatureFlags(userId);
+    if (dictionaryCount > 0 && !features.multipleDictionaries) {
+      return res.status(403).json({ error: 'Multiple dictionaries feature is disabled' });
+    }
+
     const dictionary = await createDictionary(userId, parseResult.data);
 
     // Publish sync event if needed

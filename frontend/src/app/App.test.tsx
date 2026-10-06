@@ -34,7 +34,7 @@ describe('App Routing', () => {
     expect(screen.getByText('hola')).toBeInTheDocument();
   });
 
-  it('does not open a dictionary-creation page for /dictionary/new', async () => {
+  it('redirects /dictionary/new to the dashboard and opens the first dictionary dialog', async () => {
     window.history.pushState({}, '', '/en/dictionary/new');
 
     render(<App />);
@@ -42,6 +42,6 @@ describe('App Routing', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/en');
     });
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });

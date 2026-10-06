@@ -48,6 +48,7 @@ export default function WordList({ loading }: { loading: boolean }) {
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
 
   const token = useStore((state) => state.token);
+  const profile = useStore((state) => state.profile);
   const dictionary = useStore((state) => state.dictionary);
   const setDictionary = useStore((state) => state.setDictionary);
   const removeDictionaryWord = useStore((state) => state.removeDictionaryWord);
@@ -56,6 +57,7 @@ export default function WordList({ loading }: { loading: boolean }) {
   const addDictionaryDefinition = useStore((state) => state.addDictionaryDefinition);
   const removeDictionaryDefinition = useStore((state) => state.removeDictionaryDefinition);
   const removeDefinitionImage = useStore((state) => state.removeDefinitionImage);
+  const cardImagesEnabled = profile?.features?.cardImages === true;
 
   const filteredDictionary = searchQuery
     ? dictionary.filter((w) => w.text.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -497,7 +499,7 @@ export default function WordList({ loading }: { loading: boolean }) {
                         </Box>
                       )}
 
-                      {def.images && def.images.length > 0 && (
+                      {cardImagesEnabled && def.images && def.images.length > 0 && (
                         <Box sx={{ display: 'flex', gap: 1.5, ml: 2, mt: 1.5, flexWrap: 'wrap' }}>
                           {def.images.map((img) => (
                             <Box key={img.id} sx={{ position: 'relative', display: 'inline-flex' }}>
@@ -561,6 +563,7 @@ export default function WordList({ loading }: { loading: boolean }) {
         </Box>
       )}
 
+      {cardImagesEnabled && (
       <Modal
         open={!!selectedImageUrl}
         onClose={() => setSelectedImageUrl(null)}
@@ -603,6 +606,7 @@ export default function WordList({ loading }: { loading: boolean }) {
           )}
         </Box>
       </Modal>
+      )}
     </Box>
   );
 }

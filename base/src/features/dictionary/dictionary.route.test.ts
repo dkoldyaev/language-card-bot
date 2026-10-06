@@ -15,6 +15,7 @@ describe('Dictionary Fetch Endpoint', () => {
 
   beforeEach(() => {
     mockReset(prismaMock);
+    prismaMock.userFeatureFlag.findMany.mockResolvedValue([]);
   });
 
   afterEach(() => {

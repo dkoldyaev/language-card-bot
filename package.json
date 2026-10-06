@@ -62,6 +62,8 @@
     "test:unit": "npm run --prefix base test:unit && npm run --prefix definer test && npm run --prefix translator test && npm run --prefix llm test && npm run --prefix frontend test:unit && npm run --prefix image-generator test",
     "translator:cli": "npm run --prefix translator test:cli --",
     "users:create-admin": "npm run --prefix base users:create-admin --",
+    "users:feature-disable": "npm run --prefix base users:feature-disable --",
+    "users:feature-enable": "npm run --prefix base users:feature-enable --",
     "users:list": "npm run --prefix base users:list --",
     "users:make-admin": "npm run --prefix base users:make-admin --",
     "users:make-regular": "npm run --prefix base users:make-regular --",

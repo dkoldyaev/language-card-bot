@@ -24,6 +24,11 @@ describe('DictionaryPage', () => {
     useStore.setState({
       isDictionaryLoading: false,
       token: 'mock-token',
+      profile: {
+        id: 1,
+        username: 'feature_user',
+        features: { multipleDictionaries: true, cardImages: false },
+      },
       dictionaries: [
         { id: 1, name: 'English Deck', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true },
         { id: 2, name: 'Spanish Deck', targetLanguage: 'es', baseLanguage: 'ru', wordCount: 0, isActive: false },
@@ -139,6 +144,7 @@ describe('DictionaryPage', () => {
     const user = userEvent.setup();
     useStore.setState({
       token: null,
+      profile: null,
       dictionaries: [
         { id: 1, name: 'Guest English Deck', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true },
       ],

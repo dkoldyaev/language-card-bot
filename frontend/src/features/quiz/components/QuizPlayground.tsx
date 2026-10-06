@@ -73,6 +73,8 @@ export default function QuizPlayground() {
   const quizEvaluation = useStore((state) => state.quizEvaluation);
   const quizTranslation = useStore((state) => state.quizTranslation);
   const quizVariants = useStore((state) => state.quizVariants);
+  const profile = useStore((state) => state.profile);
+  const cardImagesEnabled = profile?.features?.cardImages === true;
 
   const resultInfo = {
     SUCCESS: { label: t('quiz.successFeedback'), color: colorTokens.learningStatus.mastered.color, background: colorTokens.learningStatus.mastered.lightBg },
@@ -81,11 +83,12 @@ export default function QuizPlayground() {
   };
 
   const randomImage = useMemo(() => {
+    if (!cardImagesEnabled) return null;
     const images = quizCard?.definition?.images;
     if (!images || images.length === 0) return null;
     const randomIndex = Math.floor(Math.random() * images.length);
     return images[randomIndex];
-  }, [quizCard?.definition?.id, quizCard?.definition?.images]);
+  }, [cardImagesEnabled, quizCard?.definition?.images]);
 
   const handleSubmitSuggestion = async (event: React.FormEvent) => {
     event.preventDefault();

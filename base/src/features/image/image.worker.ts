@@ -2,6 +2,7 @@ import { type Job, Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import { env } from '../../core/env';
 import { appEvents, Events } from '../../core/events';
+import { getUserFeatureFlags } from '../user_features/user_features.service';
 import { processDefinitionImage } from './image.service';
 
 const redisUrl = env.REDIS_URL;
@@ -11,7 +12,12 @@ export const imageWorker = new Worker(
   'imageQueue',
   async (job: Job) => {
     if (job.name === 'fetchImages') {
-      const { definitionId, definitionText, username, wordId, wordText } = job.data;
+      const { definitionId, definitionText, userId, username, wordId, wordText } = job.data;
+      const features = await getUserFeatureFlags(userId);
+      if (!features.cardImages) {
+        return;
+      }
+
       const attachedImages = await processDefinitionImage(definitionId, definitionText, wordText);
 
       if (attachedImages.length > 0) {

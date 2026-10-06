@@ -102,8 +102,9 @@ export default function CreateDictionaryDialog({
         onCreated(newDict);
       }
 
-      if (useGuidelineStore.getState().isActive) {
-        useGuidelineStore.getState().advanceStep('step2_create_dict_dialog');
+      const guideline = useGuidelineStore.getState();
+      if (!token && !guideline.isCompleted && !guideline.isActive) {
+        guideline.setStep('step3_select_preset');
       }
 
       handleClose();
@@ -126,22 +127,7 @@ export default function CreateDictionaryDialog({
 
   const handleCancel = () => {
     handleClose();
-    if (
-      useGuidelineStore.getState().isActive &&
-      useGuidelineStore.getState().currentStep === 'step2_create_dict_dialog'
-    ) {
-      useGuidelineStore.setState({ currentStep: 'step1_dict_selector' });
-    }
     onCancel?.();
-  };
-
-  const handleInputFocus = () => {
-    if (
-      useGuidelineStore.getState().isActive &&
-      useGuidelineStore.getState().currentStep === 'step2_create_dict_dialog'
-    ) {
-      useGuidelineStore.getState().dismissCurrentStep();
-    }
   };
 
   return (
@@ -196,8 +182,6 @@ export default function CreateDictionaryDialog({
 
         <Box
           sx={{ display: 'grid', gap: spacingTokens.form_field_gap }}
-          onFocusCapture={handleInputFocus}
-          onPointerDownCapture={handleInputFocus}
         >
           <FormControl fullWidth>
             <InputLabel id="target-language-label">{t('dialogs.targetLangLabel')}</InputLabel>

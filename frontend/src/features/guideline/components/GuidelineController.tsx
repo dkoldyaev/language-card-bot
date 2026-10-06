@@ -1,6 +1,7 @@
 import { type Driver, driver } from 'driver.js';
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 import { useTranslation } from '../../../shared/i18n';
 import '../guideline.css';
 import useStore from '../../../store/useStore';
@@ -24,30 +25,6 @@ const STEP_CONFIGS: Record<GuidelineStep, StepConfig> = {
     side: 'left',
     align: 'start',
     showNextBtn: true,
-  },
-  step1_dict_selector: {
-    selector: '[data-tour="dictionary-selector"]',
-    titleKey: 'guideline.step1.title',
-    descKey: 'guideline.step1.desc',
-    side: 'bottom',
-    align: 'start',
-    showNextBtn: true,
-  },
-  step2_create_dict_menu: {
-    selector: '[data-tour="dictionary-menu-paper"]',
-    titleKey: 'guideline.step2.title',
-    descKey: 'guideline.step2.desc',
-    side: 'bottom',
-    align: 'center',
-    showNextBtn: false,
-  },
-  step2_create_dict_dialog: {
-    selector: '[data-tour="create-dictionary-dialog-paper"]',
-    titleKey: 'guideline.step2_dialog.title',
-    descKey: 'guideline.step2_dialog.desc',
-    side: 'right',
-    align: 'start',
-    showNextBtn: false,
   },
   step3_select_preset: {
     selector: '[data-tour="preset-apply-btn"]',
@@ -86,6 +63,8 @@ const STEP_CONFIGS: Record<GuidelineStep, StepConfig> = {
 export default function GuidelineController() {
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { locale } = useParams<{ locale: string }>();
 
   const isActive = useGuidelineStore((state) => state.isActive);
   const isCompleted = useGuidelineStore((state) => state.isCompleted);
@@ -96,6 +75,8 @@ export default function GuidelineController() {
   const advanceStep = useGuidelineStore((state) => state.advanceStep);
   const closeGuideline = useGuidelineStore((state) => state.closeGuideline);
   const token = useStore((state) => state.token);
+  const dictionaries = useStore((state) => state.dictionaries);
+  const activeDictionaryId = useActiveDictionaryId();
 
   const driverInstanceRef = useRef<Driver | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -112,7 +93,7 @@ export default function GuidelineController() {
 
   // Initialize guideline on main page if not completed and user is guest
   useEffect(() => {
-    if (isCompleted || isActive || token) return;
+    if (isCompleted || isActive || token || dictionaries.length === 0) return;
 
     // Only start on the locale dashboard, for example /en or /ru.
     if (!/^\/[^/]+$/.test(location.pathname)) return;
@@ -122,7 +103,7 @@ export default function GuidelineController() {
       startGuideline();
     }, 700);
     return () => clearTimeout(timer);
-  }, [isCompleted, isActive, token, location.pathname, startGuideline]);
+  }, [dictionaries.length, isCompleted, isActive, token, location.pathname, startGuideline]);
 
   // Clean up driver on unmount
   useEffect(() => {
@@ -162,9 +143,6 @@ export default function GuidelineController() {
     const isQuizRoute = /^\/[^/]+\/quiz\/\d+$/.test(location.pathname);
     const isStepRouteValid: Record<GuidelineStep, boolean> = {
       step0_locale: isDashboardRoute,
-      step1_dict_selector: isDashboardRoute,
-      step2_create_dict_menu: isDashboardRoute,
-      step2_create_dict_dialog: isDashboardRoute,
       step3_select_preset: isDictionaryRoute,
       step4_nav_quiz: isDictionaryRoute,
       step4_start_quiz: isQuizRoute,
@@ -264,6 +242,9 @@ export default function GuidelineController() {
             nextBtnText: t('guideline.buttons.next'),
             onNextClick: () => {
               advanceStep(currentStep);
+              if (currentStep === 'step0_locale' && activeDictionaryId && locale) {
+                navigate(`/${locale}/dictionary/${activeDictionaryId}`);
+              }
             },
             onCloseClick: () => {
               closeGuideline();
@@ -305,32 +286,6 @@ export default function GuidelineController() {
       localeObserver.observe(document.body, { childList: true, subtree: true });
     }
 
-    // For step2_create_dict_dialog: automatically dismiss tour step when user interacts with or focuses on any input
-    let focusCleanup: (() => void) | null = null;
-    if (currentStep === 'step2_create_dict_dialog') {
-      const handleInputFocus = (e: Event) => {
-        const target = e.target as HTMLElement | null;
-        if (!target) return;
-        const isInputField =
-          target.matches('input, select, textarea, [role="combobox"], .MuiSelect-select, .MuiInputBase-input') ||
-          Boolean(target.closest('.MuiInputBase-root'));
-        if (isInputField) {
-          useGuidelineStore.getState().dismissCurrentStep();
-        }
-      };
-
-      const timer = setTimeout(() => {
-        document.addEventListener('focusin', handleInputFocus, true);
-        document.addEventListener('pointerdown', handleInputFocus, true);
-      }, 250);
-
-      focusCleanup = () => {
-        clearTimeout(timer);
-        document.removeEventListener('focusin', handleInputFocus, true);
-        document.removeEventListener('pointerdown', handleInputFocus, true);
-      };
-    }
-
     // Small delay to allow any current render / transition to mount DOM element
     const initialTimer = setTimeout(() => {
       findAndHighlight();
@@ -347,11 +302,8 @@ export default function GuidelineController() {
       if (localeObserver) {
         localeObserver.disconnect();
       }
-      if (focusCleanup) {
-        focusCleanup();
-      }
     };
-  }, [isActive, currentStep, isStepDismissed, t, advanceStep, closeGuideline, location.pathname]);
+  }, [isActive, currentStep, isStepDismissed, t, advanceStep, closeGuideline, location.pathname, activeDictionaryId, locale, navigate]);
 
   return null;
 }

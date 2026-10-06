@@ -10,7 +10,13 @@ export interface UserProfile {
   picture?: string | null;
   isAdmin?: boolean;
   is_admin?: boolean;
+  features?: UserFeatureFlags;
   active_dictionary_id?: number | null;
+}
+
+export interface UserFeatureFlags {
+  multipleDictionaries: boolean;
+  cardImages: boolean;
 }
 
 export interface SettingsState {

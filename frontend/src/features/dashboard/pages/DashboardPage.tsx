@@ -97,6 +97,12 @@ export default function Dashboard() {
     };
   }, [token, loadAuthStats]);
 
+  useEffect(() => {
+    if (dictionaries.length === 0) {
+      setCreateDialogOpen(true);
+    }
+  }, [dictionaries.length]);
+
   const hasQuizzes = (dashboardStats?.totalAttempts ?? 0) > 0;
   const isDeckEmpty = totalWords === 0;
 
@@ -503,6 +509,7 @@ export default function Dashboard() {
       <CreateDictionaryDialog
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
+        onCancel={() => setCreateDialogOpen(false)}
         onCreated={(newDict) => {
           navigate(`/${locale}/dictionary/${newDict.id}`);
         }}

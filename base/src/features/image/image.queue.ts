@@ -10,6 +10,7 @@ export const imageQueue = new Queue('imageQueue', { connection: imageQueueConnec
 export interface FetchImagesJobData {
   definitionId: number;
   definitionText: string;
+  userId: number;
   username?: string;
   wordId?: number;
   wordText?: string;

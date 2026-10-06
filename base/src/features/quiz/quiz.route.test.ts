@@ -24,6 +24,7 @@ describe('Quiz Route', () => {
     vi.mocked(publishEvent).mockResolvedValue();
     mockReset(prismaMock);
     vi.restoreAllMocks();
+    prismaMock.userFeatureFlag.findMany.mockResolvedValue([]);
 
     prismaMock.userState.findUnique.mockResolvedValue({
       id: 1,

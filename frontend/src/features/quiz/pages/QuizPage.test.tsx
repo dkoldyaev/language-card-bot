@@ -22,6 +22,7 @@ describe('Quiz', () => {
       quizTranslation: null,
       quizVariants: null,
       isDictionaryLoading: false,
+      activeDictionaryId: 1,
       dictionary: [
         {
           id: 1,
@@ -52,6 +53,11 @@ describe('Quiz', () => {
 
   it('renders random image and source attribution when definition has images', () => {
     useStore.setState({
+      profile: {
+        id: 1,
+        username: 'image_user',
+        features: { multipleDictionaries: false, cardImages: true },
+      },
       quizCard: {
         wordId: 1,
         definition: {
@@ -65,7 +71,7 @@ describe('Quiz', () => {
       }
     });
 
-    render(<Quiz />);
+    renderQuiz();
 
     const img = screen.getByRole('img', { name: 'A fruit' });
     expect(img).toBeInTheDocument();

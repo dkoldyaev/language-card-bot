@@ -6,6 +6,7 @@ import { getAuthUser } from '../auth/auth.service';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 import { publishEvent } from '../event_bus/event_bus.service';
 import type { QuizAnswerEvaluationMercureEvent, QuizCardMercureEvent, QuizDefinitionTranslationMercureEvent, QuizVariantsMercureEvent } from '../event_bus/event_bus.type';
+import { getUserFeatureFlags } from '../user_features/user_features.service';
 import { evaluateSuggestion } from './evaluation.service';
 import { generateQuizCard, getNextDefinition, getQuizVariants } from './quiz.service';
 import { type QuizAnswerRequest,
@@ -23,6 +24,7 @@ router.post('/start', authMiddleware, validateRequest(QuizStartSchema), async (r
   const user = getAuthUser(req);
   
   try {
+    const features = await getUserFeatureFlags(user.id);
     const { dictionaryId } = req.body;
     
     const dict = await prisma.dictionary.findFirst({
@@ -58,7 +60,7 @@ router.post('/start', authMiddleware, validateRequest(QuizStartSchema), async (r
         id: cardData.definition.id,
         text: cardData.definition.text,
         translation: cardData.definition.translation ? cardData.definition.translation.text : null,
-        images: Array.isArray(cardData.definition.images)
+        images: features.cardImages && Array.isArray(cardData.definition.images)
           ? cardData.definition.images.map((img) => ({ id: img.id, url: img.url, source: img.source }))
           : [],
       }
@@ -195,6 +197,7 @@ router.post('/next_card', authMiddleware, validateRequest(QuizNextCardSchema), a
   const user = getAuthUser(req);
   
   try {
+    const features = await getUserFeatureFlags(user.id);
     const { dictionaryId } = req.body;
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
     if (!userState) {
@@ -226,7 +229,7 @@ router.post('/next_card', authMiddleware, validateRequest(QuizNextCardSchema), a
         id: cardData.definition.id,
         text: cardData.definition.text,
         translation: cardData.definition.translation ? cardData.definition.translation.text : null,
-        images: Array.isArray(cardData.definition.images)
+        images: features.cardImages && Array.isArray(cardData.definition.images)
           ? cardData.definition.images.map((img) => ({ id: img.id, url: img.url, source: img.source }))
           : [],
       }
@@ -244,6 +247,7 @@ router.post('/next_definition', authMiddleware, validateRequest(QuizNextDefiniti
   const user = getAuthUser(req);
 
   try {
+    const features = await getUserFeatureFlags(user.id);
     const userState = await prisma.userState.findUnique({ where: { userId: user.id } });
     if (!userState?.currentWordId || !userState.currentDefinitionId) {
       return res.status(400).json({ error: 'Quiz not active or current word/definition not set' });
@@ -272,7 +276,7 @@ router.post('/next_definition', authMiddleware, validateRequest(QuizNextDefiniti
         id: definition.id,
         text: definition.text,
         translation: definition.translation ? definition.translation.text : null,
-        images: Array.isArray(definition.images)
+        images: features.cardImages && Array.isArray(definition.images)
           ? definition.images.map((img) => ({ id: img.id, url: img.url, source: img.source }))
           : [],
       }

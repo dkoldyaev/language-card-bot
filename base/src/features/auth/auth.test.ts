@@ -49,6 +49,7 @@ describe('Auth Endpoints', () => {
 
   beforeEach(() => {
     mockReset(prismaMock);
+    prismaMock.userFeatureFlag.findMany.mockResolvedValue([]);
     mockVerifyIdToken.mockReset();
   });
 

@@ -1,4 +1,4 @@
-import type { Dictionary, PrismaClient, UserState } from '@prisma/client';
+import { type Dictionary, type PrismaClient, UserFeature, type UserState } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -18,6 +18,8 @@ describe('Dictionaries API', () => {
 
   beforeEach(() => {
     mockReset(prismaMock);
+    prismaMock.dictionary.count.mockResolvedValue(0);
+    prismaMock.userFeatureFlag.findMany.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -150,6 +152,54 @@ describe('Dictionaries API', () => {
     expect(res.body.dictionary.name).toBe('Spanish (English)');
     expect(res.body.dictionary.targetLanguage).toBe('es');
     expect(res.body.dictionary.baseLanguage).toBe('en');
+  });
+
+  it('rejects creating an additional dictionary when the feature is disabled', async () => {
+    prismaMock.dictionary.count.mockResolvedValue(1);
+
+    const res = await request(app)
+      .post('/api/v1/dictionaries')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ targetLanguage: 'es', baseLanguage: 'en' });
+
+    expect(res).toMatchObject({
+      status: 403,
+      body: { error: 'Multiple dictionaries feature is disabled' },
+    });
+    expect(prismaMock.dictionary.create).not.toHaveBeenCalled();
+  });
+
+  it('allows creating an additional dictionary when the feature is enabled', async () => {
+    prismaMock.dictionary.count.mockResolvedValue(1);
+    prismaMock.userFeatureFlag.findMany.mockResolvedValue([
+      { feature: UserFeature.MULTIPLE_DICTIONARIES, enabled: true },
+    ]);
+    prismaMock.dictionary.create.mockResolvedValue({
+      id: 12,
+      name: 'Spanish (English)',
+      targetLanguage: 'es',
+      baseLanguage: 'en',
+      userId,
+      createdAt: new Date(),
+    } as Dictionary);
+    prismaMock.userState.findUnique.mockResolvedValue({
+      id: 1,
+      userId,
+      activeDictionaryId: 10,
+      currentWordId: null,
+      currentDefinitionId: null,
+      showVariants: false,
+      showDefinitionTranslation: false,
+    } as UserState);
+    prismaMock.dictionary.findMany.mockResolvedValue([]);
+
+    const res = await request(app)
+      .post('/api/v1/dictionaries')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ targetLanguage: 'es', baseLanguage: 'en' });
+
+    expect(res.status).toBe(201);
+    expect(prismaMock.dictionary.create).toHaveBeenCalledOnce();
   });
 
   it('POST /api/v1/dictionaries/:id/select should select active dictionary', async () => {

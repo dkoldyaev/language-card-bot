@@ -3,8 +3,8 @@ import type { Job } from 'bullmq';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type mockDeep, mockReset } from 'vitest-mock-extended';
 import { prisma } from '../../prisma';
-import * as eventBusService from '../event_bus/event_bus.service';
 import * as imageQueue from '../image/image.queue';
+import * as userFeatures from '../user_features/user_features.service';
 import * as addWordQueue from './add_word.queue';
 import { dictionaryWorker } from './add_word.worker';
 
@@ -18,6 +18,12 @@ vi.mock('../image/image.queue', () => ({
 vi.mock('./add_word.queue', () => ({
   enqueueFetchTranslations: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock('../user_features/user_features.service', () => ({
+  getUserFeatureFlags: vi.fn().mockResolvedValue({
+    multipleDictionaries: false,
+    cardImages: true,
+  }),
+}));
 
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
@@ -25,6 +31,10 @@ describe('dictionaryWorker - add_word job handling', () => {
   beforeEach(() => {
     mockReset(prismaMock);
     vi.clearAllMocks();
+    vi.mocked(userFeatures.getUserFeatureFlags).mockResolvedValue({
+      multipleDictionaries: false,
+      cardImages: true,
+    });
   });
 
   it('enqueues both translation and image generation jobs when fetchDefinitions succeeds', async () => {
@@ -65,7 +75,7 @@ describe('dictionaryWorker - add_word job handling', () => {
     } as unknown as Job;
 
     // Execute the worker process function
-    const processFn = (dictionaryWorker as any).processFn;
+    const processFn = (dictionaryWorker as unknown as { processFn: (job: Job) => Promise<void> }).processFn;
     await processFn(job);
 
     // 1. Translations enqueued
@@ -79,8 +89,8 @@ describe('dictionaryWorker - add_word job handling', () => {
       'john',
       10,
       'apple',
-      'ru',
-      'en'
+      'en',
+      'ru'
     );
 
     // 2. Images enqueued for all created definitions
@@ -89,6 +99,7 @@ describe('dictionaryWorker - add_word job handling', () => {
       {
         definitionId: 101,
         definitionText: 'a round edible fruit produced by an apple tree',
+        userId: 5,
         username: 'john',
         wordId: 10,
         wordText: 'apple',
@@ -96,10 +107,42 @@ describe('dictionaryWorker - add_word job handling', () => {
       {
         definitionId: 102,
         definitionText: 'the tree that bears apple fruit',
+        userId: 5,
         username: 'john',
         wordId: 10,
         wordText: 'apple',
       },
     ]);
+  });
+
+  it('does not enqueue image generation when card images are disabled', async () => {
+    prismaMock.word.findUnique.mockResolvedValue({
+      id: 10,
+      text: 'apple',
+      dictionary: {
+        id: 1,
+        targetLanguage: 'en',
+        baseLanguage: 'ru',
+      },
+    } as any);
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ definitions: [{ text: 'a round edible fruit' }] }),
+    } as any);
+    prismaMock.definition.createManyAndReturn.mockResolvedValue([
+      { id: 101, text: 'a round edible fruit', wordId: 10 },
+    ] as any);
+    vi.mocked(userFeatures.getUserFeatureFlags).mockResolvedValue({
+      multipleDictionaries: false,
+      cardImages: false,
+    });
+
+    const processFn = (dictionaryWorker as unknown as { processFn: (job: Job) => Promise<void> }).processFn;
+    await processFn({
+      name: 'fetchDefinitions',
+      data: { userId: 5, username: 'john', wordId: 10, wordText: 'apple' },
+    } as Job);
+
+    expect(imageQueue.enqueueFetchImages).not.toHaveBeenCalled();
   });
 });

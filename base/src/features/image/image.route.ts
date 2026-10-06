@@ -2,6 +2,7 @@ import { type Request, type Response, Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { prisma } from '../../prisma';
 import { getAuthUser } from '../auth/auth.service';
+import { getUserFeatureFlags } from '../user_features/user_features.service';
 
 const router = Router();
 
@@ -15,6 +16,11 @@ router.delete('/:definitionId/:imageId', authMiddleware, async (req: Request<{ d
   }
 
   try {
+    const features = await getUserFeatureFlags(userId);
+    if (!features.cardImages) {
+      return res.status(403).json({ error: 'Card images feature is disabled' });
+    }
+
     const definition = await prisma.definition.findUnique({
       where: { id: definitionId },
       include: {

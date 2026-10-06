@@ -16,12 +16,11 @@ import {
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CreateDictionaryDialog from '../../features/dictionary/components/CreateDictionaryDialog';
-import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
+import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 import { useTranslation } from '../i18n/I18nContext';
 import { AppChip, radiusTokens, spacingTokens } from '../ui';
-import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 
 type MenuPaperSlotProps = PaperProps & { 'data-testid'?: string };
 
@@ -41,17 +40,10 @@ export default function DictionarySelector() {
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
-    useGuidelineStore.getState().advanceStep('step1_dict_selector');
   };
 
   const handleCloseMenu = () => {
     setAnchorEl(null);
-    if (
-      useGuidelineStore.getState().isActive &&
-      useGuidelineStore.getState().currentStep === 'step2_create_dict_menu'
-    ) {
-      useGuidelineStore.setState({ currentStep: 'step1_dict_selector' });
-    }
   };
 
   const handleSelect = async (dictId: number) => {
@@ -171,7 +163,6 @@ export default function DictionarySelector() {
         <MenuItem
           data-tour="create-dictionary-menu-item"
           onClick={() => {
-            useGuidelineStore.getState().advanceStep('step2_create_dict_menu');
             setAnchorEl(null);
             setCreateDialogOpen(true);
           }}

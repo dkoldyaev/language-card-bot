@@ -5,6 +5,7 @@ import { env } from '../../core/env';
 import { authMiddleware } from '../../middleware/auth';
 import { validateRequest } from '../../middleware/validate';
 import { prisma } from '../../prisma';
+import { getUserFeatureFlags } from '../user_features/user_features.service';
 import { getAuthUser } from './auth.service';
 import {
   type AuthResponse, 
@@ -15,7 +16,7 @@ import {
   type UsernameAuthRequest,
   UsernameAuthRequestSchema
 } from './auth.type';
-import { migrateGuestData } from './migrate_guest.service';
+import { MultipleDictionariesFeatureDisabledError, migrateGuestData } from './migrate_guest.service';
 
 const router = Router();
 const JWT_SECRET = env.JWT_SECRET;
@@ -280,6 +281,8 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
+  const features = await getUserFeatureFlags(user.id);
+
   res.json({
     user: {
       id: user.id,
@@ -289,6 +292,7 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
       picture: user.picture,
       isAdmin: user.isAdmin,
       is_admin: user.isAdmin,
+      features,
     }
   });
 });
@@ -300,13 +304,17 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
 router.post('/migrate-guest', authMiddleware, validateRequest(MigrateGuestRequestSchema), async (req: Request<Record<string, never>, unknown, MigrateGuestRequest>, res: Response) => {
   const { id: userId } = getAuthUser(req);
   try {
-    const result = await migrateGuestData(userId, req.body);
+    const features = await getUserFeatureFlags(userId);
+    const result = await migrateGuestData(userId, req.body, features.multipleDictionaries);
     res.json({
       message: 'Guest data migrated successfully',
       ...result,
     });
   } catch (error: unknown) {
     console.error('Migrate guest data error:', error);
+    if (error instanceof MultipleDictionariesFeatureDisabledError) {
+      return res.status(403).json({ error: error.message });
+    }
     const message = error instanceof Error ? error.message : 'Failed to migrate guest data';
     res.status(500).json({ error: message });
   }

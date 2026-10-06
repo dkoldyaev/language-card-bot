@@ -2,7 +2,13 @@ import { prisma } from '../../prisma';
 import { invalidateDashboardCache } from '../dashboard/dashboard.service';
 import type { MigrateGuestRequest } from './auth.type';
 
-export async function migrateGuestData(userId: number, payload: MigrateGuestRequest) {
+export class MultipleDictionariesFeatureDisabledError extends Error {
+  constructor() {
+    super('Multiple dictionaries feature is disabled');
+  }
+}
+
+export async function migrateGuestData(userId: number, payload: MigrateGuestRequest, multipleDictionariesEnabled: boolean) {
   const result = await prisma.$transaction(async (tx) => {
     // If replace mode, delete all existing user's dictionaries (cascade deletes words, definitions, etc.)
     if (payload.mode === 'replace') {
@@ -18,6 +24,19 @@ export async function migrateGuestData(userId: number, payload: MigrateGuestRequ
     const dictMap = new Map<string, typeof existingDicts[0]>();
     for (const d of existingDicts) {
       dictMap.set(`${d.targetLanguage.toLowerCase()}:${d.baseLanguage.toLowerCase()}`, d);
+    }
+
+    const requestedDictionaryKeys = new Set<string>();
+    for (const dict of payload.dictionaries) {
+      requestedDictionaryKeys.add(`${dict.targetLanguage.toLowerCase()}:${dict.baseLanguage.toLowerCase()}`);
+    }
+    for (const word of payload.words) {
+      requestedDictionaryKeys.add(`${word.targetLanguage.toLowerCase()}:${word.baseLanguage.toLowerCase()}`);
+    }
+
+    const resultingDictionaryKeys = new Set([...dictMap.keys(), ...requestedDictionaryKeys]);
+    if (resultingDictionaryKeys.size > 1 && !multipleDictionariesEnabled) {
+      throw new MultipleDictionariesFeatureDisabledError();
     }
 
     for (const dict of payload.dictionaries) {

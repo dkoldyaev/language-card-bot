@@ -5,6 +5,7 @@ import { LanguageCodeSchema } from '../../types/language';
 import { getAuthUser } from '../auth/auth.service';
 import { publishEvent } from '../event_bus/event_bus.service';
 import type { StateSyncMercureEvent } from '../event_bus/event_bus.type';
+import { getUserFeatureFlags } from '../user_features/user_features.service';
 import type { SyncResponse } from './state.type';
 
 const router = Router();
@@ -13,6 +14,7 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
   const { id: userId, username } = getAuthUser(req);
 
   try {
+    const features = await getUserFeatureFlags(userId);
     const userState = await prisma.userState.findUnique({
       where: { userId },
       include: {
@@ -49,7 +51,7 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response<SyncResp
         id: userState.currentDefinition.id,
         text: userState.currentDefinition.text,
         translation: userState.currentDefinition.translation ? userState.currentDefinition.translation.text : null,
-        images: Array.isArray(userState.currentDefinition.images)
+        images: features.cardImages && Array.isArray(userState.currentDefinition.images)
           ? userState.currentDefinition.images.map((img) => ({ id: img.id, url: img.url, source: img.source }))
           : [],
       } : undefined,
