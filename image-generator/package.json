@@ -8,7 +8,7 @@
     "cli": "tsx src/scripts/test-image-generator.ts",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "test": "npm run test:ts && vitest run",
+    "test": "npm run test:ts && PORT=3004 IMAGE_GENERATOR_PROVIDER=mock CACHE_URL=redis://localhost:6380/5 UNSPLASH_ACCESS_KEY=test_unsplash_access_key PEXELS_API_KEY=test_pexels_api_key PIXABAY_API_KEY=test_pixabay_api_key WIKIMEDIA_USER_AGENT=LanguageCardsTest/1.0 vitest run",
     "test:cli": "tsx src/scripts/test-image-generator.ts",
     "test:ts": "tsc --noEmit"
   },
