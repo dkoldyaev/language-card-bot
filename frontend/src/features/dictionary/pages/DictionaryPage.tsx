@@ -67,7 +67,8 @@ export default function DictionaryPage() {
       return;
     }
 
-    const nextDictionaryId = activeDictionaryId ?? dictionaries[0].id;
+    const isValidActiveId = dictionaries.some((d) => d.id === activeDictionaryId);
+    const nextDictionaryId = isValidActiveId ? activeDictionaryId : dictionaries[0].id;
     navigate(`/${locale}/dictionary/${nextDictionaryId}`, { replace: true });
   }, [activeDictionaryId, dictionaries, locale, navigate, pendingDeletedDictionaryId]);
 

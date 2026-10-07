@@ -121,7 +121,11 @@ router.post('/translate_definition', authMiddleware, validateRequest(QuizTransla
       include: { translation: true }
     });
 
-    if (!definition?.translation) {
+    if (!definition) {
+      return res.status(404).json({ error: 'Current definition not found' });
+    }
+
+    if (!definition.translation) {
       return res.status(404).json({ error: 'Translation not found for current definition' });
     }
 

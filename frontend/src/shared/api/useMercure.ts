@@ -71,6 +71,7 @@ export function useMercure() {
                 if (Array.isArray(data.words)) {
                   useStore.getState().updateDictionaryTranslationsBatch(data.words);
                 }
+                window.dispatchEvent(new CustomEvent('mercure-word-status', { detail: data }));
               } else if (data.type === 'definition_images_loaded') {
                 if (Array.isArray(data.definitions)) {
                   useStore.getState().setDefinitionImagesBatch(data.definitions);

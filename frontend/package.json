@@ -12,7 +12,7 @@
     "test:e2e": "playwright test",
     "test:e2e:watch": "playwright test --watch",
     "test:ts": "tsc --noEmit",
-    "test:unit": "vitest run",
+    "test:unit": "vitest run --fileParallelism false",
     "test:unit:watch": "vitest"
   },
   "dependencies": {

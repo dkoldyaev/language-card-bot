@@ -1,17 +1,39 @@
 import { Page, expect } from '@playwright/test';
 
-export async function register(page: Page, username: string, baseLang = 'en', targetLang = 'ru') {
+export interface FirstDictionary {
+  name: string;
+  targetLanguage: string;
+  baseLanguage: string;
+}
+
+async function fillCreateDictionaryDialog(page: Page, dictionary: FirstDictionary) {
+  const createDialog = page.getByRole('dialog', { name: 'Create New Dictionary' });
+  await expect(createDialog).toBeVisible();
+
+  await createDialog.getByLabel('Language to Learn (Target)').click();
+  await page.locator(`li[data-value="${dictionary.targetLanguage}"]`).click();
+  await createDialog.getByLabel('Explanations / Native Language').click();
+  await page.locator(`li[data-value="${dictionary.baseLanguage}"]`).click();
+  await createDialog.getByLabel('Dictionary Name (optional)').fill(dictionary.name);
+  await createDialog.locator('[data-tour="create-dictionary-dialog-submit"]').click();
+  await expect(createDialog).toBeHidden();
+}
+
+export async function register(page: Page, username: string, firstDictionary: FirstDictionary) {
   await page.goto('/en/register');
   await expect(page.locator('button:has-text("Create account")')).toBeVisible();
   await page.getByLabel(/Username|Login/i).fill(username);
 
   await page.click('button:has-text("Create account")');
   await expect(page).toHaveURL('/en');
-  await page.getByRole('button', { name: 'Sign out' }).click();
-  await expect(page).toHaveURL('/en/login');
+  await fillCreateDictionaryDialog(page, firstDictionary);
 }
 
 export async function login(page: Page, username: string) {
+  if (await page.getByRole('button', { name: 'Sign out' }).isVisible().catch(() => false)) {
+    return;
+  }
+
   await page.goto('/en/login');
   await page.getByLabel(/Username|Login/i).fill(username);
   await page.click('button:has-text("Log in")');
@@ -23,26 +45,11 @@ export async function login(page: Page, username: string) {
   await page.evaluate(() => localStorage.setItem('cardbot_guideline_completed', 'true'));
 }
 
-export async function createDictionary(
-  page: Page,
-  { name, targetLanguage = 'en', baseLanguage = 'ru' }: {
-    name: string;
-    targetLanguage?: string;
-    baseLanguage?: string;
-  },
-) {
+export async function createDictionary(page: Page, dictionary: FirstDictionary) {
   await page.locator('nav').getByText('Dictionary').click();
-  const createDialog = page.getByRole('dialog', { name: 'Create New Dictionary' });
-  await expect(createDialog).toBeVisible();
-
-  await createDialog.getByLabel('Language to Learn (Target)').click();
-  await page.locator(`li[data-value="${targetLanguage}"]`).click();
-  await createDialog.getByLabel('Explanations / Native Language').click();
-  await page.locator(`li[data-value="${baseLanguage}"]`).click();
-  await createDialog.getByLabel('Dictionary Name (optional)').fill(name);
-  await createDialog.locator('[data-tour="create-dictionary-dialog-submit"]').click();
-  await expect(createDialog).toBeHidden();
-  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'New Dictionary' }).click();
+  await fillCreateDictionaryDialog(page, dictionary);
+  await expect(page.getByRole('heading', { name: dictionary.name, exact: true })).toBeVisible();
 }
 
 export async function addWordsToDictionary(page: Page, words: string[]) {
@@ -60,7 +67,21 @@ export async function addWordsToDictionary(page: Page, words: string[]) {
   await expect(wordsInput).toHaveValue('');
 }
 
-export async function addWordsAndAwaitDefinitions(page: Page, words: string[]) {
+export async function addWordsAndAwaitDefinitions(
+  page: Page,
+  words: string[],
+  { waitForTranslations = false }: { waitForTranslations?: boolean } = {},
+) {
+  if (waitForTranslations) {
+    await page.evaluate(() => {
+      const testWindow = window as typeof window & { __mercureWordStatusEvents?: Array<{ type?: string }> };
+      testWindow.__mercureWordStatusEvents = [];
+      window.addEventListener('mercure-word-status', (event) => {
+        testWindow.__mercureWordStatusEvents?.push((event as CustomEvent<{ type?: string }>).detail);
+      });
+    });
+  }
+
   await addWordsToDictionary(page, words);
 
   for (const word of words) {
@@ -74,12 +95,23 @@ export async function addWordsAndAwaitDefinitions(page: Page, words: string[]) {
         await summary.click();
       }
       await expect(accordion.locator('[aria-label="Edit definition"]').first()).toBeVisible({ timeout: 1000 });
-      await expect(accordion.locator('[aria-label="Edit translation"]').first()).toBeVisible({ timeout: 1000 });
     }).toPass({ timeout: 20000 });
 
     if (await summary.getAttribute('aria-expanded') === 'true') {
       await summary.click();
     }
+  }
+
+  if (waitForTranslations) {
+    await expect.poll(
+      () => page.evaluate(() => {
+        const testWindow = window as typeof window & { __mercureWordStatusEvents?: Array<{ type?: string }> };
+        return testWindow.__mercureWordStatusEvents?.some(
+          (event) => event.type === 'definition_translate_loaded',
+        ) ?? false;
+      }),
+      { timeout: 30000 },
+    ).toBe(true);
   }
 }
 

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createDictionary, register, login } from './helpers';
+import { register, login } from './helpers';
 
 test.describe('Presets & Admin Flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -13,7 +13,7 @@ test.describe('Presets & Admin Flow', () => {
 
   test('regular user cannot access presets in navigation or direct URL', async ({ page }, testInfo) => {
     const regularUsername = `reguser_${Date.now()}_${testInfo.workerIndex}`;
-    await register(page, regularUsername);
+    await register(page, regularUsername, { name: 'Regular deck', targetLanguage: 'en', baseLanguage: 'ru' });
     await login(page, regularUsername);
 
     // Verify "Presets" link is not present in navigation
@@ -29,13 +29,8 @@ test.describe('Presets & Admin Flow', () => {
     test.setTimeout(90000);
 
     const adminUsername = `admin_${Date.now()}_${testInfo.workerIndex}`;
-    await register(page, adminUsername, 'en', 'es');
+    await register(page, adminUsername, { name: 'Spanish Learner', targetLanguage: 'es', baseLanguage: 'en' });
     await login(page, adminUsername);
-    await createDictionary(page, {
-      name: 'Spanish Learner',
-      targetLanguage: 'es',
-      baseLanguage: 'en',
-    });
 
     // Verify "Presets" is visible in sidebar for admin
     const presetsNav = page.locator('nav').getByText('Presets');

@@ -33,6 +33,7 @@ const handleTranslateDefinition = async () => {
     await apiClient.post('/quiz/translate_definition', { dictionaryId });
   } catch (error) {
     console.error('Failed to translate definition:', error);
+    console.log('translate_definition response:', JSON.stringify((error as any)?.response?.data, null, 2));
   }
 };
 

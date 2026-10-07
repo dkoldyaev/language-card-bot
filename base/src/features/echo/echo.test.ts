@@ -64,16 +64,18 @@ describe('Echo Endpoint', () => {
     const payload2 = { message: 'Hello user2' };
 
     // Request from user 1
-    await request(app)
+    const res1 = await request(app)
       .post('/api/v1/echo')
       .set('Authorization', `Bearer ${token1}`)
       .send(payload1);
+    expect(res1.status).toBe(200);
 
     // Request from user 2
-    await request(app)
+    const res2 = await request(app)
       .post('/api/v1/echo')
       .set('Authorization', `Bearer ${token2}`)
       .send(payload2);
+    expect(res2.status).toBe(200);
 
     // Verify event bus push was called twice
     expect(publishEvent).toHaveBeenCalledTimes(2);

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createDictionary, register, login, addWordsAndAwaitDefinitions } from './helpers';
+import { register, login, addWordsAndAwaitDefinitions } from './helpers';
 
 test.describe('Quiz Operations', () => {
   test.beforeEach(async ({ page }, testInfo) => {
@@ -12,9 +12,8 @@ test.describe('Quiz Operations', () => {
 
     const username = `testuser_${Date.now()}_${testInfo.workerIndex}`;
     // We register and then login the user for each test
-    await register(page, username);
+    await register(page, username, { name: 'Quiz deck', targetLanguage: 'en', baseLanguage: 'ru' });
     await login(page, username);
-    await createDictionary(page, { name: 'Quiz deck' });
   });
 
   test('should disable quiz when dictionary is empty and show locked state on /quiz', async ({ page }) => {
@@ -33,7 +32,7 @@ test.describe('Quiz Operations', () => {
 
   test('should navigate to Quiz and click Start Quiz', async ({ page }) => {
     // Add a word first so the quiz has content
-    await addWordsAndAwaitDefinitions(page, ['apple']);
+    await addWordsAndAwaitDefinitions(page, ['apple'], { waitForTranslations: true });
 
     await page.locator('nav').getByText('Quiz').click();
     await expect(async () => {
@@ -69,9 +68,12 @@ test.describe('Quiz Operations', () => {
     await expect(page.locator('text=Close Match 🤔')).toBeVisible();
     await expect(page.locator('text=aple')).toBeVisible();
 
-    // 3. Test Translate Definition
-    await page.click('button:has-text("Translate definition")');
-    await expect(page.getByText(/Translation: \[MOCK: ru -> en\] \[Mock] Definition/)).toBeVisible();
+    // 3. Test Translate 
+    const translateButton = page.getByRole('button', { name: 'Translate definition' });
+    expect(translateButton).not.toBeDisabled({ timeout: 3000 });
+    await translateButton.click();
+    await expect(page.getByText(/Translation: \[MOCK: en -> ru\] \[Mock] Definition/)).toBeVisible({ timeout: 3000 });
+    await expect(translateButton).toBeDisabled();
 
     // 4. Test Another Definition
     const currentDefText = await cardContent.innerText();

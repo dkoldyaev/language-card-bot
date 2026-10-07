@@ -13,7 +13,7 @@ test.describe('English Card Bot Frontend E2E', () => {
 
     const username = `testuser_${Date.now()}_${testInfo.workerIndex}`;
     // We register and then login the user for each test
-    await register(page, username);
+    await register(page, username, { name: 'App deck', targetLanguage: 'en', baseLanguage: 'ru' });
     await login(page, username);
   });
 

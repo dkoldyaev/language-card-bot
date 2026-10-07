@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import app from '../app';
 import { prisma } from '../prisma';
 import type { TMessage } from '../types/message';
@@ -18,7 +18,28 @@ describe('Presets E2E', () => {
   let messages: TMessage[] = [];
   let streamPromise: Promise<void>;
 
+  let fetchSpy: import('vitest').MockInstance;
+  let originalFetch: typeof global.fetch;
+
   beforeEach(async () => {
+    originalFetch = global.fetch;
+    fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (url, options) => {
+      const urlStr = url.toString();
+      if (urlStr.includes('translate')) {
+        return new Response(JSON.stringify({ translations: ['mocked_translation'] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (urlStr.includes('define')) {
+        return new Response(JSON.stringify({ definitions: ['mocked_definition'] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return originalFetch(url, options);
+    });
+
     await clearDatabase();
 
     regularSetup = await setupTestUser(regularUsername);
@@ -34,6 +55,7 @@ describe('Presets E2E', () => {
   });
 
   afterEach(async () => {
+    fetchSpy.mockRestore();
     await teardownMercureListener(reader, streamPromise);
   });
 

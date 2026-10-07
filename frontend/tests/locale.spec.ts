@@ -8,13 +8,14 @@ test.describe('Locale and Routing logic', () => {
     // Check that we are redirected to /ru
     await expect(page).toHaveURL('/ru');
 
-    await expect(page.locator('text=Добро пожаловать.').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
   });
 
   test('should persist locale when navigating', async ({ page }) => {
     // Visit root -> redirects to /ru
     await page.goto('/');
     await expect(page).toHaveURL('/ru');
+    await page.getByTestId('create-dictionary-cancel-btn').click();
 
     await page.getByTestId('sidebar-login-btn').click();
     await expect(page).toHaveURL('/ru/login');
@@ -37,7 +38,7 @@ test.describe('Locale and Routing logic', () => {
 
     await page.goto('/');
     await expect(page).toHaveURL('/en');
-    await expect(page.locator('text=Welcome.').first()).toBeVisible();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
     await context.close();
   });
 
@@ -45,11 +46,11 @@ test.describe('Locale and Routing logic', () => {
     // Even though browser is 'ru-RU', visiting '/en' should force English
     await page.goto('/en');
     await expect(page).toHaveURL('/en');
-    await expect(page.locator('text=Welcome.').first()).toBeVisible();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
 
     // Now visit root again, it should redirect to '/en' because cookie is set
     await page.goto('/');
     await expect(page).toHaveURL('/en');
-    await expect(page.locator('text=Welcome.').first()).toBeVisible();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
   });
 });

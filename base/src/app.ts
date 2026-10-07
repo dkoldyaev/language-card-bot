@@ -44,6 +44,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/state', stateRoutes);
 app.use('/api/v1/add_word/batch', addWordBatchRoutes);

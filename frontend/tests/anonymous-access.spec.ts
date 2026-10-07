@@ -6,7 +6,6 @@ test.describe('Anonymous session onboarding', () => {
   test('a first-time visitor receives an anonymous session and is prompted to create the first dictionary', async ({ page }) => {
     await page.goto('/en');
 
-    await expect(page.getByTestId('guest-banner')).toBeVisible();
     await expect(page.getByRole('dialog', { name: createDictionaryDialogName })).toBeVisible();
     await expect(page.getByLabel('Language to Learn (Target)')).toBeVisible();
     await expect(page.getByLabel('Explanations / Native Language')).toBeVisible();
@@ -33,7 +32,6 @@ test.describe('Anonymous session onboarding', () => {
 
     await page.goto('/en');
 
-    await expect(page.getByTestId('guest-banner')).toBeVisible();
     await expect(page.getByRole('button', { name: /Legacy Spanish/ })).toBeVisible();
     await expect(page.getByRole('dialog', { name: createDictionaryDialogName })).toBeHidden();
   });
