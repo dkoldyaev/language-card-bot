@@ -44,7 +44,7 @@ export default function Layout() {
     apiClient.get('/dictionary', { params: { dictionaryId: activeDictionaryId } })
       .then((res) => {
         if (res.data.dictionary) {
-          setDictionary(res.data.dictionary, activeDictionaryId);
+          setDictionary(res.data.dictionary, activeDictionaryId, { updateActiveId: false });
         }
       })
       .catch((err) => console.error('Failed to load active dictionary:', err))

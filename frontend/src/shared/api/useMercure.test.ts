@@ -1,5 +1,5 @@
 import { fetchEventSource } from '@microsoft/fetch-event-source';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,11 +19,13 @@ describe('useMercure', () => {
   );
 
   beforeEach(() => {
-    useStore.getState().reset();
-    useStore.setState({
-      dictionaries: [{ id: 7, name: 'Spanish', targetLanguage: 'es', baseLanguage: 'en', wordCount: 0, isActive: true }],
-      activeDictionaryId: 7,
-      isDictionaryLoading: false,
+    act(() => {
+      useStore.getState().reset();
+      useStore.setState({
+        dictionaries: [{ id: 7, name: 'Spanish', targetLanguage: 'es', baseLanguage: 'en', wordCount: 0, isActive: true }],
+        activeDictionaryId: 7,
+        isDictionaryLoading: false,
+      });
     });
     onMessage = undefined;
     requestOptions = undefined;
@@ -42,14 +44,18 @@ describe('useMercure', () => {
     renderHook(() => useMercure(), { wrapper });
     expect(fetchEventSource).not.toHaveBeenCalled();
 
-    useStore.getState().setProfile({ id: 1, username: 'testuser' });
+    act(() => {
+      useStore.getState().setProfile({ id: 1, username: 'testuser' });
+    });
     renderHook(() => useMercure(), { wrapper });
     expect(fetchEventSource).not.toHaveBeenCalled();
   });
 
   it('subscribes to the authenticated user topic and aborts on unmount', () => {
-    useStore.getState().setProfile({ id: 1, username: 'testuser' });
-    useStore.getState().setMercureToken('mercure-token');
+    act(() => {
+      useStore.getState().setProfile({ id: 1, username: 'testuser' });
+      useStore.getState().setMercureToken('mercure-token');
+    });
 
     const { unmount } = renderHook(() => useMercure(), { wrapper });
 
@@ -66,11 +72,17 @@ describe('useMercure', () => {
   });
 
   it('applies dictionary and quiz messages received from Mercure', () => {
-    useStore.getState().setProfile({ id: 1, username: 'testuser' });
-    useStore.getState().setMercureToken('mercure-token');
+    act(() => {
+      useStore.getState().setProfile({ id: 1, username: 'testuser' });
+      useStore.getState().setMercureToken('mercure-token');
+    });
     renderHook(() => useMercure(), { wrapper });
 
-    const publish = (payload: unknown) => onMessage?.({ data: JSON.stringify(payload) });
+    const publish = (payload: unknown) => {
+      act(() => {
+        onMessage?.({ data: JSON.stringify(payload) });
+      });
+    };
 
     publish({
       type: 'dictionary_add_processing',
@@ -114,16 +126,20 @@ describe('useMercure', () => {
 
   it('ignores a malformed event without preventing later dictionary sync', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    useStore.getState().setProfile({ id: 1, username: 'testuser' });
-    useStore.getState().setMercureToken('mercure-token');
+    act(() => {
+      useStore.getState().setProfile({ id: 1, username: 'testuser' });
+      useStore.getState().setMercureToken('mercure-token');
+    });
     renderHook(() => useMercure(), { wrapper });
 
-    onMessage?.({ data: '{not-json' });
-    onMessage?.({
-      data: JSON.stringify({
-        type: 'dictionaries_sync',
-        dictionaries: [{ id: 9, name: 'Italian', targetLanguage: 'it', baseLanguage: 'en', wordCount: 0, isActive: true }],
-      }),
+    act(() => {
+      onMessage?.({ data: '{not-json' });
+      onMessage?.({
+        data: JSON.stringify({
+          type: 'dictionaries_sync',
+          dictionaries: [{ id: 9, name: 'Italian', targetLanguage: 'it', baseLanguage: 'en', wordCount: 0, isActive: true }],
+        }),
+      });
     });
 
     expect(consoleError).toHaveBeenCalledWith('Error parsing Mercure message:', expect.any(SyntaxError));

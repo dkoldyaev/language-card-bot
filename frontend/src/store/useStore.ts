@@ -193,7 +193,7 @@ interface AppState {
   updateDictionaryItem: (id: number, partial: Partial<DictionaryItem>) => void;
   setAppState: (appState: AppSyncState | null) => void;
   setIsDictionaryLoading: (isLoading: boolean) => void;
-  setDictionary: (dictionary: DictionaryWord[], dictId?: number) => void;
+  setDictionary: (dictionary: DictionaryWord[], dictId?: number, options?: { updateActiveId?: boolean }) => void;
   addDictionaryWord: (word: DictionaryWord, dictId?: number) => void;
   addDictionaryWords: (words: DictionaryWord[], dictId?: number) => void;
   removeDictionaryWord: (wordId: number) => void;
@@ -330,7 +330,7 @@ const useStore = create<AppState>()(
         };
       }),
       setIsDictionaryLoading: (isDictionaryLoading) => set({ isDictionaryLoading }),
-      setDictionary: (dictionary, dictId) => set((state) => {
+      setDictionary: (dictionary, dictId, options = { updateActiveId: true }) => set((state) => {
         const dict = dictId ? state.dictionaries.find(d => d.id === dictId) : undefined;
         const normalizedDictionary = (dictionary || []).map((word) => normalizeWordDefinitions(word, dict?.baseLanguage?.toLowerCase()));
         
@@ -343,7 +343,7 @@ const useStore = create<AppState>()(
         return {
           dictionary: normalizedDictionary,
           guestDictionaryWords: updatedGuestWords,
-          activeDictionaryId: dictId !== undefined ? dictId : state.activeDictionaryId,
+          ...(options.updateActiveId && dictId !== undefined ? { activeDictionaryId: dictId } : {}),
           ...(shouldResetQuiz ? { quizCard: null, quizVariants: null } : {})
         };
       }),

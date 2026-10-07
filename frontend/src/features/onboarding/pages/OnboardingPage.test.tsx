@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
@@ -10,12 +10,14 @@ vi.mock('../../../shared/api/client');
 describe('OnboardingPage', () => {
   beforeEach(() => {
     localStorage.clear();
-    useStore.setState({
-      token: null,
-      dictionaries: [],
-      dictionary: [],
-      hasSeenOnboarding: false,
-      hasCompletedGuestOnboarding: false,
+    act(() => {
+      useStore.setState({
+        token: null,
+        dictionaries: [],
+        dictionary: [],
+        hasSeenOnboarding: false,
+        hasCompletedGuestOnboarding: false,
+      });
     });
     vi.clearAllMocks();
     vi.mocked(apiClient.get).mockImplementation((url: string) => {
@@ -40,14 +42,16 @@ describe('OnboardingPage', () => {
     });
   });
 
-  it('renders onboarding page step 1 with brand header, theme and locale switchers', () => {
-    render(
-      <MemoryRouter initialEntries={['/onboarding']}>
-        <Routes>
-          <Route path="/onboarding" element={<OnboardingPage />} />
-        </Routes>
-      </MemoryRouter>
-    );
+  it('renders onboarding page step 1 with brand header, theme and locale switchers', async () => {
+    await act(async () => {
+      render(
+        <MemoryRouter initialEntries={['/onboarding']}>
+          <Routes>
+            <Route path="/onboarding" element={<OnboardingPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+    });
 
     expect(screen.getByText('CardBot')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /switch to dark theme|switch to light theme/i })).toBeInTheDocument();
@@ -55,7 +59,7 @@ describe('OnboardingPage', () => {
     expect(screen.getByTestId('guest-onboarding-next-btn')).toBeInTheDocument();
   });
 
-  it('redirects to / when user already has existing data in localStorage', () => {
+  it('redirects to / when user already has existing data in localStorage', async () => {
     localStorage.setItem(
       'english-card-bot-storage',
       JSON.stringify({
@@ -67,27 +71,31 @@ describe('OnboardingPage', () => {
       })
     );
 
-    render(
-      <MemoryRouter initialEntries={['/onboarding']}>
-        <Routes>
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/" element={<div>Dashboard Home</div>} />
-        </Routes>
-      </MemoryRouter>
-    );
+    await act(async () => {
+      render(
+        <MemoryRouter initialEntries={['/onboarding']}>
+          <Routes>
+            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/" element={<div>Dashboard Home</div>} />
+          </Routes>
+        </MemoryRouter>
+      );
+    });
 
     expect(screen.getByText('Dashboard Home')).toBeInTheDocument();
   });
 
   it('navigates from step 1 to step 2 and finishes with preset', async () => {
-    render(
-      <MemoryRouter initialEntries={['/onboarding']}>
-        <Routes>
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/" element={<div>Dashboard Home</div>} />
-        </Routes>
-      </MemoryRouter>
-    );
+    await act(async () => {
+      render(
+        <MemoryRouter initialEntries={['/onboarding']}>
+          <Routes>
+            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/" element={<div>Dashboard Home</div>} />
+          </Routes>
+        </MemoryRouter>
+      );
+    });
 
     // Click Next to load presets
     const nextBtn = screen.getByTestId('guest-onboarding-next-btn');

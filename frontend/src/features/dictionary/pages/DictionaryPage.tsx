@@ -83,14 +83,7 @@ export default function DictionaryPage() {
     navigate(`/${locale}/dictionary/${dictId}`);
     if (!token) {
       const dictWords = useStore.getState().guestDictionaryWords[dictId] || [];
-      setDictionary(dictWords, dictId);
-      return;
-    }
-    
-    try {
-      await apiClient.post(`/dictionaries/${dictId}/select`);
-    } catch (error) {
-      console.error('Failed to select dictionary:', error);
+      setDictionary(dictWords, dictId, { updateActiveId: false });
     }
   };
 

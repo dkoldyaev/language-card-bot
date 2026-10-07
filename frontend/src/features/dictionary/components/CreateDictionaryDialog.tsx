@@ -71,9 +71,9 @@ export default function CreateDictionaryDialog({
       setError(null);
 
       let newDict: DictionaryItem;
+      const isFirst = dictionaries.length === 0;
       if (!token) {
         const dictId = Date.now();
-        const isFirst = dictionaries.length === 0;
         const defaultName = `${targetLanguage.toUpperCase()} (${baseLanguage.toUpperCase()})`;
         newDict = {
           id: dictId,
@@ -96,7 +96,7 @@ export default function CreateDictionaryDialog({
       }
 
       addDictionary(newDict);
-      setDictionary([], newDict.id);
+      setDictionary([], newDict.id, { updateActiveId: isFirst });
 
       if (onCreated) {
         onCreated(newDict);

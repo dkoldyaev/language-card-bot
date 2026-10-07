@@ -5,6 +5,14 @@ import { redisClient } from '../core/cache';
 import { ImageGeneratorFactory } from '../core/ImageGeneratorFactory';
 import { buildCacheKey, imagesRouter } from './images';
 
+vi.mock('../core/cache', () => ({
+  redisClient: {
+    mget: vi.fn(),
+    pipeline: vi.fn(),
+    on: vi.fn(),
+  },
+}));
+
 describe('POST /api/v1/images', () => {
   const app = express();
   app.use(express.json());

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../../../shared/api/client';
@@ -22,8 +22,10 @@ function renderDashboard() {
 describe('DashboardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useStore.getState().reset();
-    useStore.setState({ token: 'mock-token' });
+    act(() => {
+      useStore.getState().reset();
+      useStore.setState({ token: 'mock-token' });
+    });
     mockedApiClient.get.mockImplementation((url) => {
       if (url === '/dashboard/stats') {
         return Promise.resolve({
@@ -47,11 +49,13 @@ describe('DashboardPage', () => {
   });
 
   it('renders State 1 (Empty dictionary) with onboarding and disabled quiz button', async () => {
-    useStore.setState({
-      dictionary: [],
-      dictionaries: [{ id: 1, name: 'English', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 0, isActive: true }],
-      activeDictionaryId: 1,
-      dashboardStats: null,
+    act(() => {
+      useStore.setState({
+        dictionary: [],
+        dictionaries: [{ id: 1, name: 'English', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 0, isActive: true }],
+        activeDictionaryId: 1,
+        dashboardStats: null,
+      });
     });
 
     renderDashboard();
@@ -64,6 +68,10 @@ describe('DashboardPage', () => {
 
     // Quick add input should be present
     expect(screen.getByPlaceholderText(/Type a new word/i)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/dashboard/stats', expect.anything());
+    });
   });
 
 
@@ -88,17 +96,19 @@ describe('DashboardPage', () => {
       return Promise.resolve({ data: {} });
     });
 
-    useStore.setState({
-      dictionary: [
-        {
-          id: 1,
-          text: 'serendipity',
-          definitions: [{ id: 10, text: 'A fortunate discovery', translation: { id: 100, text: 'счастливая случайность' } }],
-        },
-      ],
-      dictionaries: [{ id: 1, name: 'English', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true }],
-      activeDictionaryId: 1,
-      dashboardStats: stats,
+    act(() => {
+      useStore.setState({
+        dictionary: [
+          {
+            id: 1,
+            text: 'serendipity',
+            definitions: [{ id: 10, text: 'A fortunate discovery', translation: { id: 100, text: 'счастливая случайность' } }],
+          },
+        ],
+        dictionaries: [{ id: 1, name: 'English', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true }],
+        activeDictionaryId: 1,
+        dashboardStats: stats,
+      });
     });
 
     renderDashboard();
@@ -146,17 +156,19 @@ describe('DashboardPage', () => {
       return Promise.resolve({ data: {} });
     });
 
-    useStore.setState({
-      dictionary: [
-        {
-          id: 1,
-          text: 'ephemeral',
-          definitions: [{ id: 10, text: 'Lasting for a very short time', translation: { id: 100, text: 'эфемерный' } }],
-        },
-      ],
-      dictionaries: [{ id: 1, name: 'English', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true }],
-      activeDictionaryId: 1,
-      dashboardStats: stats,
+    act(() => {
+      useStore.setState({
+        dictionary: [
+          {
+            id: 1,
+            text: 'ephemeral',
+            definitions: [{ id: 10, text: 'Lasting for a very short time', translation: { id: 100, text: 'эфемерный' } }],
+          },
+        ],
+        dictionaries: [{ id: 1, name: 'English', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true }],
+        activeDictionaryId: 1,
+        dashboardStats: stats,
+      });
     });
 
     renderDashboard();
@@ -178,12 +190,14 @@ describe('DashboardPage', () => {
   });
 
   it('computes guest dashboard stats locally without API call when guest', async () => {
-    useStore.setState({
-      token: null,
-      dictionary: [{ id: 1, text: 'guest-word', definitions: [{ id: 1, text: 'def', translation: null }] }],
-      dictionaries: [{ id: 1, name: 'Guest Deck', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true }],
-      activeDictionaryId: 1,
-      guestQuizAttempts: [{ wordText: 'guest-word', result: 'SUCCESS', createdAt: new Date().toISOString() }],
+    act(() => {
+      useStore.setState({
+        token: null,
+        dictionary: [{ id: 1, text: 'guest-word', definitions: [{ id: 1, text: 'def', translation: null }] }],
+        dictionaries: [{ id: 1, name: 'Guest Deck', targetLanguage: 'en', baseLanguage: 'ru', wordCount: 1, isActive: true }],
+        activeDictionaryId: 1,
+        guestQuizAttempts: [{ wordText: 'guest-word', result: 'SUCCESS', createdAt: new Date().toISOString() }],
+      });
     });
 
     renderDashboard();

@@ -70,9 +70,9 @@ describe('DictionaryPage', () => {
     // Should NOT fetch words directly
     expect(getSpy).not.toHaveBeenCalledWith('/dictionary', expect.anything());
 
-    // CRITICAL: activeDictionaryId must NOT change directly, and /select MUST be called
+    // CRITICAL: activeDictionaryId must NOT change directly, and /select must NOT be called
     expect(useStore.getState().activeDictionaryId).toBe(1);
-    expect(postSpy).toHaveBeenCalledWith(expect.stringContaining('/select'));
+    expect(postSpy).not.toHaveBeenCalledWith(expect.stringContaining('/select'));
   });
 
   it('toggles edit mode when pencil icon is clicked and saves new name', async () => {

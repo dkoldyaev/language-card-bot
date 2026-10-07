@@ -19,7 +19,6 @@ import CreateDictionaryDialog from '../../features/dictionary/components/CreateD
 import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
-import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 import { useTranslation } from '../i18n/I18nContext';
 import { AppChip, radiusTokens, spacingTokens } from '../ui';
 
@@ -31,7 +30,7 @@ export default function DictionarySelector() {
   const { locale } = useParams<{ locale: string }>();
   const token = useStore((state) => state.token);
   const dictionaries = useStore((state) => state.dictionaries);
-  const activeDictionaryId = useActiveDictionaryId();
+  const activeDictionaryId = useStore((state) => state.activeDictionaryId) || dictionaries[0]?.id || null;
   const setDictionary = useStore((state) => state.setDictionary);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
