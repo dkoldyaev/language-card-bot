@@ -115,7 +115,7 @@ describe('Image Feature Service', () => {
         },
       ];
 
-      const updateSpy = vi.spyOn(prisma.definition, 'update').mockResolvedValue({ id: 20 } as any);
+      const updateSpy = vi.spyOn(prisma.definition, 'update').mockResolvedValue({ id: 20 } as never);
 
       const attached = await attachExistingImagesToDefinition(20, existingImages);
 
@@ -160,7 +160,7 @@ describe('Image Feature Service', () => {
         createdAt: new Date(),
       };
 
-      const upsertSpy = vi.spyOn(prisma.image, 'upsert').mockResolvedValue(mockImage as any);
+      const upsertSpy = vi.spyOn(prisma.image, 'upsert').mockResolvedValue(mockImage as never);
 
       const result = await attachImagesToDefinition(10, [['https://images.site.com/photo-1.jpg']], [['car', 'auto']]);
 
@@ -194,7 +194,7 @@ describe('Image Feature Service', () => {
         createdAt: new Date(),
       };
 
-      const upsertSpy = vi.spyOn(prisma.image, 'upsert').mockResolvedValue(existingImage as any);
+      const upsertSpy = vi.spyOn(prisma.image, 'upsert').mockResolvedValue(existingImage as never);
 
       const result = await attachImagesToDefinition(12, [['https://images.site.com/photo-1.jpg']], [['car', 'auto']]);
 
@@ -255,8 +255,8 @@ describe('Image Feature Service', () => {
       ];
 
       vi.spyOn(prisma.definition, 'findUnique').mockResolvedValue(null);
-      vi.spyOn(prisma.image, 'findMany').mockResolvedValue(existingImages as any);
-      const updateSpy = vi.spyOn(prisma.definition, 'update').mockResolvedValue({ id: 2 } as any);
+      vi.spyOn(prisma.image, 'findMany').mockResolvedValue(existingImages as never);
+      const updateSpy = vi.spyOn(prisma.definition, 'update').mockResolvedValue({ id: 2 } as never);
 
       const results = await processDefinitionImage(2, 'a road vehicle with four wheels');
 
@@ -314,7 +314,7 @@ describe('Image Feature Service', () => {
         url: 'https://images.site.com/plane.jpg',
         source: 'mock',
         text: 'airplane flight',
-      } as any);
+      } as never);
 
       const results = await processDefinitionImage(5, 'a powered flying vehicle with fixed wings');
 
@@ -345,13 +345,13 @@ describe('Image Feature Service', () => {
   describe('English keywords enforcement', () => {
 
     it('extractKeywordsFromDefinition includes strict instruction that keywords must be in English regardless of definition language', async () => {
-      let capturedBody: any;
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url: any, options: any) => {
+      let capturedBody: unknown;
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url: unknown, options: RequestInit) => {
         capturedBody = JSON.parse(options.body);
         return {
           ok: true,
           json: async () => ({ data: { keywordSets: [['apple', 'fruit']] } }),
-        } as any;
+        } as never;
       });
 
       const russianDefinition = 'Съедобный плод домашней яблони';
@@ -379,19 +379,19 @@ describe('Image Feature Service', () => {
 
   describe('getImagesForDefinitionText', () => {
     it('returns existing images from DB if matching keywords found without calling generator', async () => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any) => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: unknown) => {
         if (url.toString().includes('generate')) {
           return {
             ok: true,
             json: async () => ({ data: { keywordSets: [['apple', 'fruit']] } }),
-          } as any;
+          } as never;
         }
         throw new Error('Image generator should not be called');
       });
 
       vi.spyOn(prisma.image, 'findMany').mockResolvedValue([
         { url: 'https://images.site.com/apple.jpg', source: 'unsplash', text: 'apple fruit' },
-      ] as any);
+      ] as never);
 
       const result = await getImagesForDefinitionText('an edible round fruit');
       expect(result.fromDb).toBe(true);
@@ -400,17 +400,17 @@ describe('Image Feature Service', () => {
     });
 
     it('fetches from generator when no matching images exist in DB', async () => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any) => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: unknown) => {
         if (url.toString().includes('generate')) {
           return {
             ok: true,
             json: async () => ({ data: { keywordSets: [['banana', 'fruit']] } }),
-          } as any;
+          } as never;
         }
         return {
           ok: true,
           json: async () => [['https://images.site.com/banana.jpg']],
-        } as any;
+        } as never;
       });
 
       vi.spyOn(prisma.image, 'findMany').mockResolvedValue([]);
@@ -427,7 +427,7 @@ describe('Image Feature Service', () => {
       vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
         ok: true,
         json: async () => ({ data: { keywordSets: [] } }),
-      } as any));
+      } as never));
 
       vi.spyOn(prisma.definition, 'findUnique').mockResolvedValue(null);
       const findManySpy = vi.spyOn(prisma.image, 'findMany');
@@ -440,7 +440,7 @@ describe('Image Feature Service', () => {
       vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
         ok: true,
         json: async () => ({ data: { keywordSets: [] } }),
-      } as any));
+      } as never));
 
       const result = await getImagesForDefinitionText('');
       expect(result.keywordSets).toEqual([]);

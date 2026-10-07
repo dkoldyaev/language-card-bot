@@ -11,7 +11,7 @@ export function useActiveDictionaryId(): number | null {
   const match = dictMatch || quizMatch;
   if (match?.params.dictId && match.params.dictId !== 'new') {
     const id = parseInt(match.params.dictId, 10);
-    if (!isNaN(id)) return id;
+    if (!Number.isNaN(id)) return id;
   }
   
   return storeActiveId || profile?.active_dictionary_id || dictionaries[0]?.id || null;

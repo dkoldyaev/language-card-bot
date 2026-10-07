@@ -178,7 +178,8 @@ async function extractKeywords(
 
   try {
     return await extractKeywordsFromDefinition(definitionText, wordText);
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as { cause?: { code?: string }, message?: string };
     const isNetworkError =
       err?.cause?.code === 'ECONNREFUSED' ||
       err?.message?.includes('fetch failed') ||
@@ -216,7 +217,8 @@ async function fetchImages(
 
     const urls = (await response.json()) as string[][];
     return Array.isArray(urls) ? urls : [];
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as { cause?: { code?: string }, message?: string };
     const isNetworkError =
       err?.cause?.code === 'ECONNREFUSED' ||
       err?.message?.includes('fetch failed') ||
@@ -264,7 +266,8 @@ async function main() {
         text: true,
       },
     });
-  } catch (dbErr: any) {
+  } catch (error) {
+    const dbErr = error as { message?: string };
     if (!args.urlsOnly && !args.isJson) {
       console.warn(`⚠️  Database query skipped: ${dbErr.message}`);
     }

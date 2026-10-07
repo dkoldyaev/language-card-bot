@@ -63,13 +63,13 @@ export class WikimediaImageAdapter implements IImageGenerator {
     if (pages) {
       const validPages = Object.values(pages).filter((p) => {
         const info = p.imageinfo?.[0];
-        return info && info.mime && info.mime.startsWith('image/');
+        return info?.mime?.startsWith('image/');
       }).slice(0, 3);
 
       if (validPages.length > 0) {
         return validPages.map(page => {
-          const imageInfo = page.imageinfo![0];
-          return imageInfo.thumburl || imageInfo.url || '';
+          const imageInfo = page.imageinfo?.[0];
+          return imageInfo?.thumburl || imageInfo?.url || '';
         }).filter(url => url.length > 0);
       }
     }

@@ -35,7 +35,7 @@ describe('dictionaryWorker - add_word job handling', () => {
         targetLanguage: 'en',
         baseLanguage: 'ru',
       },
-    } as any);
+    } as never);
 
     // Mock definer fetch API
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
@@ -46,12 +46,12 @@ describe('dictionaryWorker - add_word job handling', () => {
           { text: 'the tree that bears apple fruit' },
         ],
       }),
-    } as any);
+    } as never);
 
     prismaMock.definition.createManyAndReturn.mockResolvedValue([
       { id: 101, text: 'a round edible fruit produced by an apple tree', wordId: 10 },
       { id: 102, text: 'the tree that bears apple fruit', wordId: 10 },
-    ] as any);
+    ] as never);
 
     const job = {
       name: 'fetchDefinitions',
@@ -64,7 +64,7 @@ describe('dictionaryWorker - add_word job handling', () => {
     } as unknown as Job;
 
     // Execute the worker process function
-    const processFn = (dictionaryWorker as any).processFn;
+    const processFn = (dictionaryWorker as never).processFn;
     await processFn(job);
 
     // 1. Translations enqueued

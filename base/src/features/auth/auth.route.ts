@@ -44,7 +44,7 @@ async function getAnonymousUser(req: Pick<Request, 'user'>) {
     include: { accounts: true },
   });
 
-  if (!user || !user.accounts.some((account) => account.provider === 'anonymous')) {
+  if (!user?.accounts.some((account) => account.provider === 'anonymous')) {
     return null;
   }
 

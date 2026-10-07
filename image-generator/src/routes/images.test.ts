@@ -25,7 +25,7 @@ describe('POST /api/v1/images', () => {
     const mockGenerator = {
       generate: vi.fn().mockResolvedValue([[]]),
     };
-    vi.spyOn(ImageGeneratorFactory, 'getGenerator').mockReturnValue(mockGenerator as any);
+    vi.spyOn(ImageGeneratorFactory, 'getGenerator').mockReturnValue(mockGenerator as never);
 
     const res = await request(app)
       .post('/api/v1/images')
@@ -151,7 +151,7 @@ describe('POST /api/v1/images', () => {
     const mockGenerator = {
       generate: vi.fn().mockResolvedValue([['https://generated.site/dog.jpg']]),
     };
-    vi.spyOn(ImageGeneratorFactory, 'getGenerator').mockReturnValue(mockGenerator as any);
+    vi.spyOn(ImageGeneratorFactory, 'getGenerator').mockReturnValue(mockGenerator as never);
 
     const res = await request(app)
       .post('/api/v1/images')

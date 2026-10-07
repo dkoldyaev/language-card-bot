@@ -212,8 +212,8 @@ interface AppState {
   setDefinitionImagesBatch: (items: Array<{ id: number; images: QuizCardImageItem[] }>) => void;
   hasSeenOnboarding: boolean;
   setHasSeenOnboarding: (hasSeen: boolean) => void;
-  presets: any[]; // Type should be PresetItem[] but we don't have it imported here. It's fine for now, or we can use any[]
-  setPresets: (presets: any[]) => void;
+  presets: unknown[]; // Type should be PresetItem[] but we don't have it imported here. It's fine for now, or we can use unknown[]
+  setPresets: (presets: unknown[]) => void;
   reset: () => void;
 }
 
@@ -235,7 +235,7 @@ const initialState = {
   quizTranslation: null,
   quizVariants: null,
   dashboardStats: null,
-  presets: [] as any[], // Using any[] temporarily, will be typed below
+  presets: [] as unknown[], // Using unknown[] temporarily, will be typed below
   themeMode: 'light' as 'light' | 'dark' | 'system',
   hasSeenOnboarding: false,
   hasCompletedGuestOnboarding: false,

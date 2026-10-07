@@ -19,7 +19,7 @@ import { type QuizAnswerRequest,
 
 const router = Router();
 
-router.post('/start', authMiddleware, validateRequest(QuizStartSchema), async (req: Request<Record<string, string>, any, QuizStartRequest>, res: Response) => {
+router.post('/start', authMiddleware, validateRequest(QuizStartSchema), async (req: Request<Record<string, string>, unknown, QuizStartRequest>, res: Response) => {
   const user = getAuthUser(req);
   
   try {
@@ -73,7 +73,7 @@ router.post('/start', authMiddleware, validateRequest(QuizStartSchema), async (r
   }
 });
 
-router.post('/variants', authMiddleware, validateRequest(QuizVariantsSchema), async (req: Request<Record<string, string>, any, QuizVariantsRequest>, res: Response) => {
+router.post('/variants', authMiddleware, validateRequest(QuizVariantsSchema), async (req: Request<Record<string, string>, unknown, QuizVariantsRequest>, res: Response) => {
   const user = getAuthUser(req);
   
   try {
@@ -106,7 +106,7 @@ router.post('/variants', authMiddleware, validateRequest(QuizVariantsSchema), as
   }
 });
 
-router.post('/translate_definition', authMiddleware, validateRequest(QuizTranslateDefinitionSchema), async (req: Request<Record<string, string>, any, QuizTranslateDefinitionRequest>, res: Response) => {
+router.post('/translate_definition', authMiddleware, validateRequest(QuizTranslateDefinitionSchema), async (req: Request<Record<string, string>, unknown, QuizTranslateDefinitionRequest>, res: Response) => {
   const user = getAuthUser(req);
 
   try {
@@ -149,7 +149,7 @@ router.post('/translate_definition', authMiddleware, validateRequest(QuizTransla
   }
 });
 
-router.post('/answer', authMiddleware, validateRequest(QuizAnswerSchema), async (req: Request<Record<string, string>, any, QuizAnswerRequest>, res: Response) => {
+router.post('/answer', authMiddleware, validateRequest(QuizAnswerSchema), async (req: Request<Record<string, string>, unknown, QuizAnswerRequest>, res: Response) => {
   const user = getAuthUser(req);
   const { suggestion } = req.body;
   try {
@@ -195,7 +195,7 @@ router.post('/answer', authMiddleware, validateRequest(QuizAnswerSchema), async 
   }
 });
 
-router.post('/next_card', authMiddleware, validateRequest(QuizNextCardSchema), async (req: Request<Record<string, string>, any, QuizNextCardRequest>, res: Response) => {
+router.post('/next_card', authMiddleware, validateRequest(QuizNextCardSchema), async (req: Request<Record<string, string>, unknown, QuizNextCardRequest>, res: Response) => {
   const user = getAuthUser(req);
   
   try {
@@ -244,7 +244,7 @@ router.post('/next_card', authMiddleware, validateRequest(QuizNextCardSchema), a
   }
 });
 
-router.post('/next_definition', authMiddleware, validateRequest(QuizNextDefinitionSchema), async (req: Request<Record<string, string>, any, QuizNextDefinitionRequest>, res: Response) => {
+router.post('/next_definition', authMiddleware, validateRequest(QuizNextDefinitionSchema), async (req: Request<Record<string, string>, unknown, QuizNextDefinitionRequest>, res: Response) => {
   const user = getAuthUser(req);
 
   try {
