@@ -13,7 +13,7 @@ vi.mock('../api/client', () => ({
 
 describe('Layout', () => {
   const renderLayout = async (initialEntry = '/en') => {
-    let result: ReturnType<typeof render>;
+    let result!: ReturnType<typeof render>;
     await act(async () => {
       result = render(
         <MemoryRouter initialEntries={[initialEntry]}>

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { PresetItem } from '../features/presets/types';
 import type { LanguageCode } from '../shared/i18n/types';
 
 export interface UserProfile {
@@ -212,8 +213,8 @@ interface AppState {
   setDefinitionImagesBatch: (items: Array<{ id: number; images: QuizCardImageItem[] }>) => void;
   hasSeenOnboarding: boolean;
   setHasSeenOnboarding: (hasSeen: boolean) => void;
-  presets: unknown[]; // Type should be PresetItem[] but we don't have it imported here. It's fine for now, or we can use unknown[]
-  setPresets: (presets: unknown[]) => void;
+  presets: PresetItem[];
+  setPresets: (presets: PresetItem[]) => void;
   reset: () => void;
 }
 
@@ -235,7 +236,7 @@ const initialState = {
   quizTranslation: null,
   quizVariants: null,
   dashboardStats: null,
-  presets: [] as unknown[], // Using unknown[] temporarily, will be typed below
+  presets: [] as PresetItem[],
   themeMode: 'light' as 'light' | 'dark' | 'system',
   hasSeenOnboarding: false,
   hasCompletedGuestOnboarding: false,
