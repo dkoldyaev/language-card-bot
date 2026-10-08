@@ -333,6 +333,8 @@ function generateComposeEnv({ domainHost, pgAppName, pgUser, pgPassword, pgDbNam
     'BASE_LLM_API_URL=http://llm:3003/api/v1/generate',
     `BASE_LLM_PROVIDER=${getEnvVar('BASE_LLM_PROVIDER')}`,
     `BASE_LLM_MODEL=${getEnvVar('BASE_LLM_MODEL')}`,
+    `BASE_IMAGE_GENERATOR_API_URL=http://image-generator:3004/api/v1/images`,
+    `BASE_IMAGE_GENERATOR_PROVIDER=${getEnvVar('BASE_IMAGE_GENERATOR_PROVIDER')}`,
     `BASE_ENABLE_DB_LOGGING=${getEnvVar('BASE_ENABLE_DB_LOGGING')}`,
     `BASE_ALLOW_GUEST_AI_GENERATION=${getEnvVar('BASE_ALLOW_GUEST_AI_GENERATION')}`,
     `BASE_GUEST_AI_DAILY_LIMIT=${getEnvVar('BASE_GUEST_AI_DAILY_LIMIT')}`,
@@ -354,8 +356,8 @@ function generateComposeEnv({ domainHost, pgAppName, pgUser, pgPassword, pgDbNam
     `TRANSLATOR_MOCK_TIMEOUT=${getEnvVar('TRANSLATOR_MOCK_TIMEOUT')}`,
     `TRANSLATOR_APP_TYPE=${getEnvVar('BASE_TRANSLATOR_APP_TYPE')}`,
     'TRANSLATOR_LLM_SERVICE_URL=http://llm:3003/api/v1/generate',
-    `TRANSLATOR_LLM_PROVIDER=${getEnvVar('BASE_LLM_PROVIDER')}`,
-    `TRANSLATOR_LLM_MODEL=${getEnvVar('BASE_LLM_MODEL')}`,
+    `TRANSLATOR_LLM_PROVIDER=${getEnvVar('TRANSLATOR_LLM_PROVIDER')}`,
+    `TRANSLATOR_LLM_MODEL=${getEnvVar('TRANSLATOR_LLM_MODEL')}`,
     '',
     '# LLM SERVICE',
     'LLM_TARGET=production',
@@ -376,6 +378,17 @@ function generateComposeEnv({ domainHost, pgAppName, pgUser, pgPassword, pgDbNam
     `DEFINER_CACHE_URL=${redisUrl}/2`,
     `DEFINER_MOCK_TIMEOUT=${getEnvVar('DEFINER_MOCK_TIMEOUT')}`,
     `DEFINER_APP_TYPE=${getEnvVar('BASE_DEFINER_APP_TYPE')}`,
+    '',
+    '# IMAGE GENERATOR SERVICE',
+    'IMAGE_GENERATOR_TARGET=production',
+    `IMAGE_GENERATOR_PORT=${getEnvVar('IMAGE_GENERATOR_PORT')}`,
+    `IMAGE_GENERATOR_PROVIDER=${getEnvVar('IMAGE_GENERATOR_PROVIDER')}`,
+    `IMAGE_GENERATOR_UNSPLASH_ACCESS_KEY=${getEnvVar('IMAGE_GENERATOR_UNSPLASH_ACCESS_KEY')}`,
+    `IMAGE_GENERATOR_PEXELS_API_KEY=${getEnvVar('IMAGE_GENERATOR_PEXELS_API_KEY')}`,
+    `IMAGE_GENERATOR_PIXABAY_API_KEY=${getEnvVar('IMAGE_GENERATOR_PIXABAY_API_KEY')}`,
+    `IMAGE_GENERATOR_WIKIMEDIA_USER_AGENT=${getEnvVar('IMAGE_GENERATOR_WIKIMEDIA_USER_AGENT')}`,
+    `IMAGE_GENERATOR_MOCK_TIMEOUT=${getEnvVar('IMAGE_GENERATOR_MOCK_TIMEOUT')}`,
+    `IMAGE_GENERATOR_CACHE_URL=${redisUrl}/5`,
     '',
     '# FRONTEND SERVICE',
     'FRONTEND_TARGET=production',
@@ -581,6 +594,7 @@ async function main() {
     { serviceName: 'translator', networkIds: [envNet.networkId], detachDokployNetwork: false },
     { serviceName: 'definer', networkIds: [envNet.networkId], detachDokployNetwork: false },
     { serviceName: 'llm', networkIds: [envNet.networkId], detachDokployNetwork: false },
+    { serviceName: 'image-generator', networkIds: [envNet.networkId], detachDokployNetwork: false },
   ];
 
   console.log('\n⚙️  Configuring Compose application settings...');
@@ -609,7 +623,7 @@ async function main() {
   });
   console.log(`✅ Repository dkoldyaev/language-card-bot (${gitBranch}), composePath: ./docker-compose.yml`);
   console.log('✅ Environment variables saved');
-  console.log(`✅ Connected services (app, translator, definer, llm) to isolated network "${envNetName}"`);
+  console.log(`✅ Connected services (app, translator, definer, llm, image-generator) to isolated network "${envNetName}"`);
 
   // 7. Setup Traefik Domains
   console.log('\n🌐 Configuring Traefik domain routes...');
