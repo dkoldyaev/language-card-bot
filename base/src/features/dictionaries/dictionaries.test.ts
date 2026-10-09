@@ -8,6 +8,9 @@ import { env } from '../../core/env';
 import { prisma } from '../../prisma';
 
 vi.mock('../../prisma');
+vi.mock('../event_bus/event_bus.service', () => ({
+  publishEvent: vi.fn().mockResolvedValue(undefined),
+}));
 const prismaMock = prisma as unknown as ReturnType<typeof mockDeep<PrismaClient>>;
 
 describe('Dictionaries API', () => {

@@ -9,6 +9,9 @@ import { prisma } from '../../prisma';
 import { enqueueFetchTranslations } from '../add_word/add_word.queue';
 
 vi.mock('../../prisma');
+vi.mock('../event_bus/event_bus.service', () => ({
+  publishEvent: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock('../add_word/add_word.queue', () => ({
   enqueueFetchTranslations: vi.fn().mockResolvedValue(undefined)
 }));
