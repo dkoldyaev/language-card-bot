@@ -19,7 +19,6 @@ import CreateDictionaryDialog from '../../features/dictionary/components/CreateD
 import { useGuidelineStore } from '../../features/guideline';
 import useStore from '../../store/useStore';
 import apiClient from '../api/client';
-import { useActiveDictionaryId } from '../hooks/useActiveDictionaryId';
 import { useTranslation } from '../i18n/I18nContext';
 import { AppChip, radiusTokens, spacingTokens } from '../ui';
 
@@ -31,13 +30,14 @@ export default function DictionarySelector() {
   const { locale } = useParams<{ locale: string }>();
   const token = useStore((state) => state.token);
   const dictionaries = useStore((state) => state.dictionaries);
-  const activeDictionaryId = useActiveDictionaryId();
+  const storeActiveDictionaryId = useStore((state) => state.activeDictionaryId);
+  const setActiveDictionaryId = useStore((state) => state.setActiveDictionaryId);
   const setDictionary = useStore((state) => state.setDictionary);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const activeDict = dictionaries.find((d) => d.id === activeDictionaryId) || dictionaries[0];
+  const activeDict = dictionaries.find((d) => d.id === storeActiveDictionaryId) || dictionaries.find((d) => d.isActive) || dictionaries[0];
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -56,11 +56,12 @@ export default function DictionarySelector() {
 
   const handleSelect = async (dictId: number) => {
     handleCloseMenu();
-    if (dictId === activeDictionaryId) return;
+    if (dictId === activeDict?.id) return;
 
     navigate(`/${locale}/dictionary/${dictId}`);
 
     if (!token) {
+      setActiveDictionaryId(dictId);
       const dictWords = useStore.getState().guestDictionaryWords[dictId] || [];
       setDictionary(dictWords, dictId);
       return;
@@ -68,6 +69,7 @@ export default function DictionarySelector() {
 
     try {
       await apiClient.post(`/dictionaries/${dictId}/select`);
+      setActiveDictionaryId(dictId);
 
       // Fetch words for newly selected dictionary
       const res = await apiClient.get('/dictionary', { params: { dictionaryId: dictId } });
@@ -140,7 +142,7 @@ export default function DictionarySelector() {
         </Box>
 
         {dictionaries.map((dict) => {
-          const isCurrent = dict.id === activeDictionaryId;
+          const isCurrent = dict.id === activeDict?.id;
           return (
             <MenuItem
               key={dict.id}

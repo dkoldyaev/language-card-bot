@@ -314,9 +314,14 @@ const useStore = create<AppState>()(
       removeDictionary: (id) => set((state) => {
         const updatedGuestWords = { ...state.guestDictionaryWords };
         delete updatedGuestWords[id];
+        const remainingDictionaries = state.dictionaries.filter((d) => d.id !== id);
+        const nextActiveId = state.activeDictionaryId === id
+          ? (remainingDictionaries[0]?.id ?? null)
+          : state.activeDictionaryId;
         return {
-          dictionaries: state.dictionaries.filter(d => d.id !== id),
+          dictionaries: remainingDictionaries,
           guestDictionaryWords: updatedGuestWords,
+          activeDictionaryId: nextActiveId,
         };
       }),
       updateDictionaryItem: (id, partial) => set((state) => ({
@@ -353,7 +358,7 @@ const useStore = create<AppState>()(
         return {
           dictionary: normalizedDictionary,
           guestDictionaryWords: updatedGuestWords,
-          activeDictionaryId: dictId !== undefined ? dictId : state.activeDictionaryId,
+          activeDictionaryId: (!state.token && dictId !== undefined) ? dictId : (state.activeDictionaryId ?? (dictId !== undefined ? dictId : null)),
           ...(shouldResetQuiz ? { quizCard: null, quizVariants: null } : {})
         };
       }),

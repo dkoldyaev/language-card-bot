@@ -67,9 +67,13 @@ export default function DictionaryPage() {
       return;
     }
 
-    const nextDictionaryId = activeDictionaryId ?? dictionaries[0].id;
-    navigate(`/${locale}/dictionary/${nextDictionaryId}`, { replace: true });
-  }, [activeDictionaryId, dictionaries, locale, navigate, pendingDeletedDictionaryId]);
+    const storeActiveId = useStore.getState().activeDictionaryId;
+    const nextDict = (storeActiveId && storeActiveId !== pendingDeletedDictionaryId && dictionaries.find((d) => d.id === storeActiveId))
+      || dictionaries.find((d) => d.id !== pendingDeletedDictionaryId)
+      || dictionaries[0];
+
+    navigate(`/${locale}/dictionary/${nextDict.id}`, { replace: true });
+  }, [dictionaries, locale, navigate, pendingDeletedDictionaryId]);
 
   const handleCancelCreateDialog = () => {
     setCreateDialogOpen(false);
@@ -170,6 +174,7 @@ export default function DictionaryPage() {
       if (token) {
         setPendingDeletedDictionaryId(dictId);
         await apiClient.delete(`/dictionaries/${dictId}`);
+        removeDictionary(dictId);
         return;
       }
 
