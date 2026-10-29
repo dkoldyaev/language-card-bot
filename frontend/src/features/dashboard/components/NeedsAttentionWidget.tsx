@@ -5,15 +5,16 @@ import { alpha, Box, Chip, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { AppButton, AppCard, colorTokens, radiusTokens, spacingTokens } from '../../../shared/ui';
-import type { NeedsAttentionWord } from '../../../store/useStore';
+import useStore, { type NeedsAttentionWord } from '../../../store/useStore';
 
 interface NeedsAttentionWidgetProps {
   items: NeedsAttentionWord[];
 }
 
 export default function NeedsAttentionWidget({ items }: NeedsAttentionWidgetProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const navigate = useNavigate();
+  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
 
   if (items.length === 0) {
     return (
@@ -86,7 +87,11 @@ export default function NeedsAttentionWidget({ items }: NeedsAttentionWidgetProp
           size="small"
           variant="outline"
           startIcon={<SchoolRoundedIcon fontSize="small" />}
-          onClick={() => navigate('/quiz')}
+          onClick={() => {
+            if (activeDictionaryId) {
+              navigate(`/${locale}/quiz/${activeDictionaryId}`);
+            }
+          }}
         >
           {t('dashboard.practiceMistakesBtn')}
         </AppButton>

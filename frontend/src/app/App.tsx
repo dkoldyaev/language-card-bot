@@ -87,6 +87,7 @@ function App() {
             />
             </Route>
           </Route>
+          <Route path="*" element={<RootRedirect />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

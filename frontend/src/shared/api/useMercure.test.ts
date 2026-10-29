@@ -55,7 +55,7 @@ describe('useMercure', () => {
 
     expect(fetchEventSource).toHaveBeenCalledOnce();
     const [url, options] = vi.mocked(fetchEventSource).mock.calls[0];
-    expect(new URL(String(url)).searchParams.get('topic')).toBe('http://localhost/v1/users/testuser');
+    expect(new URL(String(url)).searchParams.get('topic')).toBe(`${import.meta.env.VITE_BASE_DOMAIN}/v1/users/testuser`);
     expect(options.headers).toMatchObject({
       Authorization: 'Bearer mercure-token',
       Accept: 'text/event-stream',

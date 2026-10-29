@@ -220,7 +220,7 @@ export default function OnboardingPage() {
               <Box>
                 <AppButton
                   component={RouterLink}
-                  to="/login"
+                  to={`/${locale}/login`}
                   variant="outline"
                   sx={{
                     color: '#FFFFFF',
@@ -391,7 +391,7 @@ export default function OnboardingPage() {
                     <>
                       <Button
                         component={RouterLink}
-                        to="/login"
+                        to={`/${locale}/login`}
                         variant="text"
                         sx={{ textTransform: 'none', fontWeight: 600, display: { xs: 'inline-flex', md: 'none' } }}
                       >

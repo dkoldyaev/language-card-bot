@@ -16,7 +16,7 @@ interface QuickAddWordCardProps {
 }
 
 export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [wordText, setWordText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [successWord, setSuccessWord] = useState<string | null>(null);
@@ -122,7 +122,7 @@ export default function QuickAddWordCard({ onWordAdded }: QuickAddWordCardProps)
           </Typography>
           <Button
             component={RouterLink}
-            to="/login"
+            to={`/${locale}/login`}
             size="small"
             variant="outlined"
             color="primary"

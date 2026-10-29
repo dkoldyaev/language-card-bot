@@ -64,9 +64,9 @@ function AuthContent() {
 
   useEffect(() => {
     if (token) {
-      navigate('/', { replace: true });
+      navigate(`/${locale}`, { replace: true });
     }
-  }, [token, navigate]);
+  }, [token, navigate, locale]);
 
   const completeLogin = (authData: AuthData) => {
     trackEvent('Sign In');
@@ -79,7 +79,7 @@ function AuthContent() {
       name: authData.user.name,
       picture: authData.user.picture,
     });
-    navigate('/');
+    navigate(`/${locale}`);
   };
 
   const handleConfirmMerge = async () => {
@@ -181,7 +181,7 @@ function AuthContent() {
       });
       setProfile(meResponse.data.user);
       trackEvent('Sign Up');
-      navigate('/');
+      navigate(`/${locale}`);
     } catch (err: unknown) {
       console.error('Profile completion error', err);
       setError(t('auth.profileSetupFailed'));
@@ -419,7 +419,7 @@ function AuthContent() {
               <Box sx={{ textAlign: 'center', mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
                 <Button
                   component={RouterLink}
-                  to="/"
+                  to={`/${locale}`}
                   variant="text"
                   size="small"
                   data-testid="continue-as-guest-btn"

@@ -19,7 +19,7 @@ const GuidelineController = lazy(
 export default function Layout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const token = useStore((state) => state.token);
   const setDictionary = useStore((state) => state.setDictionary);
   const setAppState = useStore((state) => state.setAppState);
@@ -184,7 +184,7 @@ export default function Layout() {
               action={
                 <Button
                   component={RouterLink}
-                  to="/login"
+                  to={`/${locale}/login`}
                   color="inherit"
                   size="small"
                   variant="outlined"

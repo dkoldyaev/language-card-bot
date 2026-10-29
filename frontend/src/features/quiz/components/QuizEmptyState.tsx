@@ -6,10 +6,12 @@ import { alpha, Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../../shared/i18n';
 import { AppButton, AppCard, colorTokens, spacingTokens } from '../../../shared/ui';
+import useStore from '../../../store/useStore';
 
 export default function QuizEmptyState() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const activeDictionaryId = useStore((state) => state.activeDictionaryId);
 
   const emptyBenefits = [
     t('quiz.emptyBenefit1'),
@@ -101,7 +103,13 @@ export default function QuizEmptyState() {
               <AppButton
                 variant="primary"
                 size="large"
-                onClick={() => navigate('/dictionary')}
+                onClick={() => {
+                  if (activeDictionaryId) {
+                    navigate(`/${locale}/dictionary/${activeDictionaryId}`);
+                  } else {
+                    navigate(`/${locale}`);
+                  }
+                }}
                 startIcon={<MenuBookRoundedIcon />}
                 endIcon={<ArrowForwardRoundedIcon />}
               >

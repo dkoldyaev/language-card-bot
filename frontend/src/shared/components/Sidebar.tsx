@@ -213,7 +213,7 @@ export default function Sidebar() {
         ) : (
           <ListItemButton
             component={NavLink}
-            to="/login"
+            to={`/${loc}/login`}
             data-testid="mobile-login-btn"
             aria-label={t('auth.submitLogin')}
             sx={{
@@ -391,7 +391,7 @@ export default function Sidebar() {
             </Box>
             <ListItemButton
               component={NavLink}
-              to="/login"
+              to={`/${loc}/login`}
               data-testid="sidebar-login-btn"
               sx={{
                 minHeight: 44,
