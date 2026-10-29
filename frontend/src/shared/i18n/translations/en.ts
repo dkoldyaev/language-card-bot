@@ -117,6 +117,8 @@ const en = {
   // Dictionary Page
   'dictionary.overline': 'Vocabulary Deck',
   'dictionary.defaultTitle': 'Dictionary',
+  'dictionary.editSettings': 'Edit Dictionary Settings',
+  'dictionary.editingSettingsFor': 'Editing settings for dictionary ID: {{dictId}}',
   'dictionary.renameTooltip': 'Rename dictionary',
   'dictionary.saveTooltip': 'Save (Enter)',
   'dictionary.cancelTooltip': 'Cancel (Esc)',

@@ -88,6 +88,8 @@ const tr = {
   // Dictionary Page
   'dictionary.overline': 'Kelime Destesi',
   'dictionary.defaultTitle': 'Sözlük',
+  'dictionary.editSettings': 'Sözlük Ayarlarını Düzenle',
+  'dictionary.editingSettingsFor': 'Sözlük Kimliği için ayarlar düzenleniyor: {{dictId}}',
   'dictionary.renameTooltip': 'Sözlüğü yeniden adlandır',
   'dictionary.saveTooltip': 'Kaydet (Enter)',
   'dictionary.cancelTooltip': 'İptal (Esc)',

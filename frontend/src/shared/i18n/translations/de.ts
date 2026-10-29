@@ -88,6 +88,8 @@ const de = {
   // Dictionary Page
   'dictionary.overline': 'Vokabeldeck',
   'dictionary.defaultTitle': 'Wörterbuch',
+  'dictionary.editSettings': 'Wörterbucheinstellungen bearbeiten',
+  'dictionary.editingSettingsFor': 'Einstellungen für Wörterbuch-ID bearbeiten: {{dictId}}',
   'dictionary.renameTooltip': 'Wörterbuch umbenennen',
   'dictionary.saveTooltip': 'Speichern (Enter)',
   'dictionary.cancelTooltip': 'Abbrechen (Esc)',

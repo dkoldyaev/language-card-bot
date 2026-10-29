@@ -117,6 +117,8 @@ const ru = {
   // Dictionary Page
   'dictionary.overline': 'Словарная колода',
   'dictionary.defaultTitle': 'Словарь',
+  'dictionary.editSettings': 'Настройки словаря',
+  'dictionary.editingSettingsFor': 'Редактирование настроек словаря ID: {{dictId}}',
   'dictionary.renameTooltip': 'Переименовать словарь',
   'dictionary.saveTooltip': 'Сохранить (Enter)',
   'dictionary.cancelTooltip': 'Отмена (Esc)',

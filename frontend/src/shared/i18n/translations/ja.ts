@@ -88,6 +88,8 @@ const ja = {
   // Dictionary Page
   'dictionary.overline': '単語デッキ',
   'dictionary.defaultTitle': '辞書',
+  'dictionary.editSettings': '辞書設定の編集',
+  'dictionary.editingSettingsFor': '辞書ID: {{dictId}} の設定を編集',
   'dictionary.renameTooltip': '辞書名を変更',
   'dictionary.saveTooltip': '保存 (Enter)',
   'dictionary.cancelTooltip': 'キャンセル (Esc)',

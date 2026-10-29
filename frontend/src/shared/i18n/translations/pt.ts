@@ -88,6 +88,8 @@ const pt = {
   // Dictionary Page
   'dictionary.overline': 'Baralho de vocabulário',
   'dictionary.defaultTitle': 'Dicionário',
+  'dictionary.editSettings': 'Configurações do dicionário',
+  'dictionary.editingSettingsFor': 'Editando configurações para o ID do dicionário: {{dictId}}',
   'dictionary.renameTooltip': 'Renomear dicionário',
   'dictionary.saveTooltip': 'Salvar (Enter)',
   'dictionary.cancelTooltip': 'Cancelar (Esc)',

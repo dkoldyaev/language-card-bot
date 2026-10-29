@@ -88,6 +88,8 @@ const es = {
   // Dictionary Page
   'dictionary.overline': 'Mazo de vocabulario',
   'dictionary.defaultTitle': 'Diccionario',
+  'dictionary.editSettings': 'Configuración del diccionario',
+  'dictionary.editingSettingsFor': 'Editando configuración para ID de diccionario: {{dictId}}',
   'dictionary.renameTooltip': 'Renombrar diccionario',
   'dictionary.saveTooltip': 'Guardar (Enter)',
   'dictionary.cancelTooltip': 'Cancelar (Esc)',

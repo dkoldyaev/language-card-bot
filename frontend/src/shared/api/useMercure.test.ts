@@ -1,5 +1,5 @@
-import { renderHook } from '@testing-library/react';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { renderHook } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,7 +12,7 @@ vi.mock('@microsoft/fetch-event-source', () => ({
 
 describe('useMercure', () => {
   let onMessage: ((event: { data: string }) => void) | undefined;
-  let requestOptions: { signal?: AbortSignal } | undefined;
+  let requestOptions: { signal?: AbortSignal | null } | undefined;
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     createElement(MemoryRouter, null, children)

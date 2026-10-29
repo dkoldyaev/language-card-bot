@@ -88,6 +88,8 @@ const fr = {
   // Dictionary Page
   'dictionary.overline': 'Deck de vocabulaire',
   'dictionary.defaultTitle': 'Dictionnaire',
+  'dictionary.editSettings': 'Paramètres du dictionnaire',
+  'dictionary.editingSettingsFor': 'Modification des paramètres pour le dictionnaire ID : {{dictId}}',
   'dictionary.renameTooltip': 'Renommer le dictionnaire',
   'dictionary.saveTooltip': 'Enregistrer (Entrée)',
   'dictionary.cancelTooltip': 'Annuler (Échap)',

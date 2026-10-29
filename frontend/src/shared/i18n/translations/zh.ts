@@ -88,6 +88,8 @@ const zh = {
   // Dictionary Page
   'dictionary.overline': '词汇卡组',
   'dictionary.defaultTitle': '词典',
+  'dictionary.editSettings': '编辑词典设置',
+  'dictionary.editingSettingsFor': '正在编辑词典设置（ID：{{dictId}}）',
   'dictionary.renameTooltip': '重命名词典',
   'dictionary.saveTooltip': '保存 (Enter)',
   'dictionary.cancelTooltip': '取消 (Esc)',

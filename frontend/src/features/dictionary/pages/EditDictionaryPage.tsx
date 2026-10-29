@@ -1,9 +1,8 @@
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { PageContainer, AppIconButton, spacingTokens } from '../../../shared/ui';
-import { Typography, Box } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Box, Typography } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from '../../../shared/i18n/I18nContext';
+import { AppIconButton, PageContainer, spacingTokens } from '../../../shared/ui';
 
 export default function EditDictionaryPage() {
   const { locale, dictId } = useParams<{ locale: string, dictId: string }>();
@@ -16,10 +15,10 @@ export default function EditDictionaryPage() {
         <AppIconButton onClick={() => navigate(`/${locale}/dictionary/${dictId}`)} sx={{ mr: 2 }}>
           <ArrowBackIcon />
         </AppIconButton>
-        <Typography variant="h1">Edit Dictionary Settings</Typography>
+        <Typography variant="h1">{t('dictionary.editSettings')}</Typography>
       </Box>
       <Typography variant="body1">
-        Editing settings for dictionary ID: {dictId}
+        {t('dictionary.editingSettingsFor', { dictId: dictId ?? '' })}
       </Typography>
       {/* Settings form will go here */}
     </PageContainer>
