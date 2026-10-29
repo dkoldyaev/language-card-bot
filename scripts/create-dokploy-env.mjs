@@ -187,6 +187,7 @@ function getEnvVar(name) {
 const DOKPLOY_URL_RAW = requireEnvVar('DOKPLOY_URL');
 const BASE_URL = `${DOKPLOY_URL_RAW.replace(/\/+$/, '')}/api`;
 const API_KEY = requireEnvVar('DOKPLOY_API_KEY');
+const DOKPLOY_BASE_DOMAIN = requireEnvVar('DOKPLOY_BASE_DOMAIN').replace(/^https?:\/\//, '').replace(/^\.+/, '').replace(/\/+$/, '');
 
 // Helper to make API requests to Dokploy
 function dokployRequest(endpoint, method = 'GET', body = null) {
@@ -565,7 +566,7 @@ async function main() {
   composeApp = await dokployRequest(`/compose.one?composeId=${composeId}`);
 
   // 7. Generate and save environment variables
-  const domainHost = `${envName}.languagecards.194-163-164-255.sslip.io`;
+  const domainHost = `${envName}.${DOKPLOY_BASE_DOMAIN}`;
   const composeEnv = generateComposeEnv({
     domainHost,
     pgAppName: pgService.appName,
