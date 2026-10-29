@@ -283,7 +283,7 @@ function execInContainer({ containerId, command, timeoutMs = 600000 }) {
       // Check for completion marker preceded by newline to avoid matching echoed input
       if (sent && fullOutput.match(/[\r\n]__CMD_(SUCCESS|FAILED)__/)) {
         if (timer) clearTimeout(timer);
-        const isSuccess = fullOutput.includes('__CMD_SUCCESS__');
+        const isSuccess = /[\r\n]__CMD_SUCCESS__/.test(fullOutput) && !/[\r\n]__CMD_FAILED__/.test(fullOutput);
         setTimeout(() => {
           ws.close();
           if (isSuccess) {
@@ -334,6 +334,8 @@ function generateComposeEnv({ domainHost, pgAppName, pgUser, pgPassword, pgDbNam
     'BASE_LLM_API_URL=http://llm:3003/api/v1/generate',
     `BASE_LLM_PROVIDER=${getEnvVar('BASE_LLM_PROVIDER')}`,
     `BASE_LLM_MODEL=${getEnvVar('BASE_LLM_MODEL')}`,
+    'BASE_IMAGE_GENERATOR_API_URL=http://image-generator:3004/api/v1/images',
+    `BASE_IMAGE_GENERATOR_PROVIDER=${getEnvVar('BASE_IMAGE_GENERATOR_PROVIDER')}`,
     `BASE_ENABLE_DB_LOGGING=${getEnvVar('BASE_ENABLE_DB_LOGGING')}`,
     `BASE_ALLOW_GUEST_AI_GENERATION=${getEnvVar('BASE_ALLOW_GUEST_AI_GENERATION')}`,
     `BASE_GUEST_AI_DAILY_LIMIT=${getEnvVar('BASE_GUEST_AI_DAILY_LIMIT')}`,
@@ -377,6 +379,17 @@ function generateComposeEnv({ domainHost, pgAppName, pgUser, pgPassword, pgDbNam
     `DEFINER_CACHE_URL=${redisUrl}/2`,
     `DEFINER_MOCK_TIMEOUT=${getEnvVar('DEFINER_MOCK_TIMEOUT')}`,
     `DEFINER_APP_TYPE=${getEnvVar('BASE_DEFINER_APP_TYPE')}`,
+    '',
+    '# IMAGE GENERATOR SERVICE',
+    'IMAGE_GENERATOR_TARGET=production',
+    `IMAGE_GENERATOR_PORT=${getEnvVar('IMAGE_GENERATOR_PORT')}`,
+    `IMAGE_GENERATOR_PROVIDER=${getEnvVar('IMAGE_GENERATOR_PROVIDER')}`,
+    `IMAGE_GENERATOR_UNSPLASH_ACCESS_KEY=${getEnvVar('IMAGE_GENERATOR_UNSPLASH_ACCESS_KEY')}`,
+    `IMAGE_GENERATOR_PEXELS_API_KEY=${getEnvVar('IMAGE_GENERATOR_PEXELS_API_KEY')}`,
+    `IMAGE_GENERATOR_PIXABAY_API_KEY=${getEnvVar('IMAGE_GENERATOR_PIXABAY_API_KEY')}`,
+    `IMAGE_GENERATOR_WIKIMEDIA_USER_AGENT=${getEnvVar('IMAGE_GENERATOR_WIKIMEDIA_USER_AGENT')}`,
+    `IMAGE_GENERATOR_MOCK_TIMEOUT=${getEnvVar('IMAGE_GENERATOR_MOCK_TIMEOUT')}`,
+    `IMAGE_GENERATOR_CACHE_URL=${redisUrl}/5`,
     '',
     '# FRONTEND SERVICE',
     'FRONTEND_TARGET=production',
@@ -582,6 +595,7 @@ async function main() {
     { serviceName: 'translator', networkIds: [envNet.networkId], detachDokployNetwork: false },
     { serviceName: 'definer', networkIds: [envNet.networkId], detachDokployNetwork: false },
     { serviceName: 'llm', networkIds: [envNet.networkId], detachDokployNetwork: false },
+    { serviceName: 'image-generator', networkIds: [envNet.networkId], detachDokployNetwork: false },
   ];
 
   console.log('\n⚙️  Configuring Compose application settings...');
