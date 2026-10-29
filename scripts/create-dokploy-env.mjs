@@ -596,6 +596,7 @@ async function main() {
     { serviceName: 'definer', networkIds: [envNet.networkId], detachDokployNetwork: false },
     { serviceName: 'llm', networkIds: [envNet.networkId], detachDokployNetwork: false },
     { serviceName: 'image-generator', networkIds: [envNet.networkId], detachDokployNetwork: false },
+    { serviceName: 'mercure', networkIds: [envNet.networkId], detachDokployNetwork: false },
   ];
 
   console.log('\n⚙️  Configuring Compose application settings...');

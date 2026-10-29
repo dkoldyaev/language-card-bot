@@ -35,7 +35,7 @@ services:
       - image-generator
 
   mercure:
-    image: dunglas/mercure
+    image: dunglas/mercure:v0.14
     environment:
       - SERVER_NAME=${MERCURE_SERVER_NAME}
       - MERCURE_PUBLISHER_JWT_KEY=${MERCURE_JWT_KEY}
