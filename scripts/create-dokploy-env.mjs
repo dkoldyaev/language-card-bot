@@ -321,7 +321,7 @@ function generateComposeEnv({ domainHost, pgAppName, pgUser, pgPassword, pgDbNam
     `BASE_PORT=${getEnvVar('BASE_PORT')}`,
     `BASE_DATABASE_URL=${postgresUrl}`,
     `BASE_JWT_SECRET=${requireEnvVar('BASE_JWT_SECRET')}`,
-    'BASE_MERCURE_URL=http://mercure/.well-known/mercure',
+    `BASE_MERCURE_URL=${fullDomain}/.well-known/mercure`,
     `BASE_MERCURE_JWT=${requireEnvVar('BASE_MERCURE_JWT')}`,
     'BASE_TRANSLATOR_API_URL=http://translator:3001/api/v1/translate',
     `BASE_TRANSLATOR_APP_TYPE=${getEnvVar('BASE_TRANSLATOR_APP_TYPE')}`,
