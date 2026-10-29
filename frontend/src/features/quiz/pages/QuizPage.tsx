@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 import { trackEvent } from '../../../shared/lib/analytics';
 import { LoadingState, PageContainer } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
 import QuizEmptyState from '../components/QuizEmptyState';
 import QuizPlayground from '../components/QuizPlayground';
-import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 
 export default function QuizPage() {
   const quizCard = useStore((state) => state.quizCard);

@@ -5,7 +5,7 @@ import { useTranslation } from '../../../shared/i18n/I18nContext';
 import { AppIconButton, PageContainer, spacingTokens } from '../../../shared/ui';
 
 export default function EditDictionaryPage() {
-  const { locale, dictId } = useParams<{ locale: string, dictId: string }>();
+  const { locale, dictId } = useParams<{ locale: string; dictId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
 

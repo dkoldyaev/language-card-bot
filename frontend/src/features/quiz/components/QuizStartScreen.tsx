@@ -4,11 +4,11 @@ import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import { alpha, Box, Button, Card, CircularProgress, Typography } from '@mui/material';
 import { useState } from 'react';
 import apiClient from '../../../shared/api/client';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 import { useTranslation } from '../../../shared/i18n';
 import { trackEvent } from '../../../shared/lib/analytics';
 import useStore from '../../../store/useStore';
 import { useGuidelineStore } from '../../guideline';
-import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 
 export default function QuizStartScreen() {
   const { t } = useTranslation();

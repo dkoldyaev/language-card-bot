@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
     exclude: ['src/**/*.e2e.test.ts', 'node_modules/**'],
+    setupFiles: ['./src/test/setup.ts'],
     fileParallelism: false,
   },
 });

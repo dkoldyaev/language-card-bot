@@ -106,7 +106,7 @@ export default function PresetsPage() {
 
     fetchPresets();
     return () => controller.abort();
-  }, [t]);
+  }, [t, setStorePresets]);
 
   const { allTags, allLevels } = useMemo(() => {
     const tags = new Set<string>();

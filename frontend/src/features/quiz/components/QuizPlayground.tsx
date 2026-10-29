@@ -12,6 +12,7 @@ import {
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
+import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 import { useTranslation } from '../../../shared/i18n';
 import { trackEvent } from '../../../shared/lib/analytics';
 import {
@@ -23,8 +24,6 @@ import {
   spacingTokens,
 } from '../../../shared/ui';
 import useStore from '../../../store/useStore';
-
-import { useActiveDictionaryId } from '../../../shared/hooks/useActiveDictionaryId';
 
 const handleTranslateDefinition = async (dictionaryId: number | null) => {
   try {
@@ -104,7 +103,7 @@ export default function QuizPlayground() {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [quizEvaluation?.result]);
+  }, [quizEvaluation?.result, activeDictionaryId]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Clear suggestion when card changes
   useEffect(() => {

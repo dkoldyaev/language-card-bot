@@ -22,5 +22,5 @@ export default function LocaleGuard({ children }: { children?: React.ReactNode }
     setLocale(locale);
   }
 
-  return children ? <>{children}</> : <Outlet />;
+  return children ? children : <Outlet />;
 }

@@ -187,6 +187,7 @@ function getEnvVar(name) {
 const DOKPLOY_URL_RAW = requireEnvVar('DOKPLOY_URL');
 const BASE_URL = `${DOKPLOY_URL_RAW.replace(/\/+$/, '')}/api`;
 const API_KEY = requireEnvVar('DOKPLOY_API_KEY');
+const DOKPLOY_BASE_DOMAIN = requireEnvVar('DOKPLOY_BASE_DOMAIN').replace(/^https?:\/\//, '').replace(/^\.+/, '').replace(/\/+$/, '');
 
 // Helper to make API requests to Dokploy
 function dokployRequest(endpoint, method = 'GET', body = null) {
@@ -282,7 +283,7 @@ function execInContainer({ containerId, command, timeoutMs = 600000 }) {
       // Check for completion marker preceded by newline to avoid matching echoed input
       if (sent && fullOutput.match(/[\r\n]__CMD_(SUCCESS|FAILED)__/)) {
         if (timer) clearTimeout(timer);
-        const isSuccess = fullOutput.includes('__CMD_SUCCESS__');
+        const isSuccess = /[\r\n]__CMD_SUCCESS__/.test(fullOutput) && !/[\r\n]__CMD_FAILED__/.test(fullOutput);
         setTimeout(() => {
           ws.close();
           if (isSuccess) {
@@ -565,7 +566,7 @@ async function main() {
   composeApp = await dokployRequest(`/compose.one?composeId=${composeId}`);
 
   // 7. Generate and save environment variables
-  const domainHost = `${envName}.languagecards.194-163-164-255.sslip.io`;
+  const domainHost = `${envName}.${DOKPLOY_BASE_DOMAIN}`;
   const composeEnv = generateComposeEnv({
     domainHost,
     pgAppName: pgService.appName,
@@ -581,6 +582,7 @@ async function main() {
     { serviceName: 'translator', networkIds: [envNet.networkId], detachDokployNetwork: false },
     { serviceName: 'definer', networkIds: [envNet.networkId], detachDokployNetwork: false },
     { serviceName: 'llm', networkIds: [envNet.networkId], detachDokployNetwork: false },
+    { serviceName: 'mercure', networkIds: [envNet.networkId], detachDokployNetwork: false },
   ];
 
   console.log('\n⚙️  Configuring Compose application settings...');
