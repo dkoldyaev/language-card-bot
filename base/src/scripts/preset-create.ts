@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { redisClient } from '../core/cache';
+import { enqueueGeneratePreset, presetQueueConnection } from '../features/preset/preset.queue';
 import type { PresetDto } from '../features/preset/preset.type';
 import { generatePreset } from '../features/preset/preset_generator.service';
 import { prisma } from '../prisma';
@@ -14,6 +15,7 @@ interface CliParams {
   translationLanguages?: string[];
   title?: string;
   description?: string;
+  asyncMode: boolean;
 }
 
 function printUsage() {
@@ -42,6 +44,7 @@ Optional:
   --preset-id <id>              ID of an existing preset to add/update words (single preset only).
   --title <title>               Preset title (default auto-generated).
   --description <desc>          Preset description.
+  --async                       Enqueue preset creation jobs to BullMQ queue instead of synchronous generation.
 
 Examples:
   npm run preset:create -- --language en --level B1 --level B2 --theme travel --word-count 10,10,10
@@ -61,6 +64,7 @@ function parseCliArgs(): CliParams {
   const rawTranslationLanguages: string[] = [];
   let title: string | undefined;
   let description: string | undefined;
+  let asyncMode = false;
 
   const addLanguages = (val: string) => {
     val.split(',').forEach((s) => {
@@ -163,6 +167,8 @@ function parseCliArgs(): CliParams {
       description = arg.split('=')[1];
     } else if (arg === '--description') {
       description = args[++i];
+    } else if (arg === '--async') {
+      asyncMode = true;
     }
   }
 
@@ -182,6 +188,7 @@ function parseCliArgs(): CliParams {
     translationLanguages,
     title,
     description,
+    asyncMode,
   };
 }
 
@@ -226,7 +233,8 @@ async function main() {
 
   const totalRuns = combinations.length * params.wordCounts.length;
   console.log(`\n============================================================`);
-  console.log(`Preset Creation Plan:`);
+  console.log(`Preset Creation Plan (${params.asyncMode ? 'ASYNC / QUEUED' : 'SYNC'}):`);
+  console.log(`- Mode:         ${params.asyncMode ? 'Asynchronous (BullMQ queue jobs)' : 'Synchronous'}`);
   console.log(`- Languages:    ${params.languages.join(', ')}`);
   console.log(`- Levels:       ${params.levels.length > 0 ? params.levels.join(', ') : 'any'}`);
   console.log(`- Themes:       ${params.themes.length > 0 ? params.themes.join(', ') : 'none'}`);
@@ -235,6 +243,70 @@ async function main() {
   console.log(`- Combinations: ${combinations.length}`);
   console.log(`- Total tasks:  ${totalRuns}`);
   console.log(`============================================================\n`);
+
+  if (params.asyncMode) {
+    try {
+      let queuedCount = 0;
+      for (const combo of combinations) {
+        const { language, level, theme } = combo;
+        for (let partIdx = 0; partIdx < params.wordCounts.length; partIdx++) {
+          queuedCount++;
+          const wordsCount = params.wordCounts[partIdx];
+          const partNumber = partIdx + 1;
+          const totalParts = params.wordCounts.length;
+
+          let presetTitle: string | undefined;
+          if (params.title) {
+            if (totalParts > 1 && combinations.length > 1) {
+              presetTitle = `${params.title} (${language.toUpperCase()}${level ? ` ${level}` : ''}) #${partNumber}`;
+            } else if (totalParts > 1) {
+              presetTitle = `${params.title} #${partNumber}`;
+            } else if (combinations.length > 1) {
+              presetTitle = `${params.title} (${language.toUpperCase()}${level ? ` ${level}` : ''})`;
+            } else {
+              presetTitle = params.title;
+            }
+          } else if (totalParts > 1) {
+            const themePart = theme ? ` - ${theme}` : '';
+            const levelPart = level ? ` (${level})` : '';
+            presetTitle = `Preset ${language.toUpperCase()}${themePart}${levelPart} #${partNumber} - ${wordsCount} words`;
+          }
+
+          const job = await enqueueGeneratePreset({
+            language,
+            presetId: params.presetId,
+            wordsCount,
+            levels: level ? [level] : undefined,
+            theme,
+            title: presetTitle,
+            description: params.description,
+            translationLanguages: params.translationLanguages,
+          });
+
+          console.log(
+            `[Queued ${queuedCount}/${totalRuns}] Job #${job.id} for language: "${language}"` +
+              `${level ? `, level: "${level}"` : ''}` +
+              `${theme ? `, theme: "${theme}"` : ''}` +
+              ` (target: ${wordsCount} words)`
+          );
+        }
+      }
+
+      console.log(`\n============================================================`);
+      console.log(`✅ Successfully enqueued ${queuedCount} preset generation job(s) in BullMQ!`);
+      console.log(`The app container worker will process each job asynchronously with automatic exponential retries.`);
+      console.log(`============================================================`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error('\nFailed to enqueue preset jobs:', msg);
+      process.exit(1);
+    } finally {
+      await prisma.$disconnect();
+      await redisClient.quit();
+      await presetQueueConnection.quit();
+      process.exit(0);
+    }
+  }
 
   const usedWordsByLanguage = new Map<string, Set<string>>();
   const createdPresets: PresetDto[] = [];
@@ -337,6 +409,7 @@ async function main() {
   } finally {
     await prisma.$disconnect();
     await redisClient.quit();
+    await presetQueueConnection.quit();
     process.exit(0);
   }
 }

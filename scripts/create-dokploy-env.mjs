@@ -41,6 +41,7 @@ Options:
   --skip-deploy            Create and configure environment without triggering deploy
   --skip-presets           Skip creating presets after deployment
   --presets-only           Only run preset creation in container (skips stack deploy)
+  --preset-async, --async  Enqueue preset creation tasks asynchronously via BullMQ instead of synchronous generation
   --preset-language <lang> Language(s) for presets (default: en,es,fr,de,ru,it,pt,zh,ja,tr)
   --preset-level <level>   Level(s) for presets (default: A0,A1,A2,B1,B2,C1,C2)
   --preset-theme <theme>   Theme(s) for presets (default: IT,travel,common,food,work,shopping,education,health)
@@ -71,6 +72,7 @@ const resetDb = args.includes('--reset-db') || args.includes('--recreate-db') ||
 const skipDeploy = args.includes('--skip-deploy') || args.includes('--no-deploy');
 const skipPresets = args.includes('--skip-presets') || args.includes('--no-presets');
 const presetsOnly = args.includes('--presets-only');
+const presetAsync = args.includes('--preset-async') || args.includes('--async');
 const adminOnly = args.includes('--admin-only');
 const runCheck = args.includes('--check');
 const customBranch = getArgValue('--branch');
@@ -782,14 +784,15 @@ async function main() {
     }
   } else {
     const container = await getAppContainer();
-    const presetCmd = `cd /app && node run-script.js preset-create --language ${presetLanguage} --level ${presetLevel} --theme ${presetTheme} --word-count ${presetWordCount}`;
+    const asyncFlag = presetAsync ? ' --async' : '';
+    const presetCmd = `cd /app && node run-script.js preset-create --language ${presetLanguage} --level ${presetLevel} --theme ${presetTheme} --word-count ${presetWordCount}${asyncFlag}`;
     console.log(`\n\x1b[34m⚙️  Executing preset creation in app container:\x1b[0m`);
     console.log(`  ${presetCmd}\n`);
 
     await execInContainer({
       containerId: container.containerId,
       command: presetCmd,
-      timeoutMs: 10 * 60 * 1000,
+      timeoutMs: presetAsync ? 60 * 1000 : 10 * 60 * 1000,
     });
 
     console.log('\n\x1b[32m✅ Presets created successfully!\x1b[0m');
