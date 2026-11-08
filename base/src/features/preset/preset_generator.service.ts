@@ -279,6 +279,29 @@ export async function filterDefinitionsBatchWithLLM(
   );
   if (validItems.length === 0) return [];
 
+  // Chunk to avoid huge prompts and LLM timeouts / payload limit issues
+  const CHUNK_SIZE = 5;
+  const allResults: FilteredWordResult[] = [];
+
+  for (let i = 0; i < validItems.length; i += CHUNK_SIZE) {
+    const chunkItems = validItems.slice(i, i + CHUNK_SIZE);
+    const chunkResults = await filterDefinitionsChunkWithLLM({
+      language,
+      items: chunkItems,
+      level,
+    });
+    allResults.push(...chunkResults);
+  }
+
+  return allResults;
+}
+
+async function filterDefinitionsChunkWithLLM(
+  options: FilterDefinitionsBatchOptions
+): Promise<FilteredWordResult[]> {
+  const { language, items: validItems, level } = options;
+  if (validItems.length === 0) return [];
+
   let prompt = `You are an expert language teacher and lexicographer.\n`;
   prompt += `Language: "${language}"\n`;
   if (level) {

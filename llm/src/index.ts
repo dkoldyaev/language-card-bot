@@ -6,7 +6,7 @@ import { generateRouter } from './routes/generate';
 dotenv.config();
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 app.use('/api/v1/generate', generateRouter);
 app.use('/api/v1/llm/generate', generateRouter);

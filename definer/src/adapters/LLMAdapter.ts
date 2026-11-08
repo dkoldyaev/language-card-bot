@@ -30,6 +30,20 @@ export class LLMAdapter implements IDefiner {
       return [];
     }
 
+    // Chunk into smaller batches (e.g. 5 words) to avoid LLM timeouts and payload issues
+    const CHUNK_SIZE = 5;
+    const allResults: DefinitionItem[][] = [];
+
+    for (let i = 0; i < texts.length; i += CHUNK_SIZE) {
+      const chunkTexts = texts.slice(i, i + CHUNK_SIZE);
+      const chunkResults = await this.defineChunk(chunkTexts, language);
+      allResults.push(...chunkResults);
+    }
+
+    return allResults;
+  }
+
+  private async defineChunk(texts: string[], language: LanguageCode): Promise<DefinitionItem[][]> {
     const itemsFormat = texts.map((t, idx) => `[${idx + 1}] "${t}"`).join('\n');
     const prompt = `Please provide a comprehensive and extensive list with the maximum possible number of distinct definitions and senses for each of the following words/phrases in the language "${language}".
 Cover all proficiency levels from beginner (A1, A2) to intermediate (B1, B2) and advanced/mastery (C1, C2), ranging from simple, accessible explanations to nuanced, figurative, formal, and specialized meanings.
