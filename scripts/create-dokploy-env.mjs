@@ -150,7 +150,6 @@ const envName = rawEnvName.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
 
 // Clean domain if user passed URL or leading/trailing slashes
 const cleanCustomDomain = customDomain !== null ? customDomain.replace(/^https?:\/\//i, '').replace(/\/+$/, '').trim() : null;
-const domainHost = cleanCustomDomain !== null ? cleanCustomDomain : `${envName}.languagecards.194-163-164-255.sslip.io`;
 
 // 3. Load .env file with strict validation
 function loadEnv(filePath) {
@@ -203,7 +202,12 @@ function getEnvVar(name) {
 const DOKPLOY_URL_RAW = requireEnvVar('DOKPLOY_URL');
 const BASE_URL = `${DOKPLOY_URL_RAW.replace(/\/+$/, '')}/api`;
 const API_KEY = requireEnvVar('DOKPLOY_API_KEY');
-const DOKPLOY_BASE_DOMAIN = requireEnvVar('DOKPLOY_BASE_DOMAIN').replace(/^https?:\/\//, '').replace(/^\.+/, '').replace(/\/+$/, '');
+const DOKPLOY_BASE_DOMAIN = (cleanCustomDomain !== null
+  ? cleanCustomDomain
+  : requireEnvVar('DOKPLOY_BASE_DOMAIN')
+).replace(/^https?:\/\//, '').replace(/^\.+/, '').replace(/\/+$/, '');
+
+const domainHost = cleanCustomDomain !== null ? cleanCustomDomain : `${envName}.${DOKPLOY_BASE_DOMAIN}`;
 
 // Helper to make API requests to Dokploy
 function dokployRequest(endpoint, method = 'GET', body = null) {
