@@ -4,13 +4,18 @@ import type { LanguageCode } from '../types/language';
 
 export class MockDefiner implements IDefiner {
   async define(text: string, language: LanguageCode): Promise<DefinitionItem[]> {
+    const [result] = await this.defineBatch([text], language);
+    return result;
+  }
+
+  async defineBatch(texts: string[], language: LanguageCode): Promise<DefinitionItem[][]> {
     let delay = Math.floor(Math.random() * 1300) + 200; // Random delay between 200ms and 1500ms
     if (env.MOCK_TIMEOUT !== undefined) {
       delay = parseInt(env.MOCK_TIMEOUT, 10);
       if (Number.isNaN(delay)) delay = 0;
     }
     await new Promise((resolve) => setTimeout(resolve, delay));
-    return [
+    return texts.map((text) => [
       {
         text: `[Mock] Definition 1 for ${text} in ${language}`,
         tags: ['general', 'common'],
@@ -23,6 +28,6 @@ export class MockDefiner implements IDefiner {
         partOfSpeech: 'verb',
         levels: ['B1'],
       },
-    ];
+    ]);
   }
 }

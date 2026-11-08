@@ -6,11 +6,19 @@ import { SUPPORTED_LANGUAGES } from '../types/language';
 
 const router = Router();
 
-const DefineRequestSchema = z.object({
+const SingleDefineRequestSchema = z.object({
   language: z.enum(SUPPORTED_LANGUAGES),
   text: z.string().min(1, 'Text is required'),
   definerApp: z.enum(['mistral', 'gemini', 'mock', 'freedictionary', 'llm'] as const),
 });
+
+const BatchDefineRequestSchema = z.object({
+  language: z.enum(SUPPORTED_LANGUAGES),
+  texts: z.array(z.string().min(1)).min(1, 'Texts array must not be empty'),
+  definerApp: z.enum(['mistral', 'gemini', 'mock', 'freedictionary', 'llm'] as const),
+});
+
+const DefineRequestSchema = z.union([BatchDefineRequestSchema, SingleDefineRequestSchema]);
 
 router.post('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -24,25 +32,50 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
       return;
     }
 
-    const { language, text, definerApp } = parseResult.data;
+    const { language, definerApp } = parseResult.data;
+    const isBatch = 'texts' in parseResult.data;
+    const texts: string[] = 'texts' in parseResult.data ? parseResult.data.texts : [parseResult.data.text];
 
-    const cacheKey = `definer:${definerApp}:${language}:${text}`;
-    const cachedResult = await redisClient.get(cacheKey);
+    // Check cache for all texts using mget
+    const cacheKeys = texts.map((t: string) => `definer:${definerApp}:${language}:${t}`);
+    const cachedDefs: Array<string | null> = await redisClient.mget(cacheKeys);
 
-    if (cachedResult) {
-      res.json({ definitions: JSON.parse(cachedResult) });
-      return;
+    const uncachedIndices: number[] = [];
+    const uncachedTexts: string[] = [];
+
+    const finalDefinitions: Array<unknown> = cachedDefs.map((cached, index) => {
+      if (cached === null) {
+        uncachedIndices.push(index);
+        uncachedTexts.push(texts[index]);
+        return null;
+      }
+      return JSON.parse(cached);
+    });
+
+    if (uncachedTexts.length > 0) {
+      const definer = DefinerFactory.getDefiner(definerApp);
+      const definedBatch = await definer.defineBatch(uncachedTexts, language);
+
+      const pipeline = redisClient.pipeline();
+      definedBatch.forEach((defs, i) => {
+        const originalIndex = uncachedIndices[i];
+        finalDefinitions[originalIndex] = defs;
+        const originalText = uncachedTexts[i];
+        const cacheKey = `definer:${definerApp}:${language}:${originalText}`;
+        pipeline.set(cacheKey, JSON.stringify(defs), 'EX', 365 * 24 * 60 * 60);
+      });
+      await pipeline.exec();
     }
 
-    const definer = DefinerFactory.getDefiner(definerApp);
-    const result = await definer.define(text, language);
-
-    // Cache for 1 year
-    await redisClient.set(cacheKey, JSON.stringify(result), 'EX', 365 * 24 * 60 * 60);
-
-    res.json({
-      definitions: result,
-    });
+    if (isBatch) {
+      res.json({
+        definitions: finalDefinitions,
+      });
+    } else {
+      res.json({
+        definitions: finalDefinitions[0] || [],
+      });
+    }
   } catch (error) {
     next(error);
   }

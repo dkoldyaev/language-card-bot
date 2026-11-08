@@ -16,6 +16,11 @@ interface DefinerApiResponse {
   error?: string;
 }
 
+interface DefinerBatchApiResponse {
+  definitions?: Array<Array<string | { text: string }>>;
+  error?: string;
+}
+
 interface TranslatorApiResponse {
   translations?: string[];
   error?: string;
@@ -82,6 +87,7 @@ export async function fetchDefinitionsFromDefiner(text: string, language: string
       body: JSON.stringify({
         language,
         text,
+        texts: [text],
         definerApp: env.DEFINER_APP_TYPE,
       }),
     });
@@ -96,9 +102,68 @@ export async function fetchDefinitionsFromDefiner(text: string, language: string
     throw new Error(`Definer API error (${response.status}): ${errorText}`);
   }
 
-  const json = (await response.json()) as DefinerApiResponse;
+  const json = (await response.json()) as DefinerBatchApiResponse & DefinerApiResponse;
   const rawDefs = json.definitions || [];
-  return rawDefs.map((d) => (typeof d === 'string' ? d : d.text));
+  if (Array.isArray(rawDefs) && rawDefs.length > 0 && Array.isArray(rawDefs[0])) {
+    return (rawDefs[0] as Array<string | { text: string }>).map((d) =>
+      typeof d === 'string' ? d : d.text
+    );
+  }
+  return (rawDefs as Array<string | { text: string }>).map((d) =>
+    typeof d === 'string' ? d : d.text
+  );
+}
+
+export async function fetchDefinitionsBatchFromDefiner(
+  texts: string[],
+  language: string
+): Promise<string[][]> {
+  if (texts.length === 0) return [];
+
+  let response: Response;
+  try {
+    response = await fetch(env.DEFINER_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language,
+        texts,
+        definerApp: env.DEFINER_APP_TYPE,
+      }),
+    });
+  } catch (err: unknown) {
+    throw new Error(
+      `Failed to connect to Definer service at ${env.DEFINER_API_URL}: ${getErrorMessage(err)}. Please verify that the Definer service is running and accessible.`
+    );
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Definer API error (${response.status}): ${errorText}`);
+  }
+
+  const json = (await response.json()) as DefinerBatchApiResponse & DefinerApiResponse;
+  const rawDefs = json.definitions || [];
+
+  // Check if response is batch (array of arrays) or single (array of strings/objects)
+  const isBatchResponse = Array.isArray(rawDefs) && rawDefs.length > 0 && Array.isArray(rawDefs[0]);
+
+  if (isBatchResponse) {
+    const rawDefsBatch = rawDefs as Array<Array<string | { text: string }>>;
+    return texts.map((_, idx) => {
+      const list = rawDefsBatch[idx] || [];
+      return list.map((d) => (typeof d === 'string' ? d : d.text));
+    });
+  }
+
+  // Fallback if definer returns flat array (e.g. for single word or legacy mock)
+  const flatDefs = (rawDefs as Array<string | { text: string }>).map((d) =>
+    typeof d === 'string' ? d : d.text
+  );
+  if (texts.length === 1) {
+    return [flatDefs];
+  }
+  return texts.map(() => flatDefs);
 }
 
 export async function fetchTranslationsFromTranslator(options: {
@@ -461,18 +526,18 @@ export async function generatePreset(options: GeneratePresetOptions): Promise<Pr
         globalExcludedWords.add(word);
       }
 
-      const candidateBatch: WordDefinitionsItem[] = [];
-      for (const word of newWords) {
-        log(`[${levelLabel}] Fetching definitions for word "${word}"...`);
-        const rawDefinitions = await fetchDefinitionsFromDefiner(word, language);
+      log(`[${levelLabel}] Fetching definitions for ${newWords.length} candidate word(s)...`);
+      const rawDefinitionsBatch = await fetchDefinitionsBatchFromDefiner(newWords, language);
 
+      const candidateBatch: WordDefinitionsItem[] = [];
+      newWords.forEach((word, idx) => {
+        const rawDefinitions = rawDefinitionsBatch[idx];
         if (!rawDefinitions || rawDefinitions.length === 0) {
           log(`[${levelLabel}] No definitions found for "${word}". Discarding.`);
-          continue;
+          return;
         }
-
         candidateBatch.push({ word, definitions: rawDefinitions });
-      }
+      });
 
       if (candidateBatch.length > 0) {
         log(

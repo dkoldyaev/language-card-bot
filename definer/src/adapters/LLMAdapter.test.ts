@@ -105,4 +105,59 @@ describe('LLMAdapter', () => {
 
     await expect(adapter.define('test', 'en')).rejects.toThrow('Unexpected response format');
   });
+
+  it('should batch define multiple words in a single request to LLM service', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          words: [
+            {
+              index: 1,
+              word: 'dog',
+              definitions: [
+                {
+                  text: 'A common domestic animal',
+                  partOfSpeech: 'noun',
+                  tags: ['common'],
+                  levels: ['A1'],
+                },
+              ],
+            },
+            {
+              index: 2,
+              word: 'cat',
+              definitions: [
+                {
+                  text: 'A small carnivorous mammal',
+                  partOfSpeech: 'noun',
+                  tags: ['common'],
+                  levels: ['A1'],
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    });
+    global.fetch = mockFetch;
+
+    const adapter = new LLMAdapter({
+      provider: 'mistral',
+      model: 'mistral-large-latest',
+      llmServiceUrl: 'http://llm:3003/api/v1/generate',
+    });
+
+    const results = await adapter.defineBatch(['dog', 'cat'], 'en');
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [, options] = mockFetch.mock.calls[0];
+    const parsedBody = JSON.parse(options.body);
+    expect(parsedBody.prompt).toContain('"dog"');
+    expect(parsedBody.prompt).toContain('"cat"');
+
+    expect(results).toHaveLength(2);
+    expect(results[0][0].text).toBe('A common domestic animal');
+    expect(results[1][0].text).toBe('A small carnivorous mammal');
+  });
 });

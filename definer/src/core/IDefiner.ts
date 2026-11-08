@@ -11,5 +11,6 @@ export interface DefinitionItem {
 
 export interface IDefiner {
   define(text: string, language: LanguageCode): Promise<DefinitionItem[]>;
+  defineBatch(texts: string[], language: LanguageCode): Promise<DefinitionItem[][]>;
 }
 

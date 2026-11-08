@@ -12,10 +12,19 @@ vi.mock('../core/DefinerFactory', () => ({
   },
 }));
 
+const { mockPipeline } = vi.hoisted(() => ({
+  mockPipeline: {
+    set: vi.fn().mockReturnThis(),
+    exec: vi.fn().mockResolvedValue([]),
+  },
+}));
+
 // Mock Redis cache client
 vi.mock('../core/cache', () => ({
   redisClient: {
     get: vi.fn().mockResolvedValue(null),
+    mget: vi.fn().mockImplementation(async (keys: string[]) => keys.map(() => null)),
+    pipeline: vi.fn().mockReturnValue(mockPipeline),
     set: vi.fn().mockResolvedValue('OK'),
   },
 }));
@@ -40,19 +49,22 @@ describe('POST /api/v1/define', () => {
 
   it('should return definitions when using mock provider directly via API', async () => {
     const mockDefiner: IDefiner = {
-      define: vi.fn().mockResolvedValue([
-        {
-          text: '[Mock] Definition 1',
-          partOfSpeech: 'noun',
-          tags: ['common'],
-          levels: ['A1'],
-        },
-        {
-          text: '[Mock] Definition 2',
-          partOfSpeech: 'verb',
-          tags: ['slang'],
-          levels: ['B1'],
-        },
+      define: vi.fn(),
+      defineBatch: vi.fn().mockResolvedValue([
+        [
+          {
+            text: '[Mock] Definition 1',
+            partOfSpeech: 'noun',
+            tags: ['common'],
+            levels: ['A1'],
+          },
+          {
+            text: '[Mock] Definition 2',
+            partOfSpeech: 'verb',
+            tags: ['slang'],
+            levels: ['B1'],
+          },
+        ],
       ]),
     };
     vi.mocked(DefinerFactory.getDefiner).mockReturnValue(mockDefiner);
@@ -84,18 +96,61 @@ describe('POST /api/v1/define', () => {
     ]);
     
     expect(DefinerFactory.getDefiner).toHaveBeenCalledWith('mock');
-    expect(mockDefiner.define).toHaveBeenCalledWith('hello', 'en');
+    expect(mockDefiner.defineBatch).toHaveBeenCalledWith(['hello'], 'en');
+  });
+
+  it('should support batch request with texts array', async () => {
+    const mockDefiner: IDefiner = {
+      define: vi.fn(),
+      defineBatch: vi.fn().mockResolvedValue([
+        [
+          {
+            text: 'Def 1 for word 1',
+            partOfSpeech: 'noun',
+            tags: [],
+            levels: ['A1'],
+          },
+        ],
+        [
+          {
+            text: 'Def 1 for word 2',
+            partOfSpeech: 'verb',
+            tags: [],
+            levels: ['A2'],
+          },
+        ],
+      ]),
+    };
+    vi.mocked(DefinerFactory.getDefiner).mockReturnValue(mockDefiner);
+
+    const res = await request(app)
+      .post('/api/v1/define')
+      .send({
+        texts: ['word1', 'word2'],
+        language: 'en',
+        definerApp: 'mock',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('definitions');
+    expect(res.body.definitions).toHaveLength(2);
+    expect(res.body.definitions[0][0].text).toBe('Def 1 for word 1');
+    expect(res.body.definitions[1][0].text).toBe('Def 1 for word 2');
+    expect(mockDefiner.defineBatch).toHaveBeenCalledWith(['word1', 'word2'], 'en');
   });
 
   it('should call mistral adapter when specified and return mocked results', async () => {
     const mistralMock: IDefiner = {
-      define: vi.fn().mockResolvedValue([
-        {
-          text: 'Mistral Definition 1',
-          partOfSpeech: 'noun',
-          tags: ['formal'],
-          levels: ['C1'],
-        },
+      define: vi.fn(),
+      defineBatch: vi.fn().mockResolvedValue([
+        [
+          {
+            text: 'Mistral Definition 1',
+            partOfSpeech: 'noun',
+            tags: ['formal'],
+            levels: ['C1'],
+          },
+        ],
       ]),
     };
     vi.mocked(DefinerFactory.getDefiner).mockReturnValue(mistralMock);
@@ -114,18 +169,21 @@ describe('POST /api/v1/define', () => {
     expect(res.body.definitions[0].levels).toEqual(['C1']);
 
     expect(DefinerFactory.getDefiner).toHaveBeenCalledWith('mistral');
-    expect(mistralMock.define).toHaveBeenCalledWith('bonjour', 'fr');
+    expect(mistralMock.defineBatch).toHaveBeenCalledWith(['bonjour'], 'fr');
   });
 
   it('should call gemini adapter when specified and return mocked results', async () => {
     const geminiMock: IDefiner = {
-      define: vi.fn().mockResolvedValue([
-        {
-          text: 'Gemini Definition 1',
-          partOfSpeech: 'adjective',
-          tags: [],
-          levels: ['B2'],
-        },
+      define: vi.fn(),
+      defineBatch: vi.fn().mockResolvedValue([
+        [
+          {
+            text: 'Gemini Definition 1',
+            partOfSpeech: 'adjective',
+            tags: [],
+            levels: ['B2'],
+          },
+        ],
       ]),
     };
     vi.mocked(DefinerFactory.getDefiner).mockReturnValue(geminiMock);
@@ -144,18 +202,21 @@ describe('POST /api/v1/define', () => {
     expect(res.body.definitions[0].partOfSpeech).toBe('adjective');
 
     expect(DefinerFactory.getDefiner).toHaveBeenCalledWith('gemini');
-    expect(geminiMock.define).toHaveBeenCalledWith('hola', 'es');
+    expect(geminiMock.defineBatch).toHaveBeenCalledWith(['hola'], 'es');
   });
 
   it('should call llm adapter when specified and return mocked results', async () => {
     const llmMock: IDefiner = {
-      define: vi.fn().mockResolvedValue([
-        {
-          text: 'LLM Definition 1',
-          partOfSpeech: 'interjection',
-          tags: ['informal'],
-          levels: ['A1'],
-        },
+      define: vi.fn(),
+      defineBatch: vi.fn().mockResolvedValue([
+        [
+          {
+            text: 'LLM Definition 1',
+            partOfSpeech: 'interjection',
+            tags: ['informal'],
+            levels: ['A1'],
+          },
+        ],
       ]),
     };
     vi.mocked(DefinerFactory.getDefiner).mockReturnValue(llmMock);
@@ -174,6 +235,6 @@ describe('POST /api/v1/define', () => {
     expect(res.body.definitions[0].levels).toEqual(['A1']);
 
     expect(DefinerFactory.getDefiner).toHaveBeenCalledWith('llm');
-    expect(llmMock.define).toHaveBeenCalledWith('ciao', 'it');
+    expect(llmMock.defineBatch).toHaveBeenCalledWith(['ciao'], 'it');
   });
 });

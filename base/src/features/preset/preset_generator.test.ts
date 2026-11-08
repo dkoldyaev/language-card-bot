@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type mockDeep, mockReset } from 'vitest-mock-extended';
 import { prisma } from '../../prisma';
 import {
+  fetchDefinitionsBatchFromDefiner,
   fetchDefinitionsFromDefiner,
   fetchTranslationsFromTranslator,
   fetchWordsFromLLM,
@@ -83,6 +84,26 @@ describe('Preset Generator Service', () => {
 
       const defs = await fetchDefinitionsFromDefiner('apple', 'en');
       expect(defs).toEqual(['A sweet red or green fruit', 'A technology company']);
+    });
+  });
+
+  describe('fetchDefinitionsBatchFromDefiner', () => {
+    it('should call definer endpoint with batch texts and return array of definitions', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          definitions: [
+            ['Definition 1 for apple'],
+            ['Definition 1 for banana'],
+          ],
+        }),
+      } as Response);
+
+      const batchDefs = await fetchDefinitionsBatchFromDefiner(['apple', 'banana'], 'en');
+      expect(batchDefs).toEqual([
+        ['Definition 1 for apple'],
+        ['Definition 1 for banana'],
+      ]);
     });
   });
 
@@ -299,7 +320,7 @@ describe('Preset Generator Service', () => {
         const body = JSON.parse(init.body);
 
         // Translator call
-        if (body.texts && Array.isArray(body.texts)) {
+        if (body.texts && Array.isArray(body.texts) && !body.definerApp) {
           return {
             ok: true,
             json: async () => ({
@@ -320,6 +341,18 @@ describe('Preset Generator Service', () => {
 
         // Definer
         if (body.definerApp) {
+          const defsMap: Record<string, string[]> = {
+            water: ['A clear liquid essential for life'],
+            apple: ['A round edible fruit'],
+          };
+          if (Array.isArray(body.texts)) {
+            return {
+              ok: true,
+              json: async () => ({
+                definitions: body.texts.map((w: string) => defsMap[w] || []),
+              }),
+            };
+          }
           if (body.text === 'water') {
             return {
               ok: true,
@@ -425,7 +458,7 @@ describe('Preset Generator Service', () => {
         const body = JSON.parse(init.body);
 
         // Translator
-        if (body.texts && Array.isArray(body.texts)) {
+        if (body.texts && Array.isArray(body.texts) && !body.definerApp) {
           return {
             ok: true,
             json: async () => ({
@@ -451,6 +484,14 @@ describe('Preset Generator Service', () => {
 
         // Definer
         if (body.definerApp) {
+          if (Array.isArray(body.texts)) {
+            return {
+              ok: true,
+              json: async () => ({
+                definitions: body.texts.map(() => ['Some definition']),
+              }),
+            };
+          }
           return {
             ok: true,
             json: async () => ({ definitions: ['Some definition'] }),
@@ -537,7 +578,7 @@ describe('Preset Generator Service', () => {
         const body = JSON.parse(init.body);
 
         // Translator
-        if (body.texts && Array.isArray(body.texts)) {
+        if (body.texts && Array.isArray(body.texts) && !body.definerApp) {
           return {
             ok: true,
             json: async () => ({
@@ -555,6 +596,19 @@ describe('Preset Generator Service', () => {
         }
 
         if (body.definerApp) {
+          const defsMap: Record<string, string[]> = {
+            apple: ['definition 1'],
+            banana: ['yellow fruit'],
+            orange: ['orange fruit'],
+          };
+          if (Array.isArray(body.texts)) {
+            return {
+              ok: true,
+              json: async () => ({
+                definitions: body.texts.map((w: string) => defsMap[w] || []),
+              }),
+            };
+          }
           if (body.text === 'apple') {
             return { ok: true, json: async () => ({ definitions: ['definition 1'] }) };
           }
@@ -677,7 +731,7 @@ describe('Preset Generator Service', () => {
         const body = JSON.parse(init.body);
 
         // Translator
-        if (body.texts && Array.isArray(body.texts)) {
+        if (body.texts && Array.isArray(body.texts) && !body.definerApp) {
           return {
             ok: true,
             json: async () => ({
@@ -690,6 +744,14 @@ describe('Preset Generator Service', () => {
           return { ok: true, json: async () => ({ data: { words: ['pizza'] } }) };
         }
         if (body.definerApp) {
+          if (Array.isArray(body.texts)) {
+            return {
+              ok: true,
+              json: async () => ({
+                definitions: body.texts.map(() => ['A pizza is delicious Italian dish']),
+              }),
+            };
+          }
           return { ok: true, json: async () => ({ definitions: ['A pizza is delicious Italian dish'] }) };
         }
         if (body.prompt?.includes('evaluate the following definitions')) {
@@ -754,7 +816,7 @@ describe('Preset Generator Service', () => {
         const body = JSON.parse(init.body);
 
         // Translator
-        if (body.texts && Array.isArray(body.texts)) {
+        if (body.texts && Array.isArray(body.texts) && !body.definerApp) {
           return {
             ok: true,
             json: async () => ({
@@ -774,6 +836,18 @@ describe('Preset Generator Service', () => {
         }
 
         if (body.definerApp) {
+          const defsMap: Record<string, string[]> = {
+            bread: ['A food made of flour and water baked'],
+            water: ['Clear liquid'],
+          };
+          if (Array.isArray(body.texts)) {
+            return {
+              ok: true,
+              json: async () => ({
+                definitions: body.texts.map((w: string) => defsMap[w] || []),
+              }),
+            };
+          }
           if (body.text === 'bread') {
             return {
               ok: true,
@@ -856,7 +930,7 @@ describe('Preset Generator Service', () => {
       global.fetch = vi.fn().mockImplementation(async (_url: string, init: RequestInit | undefined) => {
         const body = JSON.parse(init.body);
 
-        if (body.texts && Array.isArray(body.texts)) {
+        if (body.texts && Array.isArray(body.texts) && !body.definerApp) {
           translatedTargetLangs.push(body.targetLanguage);
           return {
             ok: true,
@@ -870,6 +944,14 @@ describe('Preset Generator Service', () => {
           return { ok: true, json: async () => ({ data: { words: ['cat'] } }) };
         }
         if (body.definerApp) {
+          if (Array.isArray(body.texts)) {
+            return {
+              ok: true,
+              json: async () => ({
+                definitions: body.texts.map(() => ['A small domesticated carnivorous mammal']),
+              }),
+            };
+          }
           return { ok: true, json: async () => ({ definitions: ['A small domesticated carnivorous mammal'] }) };
         }
         if (body.prompt?.includes('evaluate the following definitions')) {
@@ -932,7 +1014,7 @@ describe('Preset Generator Service', () => {
       global.fetch = vi.fn().mockImplementation(async (_url: string, init: RequestInit | undefined) => {
         const body = JSON.parse(init.body);
 
-        if (body.texts && Array.isArray(body.texts)) {
+        if (body.texts && Array.isArray(body.texts) && !body.definerApp) {
           translatedTargetLangs.push(body.targetLanguage);
           return {
             ok: true,
@@ -946,6 +1028,14 @@ describe('Preset Generator Service', () => {
           return { ok: true, json: async () => ({ data: { words: ['cat'] } }) };
         }
         if (body.definerApp) {
+          if (Array.isArray(body.texts)) {
+            return {
+              ok: true,
+              json: async () => ({
+                definitions: body.texts.map(() => ['A small domesticated mammal']),
+              }),
+            };
+          }
           return { ok: true, json: async () => ({ definitions: ['A small domesticated mammal'] }) };
         }
         if (body.prompt?.includes('evaluate the following definitions')) {
