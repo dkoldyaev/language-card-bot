@@ -33,6 +33,8 @@ Usage:
   node scripts/create-dokploy-env.mjs [environment-name] [options]
 
 Options:
+  --env, -e <name>         Explicit environment name (overrides positional arg and branch)
+  --domain, -d <domain>    Explicit custom domain host (e.g. my-app.example.com)
   --branch <name>          Git branch to deploy (default: current git branch)
   --app-name <name>        Compose application name in Dokploy (default: app)
   --reset-db               Reset database volumes on deploy (freshVolumes)
@@ -52,6 +54,8 @@ Options:
 Examples:
   npm run dokploy:deploy
   npm run dokploy:deploy -- dev
+  npm run dokploy:deploy -- --env stage --domain stage.cards.example.com
+  npm run dokploy:deploy -- dev --domain custom-dev.example.com
   npm run dokploy:deploy -- dev --skip-presets
   npm run dokploy:deploy -- dev --admin-email admin@example.com
   npm run dokploy:deploy -- dev --admin-only --admin-email admin@example.com
@@ -71,6 +75,8 @@ const adminOnly = args.includes('--admin-only');
 const runCheck = args.includes('--check');
 const customBranch = getArgValue('--branch');
 const customAppName = getArgValue('--app-name') !== null ? getArgValue('--app-name') : 'app';
+const customEnvName = getArgValue('--env') !== null ? getArgValue('--env') : getArgValue('-e');
+const customDomain = getArgValue('--domain') !== null ? getArgValue('--domain') : getArgValue('-d');
 
 const rawPresetLanguage =
   getArgValue('--preset-language') !== null ? getArgValue('--preset-language') : getArgValue('--language');
@@ -96,13 +102,17 @@ const cliAdminEmail = getArgValue('--admin-email');
 const cliAdminName = getArgValue('--admin-name');
 
 const positionalArgs = args.filter((a) => {
-  if (a.startsWith('--')) return false;
+  if (a.startsWith('-')) return false;
   const prevIdx = args.indexOf(a) - 1;
   if (
     prevIdx >= 0 &&
     [
       '--branch',
       '--app-name',
+      '--env',
+      '-e',
+      '--domain',
+      '-d',
       '--preset-language',
       '--language',
       '--preset-level',
@@ -132,9 +142,13 @@ function getCurrentGitBranch() {
 }
 
 const gitBranch = customBranch !== null ? customBranch : getCurrentGitBranch();
-const rawEnvName = positionalArgs.length > 0 ? positionalArgs[0] : gitBranch;
+const rawEnvName = customEnvName !== null ? customEnvName : (positionalArgs.length > 0 ? positionalArgs[0] : gitBranch);
 // Sanitize environment name for valid DNS label (e.g. feature/foo -> feature-foo)
 const envName = rawEnvName.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+
+// Clean domain if user passed URL or leading/trailing slashes
+const cleanCustomDomain = customDomain !== null ? customDomain.replace(/^https?:\/\//i, '').replace(/\/+$/, '').trim() : null;
+const domainHost = cleanCustomDomain !== null ? cleanCustomDomain : `${envName}.languagecards.194-163-164-255.sslip.io`;
 
 // 3. Load .env file with strict validation
 function loadEnv(filePath) {
@@ -408,6 +422,7 @@ async function main() {
   console.log(`\n\x1b[36m=== Dokploy Deployment: "${envName}" ===\x1b[0m\n`);
   console.log(`📌 Git branch: \x1b[32m${gitBranch}\x1b[0m`);
   console.log(`📌 Environment name: \x1b[32m${envName}\x1b[0m`);
+  console.log(`📌 Domain: \x1b[32m${domainHost}\x1b[0m`);
 
   // 1. Fetch Project and GitHub provider
   console.log('🔍 Connecting to Dokploy and searching for project "language-cards"...');
@@ -578,7 +593,6 @@ async function main() {
   composeApp = await dokployRequest(`/compose.one?composeId=${composeId}`);
 
   // 7. Generate and save environment variables
-  const domainHost = `${envName}.languagecards.194-163-164-255.sslip.io`;
   const composeEnv = generateComposeEnv({
     domainHost,
     pgAppName: pgService.appName,
