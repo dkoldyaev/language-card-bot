@@ -756,8 +756,9 @@ async function main() {
 
     while (Date.now() - containerWaitStart < 60000) {
       const containers = (await dokployRequest('/docker.getContainers')) || [];
+      const appPattern = new RegExp(`^${composeApp.appName}-app-\\d+$`);
       const running = containers.find(
-        (c) => c.name && c.name.includes(composeApp.appName) && c.name.includes('-app-') && c.state === 'running'
+        (c) => c.name && appPattern.test(c.name) && c.state === 'running'
       );
       if (running) {
         appContainer = running;
