@@ -27,6 +27,7 @@ const envSchema = z.object({
   LLM_MODEL: z.string().min(1),
   IMAGE_GENERATOR_API_URL: z.string().min(1),
   IMAGE_GENERATOR_PROVIDER: z.enum(['mock', 'unsplash', 'pexels', 'pixabay', 'wikimedia']),
+  SUPPORTED_LANGUAGES: z.string().min(1),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

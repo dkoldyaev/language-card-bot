@@ -200,6 +200,7 @@ const ru = {
   'languages.zh': 'Китайский (ZH)',
   'languages.ja': 'Японский (JA)',
   'languages.tr': 'Турецкий (TR)',
+  'languages.uk': 'Украинский (UK)',
 
   // Dictionary Presets Component
   'presets.availablePresetsTitle': 'Доступные пресеты',

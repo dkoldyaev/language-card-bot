@@ -1,4 +1,4 @@
-export const SUPPORTED_LANGUAGES = [
+export const ALL_AVAILABLE_LANGUAGES = [
   'en',
   'ru',
   'es',
@@ -9,12 +9,34 @@ export const SUPPORTED_LANGUAGES = [
   'zh',
   'ja',
   'tr',
+  'uk',
 ] as const;
 
-export const SUPPORTED_LOCALES = SUPPORTED_LANGUAGES;
-
-export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number];
+export type LanguageCode = (typeof ALL_AVAILABLE_LANGUAGES)[number];
 export type SupportedLocale = LanguageCode;
+
+const rawEnvLanguages = import.meta.env.VITE_SUPPORTED_LANGUAGES;
+if (!rawEnvLanguages) {
+  throw new Error('VITE_SUPPORTED_LANGUAGES is required');
+}
+
+const parsedEnvLangs = rawEnvLanguages
+  .split(',')
+  .map((s: string) => s.trim().toLowerCase())
+  .filter(Boolean);
+
+const invalidEnvLangs = parsedEnvLangs.filter(
+  (l: string) => !(ALL_AVAILABLE_LANGUAGES as readonly string[]).includes(l)
+);
+
+if (parsedEnvLangs.length === 0 || invalidEnvLangs.length > 0) {
+  throw new Error(
+    `Invalid VITE_SUPPORTED_LANGUAGES: "${rawEnvLanguages}". Must be non-empty comma-separated subset of: ${ALL_AVAILABLE_LANGUAGES.join(', ')}`
+  );
+}
+
+export const SUPPORTED_LANGUAGES = parsedEnvLangs as LanguageCode[];
+export const SUPPORTED_LOCALES = SUPPORTED_LANGUAGES;
 
 export interface LocaleInfo {
   code: SupportedLocale;
@@ -34,6 +56,7 @@ export const LOCALES_INFO: Record<SupportedLocale, LocaleInfo> = {
   zh: { code: 'zh', label: 'Chinese', nativeLabel: '中文', flag: '🇨🇳' },
   ja: { code: 'ja', label: 'Japanese', nativeLabel: '日本語', flag: '🇯🇵' },
   tr: { code: 'tr', label: 'Turkish', nativeLabel: 'Türkçe', flag: '🇹🇷' },
+  uk: { code: 'uk', label: 'Ukrainian', nativeLabel: 'Українська', flag: '🇺🇦' },
 };
 
 export type TranslationDictionary = Record<string, string>;

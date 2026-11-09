@@ -8,6 +8,7 @@ import ja from './ja';
 import pt from './pt';
 import ru from './ru';
 import tr from './tr';
+import uk from './uk';
 import zh from './zh';
 
 export const translations: Record<SupportedLocale, TranslationDictionary> = {
@@ -21,6 +22,7 @@ export const translations: Record<SupportedLocale, TranslationDictionary> = {
   zh,
   ja,
   tr,
+  uk,
 };
 
 export default translations;

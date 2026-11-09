@@ -1067,9 +1067,9 @@ describe('Preset Generator Service', () => {
         wordsCount: 1,
       });
 
-      // All AVAILABLE_LANGUAGES except 'en': es, fr, de, ru, it, pt, zh, ja, tr
+      // All SUPPORTED_LANGUAGES except 'en'
       expect(translatedTargetLangs.sort()).toEqual(
-        ['de', 'es', 'fr', 'it', 'ja', 'pt', 'ru', 'tr', 'zh'].sort()
+        ['de', 'es', 'fr', 'it', 'ja', 'pt', 'ru', 'tr', 'uk', 'zh'].sort()
       );
       expect(translatedTargetLangs).not.toContain('en');
     });

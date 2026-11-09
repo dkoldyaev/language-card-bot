@@ -171,6 +171,7 @@ const ja = {
   'languages.zh': '中国語 (ZH)',
   'languages.ja': '日本語 (JA)',
   'languages.tr': 'トルコ語 (TR)',
+  'languages.uk': 'ウクライナ語 (UK)',
 
   // Dictionary Presets Component
   'presets.availablePresetsTitle': '利用可能なプリセット',

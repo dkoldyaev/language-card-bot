@@ -31,6 +31,7 @@ vi.mock('../../core/env', () => ({
     CORS_ORIGIN: 'http://localhost:5173',
     GOOGLE_CLIENT_ID: 'mock_google_client_id',
     ENABLE_TEST_AUTH: 'true',
+    SUPPORTED_LANGUAGES: 'en,ru,es,de,fr,it,pt,zh,ja,tr,uk',
   }
 }));
 

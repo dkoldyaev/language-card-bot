@@ -171,6 +171,7 @@ const tr = {
   'languages.zh': 'Çince (ZH)',
   'languages.ja': 'Japonca (JA)',
   'languages.tr': 'Türkçe (TR)',
+  'languages.uk': 'Ukraynaca (UK)',
 
   // Dictionary Presets Component
   'presets.availablePresetsTitle': 'Kullanılabilir Şablonlar',

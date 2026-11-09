@@ -200,6 +200,7 @@ const en = {
   'languages.zh': 'Chinese (ZH)',
   'languages.ja': 'Japanese (JA)',
   'languages.tr': 'Turkish (TR)',
+  'languages.uk': 'Ukrainian (UK)',
 
   // Dictionary Presets Component
   'presets.availablePresetsTitle': 'Available Presets',

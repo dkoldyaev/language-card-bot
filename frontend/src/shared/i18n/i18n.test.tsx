@@ -44,12 +44,12 @@ describe('i18n infrastructure', () => {
     });
   });
 
-  describe('all 10 languages supported and have translations', () => {
-    it('supports exactly the 10 available languages', () => {
-      expect(SUPPORTED_LOCALES).toEqual(['en', 'ru', 'es', 'de', 'fr', 'it', 'pt', 'zh', 'ja', 'tr']);
+  describe('all configured languages supported and have translations', () => {
+    it('supports configured languages from environment', () => {
+      expect(SUPPORTED_LOCALES).toEqual(['en', 'ru', 'es', 'de', 'fr', 'it', 'pt', 'zh', 'ja', 'tr', 'uk']);
     });
 
-    it('contains translation dictionary for all 10 locales', () => {
+    it('contains translation dictionary for all configured locales', () => {
       const enKeys = Object.keys(translations.en);
       for (const loc of SUPPORTED_LOCALES) {
         expect(translations[loc]).toBeDefined();
@@ -79,7 +79,7 @@ describe('i18n infrastructure', () => {
     });
 
     it('falls back to "en" when no supported language matches', () => {
-      vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(['pl', 'uk', 'fi']);
+      vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(['pl', 'sv', 'fi']);
       vi.spyOn(window.navigator, 'language', 'get').mockReturnValue('fi');
       expect(detectBrowserLanguage()).toBe('en');
     });

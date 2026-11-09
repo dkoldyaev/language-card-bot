@@ -171,6 +171,7 @@ const zh = {
   'languages.zh': '中文 (ZH)',
   'languages.ja': '日语 (JA)',
   'languages.tr': '土耳其语 (TR)',
+  'languages.uk': '乌克兰语 (UK)',
 
   // Dictionary Presets Component
   'presets.availablePresetsTitle': '可用预设',

@@ -171,6 +171,7 @@ const it = {
   'languages.zh': 'Cinese (ZH)',
   'languages.ja': 'Giapponese (JA)',
   'languages.tr': 'Turco (TR)',
+  'languages.uk': 'Ucraino (UK)',
 
   // Dictionary Presets Component
   'presets.availablePresetsTitle': 'Preset disponibili',
