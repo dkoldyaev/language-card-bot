@@ -42,7 +42,7 @@ Options:
   --skip-presets           Skip creating presets after deployment
   --presets-only           Only run preset creation in container (skips stack deploy)
   --preset-async, --async  Enqueue preset creation tasks asynchronously via BullMQ instead of synchronous generation
-  --preset-language <lang> Language(s) for presets (default: en,es,fr,de,ru,it,pt,zh,ja,tr)
+  --preset-language <lang> Language(s) for presets (default: en,es,fr,de,ru,it,pt,zh,ja,tr,uk)
   --preset-level <level>   Level(s) for presets (default: A0,A1,A2,B1,B2,C1,C2)
   --preset-theme <theme>   Theme(s) for presets (default: IT,travel,common,food,work,shopping,education,health)
   --preset-word-count <n>  Target number of words per preset (default: 10)
@@ -83,7 +83,7 @@ const customDomain = getArgValue('--domain') !== null ? getArgValue('--domain') 
 const rawPresetLanguage =
   getArgValue('--preset-language') !== null ? getArgValue('--preset-language') : getArgValue('--language');
 const presetLanguage =
-  rawPresetLanguage !== null ? rawPresetLanguage : 'en,es,fr,de,ru,it,pt,zh,ja,tr';
+  rawPresetLanguage !== null ? rawPresetLanguage : 'en,es,fr,de,ru,it,pt,zh,ja,tr,uk';
 
 const rawPresetLevel =
   getArgValue('--preset-level') !== null ? getArgValue('--preset-level') : getArgValue('--level');
@@ -359,6 +359,7 @@ function generateComposeEnv({ domainHost, pgAppName, pgUser, pgPassword, pgDbNam
     `BASE_ENABLE_DB_LOGGING=${getEnvVar('BASE_ENABLE_DB_LOGGING')}`,
     `BASE_ALLOW_GUEST_AI_GENERATION=${getEnvVar('BASE_ALLOW_GUEST_AI_GENERATION')}`,
     `BASE_GUEST_AI_DAILY_LIMIT=${getEnvVar('BASE_GUEST_AI_DAILY_LIMIT')}`,
+    `BASE_SUPPORTED_LANGUAGES=${getEnvVar('BASE_SUPPORTED_LANGUAGES')}`,
     '',
     '# MERCURE SERVICE',
     `MERCURE_PORT=${getEnvVar('MERCURE_PORT')}`,
@@ -419,10 +420,63 @@ function generateComposeEnv({ domainHost, pgAppName, pgUser, pgPassword, pgDbNam
     `FRONTEND_BASE_DOMAIN=${fullDomain}`,
     `FRONTEND_ALLOWED_HOSTS=${domainHost}`,
     `FRONTEND_AUTH_PROVIDER=${getEnvVar('FRONTEND_AUTH_PROVIDER')}`,
+    `FRONTEND_SUPPORTED_LANGUAGES=${getEnvVar('FRONTEND_SUPPORTED_LANGUAGES')}`,
     '',
     '# AUTH',
     `GOOGLE_CLIENT_ID=${getEnvVar('GOOGLE_CLIENT_ID')}`,
   ].join('\n');
+}
+
+// Merge generated compose environment with existing remote environment,
+// preserving any custom or manually set variables (e.g. keys, tokens, overrides).
+function mergeComposeEnv(baseGeneratedEnv, existingRemoteEnv) {
+  if (!existingRemoteEnv || !existingRemoteEnv.trim()) {
+    return baseGeneratedEnv;
+  }
+
+  const existingMap = {};
+  for (const line of existingRemoteEnv.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx === -1) continue;
+    const key = trimmed.substring(0, eqIdx).trim();
+    const val = trimmed.substring(eqIdx + 1);
+    existingMap[key] = val;
+  }
+
+  const baseLines = (baseGeneratedEnv || '').split('\n');
+  const processedKeys = new Set();
+
+  const mergedLines = baseLines.map((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return line;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx === -1) return line;
+
+    const key = trimmed.substring(0, eqIdx).trim();
+    processedKeys.add(key);
+
+    // If variable already existed in remote Dokploy compose environment and was non-empty, preserve its remote value
+    if (existingMap[key] !== undefined && existingMap[key] !== '') {
+      return `${key}=${existingMap[key]}`;
+    }
+    return line;
+  });
+
+  // Preserve any custom variables defined only on remote
+  const extraKeys = [];
+  for (const [key, val] of Object.entries(existingMap)) {
+    if (!processedKeys.has(key)) {
+      extraKeys.push(`${key}=${val}`);
+    }
+  }
+
+  if (extraKeys.length > 0) {
+    mergedLines.push('', '# CUSTOM / ENVIRONMENT-SPECIFIC VARIABLES (PRESERVED)', ...extraKeys);
+  }
+
+  return mergedLines.join('\n');
 }
 
 async function main() {
@@ -600,7 +654,7 @@ async function main() {
   composeApp = await dokployRequest(`/compose.one?composeId=${composeId}`);
 
   // 7. Generate and save environment variables
-  const composeEnv = generateComposeEnv({
+  const generatedEnv = generateComposeEnv({
     domainHost,
     pgAppName: pgService.appName,
     pgUser: pgService.databaseUser,
@@ -609,6 +663,10 @@ async function main() {
     redisAppName: redisService.appName,
     redisPassword: redisService.databasePassword,
   });
+
+  // Preserve existing environment variables already configured in Dokploy (e.g. manual keys/tokens)
+  const existingRemoteEnv = composeApp?.env || '';
+  const composeEnv = mergeComposeEnv(generatedEnv, existingRemoteEnv);
 
   const serviceNetworks = [
     { serviceName: 'app', networkIds: [envNet.networkId], detachDokployNetwork: false },
